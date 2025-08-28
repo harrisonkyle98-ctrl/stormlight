@@ -251,11 +251,6 @@ async def get_current_user(user_id: str = Depends(verify_token)):
         raise HTTPException(status_code=404, detail="User not found")
     return users_db[user_id]
 
-@app.get("/api/clan/members")
-async def get_clan_members_endpoint():
-    """Get list of clan members"""
-    members = await get_clan_members()
-    return {"members": members, "clan_name": os.getenv("CLAN_NAME", "Stormlight")}
 
 @app.get("/api/player/{username}/stats")
 async def get_player_stats(username: str):
@@ -384,4 +379,66 @@ async def get_competition(competition_id: int):
     return {
         **competition,
         "leaderboard": leaderboard
+    }
+
+async def fetch_clan_members() -> List[Dict[str, Any]]:
+    """Fetch clan members from RuneScape Clan API"""
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            clan_url = "https://secure.runescape.com/m=clan-hiscores/members_lite.ws?clanName=Stormlight"
+            response = await client.get(clan_url)
+            
+            if response.status_code == 200:
+                lines = response.text.strip().split('\n')
+                members = []
+                
+                for line in lines[1:]:
+                    if line.strip():
+                        parts = line.split(',')
+                        if len(parts) >= 4:
+                            members.append({
+                                'username': parts[0].strip(),
+                                'clan_rank': parts[1].strip(),
+                                'total_xp': int(parts[2]) if parts[2].isdigit() else 0,
+                                'kills': int(parts[3]) if parts[3].isdigit() else 0,
+                                'last_updated': datetime.now().isoformat()
+                            })
+                
+                return members
+            return []
+    except Exception as e:
+        print(f"Error fetching clan members: {e}")
+        return []
+
+@app.get("/api/clan/members")
+async def get_clan_members_paginated(
+    page: int = 1,
+    limit: int = 15,
+    search: Optional[str] = None
+):
+    """Get clan members with pagination and search"""
+    if limit not in [15, 30, 50]:
+        limit = 15
+    
+    members = await fetch_clan_members()
+    
+    if search:
+        search_lower = search.lower()
+        members = [m for m in members if search_lower in m['username'].lower()]
+    
+    members.sort(key=lambda x: x['total_xp'], reverse=True)
+    
+    start_idx = (page - 1) * limit
+    end_idx = start_idx + limit
+    paginated_members = members[start_idx:end_idx]
+    
+    return {
+        "members": paginated_members,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total_members": len(members),
+            "has_next": end_idx < len(members)
+        },
+        "clan_name": "Stormlight"
     }

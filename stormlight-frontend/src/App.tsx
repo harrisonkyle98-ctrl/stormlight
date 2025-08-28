@@ -3,6 +3,7 @@ import { Toaster } from 'sonner'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Hiscores from './pages/Hiscores'
+import Members from './pages/Members'
 import PlayerProfile from './pages/PlayerProfile'
 import Competitions from './pages/Competitions'
 import CompetitionDetail from './pages/CompetitionDetail'
@@ -32,6 +33,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/hiscores" element={<Hiscores />} />
+          <Route path="/members" element={<Members />} />
           <Route path="/player/:username" element={<PlayerProfile />} />
           <Route path="/competitions" element={<Competitions />} />
           <Route path="/competitions/:id" element={<CompetitionDetail />} />
