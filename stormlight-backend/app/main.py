@@ -45,6 +45,16 @@ users_db = {}
 clan_members_db = {}
 competitions_db = {}
 player_stats_cache = {}
+discovered_players_db = {}
+
+SKILL_TABLE_MAPPING = {
+    'overall': 0, 'attack': 1, 'defence': 2, 'strength': 3, 'constitution': 4,
+    'ranged': 5, 'prayer': 6, 'magic': 7, 'cooking': 8, 'woodcutting': 9,
+    'fletching': 10, 'fishing': 11, 'firemaking': 12, 'crafting': 13, 'smithing': 14,
+    'mining': 15, 'herblore': 16, 'agility': 17, 'thieving': 18, 'slayer': 19,
+    'farming': 20, 'runecrafting': 21, 'hunter': 22, 'construction': 23, 'summoning': 24,
+    'dungeoneering': 25, 'divination': 26, 'invention': 27, 'archaeology': 28, 'necromancy': 29
+}
 
 async def fetch_player_stats(username: str) -> Optional[Dict[str, Any]]:
     """Fetch player stats from RuneScape Hiscores API"""
@@ -97,6 +107,40 @@ async def fetch_player_stats(username: str) -> Optional[Dict[str, Any]]:
     except Exception as e:
         print(f"Error fetching stats for {username}: {e}")
         return None
+
+async def fetch_top_players(skill: str = 'overall', size: int = 50) -> List[Dict[str, Any]]:
+    """Fetch top players from RuneScape ranking API"""
+    try:
+        print(f"Fetching top players for skill: {skill}")
+        table_id = SKILL_TABLE_MAPPING.get(skill.lower(), 0)
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            ranking_url = f"{os.getenv('RUNESCAPE_API_BASE')}/m=hiscore/ranking.json?table={table_id}&category=0&size={size}"
+            print(f"Requesting: {ranking_url}")
+            response = await client.get(ranking_url)
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"Got {len(data)} players from ranking API")
+                players = []
+                for i, player_data in enumerate(data[:5]):
+                    username = player_data['name']
+                    print(f"Fetching stats for player {i+1}: {username}")
+                    stats = await fetch_player_stats(username)
+                    if stats:
+                        players.append(stats)
+                        discovered_players_db[username.lower()] = {
+                            'username': username,
+                            'discovered_at': datetime.now(),
+                            'source': 'ranking_api'
+                        }
+                print(f"Successfully fetched {len(players)} player stats")
+                return players
+            else:
+                print(f"Ranking API returned status: {response.status_code}")
+            return []
+    except Exception as e:
+        print(f"Error fetching top players for {skill}: {e}")
+        return []
 
 async def get_clan_members() -> List[str]:
     """Get list of clan members - using well-known RuneScape players for testing"""
@@ -216,8 +260,58 @@ async def get_player_stats(username: str):
     return stats
 
 @app.get("/api/hiscores")
+async def get_global_hiscores(
+    skill: str = 'overall',
+    page: int = 1,
+    limit: int = 15,
+    search: Optional[str] = None
+):
+    """Get global hiscores with pagination"""
+    if limit not in [15, 30, 50]:
+        limit = 15
+    
+    players = []
+    
+    if search:
+        stats = await fetch_player_stats(search)
+        if stats:
+            players = [stats]
+            discovered_players_db[search.lower()] = {
+                'username': search,
+                'discovered_at': datetime.now(),
+                'source': 'search'
+            }
+    else:
+        top_players = await fetch_top_players(skill, 50)
+        
+        discovered_with_stats = []
+        for username_key, player_info in discovered_players_db.items():
+            if username_key not in [p['username'].lower() for p in top_players]:
+                stats = await fetch_player_stats(player_info['username'])
+                if stats and skill in stats['stats']:
+                    discovered_with_stats.append(stats)
+        
+        all_players = top_players + discovered_with_stats
+        all_players.sort(key=lambda x: x['stats'].get(skill, {}).get('xp', 0), reverse=True)
+        
+        start_idx = (page - 1) * limit
+        end_idx = start_idx + limit
+        players = all_players[start_idx:end_idx]
+    
+    return {
+        "hiscores": players,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total_players": len(discovered_players_db) + 50,
+            "has_next": len(players) == limit
+        },
+        "skill": skill
+    }
+
+@app.get("/api/clan/hiscores")
 async def get_clan_hiscores():
-    """Get clan hiscores"""
+    """Get clan hiscores (legacy endpoint)"""
     members = await get_clan_members()
     hiscores = []
     
