@@ -389,16 +389,20 @@ async def fetch_clan_members() -> List[Dict[str, Any]]:
             response = await client.get(clan_url)
             
             if response.status_code == 200:
-                lines = response.text.strip().split('\n')
+                content = response.content.decode('latin-1')
+                lines = content.strip().split('\n')
                 members = []
                 
                 for line in lines[1:]:
                     if line.strip():
                         parts = line.split(',')
                         if len(parts) >= 4:
+                            username = parts[0].strip()
+                            clan_rank = parts[1].strip()
+                            
                             members.append({
-                                'username': parts[0].strip(),
-                                'clan_rank': parts[1].strip(),
+                                'username': username,
+                                'clan_rank': clan_rank,
                                 'total_xp': int(parts[2]) if parts[2].isdigit() else 0,
                                 'kills': int(parts[3]) if parts[3].isdigit() else 0,
                                 'last_updated': datetime.now().isoformat()
