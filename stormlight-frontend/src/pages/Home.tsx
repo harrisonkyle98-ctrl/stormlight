@@ -37,11 +37,11 @@ const Home = () => {
     <div className="space-y-8">
       <div className="text-center">
         <h1 className="text-4xl font-bold text-white mb-4">
-          Welcome to <span className="text-blue-400">⚡ Stormlight</span> Clan
+          Welcome to <span className="text-blue-400">⚡ Stormlight</span>
         </h1>
         <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-          Your premier RuneScape clan community. Track your progress, compete with fellow members, 
-          and climb the hiscores together.
+          World 98 based. Track your progress, compete with fellow members,
+          and climb the clan hiscores together.
         </p>
       </div>
 
@@ -106,8 +106,8 @@ const Home = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-slate-300">
-              Explore our clan member directory to see who's in Stormlight, their clan ranks, 
-              total XP, and view detailed player profiles with RuneScape stats.
+              Explore our clan member directory to see who's in Stormlight, their clan ranks,
+              total XP, and view detailed player profiles with real data.
             </p>
             <Button asChild className="w-full bg-blue-600 hover:bg-blue-700">
               <Link to="/members">View Members</Link>
@@ -127,7 +127,7 @@ const Home = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-slate-300">
-              Participate in skill-based competitions, track your XP gains, and compete 
+              Participate in skill-based competitions, track your XP gains, and compete
               with clan members for the top spots on our leaderboards.
             </p>
             <Button asChild className="w-full bg-green-600 hover:bg-green-700">
