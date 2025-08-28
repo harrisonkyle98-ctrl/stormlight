@@ -29,7 +29,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
       <Navbar />
-      <main className="container mx-auto px-4 py-8">
+      <main className="w-full px-6 py-4">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/hiscores" element={<Hiscores />} />
