@@ -84,7 +84,9 @@ const PlayerProfile = () => {
       summoning: '👹',
       dungeoneering: '🏰',
       divination: '✨',
-      invention: '⚙️'
+      invention: '⚙️',
+      archaeology: '🏺',
+      necromancy: '💀'
     }
     return icons[skill] || '📊'
   }

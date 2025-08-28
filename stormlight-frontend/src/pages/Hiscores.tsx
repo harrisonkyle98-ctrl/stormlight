@@ -84,7 +84,7 @@ const Hiscores = () => {
     'magic', 'cooking', 'woodcutting', 'fletching', 'fishing', 'firemaking',
     'crafting', 'smithing', 'mining', 'herblore', 'agility', 'thieving',
     'slayer', 'farming', 'runecrafting', 'hunter', 'construction', 'summoning',
-    'dungeoneering', 'divination', 'invention'
+    'dungeoneering', 'divination', 'invention', 'archaeology', 'necromancy'
   ]
 
   if (loading) {

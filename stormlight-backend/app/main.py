@@ -77,7 +77,7 @@ async def fetch_player_stats(username: str) -> Optional[Dict[str, Any]]:
                     'magic', 'cooking', 'woodcutting', 'fletching', 'fishing', 'firemaking',
                     'crafting', 'smithing', 'mining', 'herblore', 'agility', 'thieving',
                     'slayer', 'farming', 'runecrafting', 'hunter', 'construction', 'summoning',
-                    'dungeoneering', 'divination', 'invention'
+                    'dungeoneering', 'divination', 'invention', 'archaeology', 'necromancy'
                 ]
                 
                 for i, skill in enumerate(skills):
@@ -89,6 +89,12 @@ async def fetch_player_stats(username: str) -> Optional[Dict[str, Any]]:
                                 'level': int(parts[1]) if parts[1] != '-1' else 1,
                                 'xp': int(parts[2]) if parts[2] != '-1' else 0
                             }
+                    else:
+                        stats[skill] = {
+                            'rank': None,
+                            'level': 1,
+                            'xp': 0
+                        }
                 
                 player_stats_cache[username.lower()] = {
                     'stats': stats,
