@@ -75,21 +75,25 @@ const Members = () => {
   }
 
   const getRankIcon = (rank: string) => {
-    const rankIcons: { [key: string]: string } = {
-      'Owner': '👑',
-      'Deputy Owner': '🔱',
-      'Overseer': '⭐',
-      'Coordinator': '🎯',
-      'Organiser': '📋',
-      'Admin': '🛡️',
-      'General': '⚡',
-      'Captain': '⚔️',
-      'Lieutenant': '🎖️',
-      'Sergeant': '🏅',
-      'Corporal': '🔰',
-      'Recruit': '🆕'
+    const rankImageMap: { [key: string]: string } = {
+      'Owner': 'owner.png',
+      'Deputy Owner': 'depowner.png',
+      'Overseer': 'overseer.png',
+      'Coordinator': 'coordinator.png',
+      'Organiser': 'organizer.png',
+      'Admin': 'admin.png',
+      'General': 'general.png',
+      'Captain': 'captain.png',
+      'Lieutenant': 'lieutenant.png',
+      'Sergeant': 'sergeant.png',
+      'Corporal': 'corporal.png',
+      'Recruit': 'recruit.png'
     }
-    return rankIcons[rank] || '👤'
+    const imageName = rankImageMap[rank]
+    if (imageName) {
+      return `/assets/ranks/${imageName}`
+    }
+    return null
   }
 
 
@@ -251,13 +255,21 @@ const Members = () => {
                     </div>
                     <div>
                       <Link 
-                        to={`/player/${encodeURIComponent(member.username.replace(/\u00A0/g, ' '))}`}
+                        to={`/clan-member/${encodeURIComponent(member.username.replace(/\u00A0/g, ' '))}`}
                         className="text-lg font-semibold text-white hover:text-blue-400 transition-colors"
                       >
                         {member.username}
                       </Link>
                       <div className="flex items-center space-x-2 mt-1">
-                        <span className="text-lg">{getRankIcon(member.clan_rank)}</span>
+                        {getRankIcon(member.clan_rank) ? (
+                          <img 
+                            src={getRankIcon(member.clan_rank)!} 
+                            alt={member.clan_rank}
+                            className="w-5 h-5"
+                          />
+                        ) : (
+                          <span className="text-lg">👤</span>
+                        )}
                         <p className="text-sm text-slate-400">{member.clan_rank}</p>
                       </div>
                     </div>

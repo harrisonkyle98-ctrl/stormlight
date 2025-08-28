@@ -35,7 +35,7 @@ function AppContent() {
             <Route path="/" element={<Home />} />
             <Route path="/hiscores" element={<Hiscores />} />
             <Route path="/members" element={<Members />} />
-            <Route path="/player/:username" element={<PlayerProfile />} />
+            <Route path="/clan-member/:username" element={<PlayerProfile />} />
             <Route path="/competitions" element={<Competitions />} />
             <Route path="/competitions/:id" element={<CompetitionDetail />} />
             <Route path="*" element={<Navigate to="/" replace />} />

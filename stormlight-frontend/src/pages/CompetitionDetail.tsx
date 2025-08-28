@@ -244,7 +244,7 @@ const CompetitionDetail = () => {
                     )}
                   </div>
                   <Link 
-                    to={`/player/${player.username}`}
+                    to={`/clan-member/${player.username}`}
                     className="text-lg font-semibold text-white hover:text-blue-400 transition-colors"
                   >
                     {player.username}
