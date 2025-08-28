@@ -97,20 +97,20 @@ const Home = () => {
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader>
             <CardTitle className="text-white flex items-center space-x-2">
-              <Trophy className="h-5 w-5 text-yellow-400" />
-              <span>Clan Hiscores</span>
+              <Users className="h-5 w-5 text-blue-400" />
+              <span>Clan Members</span>
             </CardTitle>
             <CardDescription className="text-slate-400">
-              View the top performers in our clan
+              Browse our clan roster and member profiles
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-slate-300">
-              Check out our clan hiscores to see who's leading in total XP, individual skills, 
-              and overall progress. Compare your stats with fellow clan members.
+              Explore our clan member directory to see who's in Stormlight, their clan ranks, 
+              total XP, and view detailed player profiles with RuneScape stats.
             </p>
             <Button asChild className="w-full bg-blue-600 hover:bg-blue-700">
-              <Link to="/hiscores">View Hiscores</Link>
+              <Link to="/members">View Members</Link>
             </Button>
           </CardContent>
         </Card>

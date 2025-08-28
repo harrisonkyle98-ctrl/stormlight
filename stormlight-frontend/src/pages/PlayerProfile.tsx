@@ -105,9 +105,9 @@ const PlayerProfile = () => {
     return (
       <div className="space-y-6">
         <Button asChild variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
-          <Link to="/hiscores">
+          <Link to="/members">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Hiscores
+            Back to Members
           </Link>
         </Button>
         <Card className="bg-slate-800/50 border-slate-700">
@@ -128,9 +128,9 @@ const PlayerProfile = () => {
   return (
     <div className="space-y-6">
       <Button asChild variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
-        <Link to="/hiscores">
+        <Link to="/members">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Hiscores
+          Back to Members
         </Link>
       </Button>
 
