@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Swords, Calendar, Trophy, Users, Plus } from 'lucide-react'
+import { getSkillIcon } from '../utils/skillIcons'
 
 interface Competition {
   id: number
@@ -63,39 +64,6 @@ const Competitions = () => {
     })
   }
 
-  const getSkillIcon = (skill: string) => {
-    const icons: { [key: string]: string } = {
-      overall: '⚔️',
-      attack: '⚔️',
-      defence: '🛡️',
-      strength: '💪',
-      constitution: '❤️',
-      ranged: '🏹',
-      prayer: '🙏',
-      magic: '🔮',
-      cooking: '🍳',
-      woodcutting: '🪓',
-      fletching: '🏹',
-      fishing: '🎣',
-      firemaking: '🔥',
-      crafting: '🔨',
-      smithing: '⚒️',
-      mining: '⛏️',
-      herblore: '🧪',
-      agility: '🏃',
-      thieving: '🗡️',
-      slayer: '💀',
-      farming: '🌱',
-      runecrafting: '🔮',
-      hunter: '🏹',
-      construction: '🏠',
-      summoning: '👹',
-      dungeoneering: '🏰',
-      divination: '✨',
-      invention: '⚙️'
-    }
-    return icons[skill] || '📊'
-  }
 
   if (loading) {
     return (
@@ -147,7 +115,15 @@ const Competitions = () => {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="text-2xl">{getSkillIcon(competition.skill)}</div>
+                      {getSkillIcon(competition.skill) ? (
+                        <img 
+                          src={getSkillIcon(competition.skill)!} 
+                          alt={competition.skill}
+                          className="w-6 h-6"
+                        />
+                      ) : (
+                        <div className="text-2xl">📊</div>
+                      )}
                       <div>
                         <CardTitle className="text-white text-xl">
                           {competition.name}

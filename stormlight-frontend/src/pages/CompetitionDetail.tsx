@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { ArrowLeft, Trophy, Calendar, Users, TrendingUp } from 'lucide-react'
+import { getSkillIcon } from '../utils/skillIcons'
 
 interface CompetitionLeaderboard {
   username: string
@@ -81,17 +82,6 @@ const CompetitionDetail = () => {
     return { status: 'active', color: 'bg-green-500' }
   }
 
-  const getSkillIcon = (skill: string) => {
-    const icons: { [key: string]: string } = {
-      overall: '⚔️',
-      woodcutting: '🪓',
-      slayer: '💀',
-      cooking: '🍳',
-      mining: '⛏️',
-      fishing: '🎣'
-    }
-    return icons[skill] || '📊'
-  }
 
   if (loading) {
     return (
@@ -144,7 +134,15 @@ const CompetitionDetail = () => {
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-4">
-              <div className="text-4xl">{getSkillIcon(competition.skill)}</div>
+              {getSkillIcon(competition.skill) ? (
+                <img 
+                  src={getSkillIcon(competition.skill)!} 
+                  alt={competition.skill}
+                  className="w-10 h-10"
+                />
+              ) : (
+                <div className="text-4xl">📊</div>
+              )}
               <div>
                 <CardTitle className="text-2xl text-white mb-2">
                   {competition.name || `${competition.skill.charAt(0).toUpperCase() + competition.skill.slice(1)} Competition`}

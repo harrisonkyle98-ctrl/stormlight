@@ -3,8 +3,9 @@ import { useParams, Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
-import { ArrowLeft, User, Trophy, TrendingUp } from 'lucide-react'
+import { ArrowLeft, User, Trophy, TrendingUp, Crown } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
+import { getSkillIcon } from '../utils/skillIcons'
 
 interface PlayerStats {
   username: string
@@ -16,6 +17,7 @@ interface PlayerStats {
     }
   }
   last_updated: string
+  clan_rank?: string
 }
 
 const PlayerProfile = () => {
@@ -57,40 +59,27 @@ const PlayerProfile = () => {
     return num.toString()
   }
 
-  const getSkillIcon = (skill: string) => {
-    const icons: { [key: string]: string } = {
-      overall: '⚔️',
-      attack: '⚔️',
-      defence: '🛡️',
-      strength: '💪',
-      constitution: '❤️',
-      ranged: '🏹',
-      prayer: '🙏',
-      magic: '🔮',
-      cooking: '🍳',
-      woodcutting: '🪓',
-      fletching: '🏹',
-      fishing: '🎣',
-      firemaking: '🔥',
-      crafting: '🔨',
-      smithing: '⚒️',
-      mining: '⛏️',
-      herblore: '🧪',
-      agility: '🏃',
-      thieving: '🗡️',
-      slayer: '💀',
-      farming: '🌱',
-      runecrafting: '🔮',
-      hunter: '🏹',
-      construction: '🏠',
-      summoning: '👹',
-      dungeoneering: '🏰',
-      divination: '✨',
-      invention: '⚙️',
-      archaeology: '🏺',
-      necromancy: '💀'
+
+  const getRankIcon = (rank: string) => {
+    const rankImageMap: { [key: string]: string } = {
+      'Owner': 'owner.png',
+      'Deputy Owner': 'depowner.png',
+      'Overseer': 'overseer.png',
+      'Coordinator': 'coordinator.png',
+      'Organiser': 'organizer.png',
+      'Admin': 'admin.png',
+      'General': 'general.png',
+      'Captain': 'captain.png',
+      'Lieutenant': 'lieutenant.png',
+      'Sergeant': 'sergeant.png',
+      'Corporal': 'corporal.png',
+      'Recruit': 'recruit.png'
     }
-    return icons[skill] || '📊'
+    const imageName = rankImageMap[rank]
+    if (imageName) {
+      return `/assets/ranks/${imageName}`
+    }
+    return null
   }
 
   if (loading) {
@@ -154,6 +143,34 @@ const PlayerProfile = () => {
         </div>
       </div>
 
+      {playerData.clan_rank && (
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center space-x-2">
+              <Crown className="w-5 h-5 text-yellow-400" />
+              <span>Clan Rank</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center space-x-4">
+              {getRankIcon(playerData.clan_rank) ? (
+                <img 
+                  src={getRankIcon(playerData.clan_rank)!} 
+                  alt={playerData.clan_rank}
+                  className="w-12 h-12"
+                />
+              ) : (
+                <Crown className="w-12 h-12 text-yellow-400" />
+              )}
+              <div className="text-center">
+                <p className="text-2xl font-bold text-white">{playerData.clan_rank}</p>
+                <p className="text-sm text-slate-400">Stormlight Clan</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {overallStats && (
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader>
@@ -200,7 +217,15 @@ const PlayerProfile = () => {
               <div key={skill} className="bg-slate-700/50 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
-                    <span className="text-lg">{getSkillIcon(skill)}</span>
+                    {getSkillIcon(skill) ? (
+                      <img 
+                        src={getSkillIcon(skill)!} 
+                        alt={skill}
+                        className="w-5 h-5"
+                      />
+                    ) : (
+                      <span className="text-lg">📊</span>
+                    )}
                     <span className="font-medium text-white capitalize">{skill}</span>
                   </div>
                   <Badge variant="outline" className="text-blue-400 border-blue-400">
