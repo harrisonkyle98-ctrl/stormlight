@@ -33,19 +33,21 @@ const Members = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(15)
+  const [sortBy, setSortBy] = useState('rank')
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
   useEffect(() => {
     fetchMembers()
-  }, [currentPage, pageSize, searchQuery])
+  }, [currentPage, pageSize, searchQuery, sortBy])
 
   const fetchMembers = async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams({
         page: currentPage.toString(),
-        limit: pageSize.toString()
+        limit: pageSize.toString(),
+        sort_by: sortBy
       })
       
       if (searchQuery.trim()) {
@@ -79,6 +81,7 @@ const Members = () => {
       'Coordinator': '🎯',
       'Organiser': '📋',
       'Admin': '🛡️',
+      'General': '⚡',
       'Captain': '⚔️',
       'Lieutenant': '🎖️',
       'Sergeant': '🏅',
@@ -87,6 +90,7 @@ const Members = () => {
     }
     return rankIcons[rank] || '👤'
   }
+
 
   const displayData = membersData?.members || []
 
@@ -132,6 +136,21 @@ const Members = () => {
                   className="pl-10 bg-slate-700 border-slate-600 text-white"
                 />
               </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-white text-sm">Sort by:</span>
+              <Select value={sortBy} onValueChange={(value) => {
+                setSortBy(value)
+                setCurrentPage(1)
+              }}>
+                <SelectTrigger className="w-32 bg-slate-700 border-slate-600 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-700 border-slate-600">
+                  <SelectItem value="rank" className="text-white hover:bg-slate-600">Rank</SelectItem>
+                  <SelectItem value="xp" className="text-white hover:bg-slate-600">Total XP</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
@@ -236,6 +255,34 @@ const Members = () => {
           )
         })}
       </div>
+
+      <Card className="bg-slate-800/50 border-slate-700">
+        <CardContent className="p-4">
+          <div className="flex justify-center items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+            >
+              Previous
+            </Button>
+            <span className="text-white text-sm px-3">
+              Page {currentPage}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={!membersData?.pagination?.has_next}
+              className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+            >
+              Next
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {displayData.length === 0 && !loading && (
         <Card className="bg-slate-800/50 border-slate-700">

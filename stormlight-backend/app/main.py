@@ -414,11 +414,30 @@ async def fetch_clan_members() -> List[Dict[str, Any]]:
         print(f"Error fetching clan members: {e}")
         return []
 
+def get_rank_priority(rank: str) -> int:
+    """Get rank priority for sorting (lower number = higher rank)"""
+    rank_priority = {
+        'Owner': 1,
+        'Deputy Owner': 2,
+        'Overseer': 3,
+        'Coordinator': 4,
+        'Organiser': 5,
+        'Admin': 6,
+        'General': 7,
+        'Captain': 8,
+        'Lieutenant': 9,
+        'Sergeant': 10,
+        'Corporal': 11,
+        'Recruit': 12
+    }
+    return rank_priority.get(rank, 999)
+
 @app.get("/api/clan/members")
 async def get_clan_members_paginated(
     page: int = 1,
     limit: int = 15,
-    search: Optional[str] = None
+    search: Optional[str] = None,
+    sort_by: str = "rank"
 ):
     """Get clan members with pagination and search"""
     if limit not in [15, 30, 50]:
@@ -430,7 +449,10 @@ async def get_clan_members_paginated(
         search_lower = search.lower()
         members = [m for m in members if search_lower in m['username'].lower()]
     
-    members.sort(key=lambda x: x['total_xp'], reverse=True)
+    if sort_by == "xp":
+        members.sort(key=lambda x: x['total_xp'], reverse=True)
+    else:
+        members.sort(key=lambda x: (get_rank_priority(x['clan_rank']), x['username']))
     
     start_idx = (page - 1) * limit
     end_idx = start_idx + limit
