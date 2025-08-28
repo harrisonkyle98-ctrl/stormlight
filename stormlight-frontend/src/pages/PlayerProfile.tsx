@@ -33,7 +33,8 @@ const PlayerProfile = () => {
 
   const fetchPlayerStats = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/player/${username}/stats`)
+      const decodedUsername = decodeURIComponent(username || '')
+      const response = await fetch(`${API_URL}/api/player/${encodeURIComponent(decodedUsername)}/stats`)
       if (response.ok) {
         const data = await response.json()
         setPlayerData(data)
@@ -138,7 +139,7 @@ const PlayerProfile = () => {
             <User className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-white">{playerData.username}</h1>
+            <h1 className="text-3xl font-bold text-white">{decodeURIComponent(username || '')}</h1>
             <p className="text-slate-400">
               Last updated: {new Date(playerData.last_updated).toLocaleDateString()}
             </p>

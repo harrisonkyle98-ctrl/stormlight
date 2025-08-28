@@ -202,7 +202,7 @@ const Members = () => {
                     </div>
                     <div>
                       <Link 
-                        to={`/player/${member.username}`}
+                        to={`/player/${encodeURIComponent(member.username.replace(/\u00A0/g, ' '))}`}
                         className="text-lg font-semibold text-white hover:text-blue-400 transition-colors"
                       >
                         {member.username}
