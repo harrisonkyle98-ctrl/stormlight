@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { ArrowLeft, User, Trophy, TrendingUp } from 'lucide-react'
+import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 
 interface PlayerStats {
   username: string
@@ -135,9 +136,15 @@ const PlayerProfile = () => {
 
       <div className="text-center">
         <div className="flex items-center justify-center space-x-4 mb-4">
-          <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
-            <User className="w-8 h-8 text-white" />
-          </div>
+          <Avatar className="w-16 h-16">
+            <AvatarImage 
+              src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(decodeURIComponent(username || '').replace(/\s+/g, '%20'))}/chat.png`}
+              alt={decodeURIComponent(username || '')}
+            />
+            <AvatarFallback className="bg-blue-600 text-white">
+              <User className="w-8 h-8" />
+            </AvatarFallback>
+          </Avatar>
           <div>
             <h1 className="text-3xl font-bold text-white">{decodeURIComponent(username || '')}</h1>
             <p className="text-slate-400">

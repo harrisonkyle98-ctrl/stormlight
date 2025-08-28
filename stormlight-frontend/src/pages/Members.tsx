@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Search, Users, User } from 'lucide-react'
+import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 
 interface ClanMember {
   username: string
@@ -215,9 +216,15 @@ const Members = () => {
                       <Badge variant="outline" className="text-yellow-400 border-yellow-400">
                         #{memberRank}
                       </Badge>
-                      <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-white" />
-                      </div>
+                      <Avatar className="w-10 h-10">
+                        <AvatarImage 
+                          src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(member.username.replace(/\s+/g, '%20'))}/chat.png`}
+                          alt={member.username}
+                        />
+                        <AvatarFallback className="bg-blue-600 text-white">
+                          <User className="w-5 h-5" />
+                        </AvatarFallback>
+                      </Avatar>
                     </div>
                     <div>
                       <Link 
