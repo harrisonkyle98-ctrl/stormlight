@@ -30,15 +30,17 @@ function AppContent() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
       <Navbar />
       <main className="w-full px-6 py-4">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/hiscores" element={<Hiscores />} />
-          <Route path="/members" element={<Members />} />
-          <Route path="/player/:username" element={<PlayerProfile />} />
-          <Route path="/competitions" element={<Competitions />} />
-          <Route path="/competitions/:id" element={<CompetitionDetail />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <div className="max-w-7xl mx-auto">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/hiscores" element={<Hiscores />} />
+            <Route path="/members" element={<Members />} />
+            <Route path="/player/:username" element={<PlayerProfile />} />
+            <Route path="/competitions" element={<Competitions />} />
+            <Route path="/competitions/:id" element={<CompetitionDetail />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
       </main>
       <Toaster />
     </div>
