@@ -40,6 +40,8 @@ const PlayerProfile = () => {
       const response = await fetch(`${API_URL}/api/player/${encodeURIComponent(decodedUsername)}/stats`)
       if (response.ok) {
         const data = await response.json()
+        console.log('Player data received:', data)
+        console.log('Clan rank:', data.clan_rank)
         setPlayerData(data)
       } else {
         setError('Player not found or stats unavailable')
