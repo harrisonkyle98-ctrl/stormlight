@@ -268,25 +268,39 @@ async def get_player_stats(username: str):
     from urllib.parse import unquote
     decoded_username = unquote(username)
     
-    stats = await fetch_player_stats(decoded_username)
-    if not stats:
-        raise HTTPException(status_code=404, detail="Player not found or stats unavailable")
-    
     clan_members = await fetch_clan_members()
     clan_rank = None
     print(f"Looking for player: '{decoded_username}'")
     print(f"Available clan members: {[m['username'] for m in clan_members[:5]]}")
     
     for member in clan_members:
-        if member['username'].lower() == decoded_username.lower():
+        if member['username'].lower().replace('\xa0', ' ') == decoded_username.lower().replace('\xa0', ' '):
             clan_rank = member['clan_rank']
             print(f"Found clan rank: {clan_rank}")
             break
     
-    if clan_rank:
-        stats['clan_rank'] = clan_rank
+    stats = await fetch_player_stats(decoded_username)
     
-    return stats
+    if stats:
+        if clan_rank:
+            stats['clan_rank'] = clan_rank
+        return stats
+    
+    if clan_rank:
+        return {
+            "username": decoded_username,
+            "stats": {
+                "overall": {
+                    "rank": None,
+                    "level": 0,
+                    "xp": 0
+                }
+            },
+            "last_updated": datetime.now().isoformat(),
+            "clan_rank": clan_rank
+        }
+    
+    raise HTTPException(status_code=404, detail="Player not found or stats unavailable")
 
 @app.get("/api/hiscores")
 async def get_global_hiscores(
