@@ -42,11 +42,11 @@ const PlayerProfile = () => {
         const data = await response.json()
         setPlayerData(data)
       } else {
-        setError('Player not found or stats unavailable')
+        setError('Clan member not found or stats unavailable')
       }
     } catch (error) {
-      console.error('Error fetching player stats:', error)
-      setError('Failed to load player stats')
+      console.error('Error fetching clan member stats:', error)
+      setError('Failed to load clan member stats')
     } finally {
       setLoading(false)
     }
@@ -77,7 +77,7 @@ const PlayerProfile = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
-        <div className="text-white text-xl">Loading player profile...</div>
+        <div className="text-white text-xl">Loading clan member profile...</div>
       </div>
     )
   }
@@ -95,7 +95,7 @@ const PlayerProfile = () => {
           <CardContent className="p-8 text-center">
             <p className="text-red-400 text-lg">{error}</p>
             <p className="text-slate-400 mt-2">
-              The player "{username}" could not be found or their stats are unavailable.
+              The clan member "{username}" could not be found or their stats are unavailable.
             </p>
           </CardContent>
         </Card>
@@ -114,7 +114,7 @@ const PlayerProfile = () => {
   const skills = skillOrder
     .filter(skill => playerData.stats[skill]) // Only include skills that exist in the data
     .map(skill => [skill, playerData.stats[skill]] as [string, any])
-  
+
   const overallStats = playerData.stats.overall
 
   return (
@@ -129,7 +129,7 @@ const PlayerProfile = () => {
       <div className="text-center">
         <div className="flex items-center justify-center space-x-4 mb-4">
           <Avatar className="w-16 h-16">
-            <AvatarImage 
+            <AvatarImage
               src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(decodeURIComponent(username || '').replace(/\s+/g, '%20'))}/chat.png`}
               alt={decodeURIComponent(username || '')}
             />
@@ -157,8 +157,8 @@ const PlayerProfile = () => {
           <CardContent>
             <div className="flex items-center justify-center space-x-4">
               {getRankIcon(playerData.clan_rank) ? (
-                <img 
-                  src={getRankIcon(playerData.clan_rank)!} 
+                <img
+                  src={getRankIcon(playerData.clan_rank)!}
                   alt={playerData.clan_rank}
                   className="w-12 h-12"
                 />
@@ -221,8 +221,8 @@ const PlayerProfile = () => {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     {getSkillIcon(skill) ? (
-                      <img 
-                        src={getSkillIcon(skill)!} 
+                      <img
+                        src={getSkillIcon(skill)!}
                         alt={skill}
                         className="w-5 h-5"
                       />

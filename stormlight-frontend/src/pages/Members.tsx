@@ -67,12 +67,6 @@ const Members = () => {
     }
   }
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B'
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
-    return num.toString()
-  }
 
   const getRankIcon = (rank: string) => {
     const rankImageMap: { [key: string]: string } = {
@@ -280,7 +274,7 @@ const Members = () => {
                       <div>
                         <p className="text-sm text-slate-400">Total XP</p>
                         <p className="text-xl font-bold text-green-400">
-                          {formatNumber(member.total_xp)}
+                          {member.total_xp.toLocaleString()}
                         </p>
                       </div>
                       <div>
