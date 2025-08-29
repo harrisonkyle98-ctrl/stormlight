@@ -585,40 +585,59 @@ async def get_clan_activities(
         print(f"Found {len(members)} clan members")
         all_activities = []
         
-        for i, member in enumerate(members):
-            print(f"Processing member {i+1}/{len(members)}: {member['username']}")
+        batch_size = 20  # Process 20 members at a time
+        
+        async def fetch_member_activities(member, client):
+            """Fetch activities for a single member"""
             try:
-                async with httpx.AsyncClient(timeout=10.0) as client:
-                    runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={member['username']}&activities=20"
-                    print(f"Fetching activities for {member['username']}")
-                    response = await client.get(runemetrics_url)
+                runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={member['username']}&activities=20"
+                print(f"Fetching activities for {member['username']}")
+                response = await client.get(runemetrics_url)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    activities = data.get('activities', [])
+                    print(f"Found {len(activities)} activities for {member['username']}")
                     
-                    if response.status_code == 200:
-                        data = response.json()
-                        activities = data.get('activities', [])
-                        print(f"Found {len(activities)} activities for {member['username']}")
-                        
-                        for activity in activities:
-                            try:
-                                activity_date = datetime.strptime(activity['date'], '%d-%b-%Y %H:%M')
-                                all_activities.append({
-                                    'username': member['username'],
-                                    'text': activity['text'],
-                                    'details': activity['details'],
-                                    'date': activity['date'],
-                                    'timestamp': activity_date.timestamp()
-                                })
-                            except (ValueError, KeyError) as e:
-                                print(f"Error parsing activity date for {member['username']}: {e}")
-                                continue
-                    else:
-                        print(f"Failed to fetch activities for {member['username']}: {response.status_code}")
-                    
-                    await asyncio.sleep(0.2)  # Increased delay
+                    member_activities = []
+                    for activity in activities:
+                        try:
+                            activity_date = datetime.strptime(activity['date'], '%d-%b-%Y %H:%M')
+                            member_activities.append({
+                                'username': member['username'],
+                                'text': activity['text'],
+                                'details': activity['details'],
+                                'date': activity['date'],
+                                'timestamp': activity_date.timestamp()
+                            })
+                        except (ValueError, KeyError) as e:
+                            print(f"Error parsing activity date for {member['username']}: {e}")
+                            continue
+                    return member_activities
+                else:
+                    print(f"Failed to fetch activities for {member['username']}: {response.status_code}")
+                    return []
                     
             except Exception as e:
                 print(f"Error fetching activities for {member['username']}: {e}")
-                continue
+                return []
+        
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            for i in range(0, len(members), batch_size):
+                batch = members[i:i + batch_size]
+                print(f"Processing batch {i//batch_size + 1}/{(len(members) + batch_size - 1)//batch_size} ({len(batch)} members)")
+                
+                batch_tasks = [fetch_member_activities(member, client) for member in batch]
+                batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+                
+                for result in batch_results:
+                    if isinstance(result, list):
+                        all_activities.extend(result)
+                    else:
+                        print(f"Error in batch processing: {result}")
+                
+                if i + batch_size < len(members):
+                    await asyncio.sleep(0.5)
         
         print(f"Total activities collected: {len(all_activities)}")
         all_activities.sort(key=lambda x: x['timestamp'], reverse=True)
