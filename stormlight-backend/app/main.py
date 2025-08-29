@@ -571,3 +571,83 @@ async def get_clan_stats():
                 "clan_rank": "Unknown",
                 "last_updated": datetime.now().isoformat()
             }
+
+@app.get("/api/clan/activities")
+async def get_clan_activities(
+    page: int = 1,
+    limit: int = 10
+):
+    """Get recent activities from all clan members with pagination"""
+    print(f"Starting get_clan_activities with page={page}, limit={limit}")
+    try:
+        print("Fetching clan members...")
+        members = await fetch_clan_members()
+        print(f"Found {len(members)} clan members")
+        all_activities = []
+        
+        for i, member in enumerate(members[:10]):
+            print(f"Processing member {i+1}/10: {member['username']}")
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={member['username']}&activities=20"
+                    print(f"Fetching activities for {member['username']}")
+                    response = await client.get(runemetrics_url)
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        activities = data.get('activities', [])
+                        print(f"Found {len(activities)} activities for {member['username']}")
+                        
+                        for activity in activities:
+                            try:
+                                activity_date = datetime.strptime(activity['date'], '%d-%b-%Y %H:%M')
+                                all_activities.append({
+                                    'username': member['username'],
+                                    'text': activity['text'],
+                                    'details': activity['details'],
+                                    'date': activity['date'],
+                                    'timestamp': activity_date.timestamp()
+                                })
+                            except (ValueError, KeyError) as e:
+                                print(f"Error parsing activity date for {member['username']}: {e}")
+                                continue
+                    else:
+                        print(f"Failed to fetch activities for {member['username']}: {response.status_code}")
+                    
+                    await asyncio.sleep(0.2)  # Increased delay
+                    
+            except Exception as e:
+                print(f"Error fetching activities for {member['username']}: {e}")
+                continue
+        
+        print(f"Total activities collected: {len(all_activities)}")
+        all_activities.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        start_idx = (page - 1) * limit
+        end_idx = start_idx + limit
+        paginated_activities = all_activities[start_idx:end_idx]
+        
+        print(f"Returning {len(paginated_activities)} activities for page {page}")
+        return {
+            "activities": paginated_activities,
+            "pagination": {
+                "page": page,
+                "limit": limit,
+                "total_activities": len(all_activities),
+                "has_next": end_idx < len(all_activities)
+            }
+        }
+        
+    except Exception as e:
+        print(f"Error fetching clan activities: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "activities": [],
+            "pagination": {
+                "page": 1,
+                "limit": limit,
+                "total_activities": 0,
+                "has_next": False
+            }
+        }

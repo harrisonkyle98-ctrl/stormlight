@@ -12,14 +12,37 @@ interface ClanStats {
   total_members: number
 }
 
+interface Activity {
+  username: string
+  text: string
+  details: string
+  date: string
+  timestamp: number
+}
+
+interface ActivityResponse {
+  activities: Activity[]
+  pagination: {
+    page: number
+    limit: number
+    total_activities: number
+    has_next: boolean
+  }
+}
+
 const Home = () => {
   const [clanStats, setClanStats] = useState<ClanStats | null>(null)
+  const [activities, setActivities] = useState<Activity[]>([])
+  const [activityLoading, setActivityLoading] = useState(true)
+  const [activityPage, setActivityPage] = useState(1)
+  const [hasMoreActivities, setHasMoreActivities] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
   useEffect(() => {
     fetchClanStats()
+    fetchActivities()
   }, [])
 
   const fetchClanStats = async () => {
@@ -34,6 +57,43 @@ const Home = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const fetchActivities = async (page: number = 1, append: boolean = false) => {
+    try {
+      setActivityLoading(true)
+      const response = await fetch(`${API_URL}/api/clan/activities?page=${page}&limit=10`)
+      if (response.ok) {
+        const data: ActivityResponse = await response.json()
+        if (append) {
+          setActivities(prev => [...prev, ...data.activities])
+        } else {
+          setActivities(data.activities)
+        }
+        setHasMoreActivities(data.pagination.has_next)
+        setActivityPage(page)
+      }
+    } catch (error) {
+      console.error('Error fetching activities:', error)
+    } finally {
+      setActivityLoading(false)
+    }
+  }
+
+  const loadMoreActivities = () => {
+    if (!activityLoading && hasMoreActivities) {
+      fetchActivities(activityPage + 1, true)
+    }
+  }
+
+  const formatTimeAgo = (timestamp: number) => {
+    const now = Date.now() / 1000
+    const diff = now - timestamp
+    
+    if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`
+    if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`
+    return `${Math.floor(diff / 604800)} weeks ago`
   }
 
   const formatNumber = (num: number) => {
@@ -65,7 +125,7 @@ const Home = () => {
             <div className="text-2xl font-bold text-white">
               {loading ? '...' : clanStats?.total_members || 0}
             </div>
-            <p className="text-xs text-slate-400">Active clan members</p>
+            <p className="text-xs text-slate-400">Friends to play with</p>
           </CardContent>
         </Card>
 
@@ -160,27 +220,38 @@ const Home = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center space-x-3 p-3 bg-slate-700/50 rounded-lg">
-              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-              <div>
-                <p className="text-white font-medium">ClanLeader achieved 99 Slayer!</p>
-                <p className="text-slate-400 text-sm">2 hours ago</p>
+            {activities.length > 0 ? (
+              activities.map((activity, index) => (
+                <div key={`${activity.username}-${activity.timestamp}-${index}`} className="flex items-center space-x-3 p-3 bg-slate-700/50 rounded-lg">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <div className="flex-1">
+                    <p className="text-white font-medium">
+                      <span className="text-blue-400">{activity.username}</span> {activity.text}
+                    </p>
+                    <p className="text-slate-400 text-sm">{formatTimeAgo(activity.timestamp)}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-slate-400">
+                  {activityLoading ? 'Loading activities...' : 'No recent activities found'}
+                </p>
               </div>
-            </div>
-            <div className="flex items-center space-x-3 p-3 bg-slate-700/50 rounded-lg">
-              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-              <div>
-                <p className="text-white font-medium">New competition: Woodcutting XP Week</p>
-                <p className="text-slate-400 text-sm">1 day ago</p>
+            )}
+            
+            {hasMoreActivities && (
+              <div className="text-center pt-4">
+                <Button 
+                  onClick={loadMoreActivities}
+                  disabled={activityLoading}
+                  variant="outline"
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                >
+                  {activityLoading ? 'Loading...' : 'See More'}
+                </Button>
               </div>
-            </div>
-            <div className="flex items-center space-x-3 p-3 bg-slate-700/50 rounded-lg">
-              <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-              <div>
-                <p className="text-white font-medium">SkillMaster gained 10M Cooking XP</p>
-                <p className="text-slate-400 text-sm">3 days ago</p>
-              </div>
-            </div>
+            )}
           </div>
         </CardContent>
       </Card>
