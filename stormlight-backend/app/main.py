@@ -600,16 +600,21 @@ async def get_clan_activities(
                     print(f"Found {len(activities)} activities for {member['username']}")
                     
                     member_activities = []
+                    twelve_weeks_ago = datetime.now().timestamp() - (12 * 7 * 24 * 60 * 60)
+                    
                     for activity in activities:
                         try:
                             activity_date = datetime.strptime(activity['date'], '%d-%b-%Y %H:%M')
-                            member_activities.append({
-                                'username': member['username'],
-                                'text': activity['text'],
-                                'details': activity['details'],
-                                'date': activity['date'],
-                                'timestamp': activity_date.timestamp()
-                            })
+                            activity_timestamp = activity_date.timestamp()
+                            
+                            if activity_timestamp >= twelve_weeks_ago:
+                                member_activities.append({
+                                    'username': member['username'],
+                                    'text': activity['text'],
+                                    'details': activity['details'],
+                                    'date': activity['date'],
+                                    'timestamp': activity_timestamp
+                                })
                         except (ValueError, KeyError) as e:
                             print(f"Error parsing activity date for {member['username']}: {e}")
                             continue
