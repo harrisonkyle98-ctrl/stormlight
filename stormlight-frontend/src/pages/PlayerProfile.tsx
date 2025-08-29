@@ -235,14 +235,14 @@ const PlayerProfile = () => {
       </Button>
 
       <div className="text-center">
-        <div className="flex items-center justify-center space-x-4 mb-4">
-          <Avatar className="w-16 h-16">
+        <div className="flex flex-col items-center space-y-4 mb-4">
+          <Avatar className="w-20 h-20">
             <AvatarImage
               src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(decodeURIComponent(username || '').replace(/\s+/g, '%20'))}/chat.png`}
               alt={decodeURIComponent(username || '')}
             />
             <AvatarFallback className="bg-blue-600 text-white">
-              <User className="w-8 h-8" />
+              <User className="w-10 h-10" />
             </AvatarFallback>
           </Avatar>
           <div>
@@ -255,20 +255,30 @@ const PlayerProfile = () => {
       </div>
 
       {playerData.clan_rank && (
-        <div className="flex justify-center">
-          <Badge className="bg-yellow-500 text-white px-4 py-2 text-lg font-semibold flex items-center space-x-2">
-            {getRankIcon(playerData.clan_rank) ? (
-              <img
-                src={getRankIcon(playerData.clan_rank)!}
-                alt={playerData.clan_rank}
-                className="w-5 h-5"
-              />
-            ) : (
-              <Crown className="w-5 h-5" />
-            )}
-            <span>{playerData.clan_rank}</span>
-          </Badge>
-        </div>
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center space-x-2">
+              <Crown className="w-5 h-5 text-yellow-400" />
+              <span>Badges</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-center">
+              <Badge className="bg-yellow-500 text-white px-4 py-2 text-lg font-semibold flex items-center space-x-2">
+                {getRankIcon(playerData.clan_rank) ? (
+                  <img
+                    src={getRankIcon(playerData.clan_rank)!}
+                    alt={playerData.clan_rank}
+                    className="w-5 h-5"
+                  />
+                ) : (
+                  <Crown className="w-5 h-5" />
+                )}
+                <span>{playerData.clan_rank}</span>
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {overallStats && (
