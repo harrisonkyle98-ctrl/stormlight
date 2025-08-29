@@ -56,41 +56,51 @@ SKILL_TABLE_MAPPING = {
     'dungeoneering': 25, 'divination': 26, 'invention': 27, 'archaeology': 28, 'necromancy': 29
 }
 
+RUNEMETRICS_SKILL_MAPPING = {
+    0: 'attack', 1: 'defence', 2: 'strength', 3: 'constitution', 4: 'ranged', 5: 'prayer',
+    6: 'magic', 7: 'cooking', 8: 'woodcutting', 9: 'fletching', 10: 'fishing', 11: 'firemaking',
+    12: 'crafting', 13: 'smithing', 14: 'mining', 15: 'herblore', 16: 'agility', 17: 'thieving',
+    18: 'slayer', 19: 'farming', 20: 'runecrafting', 21: 'hunter', 22: 'construction', 23: 'summoning',
+    24: 'dungeoneering', 25: 'divination', 26: 'invention', 27: 'archaeology', 28: 'necromancy'
+}
+
 async def fetch_player_stats(username: str) -> Optional[Dict[str, Any]]:
-    """Fetch player stats from RuneScape Hiscores API"""
+    """Fetch player stats from RuneScape Runemetrics API"""
     try:
         async with httpx.AsyncClient() as client:
-            hiscores_url = f"{os.getenv('RUNESCAPE_API_BASE')}/m=hiscore/index_lite.ws?player={username}"
-            response = await client.get(hiscores_url)
+            runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={username}&activities=20"
+            response = await client.get(runemetrics_url)
             
             if response.status_code == 200:
-                lines = response.text.strip().split('\n')
+                data = response.json()
                 
-                if len(lines) < 27:
-                    print(f"Incomplete data for {username}: only {len(lines)} lines")
+                if 'error' in data:
+                    print(f"Runemetrics API error for {username}: {data.get('error')}")
                     return None
                 
                 stats = {}
                 
-                skills = [
-                    'overall', 'attack', 'defence', 'strength', 'constitution', 'ranged', 'prayer',
-                    'magic', 'cooking', 'woodcutting', 'fletching', 'fishing', 'firemaking',
-                    'crafting', 'smithing', 'mining', 'herblore', 'agility', 'thieving',
-                    'slayer', 'farming', 'runecrafting', 'hunter', 'construction', 'summoning',
-                    'dungeoneering', 'divination', 'invention', 'archaeology', 'necromancy'
-                ]
+                stats['overall'] = {
+                    'rank': int(data.get('rank', '0').replace(',', '')) if data.get('rank') and data.get('rank') != '0' else None,
+                    'level': data.get('totalskill', 0),
+                    'xp': data.get('totalxp', 0)
+                }
                 
-                for i, skill in enumerate(skills):
-                    if i < len(lines):
-                        parts = lines[i].split(',')
-                        if len(parts) >= 3:
-                            stats[skill] = {
-                                'rank': int(parts[0]) if parts[0] != '-1' else None,
-                                'level': int(parts[1]) if parts[1] != '-1' else 1,
-                                'xp': int(parts[2]) if parts[2] != '-1' else 0
-                            }
-                    else:
-                        stats[skill] = {
+                for skill_data in data.get('skillvalues', []):
+                    skill_id = skill_data.get('id')
+                    skill_name = RUNEMETRICS_SKILL_MAPPING.get(skill_id)
+                    
+                    if skill_name:
+                        stats[skill_name] = {
+                            'rank': skill_data.get('rank'),
+                            'level': skill_data.get('level', 1),
+                            'xp': skill_data.get('xp', 0)
+                        }
+                
+                all_skills = ['overall'] + list(RUNEMETRICS_SKILL_MAPPING.values())
+                for skill_name in all_skills:
+                    if skill_name not in stats:
+                        stats[skill_name] = {
                             'rank': None,
                             'level': 1,
                             'xp': 0
@@ -99,7 +109,7 @@ async def fetch_player_stats(username: str) -> Optional[Dict[str, Any]]:
                 player_stats_cache[username.lower()] = {
                     'stats': stats,
                     'last_updated': datetime.now(),
-                    'username': username
+                    'username': data.get('name', username)
                 }
                 
                 return player_stats_cache[username.lower()]
@@ -107,7 +117,7 @@ async def fetch_player_stats(username: str) -> Optional[Dict[str, Any]]:
                 print(f"Player {username} not found or has private profile")
                 return None
             else:
-                print(f"API error for {username}: {response.status_code}")
+                print(f"Runemetrics API error for {username}: {response.status_code}")
                 return None
                 
     except Exception as e:
@@ -254,10 +264,28 @@ async def get_current_user(user_id: str = Depends(verify_token)):
 
 @app.get("/api/player/{username}/stats")
 async def get_player_stats(username: str):
-    """Get player stats from RuneScape API"""
-    stats = await fetch_player_stats(username)
+    """Get player stats from RuneScape API with clan rank if available"""
+    from urllib.parse import unquote
+    decoded_username = unquote(username)
+    
+    stats = await fetch_player_stats(decoded_username)
     if not stats:
         raise HTTPException(status_code=404, detail="Player not found or stats unavailable")
+    
+    clan_members = await fetch_clan_members()
+    clan_rank = None
+    print(f"Looking for player: '{decoded_username}'")
+    print(f"Available clan members: {[m['username'] for m in clan_members[:5]]}")
+    
+    for member in clan_members:
+        if member['username'].lower() == decoded_username.lower():
+            clan_rank = member['clan_rank']
+            print(f"Found clan rank: {clan_rank}")
+            break
+    
+    if clan_rank:
+        stats['clan_rank'] = clan_rank
+    
     return stats
 
 @app.get("/api/hiscores")
@@ -468,3 +496,78 @@ async def get_clan_members_paginated(
         },
         "clan_name": "Stormlight"
     }
+
+@app.get("/api/clan/stats")
+async def get_clan_stats():
+    """Get clan statistics including rank and total XP from RuneScape members_lite.ws API"""
+    try:
+        clan_url = "https://secure.runescape.com/m=clan-hiscores/members_lite.ws?clanName=Stormlight"
+        
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            response = await client.get(clan_url)
+            response.raise_for_status()
+            clan_data_text = response.text
+        
+        print(f"Clan API response: {clan_data_text[:200]}...")  # Debug logging
+        
+        lines = clan_data_text.strip().split('\n')
+        total_xp = 0
+        member_count = 0
+        clan_rank = "Unknown"  # Default fallback
+        highest_rank_member = None
+        
+        for line in lines[1:]:  # Skip header line
+            if line.strip():
+                parts = line.split(',')
+                if len(parts) >= 4:
+                    try:
+                        member_name = parts[0].strip()
+                        member_clan_rank = parts[1].strip()  # This is the clanRank variable
+                        member_xp = int(parts[2])  # Total XP is 3rd column
+                        
+                        total_xp += member_xp
+                        member_count += 1
+                        
+                        if highest_rank_member is None or get_rank_priority(member_clan_rank) < get_rank_priority(highest_rank_member):
+                            highest_rank_member = member_clan_rank
+                            
+                        print(f"Member: {member_name}, Rank: {member_clan_rank}, XP: {member_xp}")  # Debug logging
+                    except (ValueError, IndexError) as e:
+                        print(f"Error parsing line '{line}': {e}")
+                        continue
+        
+        if highest_rank_member:
+            clan_rank = highest_rank_member
+            print(f"Using highest rank member's position: {clan_rank}")
+        
+        print(f"Calculated total XP: {total_xp}, member count: {member_count}, clan rank: {clan_rank}")  # Debug logging
+        
+        return {
+            "clan_name": "Stormlight",
+            "total_members": member_count,
+            "total_xp": total_xp,
+            "clan_rank": clan_rank,
+            "last_updated": datetime.now().isoformat()
+        }
+            
+    except Exception as e:
+        print(f"Error fetching clan stats: {e}")
+        try:
+            clan_members = await fetch_clan_members()
+            total_xp = sum(member.get('total_xp', 0) for member in clan_members)
+            
+            return {
+                "clan_name": "Stormlight",
+                "total_members": len(clan_members),
+                "total_xp": total_xp,
+                "clan_rank": "Unknown",
+                "last_updated": datetime.now().isoformat()
+            }
+        except:
+            return {
+                "clan_name": "Stormlight", 
+                "total_members": 0,
+                "total_xp": 0,
+                "clan_rank": "Unknown",
+                "last_updated": datetime.now().isoformat()
+            }
