@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
-import { ArrowLeft, User, Trophy, TrendingUp, Crown } from 'lucide-react'
+import { ArrowLeft, User, Trophy, TrendingUp, Crown, Package, Activity, MapPin, BarChart3, Swords, FileText } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { getSkillIcon } from '../utils/skillIcons'
 
@@ -25,6 +25,7 @@ const PlayerProfile = () => {
   const [playerData, setPlayerData] = useState<PlayerStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState('skills')
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -117,6 +118,113 @@ const PlayerProfile = () => {
 
   const overallStats = playerData.stats.overall
 
+  const tabs = [
+    { id: 'skills', label: 'Skill Breakdown', icon: TrendingUp },
+    { id: 'drops', label: 'Drops', icon: Package },
+    { id: 'activity', label: 'Activity', icon: Activity },
+    { id: 'quests', label: 'Quests', icon: MapPin },
+    { id: 'analytics', label: 'XP Analytics', icon: BarChart3 },
+    { id: 'competitions', label: 'Competitions', icon: Swords },
+    { id: 'log', label: 'Log', icon: FileText }
+  ]
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'skills':
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {skills.map(([skill, data]) => (
+              <div key={skill} className="bg-slate-700/50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    {getSkillIcon(skill) ? (
+                      <img
+                        src={getSkillIcon(skill)!}
+                        alt={skill}
+                        className="w-5 h-5"
+                      />
+                    ) : (
+                      <span className="text-lg">📊</span>
+                    )}
+                    <span className="font-medium text-white capitalize">{skill}</span>
+                  </div>
+                  <Badge variant="outline" className="text-blue-400 border-blue-400">
+                    {data.level}
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">XP:</span>
+                    <span className="text-green-400 font-medium">
+                      {data.xp.toLocaleString()}
+                    </span>
+                  </div>
+                  {data.rank && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-400">Rank:</span>
+                      <span className="text-blue-400 font-medium">
+                        #{data.rank.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      case 'drops':
+        return (
+          <div className="text-center py-12">
+            <Package className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+            <p className="text-slate-400 text-lg">Drops tracking coming soon</p>
+            <p className="text-slate-500 text-sm mt-2">View rare drops and loot history</p>
+          </div>
+        )
+      case 'activity':
+        return (
+          <div className="text-center py-12">
+            <Activity className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+            <p className="text-slate-400 text-lg">Activity feed coming soon</p>
+            <p className="text-slate-500 text-sm mt-2">Recent player activities and achievements</p>
+          </div>
+        )
+      case 'quests':
+        return (
+          <div className="text-center py-12">
+            <MapPin className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+            <p className="text-slate-400 text-lg">Quest progress coming soon</p>
+            <p className="text-slate-500 text-sm mt-2">Track completed quests and achievements</p>
+          </div>
+        )
+      case 'analytics':
+        return (
+          <div className="text-center py-12">
+            <BarChart3 className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+            <p className="text-slate-400 text-lg">XP Analytics coming soon</p>
+            <p className="text-slate-500 text-sm mt-2">Detailed XP gain charts and statistics</p>
+          </div>
+        )
+      case 'competitions':
+        return (
+          <div className="text-center py-12">
+            <Swords className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+            <p className="text-slate-400 text-lg">Competition history coming soon</p>
+            <p className="text-slate-500 text-sm mt-2">Past and current competition participation</p>
+          </div>
+        )
+      case 'log':
+        return (
+          <div className="text-center py-12">
+            <FileText className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+            <p className="text-slate-400 text-lg">Activity log coming soon</p>
+            <p className="text-slate-500 text-sm mt-2">Detailed activity and event history</p>
+          </div>
+        )
+      default:
+        return null
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Button asChild variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
@@ -208,52 +316,29 @@ const PlayerProfile = () => {
       )}
 
       <Card className="bg-slate-800/50 border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center space-x-2">
-            <TrendingUp className="w-5 h-5 text-purple-400" />
-            <span>Skill Breakdown</span>
-          </CardTitle>
+        <CardHeader className="pb-4">
+          <div className="flex flex-wrap gap-2 border-b border-slate-600 pb-4">
+            {tabs.map((tab) => {
+              const IconComponent = tab.icon
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    activeTab === tab.id
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700 hover:text-white'
+                  }`}
+                >
+                  <IconComponent className="w-4 h-4" />
+                  <span className="text-sm font-medium">{tab.label}</span>
+                </button>
+              )
+            })}
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {skills.map(([skill, data]) => (
-              <div key={skill} className="bg-slate-700/50 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-2">
-                    {getSkillIcon(skill) ? (
-                      <img
-                        src={getSkillIcon(skill)!}
-                        alt={skill}
-                        className="w-5 h-5"
-                      />
-                    ) : (
-                      <span className="text-lg">📊</span>
-                    )}
-                    <span className="font-medium text-white capitalize">{skill}</span>
-                  </div>
-                  <Badge variant="outline" className="text-blue-400 border-blue-400">
-                    {data.level}
-                  </Badge>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">XP:</span>
-                    <span className="text-green-400 font-medium">
-                      {data.xp.toLocaleString()}
-                    </span>
-                  </div>
-                  {data.rank && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-400">Rank:</span>
-                      <span className="text-blue-400 font-medium">
-                        #{data.rank.toLocaleString()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+          {renderTabContent()}
         </CardContent>
       </Card>
     </div>
