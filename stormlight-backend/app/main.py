@@ -585,8 +585,8 @@ async def get_clan_activities(
         print(f"Found {len(members)} clan members")
         all_activities = []
         
-        for i, member in enumerate(members[:10]):
-            print(f"Processing member {i+1}/10: {member['username']}")
+        for i, member in enumerate(members):
+            print(f"Processing member {i+1}/{len(members)}: {member['username']}")
             try:
                 async with httpx.AsyncClient(timeout=10.0) as client:
                     runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={member['username']}&activities=20"
