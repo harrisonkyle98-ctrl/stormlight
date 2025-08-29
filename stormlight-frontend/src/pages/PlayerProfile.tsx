@@ -255,31 +255,20 @@ const PlayerProfile = () => {
       </div>
 
       {playerData.clan_rank && (
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center space-x-2">
-              <Crown className="w-5 h-5 text-yellow-400" />
-              <span>Clan Rank</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-center space-x-4">
-              {getRankIcon(playerData.clan_rank) ? (
-                <img
-                  src={getRankIcon(playerData.clan_rank)!}
-                  alt={playerData.clan_rank}
-                  className="w-12 h-12"
-                />
-              ) : (
-                <Crown className="w-12 h-12 text-yellow-400" />
-              )}
-              <div className="text-center">
-                <p className="text-2xl font-bold text-white">{playerData.clan_rank}</p>
-                <p className="text-sm text-slate-400">Stormlight Clan</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex justify-center">
+          <Badge className="bg-yellow-500 text-white px-4 py-2 text-lg font-semibold flex items-center space-x-2">
+            {getRankIcon(playerData.clan_rank) ? (
+              <img
+                src={getRankIcon(playerData.clan_rank)!}
+                alt={playerData.clan_rank}
+                className="w-5 h-5"
+              />
+            ) : (
+              <Crown className="w-5 h-5" />
+            )}
+            <span>{playerData.clan_rank}</span>
+          </Badge>
+        </div>
       )}
 
       {overallStats && (
