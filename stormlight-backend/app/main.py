@@ -44,8 +44,6 @@ security = HTTPBearer()
 users_db = {}
 clan_members_db = {}
 competitions_db = {}
-player_stats_cache = {}
-discovered_players_db = {}
 
 SKILL_TABLE_MAPPING = {
     'overall': 0, 'attack': 1, 'defence': 2, 'strength': 3, 'constitution': 4,
@@ -106,13 +104,11 @@ async def fetch_player_stats(username: str) -> Optional[Dict[str, Any]]:
                             'xp': 0
                         }
                 
-                player_stats_cache[username.lower()] = {
+                return {
                     'stats': stats,
                     'last_updated': datetime.now(),
                     'username': data.get('name', username)
                 }
-                
-                return player_stats_cache[username.lower()]
             elif response.status_code == 404:
                 print(f"Player {username} not found or has private profile")
                 return None
@@ -144,11 +140,6 @@ async def fetch_top_players(skill: str = 'overall', size: int = 50) -> List[Dict
                     stats = await fetch_player_stats(username)
                     if stats:
                         players.append(stats)
-                        discovered_players_db[username.lower()] = {
-                            'username': username,
-                            'discovered_at': datetime.now(),
-                            'source': 'ranking_api'
-                        }
                 print(f"Successfully fetched {len(players)} player stats")
                 return players
             else:
@@ -319,34 +310,19 @@ async def get_global_hiscores(
         stats = await fetch_player_stats(search)
         if stats:
             players = [stats]
-            discovered_players_db[search.lower()] = {
-                'username': search,
-                'discovered_at': datetime.now(),
-                'source': 'search'
-            }
     else:
         top_players = await fetch_top_players(skill, 50)
         
-        discovered_with_stats = []
-        for username_key, player_info in discovered_players_db.items():
-            if username_key not in [p['username'].lower() for p in top_players]:
-                stats = await fetch_player_stats(player_info['username'])
-                if stats and skill in stats['stats']:
-                    discovered_with_stats.append(stats)
-        
-        all_players = top_players + discovered_with_stats
-        all_players.sort(key=lambda x: x['stats'].get(skill, {}).get('xp', 0), reverse=True)
-        
         start_idx = (page - 1) * limit
         end_idx = start_idx + limit
-        players = all_players[start_idx:end_idx]
+        players = top_players[start_idx:end_idx]
     
     return {
         "hiscores": players,
         "pagination": {
             "page": page,
             "limit": limit,
-            "total_players": len(discovered_players_db) + 50,
+            "total_players": 50,
             "has_next": len(players) == limit
         },
         "skill": skill
