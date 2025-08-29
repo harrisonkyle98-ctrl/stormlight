@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { ArrowLeft, Trophy, Calendar, Users, TrendingUp } from 'lucide-react'
 import { getSkillIcon } from '../utils/skillIcons'
+import { fetchClanMembers, getGradientStyle } from '../utils/gradientUtils'
 
 interface CompetitionLeaderboard {
   username: string
@@ -31,14 +32,21 @@ const CompetitionDetail = () => {
   const [competition, setCompetition] = useState<CompetitionDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [clanMembers, setClanMembers] = useState<any[]>([])
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
   useEffect(() => {
     if (id) {
       fetchCompetition()
+      loadClanMembers()
     }
   }, [id])
+
+  const loadClanMembers = async () => {
+    const members = await fetchClanMembers()
+    setClanMembers(members)
+  }
 
   const fetchCompetition = async () => {
     try {
@@ -245,7 +253,8 @@ const CompetitionDetail = () => {
                   </div>
                   <Link 
                     to={`/clan-member/${player.username}`}
-                    className="text-lg font-semibold text-white hover:text-blue-400 transition-colors"
+                    className="text-lg font-semibold hover:text-blue-400 transition-colors"
+                    style={getGradientStyle(player.username, clanMembers.find(m => m.username === player.username)?.clan_rank)}
                   >
                     {player.username}
                   </Link>

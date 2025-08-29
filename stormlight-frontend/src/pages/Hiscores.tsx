@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Search, Trophy, User } from 'lucide-react'
+import { fetchClanMembers, getGradientStyle } from '../utils/gradientUtils'
 
 interface PlayerStats {
   username: string
@@ -38,12 +39,19 @@ const Hiscores = () => {
   const [sortBy, setSortBy] = useState('overall')
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(15)
+  const [clanMembers, setClanMembers] = useState<any[]>([])
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
   useEffect(() => {
     fetchHiscores()
+    loadClanMembers()
   }, [sortBy, currentPage, pageSize, searchQuery])
+
+  const loadClanMembers = async () => {
+    const members = await fetchClanMembers()
+    setClanMembers(members)
+  }
 
   const fetchHiscores = async () => {
     try {
@@ -215,7 +223,8 @@ const Hiscores = () => {
                     <div>
                       <Link 
                         to={`/clan-member/${player.username}`}
-                        className="text-lg font-semibold text-white hover:text-blue-400 transition-colors"
+                        className="text-lg font-semibold hover:text-blue-400 transition-colors"
+                        style={getGradientStyle(player.username, clanMembers.find(m => m.username === player.username)?.clan_rank)}
                       >
                         {player.username}
                       </Link>

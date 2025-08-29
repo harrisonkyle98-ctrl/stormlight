@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Trophy, Users, Swords, TrendingUp } from 'lucide-react'
+import { fetchClanMembers, getGradientStyle } from '../utils/gradientUtils'
 
 interface ClanStats {
   members: string[]
@@ -37,13 +38,20 @@ const Home = () => {
   const [activityPage, setActivityPage] = useState(1)
   const [hasMoreActivities, setHasMoreActivities] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [clanMembers, setClanMembers] = useState<any[]>([])
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
   useEffect(() => {
     fetchClanStats()
     fetchActivities()
+    loadClanMembers()
   }, [])
+
+  const loadClanMembers = async () => {
+    const members = await fetchClanMembers()
+    setClanMembers(members)
+  }
 
   const fetchClanStats = async () => {
     try {
@@ -226,7 +234,12 @@ const Home = () => {
                   <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
                   <div className="flex-1">
                     <p className="text-white font-medium">
-                      <span className="text-blue-400">{activity.username}</span> {activity.text}
+                      <span 
+                        className="text-blue-400"
+                        style={getGradientStyle(activity.username, clanMembers.find(m => m.username === activity.username)?.clan_rank)}
+                      >
+                        {activity.username}
+                      </span> {activity.text}
                     </p>
                     <p className="text-slate-400 text-sm">{formatTimeAgo(activity.timestamp)}</p>
                   </div>

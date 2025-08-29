@@ -7,6 +7,7 @@ import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Search, Users, User } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
+import { getGradientStyle } from '../utils/gradientUtils'
 
 interface ClanMember {
   username: string
@@ -89,6 +90,7 @@ const Members = () => {
     }
     return null
   }
+
 
 
   const displayData = membersData?.members || []
@@ -250,7 +252,8 @@ const Members = () => {
                     <div>
                       <Link 
                         to={`/clan-member/${encodeURIComponent(member.username.replace(/\u00A0/g, ' '))}`}
-                        className="text-lg font-semibold text-white hover:text-blue-400 transition-colors"
+                        className="text-lg font-semibold hover:text-blue-400 transition-colors"
+                        style={getGradientStyle(member.username, member.clan_rank)}
                       >
                         {member.username}
                       </Link>
