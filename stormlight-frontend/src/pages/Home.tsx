@@ -7,6 +7,9 @@ import { Trophy, Users, Swords, TrendingUp } from 'lucide-react'
 interface ClanStats {
   members: string[]
   clan_name: string
+  total_xp: number
+  clan_rank: string
+  total_members: number
 }
 
 const Home = () => {
@@ -21,7 +24,7 @@ const Home = () => {
 
   const fetchClanStats = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/clan/members`)
+      const response = await fetch(`${API_URL}/api/clan/stats`)
       if (response.ok) {
         const data = await response.json()
         setClanStats(data)
@@ -31,6 +34,13 @@ const Home = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const formatNumber = (num: number) => {
+    if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B'
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
+    return num.toString()
   }
 
   return (
@@ -53,7 +63,7 @@ const Home = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
-              {loading ? '...' : clanStats?.members.length || 0}
+              {loading ? '...' : clanStats?.total_members || 0}
             </div>
             <p className="text-xs text-slate-400">Active clan members</p>
           </CardContent>
@@ -76,7 +86,9 @@ const Home = () => {
             <Trophy className="h-4 w-4 text-yellow-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">#42</div>
+            <div className="text-2xl font-bold text-white">
+              {loading ? '...' : clanStats?.clan_rank || 'Unknown'}
+            </div>
             <p className="text-xs text-slate-400">Overall ranking</p>
           </CardContent>
         </Card>
@@ -87,7 +99,9 @@ const Home = () => {
             <TrendingUp className="h-4 w-4 text-purple-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">2.1B</div>
+            <div className="text-2xl font-bold text-white">
+              {loading ? '...' : formatNumber(clanStats?.total_xp || 0)}
+            </div>
             <p className="text-xs text-slate-400">Combined clan XP</p>
           </CardContent>
         </Card>
