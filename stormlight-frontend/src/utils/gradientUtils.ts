@@ -31,7 +31,7 @@ export const fetchClanMembers = async (): Promise<ClanMember[]> => {
 }
 
 export const getGradientColors = (username: string, rank?: string): [string, string] => {
-  const normalizedUsername = username.replace(/\u00A0/g, ' ').replace(/%20/g, ' ').trim()
+  const normalizedUsername = username.replace(/\u00A0/g, ' ').replace(/%20/g, ' ').replace(/\s+/g, ' ').trim()
   
   const usernameGradients: { [key: string]: [string, string] } = {
     'Space Flyer': ['#0047ab', '#9abcf7'],
@@ -41,7 +41,7 @@ export const getGradientColors = (username: string, rank?: string): [string, str
     'RoxyPT': ['#ff7b00', '#ffcd77'],
     'Superhypered': ['#ffd000', '#fff598'],
     'The Unseen': ['#131313', '#e6e6e6'],
-    'Its Unseen': ['#131313', '#e6e6e6'],
+    'lts Unseen': ['#131313', '#e6e6e6'],
     'Wondersgal': ['#970000', '#ff0000']
   }
 
@@ -69,7 +69,7 @@ export const getGradientStyle = (username: string, clanRank?: string) => {
     return { color: 'white' }
   }
 
-  const normalizedUsername = username.replace(/\u00A0/g, ' ').replace(/%20/g, ' ').trim()
+  const normalizedUsername = username.replace(/\u00A0/g, ' ').replace(/%20/g, ' ').replace(/\s+/g, ' ').trim()
   const [color1, color2] = getGradientColors(normalizedUsername, clanRank)
   return {
     background: `linear-gradient(135deg, ${color1}, ${color2})`,
