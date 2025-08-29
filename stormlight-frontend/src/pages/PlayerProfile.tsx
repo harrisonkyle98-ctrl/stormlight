@@ -52,14 +52,6 @@ const PlayerProfile = () => {
     }
   }
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B'
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
-    return num.toString()
-  }
-
-
   const getRankIcon = (rank: string) => {
     const rankImageMap: { [key: string]: string } = {
       'Owner': 'owner.png',
@@ -111,7 +103,18 @@ const PlayerProfile = () => {
     )
   }
 
-  const skills = Object.entries(playerData.stats).filter(([skill]) => skill !== 'overall')
+  const skillOrder = [
+    'attack', 'defence', 'strength', 'constitution', 'ranged', 'prayer',
+    'magic', 'cooking', 'woodcutting', 'fletching', 'fishing', 'firemaking',
+    'crafting', 'smithing', 'mining', 'herblore', 'agility', 'thieving',
+    'slayer', 'farming', 'runecrafting', 'hunter', 'construction', 'summoning',
+    'dungeoneering', 'divination', 'invention', 'archaeology', 'necromancy'
+  ]
+
+  const skills = skillOrder
+    .filter(skill => playerData.stats[skill]) // Only include skills that exist in the data
+    .map(skill => [skill, playerData.stats[skill]] as [string, any])
+  
   const overallStats = playerData.stats.overall
 
   return (
@@ -188,7 +191,7 @@ const PlayerProfile = () => {
               <div className="text-center">
                 <p className="text-sm text-slate-400 mb-1">Total XP</p>
                 <p className="text-3xl font-bold text-green-400">
-                  {formatNumber(overallStats.xp)}
+                  {overallStats.xp.toLocaleString()}
                 </p>
               </div>
               {overallStats.rank && (
@@ -236,7 +239,7 @@ const PlayerProfile = () => {
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-400">XP:</span>
                     <span className="text-green-400 font-medium">
-                      {formatNumber(data.xp)}
+                      {data.xp.toLocaleString()}
                     </span>
                   </div>
                   {data.rank && (
