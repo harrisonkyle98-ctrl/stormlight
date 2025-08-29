@@ -590,7 +590,7 @@ async def get_clan_activities(
         async def fetch_member_activities(member, client):
             """Fetch activities for a single member"""
             try:
-                runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={member['username']}&activities=20"
+                runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={member['username']}&activities=1"
                 print(f"Fetching activities for {member['username']}")
                 response = await client.get(runemetrics_url)
                 
@@ -622,7 +622,7 @@ async def get_clan_activities(
                 print(f"Error fetching activities for {member['username']}: {e}")
                 return []
         
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             for i in range(0, len(members), batch_size):
                 batch = members[i:i + batch_size]
                 print(f"Processing batch {i//batch_size + 1}/{(len(members) + batch_size - 1)//batch_size} ({len(batch)} members)")
@@ -637,7 +637,7 @@ async def get_clan_activities(
                         print(f"Error in batch processing: {result}")
                 
                 if i + batch_size < len(members):
-                    await asyncio.sleep(0.5)
+                    await asyncio.sleep(0.2)
         
         print(f"Total activities collected: {len(all_activities)}")
         all_activities.sort(key=lambda x: x['timestamp'], reverse=True)
