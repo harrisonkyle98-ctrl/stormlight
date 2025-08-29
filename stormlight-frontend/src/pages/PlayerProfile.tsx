@@ -6,6 +6,7 @@ import { Badge } from '../components/ui/badge'
 import { ArrowLeft, User, Trophy, TrendingUp, Crown, Package, Activity, MapPin, BarChart3, Swords, FileText } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { getSkillIcon } from '../utils/skillIcons'
+import { getGradientColors, getGradientStyle } from '../utils/gradientUtils'
 
 interface PlayerStats {
   username: string
@@ -74,6 +75,7 @@ const PlayerProfile = () => {
     }
     return null
   }
+
 
   if (loading) {
     return (
@@ -246,7 +248,12 @@ const PlayerProfile = () => {
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-3xl font-bold text-white">{decodeURIComponent(username || '')}</h1>
+            <h1 
+              className="text-3xl font-bold"
+              style={getGradientStyle(decodeURIComponent(username || ''), playerData.clan_rank)}
+            >
+              {decodeURIComponent(username || '')}
+            </h1>
             <p className="text-slate-400">
               Last updated: {new Date(playerData.last_updated).toLocaleDateString()}
             </p>
@@ -264,7 +271,12 @@ const PlayerProfile = () => {
           </CardHeader>
           <CardContent>
             <div className="flex justify-center">
-              <Badge className="bg-yellow-500 text-white px-4 py-2 text-lg font-semibold flex items-center space-x-2">
+              <div 
+                className="px-3 py-1 text-base font-semibold flex items-center space-x-2 rounded-md text-white"
+                style={{
+                  background: `linear-gradient(135deg, ${getGradientColors(decodeURIComponent(username || ''), playerData.clan_rank)[0]}, ${getGradientColors(decodeURIComponent(username || ''), playerData.clan_rank)[1]})`
+                }}
+              >
                 {getRankIcon(playerData.clan_rank) ? (
                   <img
                     src={getRankIcon(playerData.clan_rank)!}
@@ -275,7 +287,7 @@ const PlayerProfile = () => {
                   <Crown className="w-5 h-5" />
                 )}
                 <span>{playerData.clan_rank}</span>
-              </Badge>
+              </div>
             </div>
           </CardContent>
         </Card>
