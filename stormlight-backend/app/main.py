@@ -12,6 +12,8 @@ import jwt
 from authlib.integrations.starlette_client import OAuth
 from starlette.middleware.sessions import SessionMiddleware
 import asyncio
+import random
+import time
 
 load_dotenv()
 
@@ -44,6 +46,12 @@ security = HTTPBearer()
 users_db = {}
 clan_members_db = {}
 competitions_db = {}
+
+activities_cache = {
+    'data': [],
+    'timestamp': 0,
+    'ttl': 3600  # 1 hour cache
+}
 
 SKILL_TABLE_MAPPING = {
     'overall': 0, 'attack': 1, 'defence': 2, 'strength': 3, 'constitution': 4,
@@ -569,61 +577,112 @@ async def get_clan_activities(
 ):
     """Get recent activities from all clan members with pagination"""
     print(f"Starting get_clan_activities with page={page}, limit={limit}")
+    
+    current_time = time.time()
+    if (activities_cache['data'] and 
+        current_time - activities_cache['timestamp'] < activities_cache['ttl']):
+        print("Returning cached activities data")
+        all_activities = activities_cache['data']
+        
+        start_idx = (page - 1) * limit
+        end_idx = start_idx + limit
+        paginated_activities = all_activities[start_idx:end_idx]
+        
+        return {
+            "activities": paginated_activities,
+            "pagination": {
+                "page": page,
+                "limit": limit,
+                "total_activities": len(all_activities),
+                "has_next": end_idx < len(all_activities)
+            }
+        }
+    
     try:
+        print("Cache miss - fetching fresh clan activities...")
         print("Fetching clan members...")
         members = await fetch_clan_members()
         print(f"Found {len(members)} clan members")
         all_activities = []
         
-        batch_size = 20  # Process 20 members at a time
+        batch_size = 3  # Reduced from 20 to 3 for conservative rate limiting
         
-        async def fetch_member_activities(member, client):
-            """Fetch activities for a single member"""
-            try:
-                runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={member['username']}&activities=1"
-                print(f"Fetching activities for {member['username']}")
-                response = await client.get(runemetrics_url)
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    activities = data.get('activities', [])
-                    print(f"Found {len(activities)} activities for {member['username']}")
+        async def fetch_member_activities(member, client, max_retries=3):
+            """Fetch activities for a single member with exponential backoff retry"""
+            runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={member['username']}&activities=1"
+            
+            for attempt in range(max_retries):
+                try:
+                    print(f"Fetching activities for {member['username']} (attempt {attempt + 1}/{max_retries})")
+                    response = await client.get(runemetrics_url)
                     
-                    member_activities = []
-                    twelve_weeks_ago = datetime.now().timestamp() - (12 * 7 * 24 * 60 * 60)
+                    if response.status_code == 200:
+                        data = response.json()
+                        activities = data.get('activities', [])
+                        print(f"Found {len(activities)} activities for {member['username']}")
+                        
+                        member_activities = []
+                        twelve_weeks_ago = datetime.now().timestamp() - (12 * 7 * 24 * 60 * 60)
+                        
+                        for activity in activities:
+                            try:
+                                activity_date = datetime.strptime(activity['date'], '%d-%b-%Y %H:%M')
+                                activity_timestamp = activity_date.timestamp()
+                                
+                                if activity_timestamp >= twelve_weeks_ago:
+                                    member_activities.append({
+                                        'username': member['username'],
+                                        'text': activity['text'],
+                                        'details': activity['details'],
+                                        'date': activity['date'],
+                                        'timestamp': activity_timestamp
+                                    })
+                            except (ValueError, KeyError) as e:
+                                print(f"Error parsing activity date for {member['username']}: {e}")
+                                continue
+                        return member_activities
                     
-                    for activity in activities:
-                        try:
-                            activity_date = datetime.strptime(activity['date'], '%d-%b-%Y %H:%M')
-                            activity_timestamp = activity_date.timestamp()
-                            
-                            if activity_timestamp >= twelve_weeks_ago:
-                                member_activities.append({
-                                    'username': member['username'],
-                                    'text': activity['text'],
-                                    'details': activity['details'],
-                                    'date': activity['date'],
-                                    'timestamp': activity_timestamp
-                                })
-                        except (ValueError, KeyError) as e:
-                            print(f"Error parsing activity date for {member['username']}: {e}")
+                    elif response.status_code == 429:
+                        base_delay = 5.0  # Start with 5 seconds
+                        max_delay = 60.0  # Cap at 60 seconds
+                        jitter = random.uniform(0.8, 1.2)  # Add randomness
+                        delay = min(base_delay * (2 ** attempt) * jitter, max_delay)
+                        
+                        print(f"Rate limited for {member['username']}, waiting {delay:.2f}s before retry {attempt + 1}/{max_retries}")
+                        await asyncio.sleep(delay)
+                        continue
+                    
+                    else:
+                        print(f"Failed to fetch activities for {member['username']}: {response.status_code}")
+                        if attempt < max_retries - 1:
+                            await asyncio.sleep(2 ** attempt)
                             continue
-                    return member_activities
-                else:
-                    print(f"Failed to fetch activities for {member['username']}: {response.status_code}")
+                        return []
+                        
+                except Exception as e:
+                    print(f"Error fetching activities for {member['username']} (attempt {attempt + 1}): {e}")
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(2 ** attempt)
+                        continue
                     return []
-                    
-            except Exception as e:
-                print(f"Error fetching activities for {member['username']}: {e}")
-                return []
+            
+            print(f"Failed to fetch activities for {member['username']} after {max_retries} attempts")
+            return []
         
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:  # Increased timeout
             for i in range(0, len(members), batch_size):
                 batch = members[i:i + batch_size]
                 print(f"Processing batch {i//batch_size + 1}/{(len(members) + batch_size - 1)//batch_size} ({len(batch)} members)")
                 
-                batch_tasks = [fetch_member_activities(member, client) for member in batch]
-                batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+                batch_results = []
+                for j, member in enumerate(batch):
+                    if j > 0:  # Don't delay the first request in the batch
+                        delay = random.uniform(3.0, 5.0)  # 3-5 second spacing between requests
+                        print(f"Waiting {delay:.2f}s before next request...")
+                        await asyncio.sleep(delay)
+                    
+                    result = await fetch_member_activities(member, client)
+                    batch_results.append(result)
                 
                 for result in batch_results:
                     if isinstance(result, list):
@@ -632,10 +691,16 @@ async def get_clan_activities(
                         print(f"Error in batch processing: {result}")
                 
                 if i + batch_size < len(members):
-                    await asyncio.sleep(0.2)
+                    batch_delay = random.uniform(8.0, 12.0)  # 8-12 second delay between batches
+                    print(f"Batch complete. Waiting {batch_delay:.2f}s before next batch...")
+                    await asyncio.sleep(batch_delay)
         
         print(f"Total activities collected: {len(all_activities)}")
         all_activities.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        activities_cache['data'] = all_activities
+        activities_cache['timestamp'] = current_time
+        print(f"Cached {len(all_activities)} activities for {activities_cache['ttl']} seconds")
         
         start_idx = (page - 1) * limit
         end_idx = start_idx + limit
