@@ -742,7 +742,15 @@ async def get_clan_activities(
                         
                         if isinstance(result, list):
                             all_activities.extend(result)
-                            progressive_cache['activities'].extend(result)
+                            seen_activities = set()
+                            unique_activities = []
+                            for activity in all_activities:
+                                activity_key = (activity['username'], activity['text'], activity['timestamp'])
+                                if activity_key not in seen_activities:
+                                    seen_activities.add(activity_key)
+                                    unique_activities.append(activity)
+                            
+                            progressive_cache['activities'] = unique_activities
                             progressive_cache['activities'].sort(key=lambda x: x['timestamp'], reverse=True)
                             print(f"Updated progressive cache: {len(progressive_cache['activities'])} activities from {progressive_cache['processed_members']} members")
                     
@@ -759,11 +767,19 @@ async def get_clan_activities(
             print(f"Background processing complete: {len(all_activities)} total activities")
             all_activities.sort(key=lambda x: x['timestamp'], reverse=True)
             
-            activities_cache['data'] = all_activities
+            seen_activities = set()
+            unique_all_activities = []
+            for activity in all_activities:
+                activity_key = (activity['username'], activity['text'], activity['timestamp'])
+                if activity_key not in seen_activities:
+                    seen_activities.add(activity_key)
+                    unique_all_activities.append(activity)
+            
+            activities_cache['data'] = unique_all_activities
             activities_cache['timestamp'] = time.time()
-            progressive_cache['activities'] = all_activities
+            progressive_cache['activities'] = unique_all_activities
             progressive_cache['is_complete'] = True
-            print(f"Cached {len(all_activities)} activities for {activities_cache['ttl']} seconds")
+            print(f"Cached {len(unique_all_activities)} activities for {activities_cache['ttl']} seconds")
         
         # Start background processing
         background_tasks.add_task(background_fetch_activities)
