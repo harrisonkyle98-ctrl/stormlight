@@ -53,6 +53,12 @@ activities_cache = {
     'ttl': 3600  # 1 hour cache
 }
 
+profile_cache = {
+    'data': {},  # username -> profile data mapping
+    'timestamps': {},  # username -> timestamp mapping
+    'ttl': 1800  # 30 minutes cache
+}
+
 progressive_cache = {
     'activities': [],
     'processed_members': 0,
@@ -79,63 +85,82 @@ RUNEMETRICS_SKILL_MAPPING = {
     24: 'dungeoneering', 25: 'divination', 26: 'invention', 27: 'archaeology', 28: 'necromancy'
 }
 
-async def fetch_player_stats(username: str) -> Optional[Dict[str, Any]]:
-    """Fetch player stats from RuneScape Runemetrics API"""
-    try:
-        async with httpx.AsyncClient() as client:
-            runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={username}&activities=20"
-            response = await client.get(runemetrics_url)
-            
-            if response.status_code == 200:
-                data = response.json()
+async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Dict[str, Any]]:
+    """Fetch player stats from RuneScape Runemetrics API with rate limiting"""
+    for attempt in range(max_retries):
+        try:
+            async with httpx.AsyncClient() as client:
+                runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={username}&activities=20"
+                response = await client.get(runemetrics_url)
                 
-                if 'error' in data:
-                    print(f"Runemetrics API error for {username}: {data.get('error')}")
-                    return None
-                
-                stats = {}
-                
-                stats['overall'] = {
-                    'rank': int(data.get('rank', '0').replace(',', '')) if data.get('rank') and data.get('rank') != '0' else None,
-                    'level': data.get('totalskill', 0),
-                    'xp': data.get('totalxp', 0)
-                }
-                
-                for skill_data in data.get('skillvalues', []):
-                    skill_id = skill_data.get('id')
-                    skill_name = RUNEMETRICS_SKILL_MAPPING.get(skill_id)
+                if response.status_code == 200:
+                    data = response.json()
                     
-                    if skill_name:
-                        stats[skill_name] = {
-                            'rank': skill_data.get('rank'),
-                            'level': skill_data.get('level', 1),
-                            'xp': skill_data.get('xp', 0)
-                        }
-                
-                all_skills = ['overall'] + list(RUNEMETRICS_SKILL_MAPPING.values())
-                for skill_name in all_skills:
-                    if skill_name not in stats:
-                        stats[skill_name] = {
-                            'rank': None,
-                            'level': 1,
-                            'xp': 0
-                        }
-                
-                return {
-                    'stats': stats,
-                    'last_updated': datetime.now(),
-                    'username': data.get('name', username)
-                }
-            elif response.status_code == 404:
-                print(f"Player {username} not found or has private profile")
-                return None
-            else:
-                print(f"Runemetrics API error for {username}: {response.status_code}")
-                return None
-                
-    except Exception as e:
-        print(f"Error fetching stats for {username}: {e}")
-        return None
+                    if 'error' in data:
+                        print(f"Runemetrics API error for {username}: {data.get('error')}")
+                        return None
+                    
+                    stats = {}
+                    
+                    stats['overall'] = {
+                        'rank': int(data.get('rank', '0').replace(',', '')) if data.get('rank') and data.get('rank') != '0' else None,
+                        'level': data.get('totalskill', 0),
+                        'xp': data.get('totalxp', 0)
+                    }
+                    
+                    for skill_data in data.get('skillvalues', []):
+                        skill_id = skill_data.get('id')
+                        skill_name = RUNEMETRICS_SKILL_MAPPING.get(skill_id)
+                        
+                        if skill_name:
+                            stats[skill_name] = {
+                                'rank': skill_data.get('rank'),
+                                'level': skill_data.get('level', 1),
+                                'xp': skill_data.get('xp', 0)
+                            }
+                    
+                    all_skills = ['overall'] + list(RUNEMETRICS_SKILL_MAPPING.values())
+                    for skill_name in all_skills:
+                        if skill_name not in stats:
+                            stats[skill_name] = {
+                                'rank': None,
+                                'level': 1,
+                                'xp': 0
+                            }
+                    
+                    return {
+                        'stats': stats,
+                        'last_updated': datetime.now(),
+                        'username': data.get('name', username)
+                    }
+                elif response.status_code == 429:
+                    base_delay = 2.0
+                    max_delay = 20.0
+                    jitter = random.uniform(0.8, 1.2)
+                    delay = min(base_delay * (2 ** attempt) * jitter, max_delay)
+                    
+                    print(f"Rate limited for {username}, waiting {delay:.2f}s before retry {attempt + 1}/{max_retries}")
+                    await asyncio.sleep(delay)
+                    continue
+                elif response.status_code == 404:
+                    print(f"Player {username} not found or has private profile")
+                    return None
+                else:
+                    print(f"Runemetrics API error for {username}: {response.status_code}")
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(1.5 ** attempt)
+                        continue
+                    return None
+                    
+        except Exception as e:
+            print(f"Error fetching stats for {username} (attempt {attempt + 1}): {e}")
+            if attempt < max_retries - 1:
+                await asyncio.sleep(1.5 ** attempt)
+                continue
+            return None
+    
+    print(f"Failed to fetch stats for {username} after {max_retries} attempts")
+    return None
 
 async def fetch_top_players(skill: str = 'overall', size: int = 50) -> List[Dict[str, Any]]:
     """Fetch top players from RuneScape ranking API"""
@@ -276,6 +301,14 @@ async def get_player_stats(username: str):
     from urllib.parse import unquote
     decoded_username = unquote(username)
     
+    current_time = time.time()
+    
+    if (decoded_username in profile_cache['data'] and 
+        decoded_username in profile_cache['timestamps'] and
+        current_time - profile_cache['timestamps'][decoded_username] < profile_cache['ttl']):
+        print(f"Returning cached profile data for {decoded_username}")
+        return profile_cache['data'][decoded_username]
+    
     clan_members = await fetch_clan_members()
     clan_rank = None
     print(f"Looking for player: '{decoded_username}'")
@@ -292,10 +325,15 @@ async def get_player_stats(username: str):
     if stats:
         if clan_rank:
             stats['clan_rank'] = clan_rank
+        
+        profile_cache['data'][decoded_username] = stats
+        profile_cache['timestamps'][decoded_username] = current_time
+        print(f"Cached profile data for {decoded_username} for {profile_cache['ttl']} seconds")
+        
         return stats
     
     if clan_rank:
-        return {
+        fallback_data = {
             "username": decoded_username,
             "stats": {
                 "overall": {
@@ -307,6 +345,12 @@ async def get_player_stats(username: str):
             "last_updated": datetime.now().isoformat(),
             "clan_rank": clan_rank
         }
+        
+        profile_cache['data'][decoded_username] = fallback_data
+        profile_cache['timestamps'][decoded_username] = current_time
+        print(f"Cached fallback profile data for {decoded_username} for {profile_cache['ttl']} seconds")
+        
+        return fallback_data
     
     raise HTTPException(status_code=404, detail="Player not found or stats unavailable")
 
