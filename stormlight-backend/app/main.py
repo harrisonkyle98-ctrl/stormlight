@@ -53,6 +53,15 @@ activities_cache = {
     'ttl': 3600  # 1 hour cache
 }
 
+progressive_cache = {
+    'activities': [],
+    'processed_members': 0,
+    'total_members': 0,
+    'is_complete': False,
+    'timestamp': 0,
+    'ttl': 3600
+}
+
 SKILL_TABLE_MAPPING = {
     'overall': 0, 'attack': 1, 'defence': 2, 'strength': 3, 'constitution': 4,
     'ranged': 5, 'prayer': 6, 'magic': 7, 'cooking': 8, 'woodcutting': 9,
@@ -575,10 +584,11 @@ async def get_clan_activities(
     page: int = 1,
     limit: int = 10
 ):
-    """Get recent activities from all clan members with pagination"""
+    """Get recent activities from all clan members with pagination and progressive loading"""
     print(f"Starting get_clan_activities with page={page}, limit={limit}")
     
     current_time = time.time()
+    
     if (activities_cache['data'] and 
         current_time - activities_cache['timestamp'] < activities_cache['ttl']):
         print("Returning cached activities data")
@@ -595,6 +605,36 @@ async def get_clan_activities(
                 "limit": limit,
                 "total_activities": len(all_activities),
                 "has_next": end_idx < len(all_activities)
+            },
+            "loading_status": {
+                "is_complete": True,
+                "processed_members": progressive_cache.get('total_members', len(all_activities)),
+                "total_members": progressive_cache.get('total_members', len(all_activities))
+            }
+        }
+    
+    if (progressive_cache['activities'] and 
+        current_time - progressive_cache['timestamp'] < progressive_cache['ttl'] and
+        progressive_cache['processed_members'] >= 30):
+        print(f"Returning progressive cache with {len(progressive_cache['activities'])} activities from {progressive_cache['processed_members']} members")
+        
+        all_activities = progressive_cache['activities']
+        start_idx = (page - 1) * limit
+        end_idx = start_idx + limit
+        paginated_activities = all_activities[start_idx:end_idx]
+        
+        return {
+            "activities": paginated_activities,
+            "pagination": {
+                "page": page,
+                "limit": limit,
+                "total_activities": len(all_activities),
+                "has_next": end_idx < len(all_activities)
+            },
+            "loading_status": {
+                "is_complete": progressive_cache['is_complete'],
+                "processed_members": progressive_cache['processed_members'],
+                "total_members": progressive_cache['total_members']
             }
         }
     
@@ -603,9 +643,15 @@ async def get_clan_activities(
         print("Fetching clan members...")
         members = await fetch_clan_members()
         print(f"Found {len(members)} clan members")
-        all_activities = []
         
-        batch_size = 3  # Reduced from 20 to 3 for conservative rate limiting
+        progressive_cache['activities'] = []
+        progressive_cache['processed_members'] = 0
+        progressive_cache['total_members'] = len(members)
+        progressive_cache['is_complete'] = False
+        progressive_cache['timestamp'] = current_time
+        
+        all_activities = []
+        batch_size = 5  # Increased from 3 to 5 for faster initial results
         
         async def fetch_member_activities(member, client, max_retries=3):
             """Fetch activities for a single member with exponential backoff retry"""
@@ -643,9 +689,9 @@ async def get_clan_activities(
                         return member_activities
                     
                     elif response.status_code == 429:
-                        base_delay = 5.0  # Start with 5 seconds
-                        max_delay = 60.0  # Cap at 60 seconds
-                        jitter = random.uniform(0.8, 1.2)  # Add randomness
+                        base_delay = 3.0  # Reduced from 5.0 to 3.0 for faster processing
+                        max_delay = 30.0  # Reduced from 60.0 to 30.0
+                        jitter = random.uniform(0.8, 1.2)
                         delay = min(base_delay * (2 ** attempt) * jitter, max_delay)
                         
                         print(f"Rate limited for {member['username']}, waiting {delay:.2f}s before retry {attempt + 1}/{max_retries}")
@@ -655,43 +701,78 @@ async def get_clan_activities(
                     else:
                         print(f"Failed to fetch activities for {member['username']}: {response.status_code}")
                         if attempt < max_retries - 1:
-                            await asyncio.sleep(2 ** attempt)
+                            await asyncio.sleep(1.5 ** attempt)  # Reduced delay
                             continue
                         return []
                         
                 except Exception as e:
                     print(f"Error fetching activities for {member['username']} (attempt {attempt + 1}): {e}")
                     if attempt < max_retries - 1:
-                        await asyncio.sleep(2 ** attempt)
+                        await asyncio.sleep(1.5 ** attempt)  # Reduced delay
                         continue
                     return []
             
             print(f"Failed to fetch activities for {member['username']} after {max_retries} attempts")
             return []
         
-        async with httpx.AsyncClient(timeout=30.0) as client:  # Increased timeout
+        async with httpx.AsyncClient(timeout=30.0) as client:
             for i in range(0, len(members), batch_size):
                 batch = members[i:i + batch_size]
-                print(f"Processing batch {i//batch_size + 1}/{(len(members) + batch_size - 1)//batch_size} ({len(batch)} members)")
+                batch_num = i//batch_size + 1
+                total_batches = (len(members) + batch_size - 1)//batch_size
+                print(f"Processing batch {batch_num}/{total_batches} ({len(batch)} members)")
                 
                 batch_results = []
                 for j, member in enumerate(batch):
-                    if j > 0:  # Don't delay the first request in the batch
-                        delay = random.uniform(3.0, 5.0)  # 3-5 second spacing between requests
+                    if j > 0:
+                        if batch_num <= 10:
+                            delay = random.uniform(2.0, 3.0)  # Faster for first 10 batches
+                        else:
+                            delay = random.uniform(3.0, 5.0)  # Normal delay for remaining
                         print(f"Waiting {delay:.2f}s before next request...")
                         await asyncio.sleep(delay)
                     
                     result = await fetch_member_activities(member, client)
                     batch_results.append(result)
+                    
+                    progressive_cache['processed_members'] += 1
                 
                 for result in batch_results:
                     if isinstance(result, list):
                         all_activities.extend(result)
+                        progressive_cache['activities'].extend(result)
                     else:
                         print(f"Error in batch processing: {result}")
                 
+                progressive_cache['activities'].sort(key=lambda x: x['timestamp'], reverse=True)
+                
+                if progressive_cache['processed_members'] >= 30 and page == 1:
+                    print(f"Early return: {len(progressive_cache['activities'])} activities from {progressive_cache['processed_members']} members")
+                    
+                    start_idx = (page - 1) * limit
+                    end_idx = start_idx + limit
+                    paginated_activities = progressive_cache['activities'][start_idx:end_idx]
+                    
+                    return {
+                        "activities": paginated_activities,
+                        "pagination": {
+                            "page": page,
+                            "limit": limit,
+                            "total_activities": len(progressive_cache['activities']),
+                            "has_next": end_idx < len(progressive_cache['activities'])
+                        },
+                        "loading_status": {
+                            "is_complete": False,
+                            "processed_members": progressive_cache['processed_members'],
+                            "total_members": progressive_cache['total_members']
+                        }
+                    }
+                
                 if i + batch_size < len(members):
-                    batch_delay = random.uniform(8.0, 12.0)  # 8-12 second delay between batches
+                    if batch_num <= 10:
+                        batch_delay = random.uniform(5.0, 8.0)  # Faster for first 10 batches
+                    else:
+                        batch_delay = random.uniform(8.0, 12.0)  # Normal delay for remaining
                     print(f"Batch complete. Waiting {batch_delay:.2f}s before next batch...")
                     await asyncio.sleep(batch_delay)
         
@@ -700,6 +781,8 @@ async def get_clan_activities(
         
         activities_cache['data'] = all_activities
         activities_cache['timestamp'] = current_time
+        progressive_cache['activities'] = all_activities
+        progressive_cache['is_complete'] = True
         print(f"Cached {len(all_activities)} activities for {activities_cache['ttl']} seconds")
         
         start_idx = (page - 1) * limit
@@ -714,6 +797,11 @@ async def get_clan_activities(
                 "limit": limit,
                 "total_activities": len(all_activities),
                 "has_next": end_idx < len(all_activities)
+            },
+            "loading_status": {
+                "is_complete": True,
+                "processed_members": len(members),
+                "total_members": len(members)
             }
         }
         
@@ -728,5 +816,10 @@ async def get_clan_activities(
                 "limit": limit,
                 "total_activities": 0,
                 "has_next": False
+            },
+            "loading_status": {
+                "is_complete": True,
+                "processed_members": 0,
+                "total_members": 0
             }
         }

@@ -29,6 +29,11 @@ interface ActivityResponse {
     total_activities: number
     has_next: boolean
   }
+  loading_status?: {
+    is_complete: boolean
+    processed_members: number
+    total_members: number
+  }
 }
 
 const Home = () => {
@@ -39,6 +44,7 @@ const Home = () => {
   const [hasMoreActivities, setHasMoreActivities] = useState(false)
   const [loading, setLoading] = useState(true)
   const [clanMembers, setClanMembers] = useState<any[]>([])
+  const [loadingStatus, setLoadingStatus] = useState<{is_complete: boolean, processed_members: number, total_members: number} | null>(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -80,6 +86,7 @@ const Home = () => {
         }
         setHasMoreActivities(data.pagination.has_next)
         setActivityPage(page)
+        setLoadingStatus(data.loading_status || null)
       }
     } catch (error) {
       console.error('Error fetching activities:', error)
@@ -248,7 +255,11 @@ const Home = () => {
             ) : (
               <div className="text-center py-8">
                 <p className="text-slate-400">
-                  {activityLoading ? 'Loading activities...' : 'No recent activities found'}
+                  {activityLoading ? (
+                    loadingStatus && !loadingStatus.is_complete ? 
+                      `Loading activities... (${loadingStatus.processed_members}/${loadingStatus.total_members} members processed)` :
+                      'Loading activities...'
+                  ) : 'No recent activities found'}
                 </p>
               </div>
             )}
