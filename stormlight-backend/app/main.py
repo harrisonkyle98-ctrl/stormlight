@@ -672,14 +672,14 @@ async def get_clan_activities(
                             print(f"Found {len(activities)} activities for {member['username']}")
                             
                             member_activities = []
-                            twelve_weeks_ago = datetime.now().timestamp() - (12 * 7 * 24 * 60 * 60)
+                            two_days_ago = datetime.now().timestamp() - (2 * 24 * 60 * 60)
                             
                             for activity in activities:
                                 try:
                                     activity_date = datetime.strptime(activity['date'], '%d-%b-%Y %H:%M')
                                     activity_timestamp = activity_date.timestamp()
                                     
-                                    if activity_timestamp >= twelve_weeks_ago:
+                                    if activity_timestamp >= two_days_ago:
                                         member_activities.append({
                                             'username': member['username'],
                                             'text': activity['text'],
