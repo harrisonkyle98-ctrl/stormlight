@@ -52,6 +52,15 @@ const Home = () => {
     fetchClanStats()
     fetchActivities()
     loadClanMembers()
+
+    const statsInterval = setInterval(() => {
+      console.log('🔄 Refreshing Total XP data (hourly)')
+      fetchClanStats()
+    }, 60 * 60 * 1000) // 1 hour in milliseconds
+
+    return () => {
+      clearInterval(statsInterval)
+    }
   }, [])
 
   const loadClanMembers = async () => {
