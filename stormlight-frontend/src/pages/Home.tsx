@@ -76,9 +76,27 @@ const Home = () => {
   const fetchActivities = async (page: number = 1, append: boolean = false) => {
     try {
       setActivityLoading(true)
-      const response = await fetch(`${API_URL}/api/clan/activities?page=${page}&limit=10`)
+      console.log('🔄 Fetching activities...', { page, append })
+      const cacheBuster = Date.now()
+      const requestUrl = `${API_URL}/api/clan/activities?page=${page}&limit=10&_t=${cacheBuster}`
+      console.log('📡 Request URL:', requestUrl)
+      const response = await fetch(requestUrl, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      })
       if (response.ok) {
         const data: ActivityResponse = await response.json()
+        console.log('✅ Activities fetched:', { 
+          activities: data.activities.length, 
+          loading_status: data.loading_status,
+          processed: data.loading_status?.processed_members,
+          total: data.loading_status?.total_members,
+          first_activity: data.activities[0]?.username,
+          response_url: response.url
+        })
         if (append) {
           setActivities(prev => [...prev, ...data.activities])
         } else {
@@ -87,6 +105,15 @@ const Home = () => {
         setHasMoreActivities(data.pagination.has_next)
         setActivityPage(page)
         setLoadingStatus(data.loading_status || null)
+        
+        if (data.loading_status && !data.loading_status.is_complete) {
+          console.log('⏰ Scheduling next poll in 3 seconds...')
+          setTimeout(() => {
+            fetchActivities(page, false)
+          }, 3000)
+        } else {
+          console.log('✅ Loading complete!')
+        }
       }
     } catch (error) {
       console.error('Error fetching activities:', error)

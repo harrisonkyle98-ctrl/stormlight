@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, Query, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import psycopg
@@ -581,11 +581,13 @@ async def get_clan_stats():
 
 @app.get("/api/clan/activities")
 async def get_clan_activities(
+    background_tasks: BackgroundTasks,
     page: int = 1,
     limit: int = 10
 ):
     """Get recent activities from all clan members with pagination and progressive loading"""
-    print(f"Starting get_clan_activities with page={page}, limit={limit}")
+    print(f"=== API REQUEST: get_clan_activities with page={page}, limit={limit} ===")
+    print(f"Progressive cache state: {progressive_cache['processed_members']} members, {len(progressive_cache['activities'])} activities, complete={progressive_cache['is_complete']}")
     
     current_time = time.time()
     
@@ -613,9 +615,7 @@ async def get_clan_activities(
             }
         }
     
-    if (progressive_cache['activities'] and 
-        current_time - progressive_cache['timestamp'] < progressive_cache['ttl'] and
-        progressive_cache['processed_members'] >= 3):
+    if (progressive_cache['processed_members'] > 0 or len(progressive_cache['activities']) > 0):
         print(f"Returning progressive cache with {len(progressive_cache['activities'])} activities from {progressive_cache['processed_members']} members")
         
         all_activities = progressive_cache['activities']
@@ -639,172 +639,146 @@ async def get_clan_activities(
         }
     
     try:
-        print("Cache miss - fetching fresh clan activities...")
+        print("Cache miss - starting fresh clan activities fetch...")
         print("Fetching clan members...")
         members = await fetch_clan_members()
         print(f"Found {len(members)} clan members")
         
-        progressive_cache['activities'] = []
-        progressive_cache['processed_members'] = 0
-        progressive_cache['total_members'] = len(members)
-        progressive_cache['is_complete'] = False
-        progressive_cache['timestamp'] = current_time
+        # Only reset progressive cache if not already processing
+        if progressive_cache['processed_members'] == 0:
+            progressive_cache['activities'] = []
+            progressive_cache['processed_members'] = 0
+            progressive_cache['total_members'] = len(members)
+            progressive_cache['is_complete'] = False
+            progressive_cache['timestamp'] = current_time
         
-        all_activities = []
-        batch_size = 3  # Reduced to 3 for faster initial response
-        
-        async def fetch_member_activities(member, client, max_retries=3):
-            """Fetch activities for a single member with exponential backoff retry"""
-            runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={member['username']}&activities=1"
+        async def background_fetch_activities():
+            """Background task to fetch all member activities"""
+            all_activities = []
+            batch_size = 3
             
-            for attempt in range(max_retries):
-                try:
-                    print(f"Fetching activities for {member['username']} (attempt {attempt + 1}/{max_retries})")
-                    response = await client.get(runemetrics_url)
-                    
-                    if response.status_code == 200:
-                        data = response.json()
-                        activities = data.get('activities', [])
-                        print(f"Found {len(activities)} activities for {member['username']}")
+            async def fetch_member_activities(member, client, max_retries=3):
+                """Fetch activities for a single member with exponential backoff retry"""
+                runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={member['username']}&activities=1"
+                
+                for attempt in range(max_retries):
+                    try:
+                        print(f"Fetching activities for {member['username']} (attempt {attempt + 1}/{max_retries})")
+                        response = await client.get(runemetrics_url)
                         
-                        member_activities = []
-                        twelve_weeks_ago = datetime.now().timestamp() - (12 * 7 * 24 * 60 * 60)
+                        if response.status_code == 200:
+                            data = response.json()
+                            activities = data.get('activities', [])
+                            print(f"Found {len(activities)} activities for {member['username']}")
+                            
+                            member_activities = []
+                            twelve_weeks_ago = datetime.now().timestamp() - (12 * 7 * 24 * 60 * 60)
+                            
+                            for activity in activities:
+                                try:
+                                    activity_date = datetime.strptime(activity['date'], '%d-%b-%Y %H:%M')
+                                    activity_timestamp = activity_date.timestamp()
+                                    
+                                    if activity_timestamp >= twelve_weeks_ago:
+                                        member_activities.append({
+                                            'username': member['username'],
+                                            'text': activity['text'],
+                                            'details': activity['details'],
+                                            'date': activity['date'],
+                                            'timestamp': activity_timestamp
+                                        })
+                                except (ValueError, KeyError) as e:
+                                    print(f"Error parsing activity date for {member['username']}: {e}")
+                                    continue
+                            return member_activities
                         
-                        for activity in activities:
-                            try:
-                                activity_date = datetime.strptime(activity['date'], '%d-%b-%Y %H:%M')
-                                activity_timestamp = activity_date.timestamp()
-                                
-                                if activity_timestamp >= twelve_weeks_ago:
-                                    member_activities.append({
-                                        'username': member['username'],
-                                        'text': activity['text'],
-                                        'details': activity['details'],
-                                        'date': activity['date'],
-                                        'timestamp': activity_timestamp
-                                    })
-                            except (ValueError, KeyError) as e:
-                                print(f"Error parsing activity date for {member['username']}: {e}")
+                        elif response.status_code == 429:
+                            base_delay = 3.0
+                            max_delay = 30.0
+                            jitter = random.uniform(0.8, 1.2)
+                            delay = min(base_delay * (2 ** attempt) * jitter, max_delay)
+                            
+                            print(f"Rate limited for {member['username']}, waiting {delay:.2f}s before retry {attempt + 1}/{max_retries}")
+                            await asyncio.sleep(delay)
+                            continue
+                        
+                        else:
+                            print(f"Failed to fetch activities for {member['username']}: {response.status_code}")
+                            if attempt < max_retries - 1:
+                                await asyncio.sleep(1.5 ** attempt)
                                 continue
-                        return member_activities
-                    
-                    elif response.status_code == 429:
-                        base_delay = 3.0  # Reduced from 5.0 to 3.0 for faster processing
-                        max_delay = 30.0  # Reduced from 60.0 to 30.0
-                        jitter = random.uniform(0.8, 1.2)
-                        delay = min(base_delay * (2 ** attempt) * jitter, max_delay)
-                        
-                        print(f"Rate limited for {member['username']}, waiting {delay:.2f}s before retry {attempt + 1}/{max_retries}")
-                        await asyncio.sleep(delay)
-                        continue
-                    
-                    else:
-                        print(f"Failed to fetch activities for {member['username']}: {response.status_code}")
+                            return []
+                            
+                    except Exception as e:
+                        print(f"Error fetching activities for {member['username']} (attempt {attempt + 1}): {e}")
                         if attempt < max_retries - 1:
-                            await asyncio.sleep(1.5 ** attempt)  # Reduced delay
+                            await asyncio.sleep(1.5 ** attempt)
                             continue
                         return []
-                        
-                except Exception as e:
-                    print(f"Error fetching activities for {member['username']} (attempt {attempt + 1}): {e}")
-                    if attempt < max_retries - 1:
-                        await asyncio.sleep(1.5 ** attempt)  # Reduced delay
-                        continue
-                    return []
+                
+                print(f"Failed to fetch activities for {member['username']} after {max_retries} attempts")
+                return []
             
-            print(f"Failed to fetch activities for {member['username']} after {max_retries} attempts")
-            return []
-        
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            for i in range(0, len(members), batch_size):
-                batch = members[i:i + batch_size]
-                batch_num = i//batch_size + 1
-                total_batches = (len(members) + batch_size - 1)//batch_size
-                print(f"Processing batch {batch_num}/{total_batches} ({len(batch)} members)")
-                
-                batch_results = []
-                for j, member in enumerate(batch):
-                    if j > 0:
-                        if batch_num <= 5:
-                            delay = random.uniform(1.5, 2.5)  # Very fast for first 5 batches
-                        elif batch_num <= 15:
-                            delay = random.uniform(2.0, 3.0)  # Fast for next 10 batches
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                for i in range(0, len(members), batch_size):
+                    batch = members[i:i + batch_size]
+                    batch_num = i//batch_size + 1
+                    total_batches = (len(members) + batch_size - 1)//batch_size
+                    print(f"Processing batch {batch_num}/{total_batches} ({len(batch)} members)")
+                    
+                    for j, member in enumerate(batch):
+                        if j > 0:
+                            if batch_num <= 5:
+                                delay = random.uniform(1.5, 2.5)
+                            elif batch_num <= 15:
+                                delay = random.uniform(2.0, 3.0)
+                            else:
+                                delay = random.uniform(3.0, 5.0)
+                            print(f"Waiting {delay:.2f}s before next request...")
+                            await asyncio.sleep(delay)
+                        
+                        result = await fetch_member_activities(member, client)
+                        progressive_cache['processed_members'] += 1
+                        
+                        if isinstance(result, list):
+                            all_activities.extend(result)
+                            progressive_cache['activities'].extend(result)
+                            progressive_cache['activities'].sort(key=lambda x: x['timestamp'], reverse=True)
+                            print(f"Updated progressive cache: {len(progressive_cache['activities'])} activities from {progressive_cache['processed_members']} members")
+                    
+                    if i + batch_size < len(members):
+                        if batch_num <= 3:
+                            batch_delay = random.uniform(3.0, 5.0)
+                        elif batch_num <= 10:
+                            batch_delay = random.uniform(5.0, 8.0)
                         else:
-                            delay = random.uniform(3.0, 5.0)  # Normal delay for remaining
-                        print(f"Waiting {delay:.2f}s before next request...")
-                        await asyncio.sleep(delay)
-                    
-                    result = await fetch_member_activities(member, client)
-                    batch_results.append(result)
-                    
-                    progressive_cache['processed_members'] += 1
-                
-                for result in batch_results:
-                    if isinstance(result, list):
-                        all_activities.extend(result)
-                        progressive_cache['activities'].extend(result)
-                    else:
-                        print(f"Error in batch processing: {result}")
-                
-                progressive_cache['activities'].sort(key=lambda x: x['timestamp'], reverse=True)
-                
-                if progressive_cache['processed_members'] >= 3 and page == 1 and len(progressive_cache['activities']) > 0:
-                    print(f"Early return: {len(progressive_cache['activities'])} activities from {progressive_cache['processed_members']} members")
-                    
-                    start_idx = (page - 1) * limit
-                    end_idx = start_idx + limit
-                    paginated_activities = progressive_cache['activities'][start_idx:end_idx]
-                    
-                    return {
-                        "activities": paginated_activities,
-                        "pagination": {
-                            "page": page,
-                            "limit": limit,
-                            "total_activities": len(progressive_cache['activities']),
-                            "has_next": end_idx < len(progressive_cache['activities'])
-                        },
-                        "loading_status": {
-                            "is_complete": False,
-                            "processed_members": progressive_cache['processed_members'],
-                            "total_members": progressive_cache['total_members']
-                        }
-                    }
-                
-                if i + batch_size < len(members):
-                    if batch_num <= 3:
-                        batch_delay = random.uniform(3.0, 5.0)  # Very fast for first 3 batches
-                    elif batch_num <= 10:
-                        batch_delay = random.uniform(5.0, 8.0)  # Fast for next 7 batches
-                    else:
-                        batch_delay = random.uniform(8.0, 12.0)  # Normal delay for remaining
-                    print(f"Batch complete. Waiting {batch_delay:.2f}s before next batch...")
-                    await asyncio.sleep(batch_delay)
+                            batch_delay = random.uniform(8.0, 12.0)
+                        print(f"Batch complete. Waiting {batch_delay:.2f}s before next batch...")
+                        await asyncio.sleep(batch_delay)
+            
+            print(f"Background processing complete: {len(all_activities)} total activities")
+            all_activities.sort(key=lambda x: x['timestamp'], reverse=True)
+            
+            activities_cache['data'] = all_activities
+            activities_cache['timestamp'] = time.time()
+            progressive_cache['activities'] = all_activities
+            progressive_cache['is_complete'] = True
+            print(f"Cached {len(all_activities)} activities for {activities_cache['ttl']} seconds")
         
-        print(f"Total activities collected: {len(all_activities)}")
-        all_activities.sort(key=lambda x: x['timestamp'], reverse=True)
+        # Start background processing
+        background_tasks.add_task(background_fetch_activities)
         
-        activities_cache['data'] = all_activities
-        activities_cache['timestamp'] = current_time
-        progressive_cache['activities'] = all_activities
-        progressive_cache['is_complete'] = True
-        print(f"Cached {len(all_activities)} activities for {activities_cache['ttl']} seconds")
-        
-        start_idx = (page - 1) * limit
-        end_idx = start_idx + limit
-        paginated_activities = all_activities[start_idx:end_idx]
-        
-        print(f"Returning {len(paginated_activities)} activities for page {page}")
         return {
-            "activities": paginated_activities,
+            "activities": [],
             "pagination": {
                 "page": page,
                 "limit": limit,
-                "total_activities": len(all_activities),
-                "has_next": end_idx < len(all_activities)
+                "total_activities": 0,
+                "has_next": False
             },
             "loading_status": {
-                "is_complete": True,
-                "processed_members": len(members),
+                "is_complete": False,
+                "processed_members": 0,
                 "total_members": len(members)
             }
         }
