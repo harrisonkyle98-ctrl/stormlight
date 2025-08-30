@@ -615,7 +615,7 @@ async def get_clan_activities(
     
     if (progressive_cache['activities'] and 
         current_time - progressive_cache['timestamp'] < progressive_cache['ttl'] and
-        progressive_cache['processed_members'] >= 30):
+        progressive_cache['processed_members'] >= 3):
         print(f"Returning progressive cache with {len(progressive_cache['activities'])} activities from {progressive_cache['processed_members']} members")
         
         all_activities = progressive_cache['activities']
@@ -651,7 +651,7 @@ async def get_clan_activities(
         progressive_cache['timestamp'] = current_time
         
         all_activities = []
-        batch_size = 5  # Increased from 3 to 5 for faster initial results
+        batch_size = 3  # Reduced to 3 for faster initial response
         
         async def fetch_member_activities(member, client, max_retries=3):
             """Fetch activities for a single member with exponential backoff retry"""
@@ -725,8 +725,10 @@ async def get_clan_activities(
                 batch_results = []
                 for j, member in enumerate(batch):
                     if j > 0:
-                        if batch_num <= 10:
-                            delay = random.uniform(2.0, 3.0)  # Faster for first 10 batches
+                        if batch_num <= 5:
+                            delay = random.uniform(1.5, 2.5)  # Very fast for first 5 batches
+                        elif batch_num <= 15:
+                            delay = random.uniform(2.0, 3.0)  # Fast for next 10 batches
                         else:
                             delay = random.uniform(3.0, 5.0)  # Normal delay for remaining
                         print(f"Waiting {delay:.2f}s before next request...")
@@ -746,7 +748,7 @@ async def get_clan_activities(
                 
                 progressive_cache['activities'].sort(key=lambda x: x['timestamp'], reverse=True)
                 
-                if progressive_cache['processed_members'] >= 30 and page == 1:
+                if progressive_cache['processed_members'] >= 3 and page == 1 and len(progressive_cache['activities']) > 0:
                     print(f"Early return: {len(progressive_cache['activities'])} activities from {progressive_cache['processed_members']} members")
                     
                     start_idx = (page - 1) * limit
@@ -769,8 +771,10 @@ async def get_clan_activities(
                     }
                 
                 if i + batch_size < len(members):
-                    if batch_num <= 10:
-                        batch_delay = random.uniform(5.0, 8.0)  # Faster for first 10 batches
+                    if batch_num <= 3:
+                        batch_delay = random.uniform(3.0, 5.0)  # Very fast for first 3 batches
+                    elif batch_num <= 10:
+                        batch_delay = random.uniform(5.0, 8.0)  # Fast for next 7 batches
                     else:
                         batch_delay = random.uniform(8.0, 12.0)  # Normal delay for remaining
                     print(f"Batch complete. Waiting {batch_delay:.2f}s before next batch...")
