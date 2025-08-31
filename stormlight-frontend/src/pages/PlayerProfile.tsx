@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { ArrowLeft, User, Trophy, TrendingUp, Crown, Package, Activity, MapPin, BarChart3, Swords, FileText } from 'lucide-react'
+import { ArrowLeft, User, Trophy, TrendingUp, Crown, Package, Activity, MapPin, BarChart3, Swords, FileText, RefreshCw } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { getSkillIcon } from '../utils/skillIcons'
 import { getGradientColors, getGradientStyle } from '../utils/gradientUtils'
@@ -51,6 +51,8 @@ const PlayerProfile = () => {
   const [activeTab, setActiveTab] = useState('skills')
   const [period1, setPeriod1] = useState('today')
   const [period2, setPeriod2] = useState('yesterday')
+  const [refreshing, setRefreshing] = useState(false)
+  const [lastRefresh, setLastRefresh] = useState<number | null>(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -90,6 +92,53 @@ const PlayerProfile = () => {
       setError('Failed to load player stats')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleRefresh = async () => {
+    if (refreshing) return
+    
+    const now = Date.now()
+    if (lastRefresh && now - lastRefresh < 300000) {
+      const remainingTime = Math.ceil((300000 - (now - lastRefresh)) / 1000)
+      setError(`Please wait ${remainingTime} seconds before refreshing again`)
+      return
+    }
+    
+    setRefreshing(true)
+    setError(null)
+    
+    try {
+      const decodedUsername = decodeURIComponent(username || '')
+      const requestUrl = `${API_URL}/api/player/${encodeURIComponent(decodedUsername)}/stats/history?period1=${period1}&period2=${period2}&refresh=true`
+      console.log('🔄 Forcing refresh of player stats...', { username: decodedUsername, requestUrl })
+      
+      const response = await fetch(requestUrl, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        console.log('✅ Fresh player stats fetched:', { 
+          username: data.username, 
+          last_updated: data.last_updated 
+        })
+        setPlayerData(data)
+        setLastRefresh(now)
+      } else if (response.status === 429) {
+        setError('Refresh rate limit exceeded. Please wait 5 minutes.')
+      } else {
+        setError('Failed to refresh player stats')
+      }
+    } catch (error) {
+      console.error('Error refreshing player stats:', error)
+      setError('Failed to refresh player stats')
+    } finally {
+      setRefreshing(false)
     }
   }
 
@@ -429,9 +478,20 @@ const PlayerProfile = () => {
       {overallStats && (
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader>
-            <CardTitle className="text-white flex items-center space-x-2">
-              <Trophy className="w-5 h-5 text-yellow-400" />
-              <span>Overall Stats</span>
+            <CardTitle className="text-white flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Trophy className="w-5 h-5 text-yellow-400" />
+                <span>Overall Stats</span>
+              </div>
+              <Button
+                onClick={handleRefresh}
+                disabled={refreshing || (lastRefresh ? Date.now() - lastRefresh < 300000 : false)}
+                variant="outline"
+                size="sm"
+                className="border-slate-600 text-slate-300 hover:bg-slate-700 disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent>

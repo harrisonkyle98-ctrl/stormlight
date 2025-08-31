@@ -79,7 +79,7 @@ activities_cache = {
 profile_cache = {
     'data': {},  # username -> profile data mapping
     'timestamps': {},  # username -> timestamp mapping
-    'ttl': 1800  # 30 minutes cache
+    'ttl': 3600  # 1 hour cache
 }
 
 progressive_cache = {
@@ -95,10 +95,14 @@ rate_limit_storage = defaultdict(list)
 RATE_LIMIT_REQUESTS = 30  # requests per minute for profile endpoints
 RATE_LIMIT_WINDOW = 60  # seconds
 
+refresh_rate_limit_storage = defaultdict(list)
+REFRESH_RATE_LIMIT_REQUESTS = 1  # 1 refresh per 5 minutes
+REFRESH_RATE_LIMIT_WINDOW = 300  # 5 minutes in seconds
+
 profile_history_cache = {
     'data': {},  # cache_key -> response data mapping
     'timestamps': {},  # cache_key -> timestamp mapping
-    'ttl': 1800  # 30 minutes cache (same as profile_cache)
+    'ttl': 3600  # 1 hour cache (same as profile_cache)
 }
 
 def is_rate_limited(client_ip: str, endpoint: str) -> bool:
@@ -118,6 +122,22 @@ def is_rate_limited(client_ip: str, endpoint: str) -> bool:
         return True
     
     rate_limit_storage[key].append(current_time)
+    return False
+
+def is_refresh_rate_limited(client_ip: str, username: str) -> bool:
+    """Check if client is rate limited for refresh requests"""
+    current_time = time_module.time()
+    key = f"{client_ip}:{username}:refresh"
+    
+    refresh_rate_limit_storage[key] = [
+        req_time for req_time in refresh_rate_limit_storage[key] 
+        if current_time - req_time < REFRESH_RATE_LIMIT_WINDOW
+    ]
+    
+    if len(refresh_rate_limit_storage[key]) >= REFRESH_RATE_LIMIT_REQUESTS:
+        return True
+    
+    refresh_rate_limit_storage[key].append(current_time)
     return False
 
 def get_history_cache_key(username: str, period1: str, period2: str) -> str:
@@ -353,14 +373,19 @@ async def get_current_user(user_id: str = Depends(verify_token)):
 
 
 @app.get("/api/player/{username}/stats")
-async def get_player_stats(username: str):
+async def get_player_stats(username: str, refresh: bool = Query(False, description="Force refresh from API")):
     """Get player stats from RuneScape API with clan rank if available"""
     from urllib.parse import unquote
     decoded_username = unquote(username)
     
     current_time = time_module.time()
     
-    if (decoded_username in profile_cache['data'] and 
+    if refresh:
+        client_ip = "unknown"  # In production, extract from request
+        if is_refresh_rate_limited(client_ip, decoded_username):
+            raise HTTPException(status_code=429, detail="Refresh rate limit exceeded. Please wait 5 minutes.")
+        print(f"Forcing refresh for {decoded_username}")
+    elif (decoded_username in profile_cache['data'] and 
         decoded_username in profile_cache['timestamps'] and
         current_time - profile_cache['timestamps'][decoded_username] < profile_cache['ttl']):
         print(f"Returning cached profile data for {decoded_username}")
@@ -923,7 +948,8 @@ async def get_clan_activities(
 async def get_player_stats_with_history(
     username: str, 
     period1: str = Query("today", description="First time period for comparison"),
-    period2: str = Query("yesterday", description="Second time period for comparison")
+    period2: str = Query("yesterday", description="Second time period for comparison"),
+    refresh: bool = Query(False, description="Force refresh from API")
 ):
     """Get player stats with historical changes"""
     try:
@@ -933,7 +959,12 @@ async def get_player_stats_with_history(
         current_time = time_module.time()
         cache_key = get_history_cache_key(decoded_username, period1, period2)
         
-        if (cache_key in profile_history_cache['data'] and 
+        if refresh:
+            client_ip = "unknown"  # In production, extract from request
+            if is_refresh_rate_limited(client_ip, decoded_username):
+                raise HTTPException(status_code=429, detail="Refresh rate limit exceeded. Please wait 5 minutes.")
+            print(f"Forcing refresh for {decoded_username} history ({period1} vs {period2})")
+        elif (cache_key in profile_history_cache['data'] and 
             cache_key in profile_history_cache['timestamps'] and
             current_time - profile_history_cache['timestamps'][cache_key] < profile_history_cache['ttl']):
             print(f"Returning cached history data for {decoded_username} ({period1} vs {period2})")
