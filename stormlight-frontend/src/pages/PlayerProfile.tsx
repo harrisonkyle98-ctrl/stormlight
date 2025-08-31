@@ -152,11 +152,17 @@ const PlayerProfile = () => {
 
   const overallStats = playerData.stats.overall
   
-  console.log('=== PlayerProfile Debug ===')
-  console.log('playerData:', playerData)
-  console.log('overallStats:', overallStats)
-  console.log('combatlevel value:', overallStats.combatlevel)
-  console.log('combatlevel type:', typeof overallStats.combatlevel)
+  console.log('=== Conditional Rendering Debug ===')
+  const firstSkill = skills[0]
+  if (firstSkill) {
+    const [skillName, skillData] = firstSkill
+    console.log(`${skillName} conditional check:`, {
+      level_change: skillData.level_change,
+      level_change_check: skillData.level_change && skillData.level_change !== 0,
+      rank_change: skillData.rank_change,
+      rank_change_check: skillData.rank_change && skillData.rank_change !== 0
+    })
+  }
 
   const tabs = [
     { id: 'skills', label: 'Skill Breakdown', icon: TrendingUp },
@@ -206,11 +212,15 @@ const PlayerProfile = () => {
                         <Badge variant="outline" className="text-blue-400 border-blue-400">
                           {data.level}
                         </Badge>
-                        {data.level_change && data.level_change !== 0 && (
-                          <span className={`text-sm ${data.level_change > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                            {data.level_change > 0 ? '+' : ''}{data.level_change}
-                          </span>
-                        )}
+                        <span className="text-sm">
+                          {data.level_change && data.level_change !== 0 ? (
+                            <span className={data.level_change > 0 ? 'text-green-400' : 'text-red-400'}>
+                              {data.level_change > 0 ? '+' : ''}{data.level_change}
+                            </span>
+                          ) : (
+                            <span>&nbsp;</span>
+                          )}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="py-3">
@@ -222,11 +232,15 @@ const PlayerProfile = () => {
                         ) : (
                           <span className="text-slate-500">--</span>
                         )}
-                        {data.rank_change && data.rank_change !== 0 && (
-                          <span className={`text-sm ${data.rank_change > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                            {data.rank_change > 0 ? '+' : ''}{data.rank_change}
-                          </span>
-                        )}
+                        <span className="text-sm">
+                          {data.rank_change && data.rank_change !== 0 ? (
+                            <span className={data.rank_change < 0 ? 'text-green-400' : 'text-red-400'}>
+                              {data.rank_change > 0 ? '+' : ''}{data.rank_change}
+                            </span>
+                          ) : (
+                            <span>&nbsp;</span>
+                          )}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="py-3">
@@ -241,7 +255,7 @@ const PlayerProfile = () => {
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-slate-400 font-medium">
-                        0
+                        {data.xp_yesterday ? data.xp_yesterday.toLocaleString() : '0'}
                       </span>
                     </TableCell>
                   </TableRow>
