@@ -15,6 +15,7 @@ import asyncio
 import random
 import time as time_module
 from datetime import time as datetime_time
+from collections import defaultdict
 try:
     from .database import init_database, get_db_connection, collect_daily_player_stats
 except ImportError:
@@ -34,6 +35,23 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
 )
+
+@app.middleware("http")
+async def rate_limit_middleware(request, call_next):
+    """Rate limiting middleware for profile endpoints"""
+    client_ip = request.client.host if request.client else "unknown"
+    endpoint = request.url.path
+    
+    if is_rate_limited(client_ip, endpoint):
+        print(f"Rate limited request from {client_ip} to {endpoint}")
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Too many requests. Please try again later."}
+        )
+    
+    response = await call_next(request)
+    return response
 
 oauth = OAuth()
 oauth.register(
@@ -72,6 +90,39 @@ progressive_cache = {
     'timestamp': 0,
     'ttl': 3600
 }
+
+rate_limit_storage = defaultdict(list)
+RATE_LIMIT_REQUESTS = 30  # requests per minute for profile endpoints
+RATE_LIMIT_WINDOW = 60  # seconds
+
+profile_history_cache = {
+    'data': {},  # cache_key -> response data mapping
+    'timestamps': {},  # cache_key -> timestamp mapping
+    'ttl': 1800  # 30 minutes cache (same as profile_cache)
+}
+
+def is_rate_limited(client_ip: str, endpoint: str) -> bool:
+    """Check if client is rate limited for profile endpoints"""
+    if not endpoint.startswith('/api/player/'):
+        return False
+    
+    current_time = time_module.time()
+    key = f"{client_ip}:{endpoint}"
+    
+    rate_limit_storage[key] = [
+        req_time for req_time in rate_limit_storage[key] 
+        if current_time - req_time < RATE_LIMIT_WINDOW
+    ]
+    
+    if len(rate_limit_storage[key]) >= RATE_LIMIT_REQUESTS:
+        return True
+    
+    rate_limit_storage[key].append(current_time)
+    return False
+
+def get_history_cache_key(username: str, period1: str, period2: str) -> str:
+    """Generate cache key for history endpoint"""
+    return f"{username}:{period1}:{period2}"
 
 SKILL_TABLE_MAPPING = {
     'overall': 0, 'attack': 1, 'defence': 2, 'strength': 3, 'constitution': 4,
@@ -879,6 +930,15 @@ async def get_player_stats_with_history(
         from urllib.parse import unquote
         decoded_username = unquote(username)
         
+        current_time = time_module.time()
+        cache_key = get_history_cache_key(decoded_username, period1, period2)
+        
+        if (cache_key in profile_history_cache['data'] and 
+            cache_key in profile_history_cache['timestamps'] and
+            current_time - profile_history_cache['timestamps'][cache_key] < profile_history_cache['ttl']):
+            print(f"Returning cached history data for {decoded_username} ({period1} vs {period2})")
+            return profile_history_cache['data'][cache_key]
+        
         current_stats = await fetch_player_stats(decoded_username)
         if not current_stats:
             raise HTTPException(status_code=404, detail="Player not found")
@@ -920,10 +980,14 @@ async def get_player_stats_with_history(
                     'xp_change': 0,
                     'rank_change': 0,
                     'xp_today': skill_data['xp'],
-                    'xp_yesterday': skill_data['xp'],
+                    'xp_yesterday': 0,  # Show 0 instead of current XP
                     'xp_period1': skill_data['xp'],
-                    'xp_period2': skill_data['xp']
+                    'xp_period2': 0  # Show 0 instead of current XP
                 })
+        
+        profile_history_cache['data'][cache_key] = enhanced_stats
+        profile_history_cache['timestamps'][cache_key] = current_time
+        print(f"Cached history data for {decoded_username} ({period1} vs {period2}) for {profile_history_cache['ttl']} seconds")
         
         return enhanced_stats
         
