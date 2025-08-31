@@ -206,8 +206,10 @@ const PlayerProfile = () => {
                         <Badge variant="outline" className="text-blue-400 border-blue-400">
                           {data.level}
                         </Badge>
-                        {data.level_change && data.level_change > 0 && (
-                          <span className="text-green-400 text-sm">+{data.level_change}</span>
+                        {data.level_change && data.level_change !== 0 && (
+                          <span className={`text-sm ${data.level_change > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {data.level_change > 0 ? '+' : ''}{data.level_change}
+                          </span>
                         )}
                       </div>
                     </TableCell>
