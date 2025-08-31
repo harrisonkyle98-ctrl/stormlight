@@ -165,10 +165,10 @@ const PlayerProfile = () => {
             <Table className="text-slate-300">
               <TableHeader>
                 <TableRow className="border-slate-600 hover:bg-slate-800/50">
-                  <TableHead className="text-slate-400 font-medium">Skills</TableHead>
-                  <TableHead className="text-slate-400 font-medium">Level</TableHead>
-                  <TableHead className="text-slate-400 font-medium">Rank</TableHead>
-                  <TableHead className="text-slate-400 font-medium">XP</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3">Skills</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3">Level</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3">Rank</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3">XP</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
