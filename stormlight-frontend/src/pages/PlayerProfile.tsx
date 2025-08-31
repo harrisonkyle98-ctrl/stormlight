@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
 import { ArrowLeft, User, Trophy, TrendingUp, Crown, Package, Activity, MapPin, BarChart3, Swords, FileText } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { getSkillIcon } from '../utils/skillIcons'
@@ -160,44 +161,56 @@ const PlayerProfile = () => {
     switch (activeTab) {
       case 'skills':
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {skills.map(([skill, data]) => (
-              <div key={skill} className="bg-slate-700/50 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-2">
-                    {getSkillIcon(skill) ? (
-                      <img
-                        src={getSkillIcon(skill)!}
-                        alt={skill}
-                        className="w-5 h-5"
-                      />
-                    ) : (
-                      <span className="text-lg">📊</span>
-                    )}
-                    <span className="font-medium text-white capitalize">{skill}</span>
-                  </div>
-                  <Badge variant="outline" className="text-blue-400 border-blue-400">
-                    {data.level}
-                  </Badge>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">XP:</span>
-                    <span className="text-green-400 font-medium">
-                      {data.xp.toLocaleString()}
-                    </span>
-                  </div>
-                  {data.rank && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-400">Rank:</span>
-                      <span className="text-blue-400 font-medium">
-                        #{data.rank.toLocaleString()}
+          <div className="w-full">
+            <Table className="text-slate-300">
+              <TableHeader>
+                <TableRow className="border-slate-600 hover:bg-slate-800/50">
+                  <TableHead className="text-slate-400 font-medium">Skills</TableHead>
+                  <TableHead className="text-slate-400 font-medium">Level</TableHead>
+                  <TableHead className="text-slate-400 font-medium">Rank</TableHead>
+                  <TableHead className="text-slate-400 font-medium">XP</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {skills.map(([skill, data]) => (
+                  <TableRow key={skill} className="border-slate-600 hover:bg-slate-800/50">
+                    <TableCell className="py-3">
+                      <div className="flex items-center space-x-3">
+                        {getSkillIcon(skill) ? (
+                          <img
+                            src={getSkillIcon(skill)!}
+                            alt={skill}
+                            className="w-6 h-6"
+                          />
+                        ) : (
+                          <span className="text-lg">📊</span>
+                        )}
+                        <span className="font-medium text-white capitalize">{skill}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <Badge variant="outline" className="text-blue-400 border-blue-400">
+                        {data.level}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      {data.rank ? (
+                        <span className="text-blue-400 font-medium">
+                          #{data.rank.toLocaleString()}
+                        </span>
+                      ) : (
+                        <span className="text-slate-500">--</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <span className="text-green-400 font-medium">
+                        {data.xp.toLocaleString()}
                       </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         )
       case 'drops':
