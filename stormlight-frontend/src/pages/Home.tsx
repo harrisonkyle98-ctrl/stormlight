@@ -109,7 +109,19 @@ const Home = () => {
         if (append) {
           setActivities(prev => [...prev, ...data.activities])
         } else {
-          setActivities(data.activities)
+          setActivities(prev => {
+            const combined = [...data.activities, ...prev]
+            const seen = new Set()
+            const unique = combined.filter(activity => {
+              const key = `${activity.username}-${activity.text}-${activity.timestamp}`
+              if (seen.has(key)) {
+                return false
+              }
+              seen.add(key)
+              return true
+            })
+            return unique.sort((a, b) => b.timestamp - a.timestamp)
+          })
         }
         setHasMoreActivities(data.pagination.has_next)
         setActivityPage(page)
