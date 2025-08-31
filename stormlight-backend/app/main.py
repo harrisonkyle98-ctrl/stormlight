@@ -876,9 +876,22 @@ async def get_player_stats_with_history(
 ):
     """Get player stats with historical changes"""
     try:
-        current_stats = await fetch_player_stats(username)
+        from urllib.parse import unquote
+        decoded_username = unquote(username)
+        
+        current_stats = await fetch_player_stats(decoded_username)
         if not current_stats:
             raise HTTPException(status_code=404, detail="Player not found")
+        
+        clan_members = await fetch_clan_members()
+        clan_rank = None
+        print(f"Looking for player in history endpoint: '{decoded_username}'")
+        
+        for member in clan_members:
+            if member['username'].lower().replace('\xa0', ' ') == decoded_username.lower().replace('\xa0', ' '):
+                clan_rank = member['clan_rank']
+                print(f"Found clan rank in history endpoint: {clan_rank}")
+                break
         
         changes_data = {}
         try:
@@ -889,11 +902,15 @@ async def get_player_stats_with_history(
                     from .database import get_player_stats_for_periods
                 except ImportError:
                     from database import get_player_stats_for_periods
-                changes_data = await get_player_stats_for_periods(conn, username, period1, period2)
+                changes_data = await get_player_stats_for_periods(conn, decoded_username, period1, period2)
         except Exception as db_error:
             print(f"Database error fetching changes (historical tracking disabled): {db_error}")
         
         enhanced_stats = current_stats.copy()
+        
+        if clan_rank:
+            enhanced_stats['clan_rank'] = clan_rank
+        
         for skill_name, skill_data in enhanced_stats['stats'].items():
             if skill_name in changes_data:
                 skill_data.update(changes_data[skill_name])
