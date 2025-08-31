@@ -11,6 +11,12 @@ import { getGradientColors, getGradientStyle } from '../utils/gradientUtils'
 interface PlayerStats {
   username: string
   stats: {
+    overall: {
+      rank: number | null
+      level: number
+      xp: number
+      combatlevel: number
+    }
     [skill: string]: {
       rank: number | null
       level: number
@@ -39,9 +45,23 @@ const PlayerProfile = () => {
   const fetchPlayerStats = async () => {
     try {
       const decodedUsername = decodeURIComponent(username || '')
-      const response = await fetch(`${API_URL}/api/player/${encodeURIComponent(decodedUsername)}/stats`)
+      const cacheBuster = Date.now()
+      const requestUrl = `${API_URL}/api/player/${encodeURIComponent(decodedUsername)}/stats?_t=${cacheBuster}`
+      console.log('🔄 Fetching player stats...', { username: decodedUsername, requestUrl })
+      const response = await fetch(requestUrl, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      })
       if (response.ok) {
         const data = await response.json()
+        console.log('✅ Player stats fetched:', { 
+          username: data.username, 
+          combatlevel: data.stats?.overall?.combatlevel,
+          last_updated: data.last_updated 
+        })
         setPlayerData(data)
       } else {
         setError('Clan member not found or stats unavailable')
@@ -119,6 +139,12 @@ const PlayerProfile = () => {
     .map(skill => [skill, playerData.stats[skill]] as [string, any])
 
   const overallStats = playerData.stats.overall
+  
+  console.log('=== PlayerProfile Debug ===')
+  console.log('playerData:', playerData)
+  console.log('overallStats:', overallStats)
+  console.log('combatlevel value:', overallStats.combatlevel)
+  console.log('combatlevel type:', typeof overallStats.combatlevel)
 
   const tabs = [
     { id: 'skills', label: 'Skill Breakdown', icon: TrendingUp },
@@ -302,7 +328,11 @@ const PlayerProfile = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="text-center">
+                <p className="text-sm text-slate-400 mb-1">Combat Level</p>
+                <p className="text-3xl font-bold text-white">{overallStats.combatlevel}</p>
+              </div>
               <div className="text-center">
                 <p className="text-sm text-slate-400 mb-1">Total Level</p>
                 <p className="text-3xl font-bold text-white">{overallStats.level}</p>

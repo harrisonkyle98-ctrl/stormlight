@@ -105,7 +105,8 @@ async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Di
                     stats['overall'] = {
                         'rank': int(data.get('rank', '0').replace(',', '')) if data.get('rank') and data.get('rank') != '0' else None,
                         'level': data.get('totalskill', 0),
-                        'xp': data.get('totalxp', 0)
+                        'xp': data.get('totalxp', 0),
+                        'combatlevel': data.get('combatlevel', 0)
                     }
                     
                     for skill_data in data.get('skillvalues', []):
