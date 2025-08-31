@@ -639,7 +639,7 @@ async def get_clan_stats():
         async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(clan_url)
             response.raise_for_status()
-            clan_data_text = response.text
+            clan_data_text = response.content.decode('latin-1')
         
         print(f"Clan API response: {clan_data_text[:200]}...")  # Debug logging
         
@@ -655,8 +655,14 @@ async def get_clan_stats():
                 if len(parts) >= 4:
                     try:
                         member_name = parts[0].strip()
-                        member_clan_rank = parts[1].strip()  # This is the clanRank variable
-                        member_xp = int(parts[2])  # Total XP is 3rd column
+                        member_clan_rank = parts[1].strip()
+                        member_xp_str = parts[2].strip()
+                        
+                        if member_xp_str.isdigit():
+                            member_xp = int(member_xp_str)
+                        else:
+                            print(f"Warning: Invalid XP value '{member_xp_str}' for member '{member_name}'")
+                            continue
                         
                         total_xp += member_xp
                         member_count += 1
@@ -664,10 +670,12 @@ async def get_clan_stats():
                         if highest_rank_member is None or get_rank_priority(member_clan_rank) < get_rank_priority(highest_rank_member):
                             highest_rank_member = member_clan_rank
                             
-                        print(f"Member: {member_name}, Rank: {member_clan_rank}, XP: {member_xp}")  # Debug logging
+                        print(f"Member: {member_name}, Rank: {member_clan_rank}, XP: {member_xp}")
                     except (ValueError, IndexError) as e:
                         print(f"Error parsing line '{line}': {e}")
                         continue
+                else:
+                    print(f"Warning: Line has insufficient columns ({len(parts)}): '{line}'")
         
         if highest_rank_member:
             clan_rank = highest_rank_member
