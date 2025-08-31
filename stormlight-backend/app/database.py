@@ -46,6 +46,20 @@ async def init_database():
                 
                 CREATE INDEX IF NOT EXISTS idx_player_stats_username_date ON player_stats_history(username, snapshot_date);
                 CREATE INDEX IF NOT EXISTS idx_player_changes_username_date ON player_stat_changes(username, date);
+                
+                CREATE TABLE IF NOT EXISTS clan_activities (
+                    id SERIAL PRIMARY KEY,
+                    username VARCHAR(255) NOT NULL,
+                    text TEXT NOT NULL,
+                    details TEXT,
+                    activity_date VARCHAR(50) NOT NULL,
+                    activity_timestamp BIGINT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(username, text, activity_timestamp)
+                );
+                
+                CREATE INDEX IF NOT EXISTS idx_activities_timestamp ON clan_activities(activity_timestamp DESC);
+                CREATE INDEX IF NOT EXISTS idx_activities_username ON clan_activities(username);
             """)
             print("Database schema initialized successfully")
     except Exception as e:
@@ -201,3 +215,61 @@ async def calculate_daily_changes(conn, username: str, today: date):
                 ON CONFLICT (username, skill_name, date) 
                 DO UPDATE SET level_change = EXCLUDED.level_change, xp_change = EXCLUDED.xp_change, rank_change = EXCLUDED.rank_change
             """, (username, skill_name, today, level_change, xp_change, rank_change, today_row[2], yesterday_row[2]))
+
+async def store_clan_activity(conn, username: str, text: str, details: str, activity_date: str, activity_timestamp: int):
+    """Store a clan activity in the database"""
+    try:
+        await conn.execute("""
+            INSERT INTO clan_activities (username, text, details, activity_date, activity_timestamp)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (username, text, activity_timestamp) DO NOTHING
+        """, (username, text, details, activity_date, activity_timestamp))
+    except Exception as e:
+        print(f"Error storing activity for {username}: {e}")
+
+async def get_stored_activities(conn, limit: int = 100, offset: int = 0):
+    """Get stored activities from database, ordered by timestamp descending"""
+    try:
+        cursor = await conn.execute("""
+            SELECT username, text, details, activity_date, activity_timestamp
+            FROM clan_activities 
+            ORDER BY activity_timestamp DESC 
+            LIMIT %s OFFSET %s
+        """, (limit, offset))
+        
+        rows = await cursor.fetchall()
+        activities = []
+        for row in rows:
+            activities.append({
+                'username': row[0],
+                'text': row[1], 
+                'details': row[2],
+                'date': row[3],
+                'timestamp': row[4]
+            })
+        return activities
+    except Exception as e:
+        print(f"Error retrieving stored activities: {e}")
+        return []
+
+async def get_activity_count(conn):
+    """Get total count of stored activities"""
+    try:
+        cursor = await conn.execute("SELECT COUNT(*) FROM clan_activities")
+        row = await cursor.fetchone()
+        return row[0] if row else 0
+    except Exception as e:
+        print(f"Error getting activity count: {e}")
+        return 0
+
+async def cleanup_old_activities(conn, days_to_keep: int = 30):
+    """Remove activities older than specified days"""
+    try:
+        cutoff_timestamp = datetime.now().timestamp() - (days_to_keep * 24 * 60 * 60)
+        await conn.execute("""
+            DELETE FROM clan_activities 
+            WHERE activity_timestamp < %s
+        """, (cutoff_timestamp,))
+        print(f"Cleaned up activities older than {days_to_keep} days")
+    except Exception as e:
+        print(f"Error cleaning up old activities: {e}")

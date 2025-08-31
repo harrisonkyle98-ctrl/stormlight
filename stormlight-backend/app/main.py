@@ -717,27 +717,54 @@ async def get_clan_activities(
     
     current_time = time_module.time()
     
+    stored_activities = []
+    total_stored_count = 0
+    try:
+        conn = await get_db_connection()
+        async with conn:
+            try:
+                from .database import get_stored_activities, get_activity_count
+            except ImportError:
+                from database import get_stored_activities, get_activity_count
+            
+            stored_activities = await get_stored_activities(conn, limit=50)
+            total_stored_count = await get_activity_count(conn)
+            print(f"Retrieved {len(stored_activities)} stored activities from database")
+    except Exception as db_error:
+        print(f"Database error retrieving activities: {db_error}")
+    
     if (activities_cache['data'] and 
         current_time - activities_cache['timestamp'] < activities_cache['ttl']):
         print("Returning cached activities data")
         all_activities = activities_cache['data']
         
+        combined_activities = stored_activities + all_activities
+        seen_activities = set()
+        unique_activities = []
+        for activity in combined_activities:
+            activity_key = (activity['username'], activity['text'], activity['timestamp'])
+            if activity_key not in seen_activities:
+                seen_activities.add(activity_key)
+                unique_activities.append(activity)
+        
+        unique_activities.sort(key=lambda x: x['timestamp'], reverse=True)
+        
         start_idx = (page - 1) * limit
         end_idx = start_idx + limit
-        paginated_activities = all_activities[start_idx:end_idx]
+        paginated_activities = unique_activities[start_idx:end_idx]
         
         return {
             "activities": paginated_activities,
             "pagination": {
                 "page": page,
                 "limit": 10,
-                "total_activities": len(all_activities),
-                "has_next": end_idx < len(all_activities)
+                "total_activities": len(unique_activities),
+                "has_next": end_idx < len(unique_activities)
             },
             "loading_status": {
                 "is_complete": True,
-                "processed_members": progressive_cache.get('total_members', len(all_activities)),
-                "total_members": progressive_cache.get('total_members', len(all_activities))
+                "processed_members": progressive_cache.get('total_members', len(unique_activities)),
+                "total_members": progressive_cache.get('total_members', len(unique_activities))
             }
         }
     
@@ -745,17 +772,28 @@ async def get_clan_activities(
         print(f"Returning progressive cache with {len(progressive_cache['activities'])} activities from {progressive_cache['processed_members']} members")
         
         all_activities = progressive_cache['activities']
+        combined_activities = stored_activities + all_activities
+        seen_activities = set()
+        unique_activities = []
+        for activity in combined_activities:
+            activity_key = (activity['username'], activity['text'], activity['timestamp'])
+            if activity_key not in seen_activities:
+                seen_activities.add(activity_key)
+                unique_activities.append(activity)
+        
+        unique_activities.sort(key=lambda x: x['timestamp'], reverse=True)
+        
         start_idx = (page - 1) * limit
         end_idx = start_idx + limit
-        paginated_activities = all_activities[start_idx:end_idx]
+        paginated_activities = unique_activities[start_idx:end_idx]
         
         return {
             "activities": paginated_activities,
             "pagination": {
                 "page": page,
                 "limit": 10,
-                "total_activities": len(all_activities),
-                "has_next": end_idx < len(all_activities)
+                "total_activities": len(unique_activities),
+                "has_next": end_idx < len(unique_activities)
             },
             "loading_status": {
                 "is_complete": progressive_cache['is_complete'],
@@ -772,7 +810,7 @@ async def get_clan_activities(
         
         # Only reset progressive cache if not already processing
         if progressive_cache['processed_members'] == 0:
-            progressive_cache['activities'] = []
+            progressive_cache['activities'] = stored_activities.copy()
             progressive_cache['processed_members'] = 0
             progressive_cache['total_members'] = len(members)
             progressive_cache['is_complete'] = False
@@ -802,8 +840,24 @@ async def get_clan_activities(
                             
                             for activity in activities:
                                 try:
-                                    activity_date = datetime.strptime(activity['date'], '%d-%b-%Y %H:%M')
-                                    activity_timestamp = activity_date.timestamp()
+                                    activity_date_str = activity['date']
+                                    
+                                    try:
+                                        activity_date = datetime.strptime(activity_date_str, '%d-%b-%Y %H:%M')
+                                    except ValueError:
+                                        try:
+                                            activity_date = datetime.strptime(activity_date_str, '%d-%b-%Y')
+                                            activity_date = activity_date.replace(hour=0, minute=0)
+                                        except ValueError:
+                                            print(f"Could not parse date format '{activity_date_str}' for {member['username']}")
+                                            continue
+                                    
+                                    activity_timestamp = int(activity_date.timestamp())
+                                    
+                                    current_time = datetime.now().timestamp()
+                                    if activity_timestamp < 0 or activity_timestamp > current_time + 86400:
+                                        print(f"Invalid timestamp {activity_timestamp} for {member['username']}: {activity_date_str}")
+                                        continue
                                     
                                     if activity_timestamp >= two_days_ago:
                                         member_activities.append({
@@ -868,9 +922,31 @@ async def get_clan_activities(
                         
                         if isinstance(result, list):
                             all_activities.extend(result)
+                            
+                            try:
+                                conn = await get_db_connection()
+                                async with conn:
+                                    try:
+                                        from .database import store_clan_activity
+                                    except ImportError:
+                                        from database import store_clan_activity
+                                    
+                                    for activity in result:
+                                        await store_clan_activity(
+                                            conn, 
+                                            activity['username'], 
+                                            activity['text'], 
+                                            activity['details'], 
+                                            activity['date'], 
+                                            activity['timestamp']
+                                        )
+                            except Exception as db_error:
+                                print(f"Error storing activities to database: {db_error}")
+                            
+                            combined_activities = stored_activities + all_activities
                             seen_activities = set()
                             unique_activities = []
-                            for activity in all_activities:
+                            for activity in combined_activities:
                                 activity_key = (activity['username'], activity['text'], activity['timestamp'])
                                 if activity_key not in seen_activities:
                                     seen_activities.add(activity_key)
@@ -893,13 +969,16 @@ async def get_clan_activities(
             print(f"Background processing complete: {len(all_activities)} total activities")
             all_activities.sort(key=lambda x: x['timestamp'], reverse=True)
             
+            combined_activities = stored_activities + all_activities
             seen_activities = set()
             unique_all_activities = []
-            for activity in all_activities:
+            for activity in combined_activities:
                 activity_key = (activity['username'], activity['text'], activity['timestamp'])
                 if activity_key not in seen_activities:
                     seen_activities.add(activity_key)
                     unique_all_activities.append(activity)
+            
+            unique_all_activities.sort(key=lambda x: x['timestamp'], reverse=True)
             
             activities_cache['data'] = unique_all_activities
             activities_cache['timestamp'] = time_module.time()
@@ -1046,6 +1125,17 @@ async def startup_event():
                     print(f"Next daily stats collection scheduled in {sleep_seconds/3600:.1f} hours")
                     await asyncio.sleep(sleep_seconds)
                     await collect_daily_player_stats()
+                    
+                    try:
+                        conn = await get_db_connection()
+                        async with conn:
+                            try:
+                                from .database import cleanup_old_activities
+                            except ImportError:
+                                from database import cleanup_old_activities
+                            await cleanup_old_activities(conn, days_to_keep=30)
+                    except Exception as e:
+                        print(f"Error cleaning up activities: {e}")
                 except Exception as e:
                     print(f"Error in daily scheduler: {e}")
                     await asyncio.sleep(3600)
