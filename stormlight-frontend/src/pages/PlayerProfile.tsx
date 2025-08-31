@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { ArrowLeft, User, Trophy, TrendingUp, Crown, Package, Activity, MapPin, BarChart3, Swords, FileText } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { getSkillIcon } from '../utils/skillIcons'
@@ -22,6 +23,8 @@ interface PlayerStats {
       rank_change?: number
       xp_today?: number
       xp_yesterday?: number
+      xp_period1?: number
+      xp_period2?: number
     }
     [skill: string]: {
       rank: number | null
@@ -32,6 +35,8 @@ interface PlayerStats {
       rank_change?: number
       xp_today?: number
       xp_yesterday?: number
+      xp_period1?: number
+      xp_period2?: number
     }
   }
   last_updated: string
@@ -44,6 +49,8 @@ const PlayerProfile = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('skills')
+  const [period1, setPeriod1] = useState('today')
+  const [period2, setPeriod2] = useState('yesterday')
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -51,13 +58,13 @@ const PlayerProfile = () => {
     if (username) {
       fetchPlayerStats()
     }
-  }, [username])
+  }, [username, period1, period2])
 
   const fetchPlayerStats = async () => {
     try {
       const decodedUsername = decodeURIComponent(username || '')
       const cacheBuster = Date.now()
-      const requestUrl = `${API_URL}/api/player/${encodeURIComponent(decodedUsername)}/stats/history?_t=${cacheBuster}`
+      const requestUrl = `${API_URL}/api/player/${encodeURIComponent(decodedUsername)}/stats/history?period1=${period1}&period2=${period2}&_t=${cacheBuster}`
       console.log('🔄 Fetching player stats with history...', { username: decodedUsername, requestUrl })
       const response = await fetch(requestUrl, {
         cache: 'no-cache',
@@ -186,8 +193,44 @@ const PlayerProfile = () => {
                   <TableHead className="text-slate-400 font-medium py-3 h-auto">Level</TableHead>
                   <TableHead className="text-slate-400 font-medium py-3 h-auto">Rank</TableHead>
                   <TableHead className="text-slate-400 font-medium py-3 h-auto">XP</TableHead>
-                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Today</TableHead>
-                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Yesterday</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">
+                    <Select value={period1} onValueChange={(value) => {
+                      setPeriod1(value)
+                    }}>
+                      <SelectTrigger className="w-32 bg-slate-700 border-slate-600 text-slate-400 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-700 border-slate-600">
+                        <SelectItem value="today" className="text-white hover:bg-slate-600">Today</SelectItem>
+                        <SelectItem value="yesterday" className="text-white hover:bg-slate-600">Yesterday</SelectItem>
+                        <SelectItem value="week" className="text-white hover:bg-slate-600">Week</SelectItem>
+                        <SelectItem value="month" className="text-white hover:bg-slate-600">Month</SelectItem>
+                        <SelectItem value="year" className="text-white hover:bg-slate-600">Year</SelectItem>
+                        <SelectItem value="last_week" className="text-white hover:bg-slate-600">Last Week</SelectItem>
+                        <SelectItem value="last_month" className="text-white hover:bg-slate-600">Last Month</SelectItem>
+                        <SelectItem value="last_year" className="text-white hover:bg-slate-600">Last Year</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">
+                    <Select value={period2} onValueChange={(value) => {
+                      setPeriod2(value)
+                    }}>
+                      <SelectTrigger className="w-32 bg-slate-700 border-slate-600 text-slate-400 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-700 border-slate-600">
+                        <SelectItem value="today" className="text-white hover:bg-slate-600">Today</SelectItem>
+                        <SelectItem value="yesterday" className="text-white hover:bg-slate-600">Yesterday</SelectItem>
+                        <SelectItem value="week" className="text-white hover:bg-slate-600">Week</SelectItem>
+                        <SelectItem value="month" className="text-white hover:bg-slate-600">Month</SelectItem>
+                        <SelectItem value="year" className="text-white hover:bg-slate-600">Year</SelectItem>
+                        <SelectItem value="last_week" className="text-white hover:bg-slate-600">Last Week</SelectItem>
+                        <SelectItem value="last_month" className="text-white hover:bg-slate-600">Last Month</SelectItem>
+                        <SelectItem value="last_year" className="text-white hover:bg-slate-600">Last Year</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -255,7 +298,7 @@ const PlayerProfile = () => {
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-slate-400 font-medium">
-                        {data.xp_yesterday ? data.xp_yesterday.toLocaleString() : '0'}
+                        {data.xp_period2 ? data.xp_period2.toLocaleString() : '0'}
                       </span>
                     </TableCell>
                   </TableRow>

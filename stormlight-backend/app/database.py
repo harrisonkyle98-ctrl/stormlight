@@ -97,6 +97,76 @@ async def collect_daily_player_stats():
     except Exception as e:
         print(f"Error in daily stats collection: {e}")
 
+def get_date_for_period(period: str, reference_date: date = None) -> date:
+    """Calculate date for a given time period"""
+    if reference_date is None:
+        reference_date = date.today()
+    
+    period_map = {
+        'today': reference_date,
+        'yesterday': reference_date - timedelta(days=1),
+        'week': reference_date - timedelta(days=7),
+        'month': reference_date - timedelta(days=30),
+        'year': reference_date - timedelta(days=365),
+        'last_week': reference_date - timedelta(days=14),
+        'last_month': reference_date - timedelta(days=60),
+        'last_year': reference_date - timedelta(days=730)
+    }
+    
+    return period_map.get(period.lower(), reference_date)
+
+async def get_player_stats_for_periods(conn, username: str, period1: str, period2: str):
+    """Get player stats comparison between two time periods"""
+    date1 = get_date_for_period(period1)
+    date2 = get_date_for_period(period2)
+    
+    period1_cursor = await conn.execute("""
+        SELECT skill_name, level, xp, rank FROM player_stats_history 
+        WHERE username = %s AND snapshot_date = %s
+    """, (username, date1))
+    
+    period2_cursor = await conn.execute("""
+        SELECT skill_name, level, xp, rank FROM player_stats_history 
+        WHERE username = %s AND snapshot_date = %s
+    """, (username, date2))
+    
+    period1_rows = await period1_cursor.fetchall()
+    period2_rows = await period2_cursor.fetchall()
+    
+    period1_dict = {row[0]: row for row in period1_rows}
+    period2_dict = {row[0]: row for row in period2_rows}
+    
+    changes_data = {}
+    
+    all_skills = set(period1_dict.keys()) | set(period2_dict.keys())
+    
+    for skill_name in all_skills:
+        period1_data = period1_dict.get(skill_name)
+        period2_data = period2_dict.get(skill_name)
+        
+        if period1_data and period2_data:
+            level_change = period1_data[1] - period2_data[1]
+            xp_change = period1_data[2] - period2_data[2]
+            rank_change = (period2_data[3] or 0) - (period1_data[3] or 0)
+            
+            changes_data[skill_name] = {
+                'level_change': level_change,
+                'xp_change': xp_change,
+                'rank_change': rank_change,
+                'xp_period1': period1_data[2],
+                'xp_period2': period2_data[2]
+            }
+        elif period1_data:
+            changes_data[skill_name] = {
+                'level_change': 0,
+                'xp_change': 0,
+                'rank_change': 0,
+                'xp_period1': period1_data[2],
+                'xp_period2': period1_data[2]
+            }
+    
+    return changes_data
+
 async def calculate_daily_changes(conn, username: str, today: date):
     """Calculate daily changes for a player"""
     yesterday = today - timedelta(days=1)

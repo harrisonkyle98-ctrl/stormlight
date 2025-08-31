@@ -869,7 +869,11 @@ async def get_clan_activities(
         }
 
 @app.get("/api/player/{username}/stats/history")
-async def get_player_stats_with_history(username: str):
+async def get_player_stats_with_history(
+    username: str, 
+    period1: str = Query("today", description="First time period for comparison"),
+    period2: str = Query("yesterday", description="Second time period for comparison")
+):
     """Get player stats with historical changes"""
     try:
         current_stats = await fetch_player_stats(username)
@@ -879,23 +883,13 @@ async def get_player_stats_with_history(username: str):
         changes_data = {}
         try:
             conn = await get_db_connection()
-            today = date.today()
             
             async with conn:
-                changes_result = await conn.execute("""
-                    SELECT skill_name, level_change, xp_change, rank_change, xp_today, xp_yesterday
-                    FROM player_stat_changes 
-                    WHERE username = %s AND date = %s
-                """, (username, today))
-                
-                changes_rows = await changes_result.fetchall()
-                changes_data = {row[0]: {
-                    'level_change': row[1],
-                    'xp_change': row[2], 
-                    'rank_change': row[3],
-                    'xp_today': row[4],
-                    'xp_yesterday': row[5]
-                } for row in changes_rows}
+                try:
+                    from .database import get_player_stats_for_periods
+                except ImportError:
+                    from database import get_player_stats_for_periods
+                changes_data = await get_player_stats_for_periods(conn, username, period1, period2)
         except Exception as db_error:
             print(f"Database error fetching changes (historical tracking disabled): {db_error}")
         
@@ -909,7 +903,9 @@ async def get_player_stats_with_history(username: str):
                     'xp_change': 0,
                     'rank_change': 0,
                     'xp_today': skill_data['xp'],
-                    'xp_yesterday': skill_data['xp']
+                    'xp_yesterday': skill_data['xp'],
+                    'xp_period1': skill_data['xp'],
+                    'xp_period2': skill_data['xp']
                 })
         
         return enhanced_stats
