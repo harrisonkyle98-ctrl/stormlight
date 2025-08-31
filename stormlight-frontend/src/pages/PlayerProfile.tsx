@@ -234,12 +234,12 @@ const PlayerProfile = () => {
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-green-400 font-medium">
-                        {(data.xp_today || data.xp).toLocaleString()}
+                        {data.xp_change ? `+${data.xp_change.toLocaleString()}` : '0'}
                       </span>
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-slate-400 font-medium">
-                        {(data.xp_yesterday || data.xp).toLocaleString()}
+                        0
                       </span>
                     </TableCell>
                   </TableRow>
