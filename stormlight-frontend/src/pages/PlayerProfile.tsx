@@ -411,12 +411,23 @@ const PlayerProfile = () => {
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
-        <Link to="/members">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Members
-        </Link>
-      </Button>
+      <div className="flex items-center justify-between">
+        <Button asChild variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+          <Link to="/members">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Members
+          </Link>
+        </Button>
+        <Button
+          onClick={handleRefresh}
+          disabled={refreshing || (lastRefresh ? Date.now() - lastRefresh < 300000 : false)}
+          variant="outline"
+          size="sm"
+          className="border-slate-600 text-slate-300 hover:bg-slate-700 disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+        </Button>
+      </div>
 
       <div className="text-center">
         <div className="flex flex-col items-center space-y-4 mb-4">
@@ -478,20 +489,9 @@ const PlayerProfile = () => {
       {overallStats && (
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader>
-            <CardTitle className="text-white flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Trophy className="w-5 h-5 text-yellow-400" />
-                <span>Overall Stats</span>
-              </div>
-              <Button
-                onClick={handleRefresh}
-                disabled={refreshing || (lastRefresh ? Date.now() - lastRefresh < 300000 : false)}
-                variant="outline"
-                size="sm"
-                className="border-slate-600 text-slate-300 hover:bg-slate-700 disabled:opacity-50"
-              >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-              </Button>
+            <CardTitle className="text-white flex items-center space-x-2">
+              <Trophy className="w-5 h-5 text-yellow-400" />
+              <span>Overall Stats</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
