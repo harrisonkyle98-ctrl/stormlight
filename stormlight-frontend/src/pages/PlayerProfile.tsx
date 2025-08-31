@@ -17,11 +17,21 @@ interface PlayerStats {
       level: number
       xp: number
       combatlevel: number
+      level_change?: number
+      xp_change?: number
+      rank_change?: number
+      xp_today?: number
+      xp_yesterday?: number
     }
     [skill: string]: {
       rank: number | null
       level: number
       xp: number
+      level_change?: number
+      xp_change?: number
+      rank_change?: number
+      xp_today?: number
+      xp_yesterday?: number
     }
   }
   last_updated: string
@@ -47,8 +57,8 @@ const PlayerProfile = () => {
     try {
       const decodedUsername = decodeURIComponent(username || '')
       const cacheBuster = Date.now()
-      const requestUrl = `${API_URL}/api/player/${encodeURIComponent(decodedUsername)}/stats?_t=${cacheBuster}`
-      console.log('🔄 Fetching player stats...', { username: decodedUsername, requestUrl })
+      const requestUrl = `${API_URL}/api/player/${encodeURIComponent(decodedUsername)}/stats/history?_t=${cacheBuster}`
+      console.log('🔄 Fetching player stats with history...', { username: decodedUsername, requestUrl })
       const response = await fetch(requestUrl, {
         cache: 'no-cache',
         headers: {
@@ -58,9 +68,10 @@ const PlayerProfile = () => {
       })
       if (response.ok) {
         const data = await response.json()
-        console.log('✅ Player stats fetched:', { 
+        console.log('✅ Player stats with history fetched:', { 
           username: data.username, 
           combatlevel: data.stats?.overall?.combatlevel,
+          rank_changes: Object.keys(data.stats).filter(skill => data.stats[skill].rank_change !== 0).length,
           last_updated: data.last_updated 
         })
         setPlayerData(data)
@@ -68,8 +79,8 @@ const PlayerProfile = () => {
         setError('Clan member not found or stats unavailable')
       }
     } catch (error) {
-      console.error('Error fetching clan member stats:', error)
-      setError('Failed to load clan member stats')
+      console.error('Error fetching player stats:', error)
+      setError('Failed to load player stats')
     } finally {
       setLoading(false)
     }
@@ -169,6 +180,8 @@ const PlayerProfile = () => {
                   <TableHead className="text-slate-400 font-medium py-3 h-auto">Level</TableHead>
                   <TableHead className="text-slate-400 font-medium py-3 h-auto">Rank</TableHead>
                   <TableHead className="text-slate-400 font-medium py-3 h-auto">XP</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Today</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Yesterday</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -189,22 +202,44 @@ const PlayerProfile = () => {
                       </div>
                     </TableCell>
                     <TableCell className="py-3">
-                      <Badge variant="outline" className="text-blue-400 border-blue-400">
-                        {data.level}
-                      </Badge>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="outline" className="text-blue-400 border-blue-400">
+                          {data.level}
+                        </Badge>
+                        {data.level_change && data.level_change > 0 && (
+                          <span className="text-green-400 text-sm">+{data.level_change}</span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="py-3">
-                      {data.rank ? (
-                        <span className="text-blue-400 font-medium">
-                          #{data.rank.toLocaleString()}
-                        </span>
-                      ) : (
-                        <span className="text-slate-500">--</span>
-                      )}
+                      <div className="flex items-center space-x-2">
+                        {data.rank ? (
+                          <span className="text-blue-400 font-medium">
+                            #{data.rank.toLocaleString()}
+                          </span>
+                        ) : (
+                          <span className="text-slate-500">--</span>
+                        )}
+                        {data.rank_change && data.rank_change !== 0 && (
+                          <span className={`text-sm ${data.rank_change > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {data.rank_change > 0 ? '+' : ''}{data.rank_change}
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-green-400 font-medium">
                         {data.xp.toLocaleString()}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <span className="text-green-400 font-medium">
+                        {(data.xp_today || data.xp).toLocaleString()}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <span className="text-slate-400 font-medium">
+                        {(data.xp_yesterday || data.xp).toLocaleString()}
                       </span>
                     </TableCell>
                   </TableRow>

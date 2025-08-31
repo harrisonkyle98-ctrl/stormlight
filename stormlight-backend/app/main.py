@@ -7,13 +7,18 @@ import os
 from dotenv import load_dotenv
 from typing import Optional, List, Dict, Any
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import jwt
 from authlib.integrations.starlette_client import OAuth
 from starlette.middleware.sessions import SessionMiddleware
 import asyncio
 import random
-import time
+import time as time_module
+from datetime import time as datetime_time
+try:
+    from .database import init_database, get_db_connection, collect_daily_player_stats
+except ImportError:
+    from database import init_database, get_db_connection, collect_daily_player_stats
 
 load_dotenv()
 
@@ -302,7 +307,7 @@ async def get_player_stats(username: str):
     from urllib.parse import unquote
     decoded_username = unquote(username)
     
-    current_time = time.time()
+    current_time = time_module.time()
     
     if (decoded_username in profile_cache['data'] and 
         decoded_username in profile_cache['timestamps'] and
@@ -634,7 +639,7 @@ async def get_clan_activities(
     print(f"=== API REQUEST: get_clan_activities with page={page}, limit={limit} ===")
     print(f"Progressive cache state: {progressive_cache['processed_members']} members, {len(progressive_cache['activities'])} activities, complete={progressive_cache['is_complete']}")
     
-    current_time = time.time()
+    current_time = time_module.time()
     
     if (activities_cache['data'] and 
         current_time - activities_cache['timestamp'] < activities_cache['ttl']):
@@ -649,7 +654,7 @@ async def get_clan_activities(
             "activities": paginated_activities,
             "pagination": {
                 "page": page,
-                "limit": limit,
+                "limit": 10,
                 "total_activities": len(all_activities),
                 "has_next": end_idx < len(all_activities)
             },
@@ -672,7 +677,7 @@ async def get_clan_activities(
             "activities": paginated_activities,
             "pagination": {
                 "page": page,
-                "limit": limit,
+                "limit": 10,
                 "total_activities": len(all_activities),
                 "has_next": end_idx < len(all_activities)
             },
@@ -821,7 +826,7 @@ async def get_clan_activities(
                     unique_all_activities.append(activity)
             
             activities_cache['data'] = unique_all_activities
-            activities_cache['timestamp'] = time.time()
+            activities_cache['timestamp'] = time_module.time()
             progressive_cache['activities'] = unique_all_activities
             progressive_cache['is_complete'] = True
             print(f"Cached {len(unique_all_activities)} activities for {activities_cache['ttl']} seconds")
@@ -833,7 +838,7 @@ async def get_clan_activities(
             "activities": [],
             "pagination": {
                 "page": page,
-                "limit": limit,
+                "limit": 10,
                 "total_activities": 0,
                 "has_next": False
             },
@@ -843,7 +848,7 @@ async def get_clan_activities(
                 "total_members": len(members)
             }
         }
-        
+    
     except Exception as e:
         print(f"Error fetching clan activities: {e}")
         import traceback
@@ -852,7 +857,7 @@ async def get_clan_activities(
             "activities": [],
             "pagination": {
                 "page": 1,
-                "limit": limit,
+                "limit": 10,
                 "total_activities": 0,
                 "has_next": False
             },
@@ -862,3 +867,84 @@ async def get_clan_activities(
                 "total_members": 0
             }
         }
+
+@app.get("/api/player/{username}/stats/history")
+async def get_player_stats_with_history(username: str):
+    """Get player stats with historical changes"""
+    try:
+        current_stats = await fetch_player_stats(username)
+        if not current_stats:
+            raise HTTPException(status_code=404, detail="Player not found")
+        
+        changes_data = {}
+        try:
+            conn = await get_db_connection()
+            today = date.today()
+            
+            async with conn:
+                changes_result = await conn.execute("""
+                    SELECT skill_name, level_change, xp_change, rank_change, xp_today, xp_yesterday
+                    FROM player_stat_changes 
+                    WHERE username = %s AND date = %s
+                """, (username, today))
+                
+                changes_rows = await changes_result.fetchall()
+                changes_data = {row[0]: {
+                    'level_change': row[1],
+                    'xp_change': row[2], 
+                    'rank_change': row[3],
+                    'xp_today': row[4],
+                    'xp_yesterday': row[5]
+                } for row in changes_rows}
+        except Exception as db_error:
+            print(f"Database error fetching changes (historical tracking disabled): {db_error}")
+        
+        enhanced_stats = current_stats.copy()
+        for skill_name, skill_data in enhanced_stats['stats'].items():
+            if skill_name in changes_data:
+                skill_data.update(changes_data[skill_name])
+            else:
+                skill_data.update({
+                    'level_change': 0,
+                    'xp_change': 0,
+                    'rank_change': 0,
+                    'xp_today': skill_data['xp'],
+                    'xp_yesterday': skill_data['xp']
+                })
+        
+        return enhanced_stats
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching player history: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching player history")
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database and start scheduled tasks"""
+    try:
+        await init_database()
+        
+        async def daily_scheduler():
+            while True:
+                try:
+                    now = datetime.now()
+                    next_run = now.replace(hour=2, minute=0, second=0, microsecond=0)
+                    if now.time() > datetime_time(2, 0):
+                        next_run += timedelta(days=1)
+                    
+                    sleep_seconds = (next_run - now).total_seconds()
+                    print(f"Next daily stats collection scheduled in {sleep_seconds/3600:.1f} hours")
+                    await asyncio.sleep(sleep_seconds)
+                    await collect_daily_player_stats()
+                except Exception as e:
+                    print(f"Error in daily scheduler: {e}")
+                    await asyncio.sleep(3600)
+        
+        asyncio.create_task(daily_scheduler())
+        
+    except Exception as e:
+        print(f"Error during startup: {e}")
+        import traceback
+        traceback.print_exc()
