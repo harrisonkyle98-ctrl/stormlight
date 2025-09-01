@@ -1122,8 +1122,8 @@ async def get_clan_activities(
         }
 
 @app.get("/api/player/{username}/activities")
-async def get_player_activities(username: str):
-    """Get recent activities for a specific player"""
+async def get_player_activities(username: str, page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50)):
+    """Get recent activities for a specific player with pagination"""
     from urllib.parse import unquote
     decoded_username = unquote(username).replace('-', ' ')
     
@@ -1196,11 +1196,19 @@ async def get_player_activities(username: str):
         return []
     
     try:
-        activities = await fetch_single_player_activities(decoded_username)
+        all_activities = await fetch_single_player_activities(decoded_username)
+        
+        start_idx = (page - 1) * limit
+        end_idx = start_idx + limit
+        paginated_activities = all_activities[start_idx:end_idx]
+        
         return {
-            "activities": activities,
+            "activities": paginated_activities,
             "player": decoded_username,
-            "total_activities": len(activities)
+            "total_activities": len(all_activities),
+            "page": page,
+            "limit": limit,
+            "has_more": end_idx < len(all_activities)
         }
     except Exception as e:
         print(f"Error fetching player activities for {decoded_username}: {e}")
