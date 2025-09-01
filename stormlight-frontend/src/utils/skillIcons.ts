@@ -1,6 +1,6 @@
 export const getSkillIcon = (skill: string): string | null => {
   const skillImageMap: { [key: string]: string | null } = {
-    'overall': null, // no overall image available
+    'overall': 'overall.png',
     'attack': 'Attack_detail.png',
     'defence': 'defence.png',
     'strength': 'strength.png',

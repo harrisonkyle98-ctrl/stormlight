@@ -195,7 +195,7 @@ const PlayerProfile = () => {
   }
 
   const skillOrder = [
-    'attack', 'defence', 'strength', 'constitution', 'ranged', 'prayer',
+    'overall', 'attack', 'defence', 'strength', 'constitution', 'ranged', 'prayer',
     'magic', 'cooking', 'woodcutting', 'fletching', 'fishing', 'firemaking',
     'crafting', 'smithing', 'mining', 'herblore', 'agility', 'thieving',
     'slayer', 'farming', 'runecrafting', 'hunter', 'construction', 'summoning',
