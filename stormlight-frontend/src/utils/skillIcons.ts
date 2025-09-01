@@ -1,12 +1,12 @@
 export const getSkillIcon = (skill: string): string | null => {
   const skillImageMap: { [key: string]: string | null } = {
     'overall': 'overall.png',
-    'attack': 'Attack_detail.png',
+    'attack': 'attack.png',
     'defence': 'defence.png',
     'strength': 'strength.png',
     'constitution': 'constitution.png',
     'ranged': 'ranged.png',
-    'prayer': 'Prayer.png',
+    'prayer': 'prayer.png',
     'magic': 'magic.png',
     'cooking': 'cooking.png',
     'woodcutting': 'woodcutting.png',
