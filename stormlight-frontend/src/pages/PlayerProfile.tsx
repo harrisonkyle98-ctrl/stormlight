@@ -451,7 +451,7 @@ const PlayerProfile = () => {
         <div className="flex flex-col items-center space-y-4 mb-4">
           <Avatar className="w-20 h-20">
             <AvatarImage
-              src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(urlToUsername(username || '').replace(/\s+/g, '%20'))}/chat.png`}
+              src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(urlToUsername(username || ''))}/chat.png`}
               alt={urlToUsername(username || '')}
             />
             <AvatarFallback className="bg-blue-600 text-white">
