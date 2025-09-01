@@ -94,8 +94,8 @@ export const checkPlayerMilestones = (stats: any): MilestoneBadge[] => {
   
   if (skills.length === 0) return badges
   
-  const maxXpSkills = skills.filter(([_, data]: [string, any]) => data.xp >= 20000000)
-  if (maxXpSkills.length === skills.length) {
+  const totalXp = skills.reduce((sum, [_, data]: [string, any]) => sum + (data.xp || 0), 0)
+  if (totalXp >= 5800000000) {
     badges.push({
       id: 'max-xp',
       name: 'Max XP',
