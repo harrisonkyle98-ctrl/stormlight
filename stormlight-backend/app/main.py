@@ -260,7 +260,7 @@ async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Di
                             if xp > 100000000:  # 100M+ XP
                                 print(f"DEBUG: {skill_name} - API Level: {api_level}, XP: {xp:,}, Virtual Level: {virtual_level}")
                             
-                            displayed_xp = min(xp, 200000000) if skill_name != 'invention' else xp
+                            displayed_xp = xp // 10
                             
                             skill_stats[skill_name] = {
                                 'rank': skill_data.get('rank'),
