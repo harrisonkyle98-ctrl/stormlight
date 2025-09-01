@@ -46,6 +46,7 @@ interface PlayerStats {
       xp_period2?: number
     }
   }
+  quest_points?: number
   last_updated: string
   clan_rank?: string
 }
@@ -508,10 +509,14 @@ const PlayerProfile = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
               <div className="text-center">
                 <p className="text-sm text-slate-400 mb-1">Combat Level</p>
                 <p className="text-3xl font-bold text-white">{overallStats.combatlevel}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-slate-400 mb-1">Quest Points</p>
+                <p className="text-3xl font-bold text-yellow-400">{playerData.quest_points || 0}</p>
               </div>
               <div className="text-center">
                 <p className="text-sm text-slate-400 mb-1">Total Level</p>

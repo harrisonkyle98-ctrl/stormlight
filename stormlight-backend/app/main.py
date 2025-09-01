@@ -284,8 +284,14 @@ async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Di
                                 'xp': 0
                             }
                     
+                    try:
+                        quest_points = data.get('questpoints', 0)
+                    except:
+                        quest_points = 0
+
                     return {
                         'stats': stats,
+                        'quest_points': quest_points,
                         'last_updated': datetime.now(),
                         'username': data.get('name', username)
                     }
@@ -1217,6 +1223,47 @@ async def get_player_activities(username: str, page: int = Query(1, ge=1), limit
             "player": decoded_username,
             "total_activities": 0
         }
+
+@app.get("/api/player/{username}/quests")
+async def get_player_quests(username: str):
+    """Get player quest data from RuneScape RuneMetrics API"""
+    from urllib.parse import unquote
+    decoded_username = unquote(username).replace('-', ' ')
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            profile_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={decoded_username}"
+            profile_response = await client.get(profile_url)
+            
+            quest_summary = {}
+            if profile_response.status_code == 200:
+                profile_data = profile_response.json()
+                quest_summary = {
+                    'questsstarted': profile_data.get('questsstarted', 0),
+                    'questscomplete': profile_data.get('questscomplete', 0),
+                    'questsnotstarted': profile_data.get('questsnotstarted', 0)
+                }
+            
+            quests_url = f"https://apps.runescape.com/runemetrics/quests?user={decoded_username}"
+            quests_response = await client.get(quests_url)
+            
+            if quests_response.status_code == 200:
+                quests_data = quests_response.json()
+                
+                total_quest_points = sum(quest.get('questPoints', 0) for quest in quests_data.get('quests', []) if quest.get('status') == 'COMPLETED')
+                
+                return {
+                    'quest_summary': quest_summary,
+                    'total_quest_points': total_quest_points,
+                    'quests': quests_data.get('quests', []),
+                    'username': decoded_username
+                }
+            else:
+                raise HTTPException(status_code=404, detail="Quest data not found")
+                
+    except Exception as e:
+        print(f"Error fetching quest data for {decoded_username}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch quest data")
 
 @app.get("/api/player/{username}/stats/history")
 async def get_player_stats_with_history(
