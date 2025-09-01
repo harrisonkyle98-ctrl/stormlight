@@ -242,7 +242,7 @@ const Members = () => {
                       </Badge>
                       <Avatar className="w-10 h-10">
                         <AvatarImage
-                          src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(member.username.replace(/\s+/g, '%20'))}/chat.png`}
+                          src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(member.username)}/chat.png`}
                           alt={member.username}
                         />
                         <AvatarFallback className="bg-blue-600 text-white">
