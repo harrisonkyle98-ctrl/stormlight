@@ -289,6 +289,21 @@ async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Di
                     except:
                         quest_points = 0
 
+                    try:
+                        quests_url = f"https://apps.runescape.com/runemetrics/quests?user={username}"
+                        quest_response = await client.get(quests_url)
+                        if quest_response.status_code == 200:
+                            quest_data = quest_response.json()
+                            quest_points = sum(quest.get('questPoints', 0) for quest in quest_data.get('quests', []) if quest.get('status') == 'COMPLETED')
+                            print(f"DEBUG: Fetched quest_points for {username}: {quest_points}")
+                        else:
+                            quest_points = 0
+                            print(f"DEBUG: Quest API failed for {username}, status: {quest_response.status_code}")
+                    except Exception as e:
+                        quest_points = 0
+                        print(f"DEBUG: Quest API exception for {username}: {e}")
+
+                    print(f"DEBUG: Returning quest_points for {username}: {quest_points}")
                     return {
                         'stats': stats,
                         'quest_points': quest_points,
@@ -1322,6 +1337,12 @@ async def get_player_stats_with_history(
         
         if clan_rank:
             enhanced_stats['clan_rank'] = clan_rank
+        
+        if 'quest_points' in current_stats:
+            enhanced_stats['quest_points'] = current_stats['quest_points']
+            print(f"DEBUG: Preserved quest_points in enhanced_stats for {decoded_username}: {current_stats['quest_points']}")
+        else:
+            print(f"DEBUG: No quest_points found in current_stats for {decoded_username}")
         
         for skill_name, skill_data in enhanced_stats['stats'].items():
             if skill_name in changes_data:

@@ -516,7 +516,7 @@ const PlayerProfile = () => {
               </div>
               <div className="text-center">
                 <p className="text-sm text-slate-400 mb-1">Quest Points</p>
-                <p className="text-3xl font-bold text-yellow-400">{playerData.quest_points || 0}</p>
+                <p className="text-3xl font-bold text-white">{playerData.quest_points || 0}</p>
               </div>
               <div className="text-center">
                 <p className="text-sm text-slate-400 mb-1">Total Level</p>

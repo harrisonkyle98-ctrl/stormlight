@@ -95,7 +95,7 @@ export const QuestsTab = ({ username, playerData: _playerData, API_URL }: TabPro
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="text-center p-4 bg-slate-700/50 rounded-lg">
           <p className="text-sm text-slate-400 mb-1">Total Quest Points</p>
-          <p className="text-2xl font-bold text-yellow-400">{questData.total_quest_points}</p>
+          <p className="text-2xl font-bold text-blue-400">{questData.total_quest_points}</p>
         </div>
         <div className="text-center p-4 bg-slate-700/50 rounded-lg">
           <p className="text-sm text-slate-400 mb-1">Completed</p>
