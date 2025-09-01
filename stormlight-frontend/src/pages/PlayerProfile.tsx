@@ -451,8 +451,8 @@ const PlayerProfile = () => {
         <div className="flex flex-col items-center space-y-4 mb-4">
           <Avatar className="w-20 h-20">
             <AvatarImage
-              src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(decodeURIComponent(username || '').replace(/\s+/g, '%20'))}/chat.png`}
-              alt={decodeURIComponent(username || '')}
+              src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(urlToUsername(username || '').replace(/\s+/g, '%20'))}/chat.png`}
+              alt={urlToUsername(username || '')}
             />
             <AvatarFallback className="bg-blue-600 text-white">
               <User className="w-10 h-10" />
@@ -461,9 +461,9 @@ const PlayerProfile = () => {
           <div>
             <h1 
               className="text-3xl font-bold"
-              style={getGradientStyle(decodeURIComponent(username || ''), playerData.clan_rank)}
+              style={getGradientStyle(urlToUsername(username || ''), playerData.clan_rank)}
             >
-              {decodeURIComponent(username || '')}
+              {urlToUsername(username || '')}
             </h1>
             <p className="text-slate-400">
               Last updated: {new Date(playerData.last_updated).toLocaleDateString()}
@@ -486,7 +486,7 @@ const PlayerProfile = () => {
                 <div 
                   className="px-3 py-1 text-base font-semibold flex items-center space-x-2 rounded-md text-white"
                   style={{
-                    background: `linear-gradient(135deg, ${getGradientColors(decodeURIComponent(username || ''), playerData.clan_rank)[0]}, ${getGradientColors(decodeURIComponent(username || ''), playerData.clan_rank)[1]})`
+                    background: `linear-gradient(135deg, ${getGradientColors(urlToUsername(username || ''), playerData.clan_rank)[0]}, ${getGradientColors(urlToUsername(username || ''), playerData.clan_rank)[1]})`
                   }}
                 >
                   {getRankIcon(playerData.clan_rank) ? (
