@@ -70,30 +70,30 @@ users_db = {}
 clan_members_db = {}
 
 RUNEMETRICS_SKILL_MAPPING = {
-    0: 'overall',
-    1: 'attack',
-    2: 'defence',
-    3: 'strength',
-    4: 'constitution',
-    5: 'ranged',
-    6: 'prayer',
-    7: 'magic',
-    8: 'cooking',
-    9: 'woodcutting',
-    10: 'fletching',
-    11: 'fishing',
-    12: 'firemaking',
-    13: 'crafting',
-    14: 'smithing',
-    15: 'mining',
-    16: 'herblore',
-    17: 'agility',
-    18: 'thieving',
-    19: 'slayer',
-    20: 'farming',
-    21: 'runecrafting',
-    22: 'hunter',
-    23: 'construction',
+    0: 'attack',
+    1: 'defence',
+    2: 'strength',
+    3: 'constitution',
+    4: 'ranged',
+    5: 'prayer',
+    6: 'magic',
+    7: 'cooking',
+    8: 'woodcutting',
+    9: 'fletching',
+    10: 'fishing',
+    11: 'firemaking',
+    12: 'crafting',
+    13: 'smithing',
+    14: 'mining',
+    15: 'herblore',
+    16: 'agility',
+    17: 'thieving',
+    18: 'slayer',
+    19: 'farming',
+    20: 'runecrafting',
+    21: 'hunter',
+    22: 'construction',
+    23: 'summoning',
     24: 'dungeoneering',
     25: 'divination',
     26: 'invention',
@@ -246,7 +246,7 @@ async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Di
                         skill_id = skill_data.get('id')
                         skill_name = RUNEMETRICS_SKILL_MAPPING.get(skill_id)
                         
-                        if skill_name and skill_name != 'overall':
+                        if skill_name:
                             xp = skill_data.get('xp', 0)
                             api_level = skill_data.get('level', 1)
                             
