@@ -1121,6 +1121,95 @@ async def get_clan_activities(
             }
         }
 
+@app.get("/api/player/{username}/activities")
+async def get_player_activities(username: str):
+    """Get recent activities for a specific player"""
+    from urllib.parse import unquote
+    decoded_username = unquote(username).replace('-', ' ')
+    
+    async def fetch_single_player_activities(username: str, max_retries: int = 3):
+        """Fetch activities for a single player with exponential backoff retry"""
+        for attempt in range(max_retries):
+            try:
+                async with httpx.AsyncClient() as client:
+                    runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={username}&activities=20"
+                    response = await client.get(runemetrics_url)
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        activities = data.get('activities', [])
+                        
+                        player_activities = []
+                        
+                        for activity in activities:
+                            try:
+                                activity_date_str = activity['date']
+                                
+                                try:
+                                    activity_date = datetime.strptime(activity_date_str, '%d-%b-%Y %H:%M')
+                                except ValueError:
+                                    try:
+                                        activity_date = datetime.strptime(activity_date_str, '%d-%b-%Y')
+                                        activity_date = activity_date.replace(hour=0, minute=0)
+                                    except ValueError:
+                                        continue
+                                
+                                activity_timestamp = int(activity_date.timestamp())
+                                
+                                current_time = datetime.now().timestamp()
+                                if activity_timestamp < 0 or activity_timestamp > current_time + 86400:
+                                    continue
+                                
+                                player_activities.append({
+                                    'username': username,
+                                    'text': activity['text'],
+                                    'details': activity['details'],
+                                    'date': activity['date'],
+                                    'timestamp': activity_timestamp
+                                })
+                            except (ValueError, KeyError):
+                                continue
+                        
+                        player_activities.sort(key=lambda x: x['timestamp'], reverse=True)
+                        return player_activities
+                    
+                    elif response.status_code == 429:
+                        base_delay = 3.0
+                        max_delay = 30.0
+                        jitter = random.uniform(0.8, 1.2)
+                        delay = min(base_delay * (2 ** attempt) * jitter, max_delay)
+                        await asyncio.sleep(delay)
+                        continue
+                    
+                    else:
+                        if attempt < max_retries - 1:
+                            await asyncio.sleep(1.5 ** attempt)
+                            continue
+                        return []
+                        
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(1.5 ** attempt)
+                    continue
+                return []
+        
+        return []
+    
+    try:
+        activities = await fetch_single_player_activities(decoded_username)
+        return {
+            "activities": activities,
+            "player": decoded_username,
+            "total_activities": len(activities)
+        }
+    except Exception as e:
+        print(f"Error fetching player activities for {decoded_username}: {e}")
+        return {
+            "activities": [],
+            "player": decoded_username,
+            "total_activities": 0
+        }
+
 @app.get("/api/player/{username}/stats/history")
 async def get_player_stats_with_history(
     username: str, 

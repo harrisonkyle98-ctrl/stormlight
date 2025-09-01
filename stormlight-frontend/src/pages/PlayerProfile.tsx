@@ -10,6 +10,12 @@ import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { getSkillIcon } from '../utils/skillIcons'
 import { getGradientColors, getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
 import { urlToUsername } from '../utils/urlUtils'
+import { DropsTab } from '../components/tabs/DropsTab'
+import { ActivityTab } from '../components/tabs/ActivityTab'
+import { QuestsTab } from '../components/tabs/QuestsTab'
+import { AnalyticsTab } from '../components/tabs/AnalyticsTab'
+import { CompetitionsTab } from '../components/tabs/CompetitionsTab'
+import { LogTab } from '../components/tabs/LogTab'
 
 interface PlayerStats {
   username: string
@@ -249,6 +255,12 @@ const PlayerProfile = () => {
   ]
 
   const renderTabContent = () => {
+    const commonProps = {
+      username: urlToUsername(username || ''),
+      playerData,
+      API_URL
+    };
+
     switch (activeTab) {
       case 'skills':
         return (
@@ -375,53 +387,17 @@ const PlayerProfile = () => {
           </div>
         )
       case 'drops':
-        return (
-          <div className="text-center py-12">
-            <Package className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-400 text-lg">Drops tracking coming soon</p>
-            <p className="text-slate-500 text-sm mt-2">View rare drops and loot history</p>
-          </div>
-        )
+        return <DropsTab {...commonProps} />
       case 'activity':
-        return (
-          <div className="text-center py-12">
-            <Activity className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-400 text-lg">Activity feed coming soon</p>
-            <p className="text-slate-500 text-sm mt-2">Recent player activities and achievements</p>
-          </div>
-        )
+        return <ActivityTab {...commonProps} />
       case 'quests':
-        return (
-          <div className="text-center py-12">
-            <MapPin className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-400 text-lg">Quest progress coming soon</p>
-            <p className="text-slate-500 text-sm mt-2">Track completed quests and achievements</p>
-          </div>
-        )
+        return <QuestsTab {...commonProps} />
       case 'analytics':
-        return (
-          <div className="text-center py-12">
-            <BarChart3 className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-400 text-lg">XP Analytics coming soon</p>
-            <p className="text-slate-500 text-sm mt-2">Detailed XP gain charts and statistics</p>
-          </div>
-        )
+        return <AnalyticsTab {...commonProps} />
       case 'competitions':
-        return (
-          <div className="text-center py-12">
-            <Swords className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-400 text-lg">Competition history coming soon</p>
-            <p className="text-slate-500 text-sm mt-2">Past and current competition participation</p>
-          </div>
-        )
+        return <CompetitionsTab {...commonProps} />
       case 'log':
-        return (
-          <div className="text-center py-12">
-            <FileText className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-400 text-lg">Activity log coming soon</p>
-            <p className="text-slate-500 text-sm mt-2">Detailed activity and event history</p>
-          </div>
-        )
+        return <LogTab {...commonProps} />
       default:
         return null
     }
