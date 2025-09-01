@@ -86,7 +86,7 @@ export interface MilestoneBadge {
   icon: string
 }
 
-export const checkPlayerMilestones = (stats: any): MilestoneBadge[] => {
+export const checkPlayerMilestones = (stats: any, questData?: any): MilestoneBadge[] => {
   if (!stats) return []
   
   const badges: MilestoneBadge[] = []
@@ -121,6 +121,15 @@ export const checkPlayerMilestones = (stats: any): MilestoneBadge[] => {
       name: 'Maxed',
       backgroundColor: '#99003b',
       icon: '/icons/overall.png'
+    })
+  }
+  
+  if (questData && questData.quest_summary && questData.quest_summary.questsnotstarted === 0) {
+    badges.push({
+      id: 'quest-cape',
+      name: 'Quest Cape',
+      backgroundColor: '#438da9',
+      icon: '/assets/ranks/quest.png'
     })
   }
   

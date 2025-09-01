@@ -54,6 +54,7 @@ interface PlayerStats {
 const PlayerProfile = () => {
   const { username } = useParams<{ username: string }>()
   const [playerData, setPlayerData] = useState<PlayerStats | null>(null)
+  const [questData, setQuestData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('skills')
@@ -67,6 +68,7 @@ const PlayerProfile = () => {
   useEffect(() => {
     if (username) {
       fetchPlayerStats()
+      fetchQuestData()
     }
   }, [username, period1, period2])
 
@@ -100,6 +102,19 @@ const PlayerProfile = () => {
       setError('Failed to load player stats')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchQuestData = async () => {
+    try {
+      const decodedUsername = urlToUsername(username || '')
+      const response = await fetch(`${API_URL}/api/player/${encodeURIComponent(decodedUsername)}/quests`)
+      if (response.ok) {
+        const data = await response.json()
+        setQuestData(data)
+      }
+    } catch (error) {
+      console.error('Error fetching quest data for badges:', error)
     }
   }
 
@@ -479,7 +494,7 @@ const PlayerProfile = () => {
                 </div>
               )}
               
-              {playerData.stats && checkPlayerMilestones(playerData.stats).map((badge) => (
+              {playerData.stats && checkPlayerMilestones(playerData.stats, questData).map((badge) => (
                 <div
                   key={badge.id}
                   className="px-3 py-1 text-base font-semibold flex items-center space-x-2 rounded-md text-white"
