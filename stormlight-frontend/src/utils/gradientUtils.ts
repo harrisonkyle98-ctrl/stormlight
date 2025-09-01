@@ -78,3 +78,51 @@ export const getGradientStyle = (username: string, clanRank?: string) => {
     backgroundClip: 'text'
   }
 }
+
+export interface MilestoneBadge {
+  id: string
+  name: string
+  backgroundColor: string
+  icon: string
+}
+
+export const checkPlayerMilestones = (stats: any): MilestoneBadge[] => {
+  if (!stats) return []
+  
+  const badges: MilestoneBadge[] = []
+  const skills = Object.entries(stats).filter(([key]) => key !== 'overall')
+  
+  if (skills.length === 0) return badges
+  
+  const maxXpSkills = skills.filter(([_, data]: [string, any]) => data.xp >= 20000000)
+  if (maxXpSkills.length === skills.length) {
+    badges.push({
+      id: 'max-xp',
+      name: 'Max XP',
+      backgroundColor: '#bf0026',
+      icon: '/icons/xp.png'
+    })
+  }
+  
+  const masterMaxedSkills = skills.filter(([_, data]: [string, any]) => data.level >= 120)
+  if (masterMaxedSkills.length === skills.length) {
+    badges.push({
+      id: 'master-maxed',
+      name: 'Master Maxed',
+      backgroundColor: '#99001f',
+      icon: '/icons/overall.png'
+    })
+  }
+  
+  const maxedSkills = skills.filter(([_, data]: [string, any]) => data.level >= 99)
+  if (maxedSkills.length === skills.length) {
+    badges.push({
+      id: 'maxed',
+      name: 'Maxed',
+      backgroundColor: '#99003b',
+      icon: '/icons/overall.png'
+    })
+  }
+  
+  return badges
+}

@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { ArrowLeft, User, Trophy, TrendingUp, Crown, Package, Activity, MapPin, BarChart3, Swords, FileText, RefreshCw } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { getSkillIcon } from '../utils/skillIcons'
-import { getGradientColors, getGradientStyle } from '../utils/gradientUtils'
+import { getGradientColors, getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
 
 interface PlayerStats {
   username: string
@@ -454,7 +454,7 @@ const PlayerProfile = () => {
         </div>
       </div>
 
-      {playerData.clan_rank && (
+      {(playerData.clan_rank || (playerData.stats && checkPlayerMilestones(playerData.stats).length > 0)) && (
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader>
             <CardTitle className="text-white flex items-center space-x-2">
@@ -463,24 +463,43 @@ const PlayerProfile = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex justify-center">
-              <div 
-                className="px-3 py-1 text-base font-semibold flex items-center space-x-2 rounded-md text-white"
-                style={{
-                  background: `linear-gradient(135deg, ${getGradientColors(decodeURIComponent(username || ''), playerData.clan_rank)[0]}, ${getGradientColors(decodeURIComponent(username || ''), playerData.clan_rank)[1]})`
-                }}
-              >
-                {getRankIcon(playerData.clan_rank) ? (
+            <div className="flex justify-center flex-wrap gap-3">
+              {playerData.clan_rank && (
+                <div 
+                  className="px-3 py-1 text-base font-semibold flex items-center space-x-2 rounded-md text-white"
+                  style={{
+                    background: `linear-gradient(135deg, ${getGradientColors(decodeURIComponent(username || ''), playerData.clan_rank)[0]}, ${getGradientColors(decodeURIComponent(username || ''), playerData.clan_rank)[1]})`
+                  }}
+                >
+                  {getRankIcon(playerData.clan_rank) ? (
+                    <img
+                      src={getRankIcon(playerData.clan_rank)!}
+                      alt={playerData.clan_rank}
+                      className="w-5 h-5"
+                    />
+                  ) : (
+                    <Crown className="w-5 h-5" />
+                  )}
+                  <span>{playerData.clan_rank}</span>
+                </div>
+              )}
+              
+              {playerData.stats && checkPlayerMilestones(playerData.stats).map((badge) => (
+                <div
+                  key={badge.id}
+                  className="px-3 py-1 text-base font-semibold flex items-center space-x-2 rounded-md text-white"
+                  style={{
+                    backgroundColor: badge.backgroundColor
+                  }}
+                >
                   <img
-                    src={getRankIcon(playerData.clan_rank)!}
-                    alt={playerData.clan_rank}
+                    src={badge.icon}
+                    alt={badge.name}
                     className="w-5 h-5"
                   />
-                ) : (
-                  <Crown className="w-5 h-5" />
-                )}
-                <span>{playerData.clan_rank}</span>
-              </div>
+                  <span>{badge.name}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
