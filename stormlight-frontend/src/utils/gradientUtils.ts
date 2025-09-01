@@ -86,10 +86,53 @@ export interface MilestoneBadge {
   icon: string
 }
 
-export const checkPlayerMilestones = (stats: any, questData?: any): MilestoneBadge[] => {
-  if (!stats) return []
-  
+export const checkPlayerMilestones = (stats: any, questData?: any, clanRank?: string): MilestoneBadge[] => {
   const badges: MilestoneBadge[] = []
+  
+  if (clanRank) {
+    const rankImageMap: { [key: string]: string } = {
+      'Owner': 'owner.png',
+      'Deputy Owner': 'depowner.png',
+      'Overseer': 'overseer.png',
+      'Coordinator': 'coordinator.png',
+      'Organiser': 'organizer.png',
+      'Admin': 'admin.png',
+      'General': 'general.png',
+      'Captain': 'captain.png',
+      'Lieutenant': 'lieutenant.png',
+      'Sergeant': 'sergeant.png',
+      'Corporal': 'corporal.png',
+      'Recruit': 'recruit.png'
+    }
+    
+    const rankColors: { [key: string]: string } = {
+      'Owner': '#ff6b35',
+      'Deputy Owner': '#ff8c42',
+      'Overseer': '#ffa726',
+      'Coordinator': '#ffb74d',
+      'Organiser': '#bbbbbb',
+      'Admin': '#bb8970',
+      'General': '#af8d4d',
+      'Captain': '#888888',
+      'Lieutenant': '#b46354',
+      'Sergeant': '#b78d5b',
+      'Corporal': '#b78d5b',
+      'Recruit': '#b78d5b'
+    }
+    
+    const imageName = rankImageMap[clanRank]
+    if (imageName) {
+      badges.push({
+        id: `rank-${clanRank.toLowerCase().replace(/\s+/g, '-')}`,
+        name: clanRank,
+        backgroundColor: rankColors[clanRank] || '#b78d5b',
+        icon: `/assets/ranks/${imageName}`
+      })
+    }
+  }
+  
+  if (!stats) return badges
+  
   const skills = Object.entries(stats).filter(([key]) => key !== 'overall')
   
   if (skills.length === 0) return badges

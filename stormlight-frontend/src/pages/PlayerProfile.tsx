@@ -494,7 +494,7 @@ const PlayerProfile = () => {
                 </div>
               )}
               
-              {playerData.stats && checkPlayerMilestones(playerData.stats, questData).map((badge) => (
+              {playerData.stats && checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank).map((badge) => (
                 <div
                   key={badge.id}
                   className="px-3 py-1 text-base font-semibold flex items-center space-x-2 rounded-md text-white"

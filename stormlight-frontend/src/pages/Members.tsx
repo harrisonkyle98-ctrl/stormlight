@@ -7,7 +7,7 @@ import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Search, Users, User } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { getGradientStyle } from '../utils/gradientUtils'
+import { getGradientStyle, checkPlayerMilestones, MilestoneBadge } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
 
 interface ClanMember {
@@ -16,6 +16,11 @@ interface ClanMember {
   total_xp: number
   kills: number
   last_updated: string
+}
+
+interface MemberWithBadges extends ClanMember {
+  badges: MilestoneBadge[]
+  badgesLoading: boolean
 }
 
 interface MembersData {
@@ -37,6 +42,7 @@ const Members = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(15)
   const [sortBy, setSortBy] = useState('rank')
+  const [membersWithBadges, setMembersWithBadges] = useState<MemberWithBadges[]>([])
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -61,6 +67,15 @@ const Members = () => {
       if (response.ok) {
         const data = await response.json()
         setMembersData(data)
+        
+        const membersWithBadgesInit: MemberWithBadges[] = data.members.map((member: ClanMember) => ({
+          ...member,
+          badges: [],
+          badgesLoading: true
+        }))
+        setMembersWithBadges(membersWithBadgesInit)
+        
+        fetchMemberBadges(data.members)
       }
     } catch (error) {
       console.error('Error fetching clan members:', error)
@@ -69,32 +84,62 @@ const Members = () => {
     }
   }
 
-
-  const getRankIcon = (rank: string) => {
-    const rankImageMap: { [key: string]: string } = {
-      'Owner': 'owner.png',
-      'Deputy Owner': 'depowner.png',
-      'Overseer': 'overseer.png',
-      'Coordinator': 'coordinator.png',
-      'Organiser': 'organizer.png',
-      'Admin': 'admin.png',
-      'General': 'general.png',
-      'Captain': 'captain.png',
-      'Lieutenant': 'lieutenant.png',
-      'Sergeant': 'sergeant.png',
-      'Corporal': 'corporal.png',
-      'Recruit': 'recruit.png'
+  const fetchMemberBadges = async (members: ClanMember[]) => {
+    for (let i = 0; i < members.length; i += 3) {
+      const batch = members.slice(i, i + 3)
+      
+      await Promise.all(batch.map(async (member) => {
+        try {
+          const urlUsername = usernameToUrl(member.username)
+          
+          const [statsResponse, questResponse] = await Promise.all([
+            fetch(`${API_URL}/api/player/${urlUsername}/stats`),
+            fetch(`${API_URL}/api/player/${urlUsername}/quests`)
+          ])
+          
+          let badges: MilestoneBadge[] = []
+          
+          if (statsResponse.ok) {
+            const statsData = await statsResponse.json()
+            let questData = null
+            
+            if (questResponse.ok) {
+              questData = await questResponse.json()
+            }
+            
+            badges = checkPlayerMilestones(statsData.stats, questData, member.clan_rank)
+          }
+          
+          setMembersWithBadges(prev => 
+            prev.map(m => 
+              m.username === member.username 
+                ? { ...m, badges, badgesLoading: false }
+                : m
+            )
+          )
+        } catch (error) {
+          console.error(`Error fetching badges for ${member.username}:`, error)
+          setMembersWithBadges(prev => 
+            prev.map(m => 
+              m.username === member.username 
+                ? { ...m, badgesLoading: false }
+                : m
+            )
+          )
+        }
+      }))
+      
+      if (i + 3 < members.length) {
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
     }
-    const imageName = rankImageMap[rank]
-    if (imageName) {
-      return `/assets/ranks/${imageName}`
-    }
-    return null
   }
 
 
 
-  const displayData = membersData?.members || []
+
+
+  const displayData = membersWithBadges || []
 
   if (loading) {
     return (
@@ -259,16 +304,40 @@ const Members = () => {
                         {member.username}
                       </Link>
                       <div className="flex items-center space-x-2 mt-1">
-                        {getRankIcon(member.clan_rank) ? (
-                          <img
-                            src={getRankIcon(member.clan_rank)!}
-                            alt={member.clan_rank}
-                            className="w-5 h-5"
-                          />
+                        {member.badgesLoading ? (
+                          <div className="flex items-center space-x-1">
+                            <div className="w-6 h-6 bg-slate-600 rounded animate-pulse"></div>
+                            <div className="w-6 h-6 bg-slate-600 rounded animate-pulse"></div>
+                            <div className="w-6 h-6 bg-slate-600 rounded animate-pulse"></div>
+                          </div>
+                        ) : member.badges.length > 0 ? (
+                          <div className="flex items-center space-x-1">
+                            {member.badges.slice(0, 3).map((badge) => (
+                              <div
+                                key={badge.id}
+                                className="w-6 h-6 rounded flex items-center justify-center"
+                                style={{ backgroundColor: badge.backgroundColor }}
+                                title={badge.name}
+                              >
+                                <img
+                                  src={badge.icon}
+                                  alt={badge.name}
+                                  className="w-4 h-4"
+                                />
+                              </div>
+                            ))}
+                            {member.badges.length > 3 && (
+                              <div 
+                                className="w-6 h-6 bg-slate-600 rounded flex items-center justify-center text-xs text-white font-medium"
+                                title={`${member.badges.length - 3} more badges`}
+                              >
+                                +{member.badges.length - 3}
+                              </div>
+                            )}
+                          </div>
                         ) : (
-                          <span className="text-lg">👤</span>
+                          <p className="text-sm text-slate-500">No badges</p>
                         )}
-                        <p className="text-sm text-slate-400">{member.clan_rank}</p>
                       </div>
                     </div>
                   </div>
