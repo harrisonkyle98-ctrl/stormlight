@@ -110,15 +110,14 @@ ELITE_XP_TABLE = [
 ]
 
 def calculate_virtual_level(xp: int) -> int:
-    """Calculate virtual level (1-120) based on XP using RuneScape experience table"""
+    """Calculate virtual level (1-120) based on displayed XP using RuneScape experience table"""
     if xp <= 0:
         return 1
     
-    xp_str = str(xp)
-    xp_for_calc = int(xp_str[:9]) if len(xp_str) > 9 else xp
+    displayed_xp = xp // 10
     
     for level in range(120, 0, -1):
-        if level <= len(XP_TABLE) and xp_for_calc >= XP_TABLE[level - 1]:
+        if level <= len(XP_TABLE) and displayed_xp >= XP_TABLE[level - 1]:
             return level
     
     return 1
@@ -128,11 +127,10 @@ def calculate_elite_virtual_level(xp: int) -> int:
     if xp <= 0:
         return 1
     
-    xp_str = str(xp)
-    xp_for_calc = int(xp_str[:9]) if len(xp_str) > 9 else xp
+    displayed_xp = xp // 10
     
     for level in range(150, 0, -1):
-        if level <= len(ELITE_XP_TABLE) and xp_for_calc >= ELITE_XP_TABLE[level - 1]:
+        if level <= len(ELITE_XP_TABLE) and displayed_xp >= ELITE_XP_TABLE[level - 1]:
             return level
     
     return 1
