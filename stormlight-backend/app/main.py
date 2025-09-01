@@ -455,7 +455,7 @@ async def get_current_user(user_id: str = Depends(verify_token)):
 async def get_player_stats(username: str, refresh: bool = Query(False, description="Force refresh from API")):
     """Get player stats from RuneScape API with clan rank if available"""
     from urllib.parse import unquote
-    decoded_username = unquote(username)
+    decoded_username = unquote(username).replace('-', ' ')
     
     current_time = time_module.time()
     
@@ -1130,7 +1130,7 @@ async def get_player_stats_with_history(
     """Get player stats with historical changes"""
     try:
         from urllib.parse import unquote
-        decoded_username = unquote(username)
+        decoded_username = unquote(username).replace('-', ' ')
         
         current_time = time_module.time()
         cache_key = get_history_cache_key(decoded_username, period1, period2)

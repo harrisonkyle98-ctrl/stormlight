@@ -6,6 +6,7 @@ import { Badge } from '../components/ui/badge'
 import { ArrowLeft, Trophy, Calendar, Users, TrendingUp } from 'lucide-react'
 import { getSkillIcon } from '../utils/skillIcons'
 import { fetchClanMembers, getGradientStyle } from '../utils/gradientUtils'
+import { usernameToUrl } from '../utils/urlUtils'
 
 interface CompetitionLeaderboard {
   username: string
@@ -252,7 +253,7 @@ const CompetitionDetail = () => {
                     )}
                   </div>
                   <Link 
-                    to={`/clan-member/${player.username}`}
+                    to={`/clan-member/${usernameToUrl(player.username)}`}
                     className="text-lg font-semibold hover:text-blue-400 transition-colors"
                     style={getGradientStyle(player.username, clanMembers.find(m => m.username === player.username)?.clan_rank)}
                   >

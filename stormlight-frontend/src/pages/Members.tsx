@@ -8,6 +8,7 @@ import { Button } from '../components/ui/button'
 import { Search, Users, User } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { getGradientStyle } from '../utils/gradientUtils'
+import { usernameToUrl } from '../utils/urlUtils'
 
 interface ClanMember {
   username: string
@@ -251,7 +252,7 @@ const Members = () => {
                     </div>
                     <div>
                       <Link
-                        to={`/clan-member/${encodeURIComponent(member.username.replace(/\u00A0/g, ' '))}`}
+                        to={`/clan-member/${usernameToUrl(member.username)}`}
                         className="text-lg font-semibold hover:text-blue-400 transition-colors"
                         style={getGradientStyle(member.username, member.clan_rank)}
                       >

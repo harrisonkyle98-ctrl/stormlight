@@ -9,6 +9,7 @@ import { ArrowLeft, User, Trophy, TrendingUp, Crown, Package, Activity, MapPin, 
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { getSkillIcon } from '../utils/skillIcons'
 import { getGradientColors, getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
+import { urlToUsername } from '../utils/urlUtils'
 
 interface PlayerStats {
   username: string
@@ -64,7 +65,7 @@ const PlayerProfile = () => {
 
   const fetchPlayerStats = async () => {
     try {
-      const decodedUsername = decodeURIComponent(username || '')
+      const decodedUsername = urlToUsername(username || '')
       const cacheBuster = Date.now()
       const requestUrl = `${API_URL}/api/player/${encodeURIComponent(decodedUsername)}/stats/history?period1=${period1}&period2=${period2}&_t=${cacheBuster}`
       console.log('🔄 Fetching player stats with history...', { username: decodedUsername, requestUrl })
@@ -109,7 +110,7 @@ const PlayerProfile = () => {
     setError(null)
     
     try {
-      const decodedUsername = decodeURIComponent(username || '')
+      const decodedUsername = urlToUsername(username || '')
       const requestUrl = `${API_URL}/api/player/${encodeURIComponent(decodedUsername)}/stats/history?period1=${period1}&period2=${period2}&refresh=true`
       console.log('🔄 Forcing refresh of player stats...', { username: decodedUsername, requestUrl })
       
