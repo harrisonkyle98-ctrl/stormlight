@@ -68,6 +68,54 @@ security = HTTPBearer()
 
 users_db = {}
 clan_members_db = {}
+
+RUNEMETRICS_SKILL_MAPPING = {
+    0: 'overall',
+    1: 'attack',
+    2: 'defence',
+    3: 'strength',
+    4: 'constitution',
+    5: 'ranged',
+    6: 'prayer',
+    7: 'magic',
+    8: 'cooking',
+    9: 'woodcutting',
+    10: 'fletching',
+    11: 'fishing',
+    12: 'firemaking',
+    13: 'crafting',
+    14: 'smithing',
+    15: 'mining',
+    16: 'herblore',
+    17: 'agility',
+    18: 'thieving',
+    19: 'slayer',
+    20: 'farming',
+    21: 'runecrafting',
+    22: 'hunter',
+    23: 'construction',
+    24: 'summoning',
+    25: 'dungeoneering',
+    26: 'divination',
+    27: 'invention',
+    28: 'archaeology',
+    29: 'necromancy'
+}
+
+XP_TABLE = [
+    0, 83, 174, 276, 388, 512, 650, 801, 969, 1154, 1358, 1584, 1833, 2107, 2411, 2746, 3115, 3523, 3973, 4470, 5018, 5624, 6291, 7028, 7842, 8740, 9730, 10824, 12031, 13363, 14833, 16456, 18247, 20224, 22406, 24815, 27473, 30408, 33648, 37224, 41171, 45529, 50339, 55649, 61512, 67983, 75127, 83014, 91721, 101333, 111945, 123660, 136594, 150872, 166636, 184040, 203254, 224466, 247886, 273742, 302288, 333804, 368599, 407015, 449428, 496254, 547953, 605032, 668051, 737627, 814445, 899257, 992895, 1096278, 1210421, 1336443, 1475581, 1629200, 1798808, 1986068, 2192818, 2421087, 2673114, 2951373, 3258594, 3597792, 3972294, 4385776, 4842295, 5346332, 5902831, 6517253, 7195629, 7944614, 8771558, 9684577, 10692629, 11805606, 13034431, 14391160, 15889109, 17542976, 19368992, 21385073, 23611006, 26068632, 28782069, 31777943, 35085654, 38737661, 42769801, 47221641, 52136869, 57563718, 63555443, 70170840, 77474828, 85539082, 94442737, 104273167, 115126838, 127110260, 140341028, 154948977, 171077457, 188884740
+]
+
+def calculate_virtual_level(xp: int) -> int:
+    """Calculate virtual level (1-120) based on XP using RuneScape experience table"""
+    if xp <= 0:
+        return 1
+    
+    for level in range(120, 0, -1):
+        if level <= len(XP_TABLE) and xp >= XP_TABLE[level - 1]:
+            return level
+    
+    return 1
 competitions_db = {}
 
 activities_cache = {
@@ -153,13 +201,6 @@ SKILL_TABLE_MAPPING = {
     'dungeoneering': 25, 'divination': 26, 'invention': 27, 'archaeology': 28, 'necromancy': 29
 }
 
-RUNEMETRICS_SKILL_MAPPING = {
-    0: 'attack', 1: 'defence', 2: 'strength', 3: 'constitution', 4: 'ranged', 5: 'prayer',
-    6: 'magic', 7: 'cooking', 8: 'woodcutting', 9: 'fletching', 10: 'fishing', 11: 'firemaking',
-    12: 'crafting', 13: 'smithing', 14: 'mining', 15: 'herblore', 16: 'agility', 17: 'thieving',
-    18: 'slayer', 19: 'farming', 20: 'runecrafting', 21: 'hunter', 22: 'construction', 23: 'summoning',
-    24: 'dungeoneering', 25: 'divination', 26: 'invention', 27: 'archaeology', 28: 'necromancy'
-}
 
 async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Dict[str, Any]]:
     """Fetch player stats from RuneScape Runemetrics API with rate limiting"""
@@ -178,23 +219,36 @@ async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Di
                     
                     stats = {}
                     
-                    stats['overall'] = {
-                        'rank': int(data.get('rank', '0').replace(',', '')) if data.get('rank') and data.get('rank') != '0' else None,
-                        'level': data.get('totalskill', 0),
-                        'xp': data.get('totalxp', 0),
-                        'combatlevel': data.get('combatlevel', 0)
-                    }
+                    total_virtual_level = 0
+                    skill_stats = {}
                     
                     for skill_data in data.get('skillvalues', []):
                         skill_id = skill_data.get('id')
                         skill_name = RUNEMETRICS_SKILL_MAPPING.get(skill_id)
                         
-                        if skill_name:
-                            stats[skill_name] = {
+                        if skill_name and skill_name != 'overall':
+                            xp = skill_data.get('xp', 0)
+                            api_level = skill_data.get('level', 1)
+                            virtual_level = calculate_virtual_level(xp)
+                            total_virtual_level += virtual_level
+                            
+                            if xp > 100000000:  # 100M+ XP
+                                print(f"DEBUG: {skill_name} - API Level: {api_level}, XP: {xp:,}, Virtual Level: {virtual_level}")
+                            
+                            skill_stats[skill_name] = {
                                 'rank': skill_data.get('rank'),
-                                'level': skill_data.get('level', 1),
-                                'xp': skill_data.get('xp', 0)
+                                'level': virtual_level,
+                                'xp': xp
                             }
+                    
+                    stats['overall'] = {
+                        'rank': int(data.get('rank', '0').replace(',', '')) if data.get('rank') and data.get('rank') != '0' else None,
+                        'level': total_virtual_level,
+                        'xp': data.get('totalxp', 0),
+                        'combatlevel': data.get('combatlevel', 0)
+                    }
+                    
+                    stats.update(skill_stats)
                     
                     all_skills = ['overall'] + list(RUNEMETRICS_SKILL_MAPPING.values())
                     for skill_name in all_skills:
