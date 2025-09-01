@@ -638,6 +638,7 @@ async def fetch_clan_members() -> List[Dict[str, Any]]:
                         parts = line.split(',')
                         if len(parts) >= 4:
                             username = parts[0].strip()
+                            username = username.replace('\u00A0', ' ')
                             clan_rank = parts[1].strip()
                             
                             members.append({
