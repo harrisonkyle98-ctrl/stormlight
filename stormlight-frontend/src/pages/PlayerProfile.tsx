@@ -203,8 +203,25 @@ const PlayerProfile = () => {
   ]
 
   const skills = skillOrder
-    .filter(skill => playerData.stats[skill]) // Only include skills that exist in the data
-    .map(skill => [skill, playerData.stats[skill]] as [string, any])
+    .filter(skill => {
+      if (skill === 'overall') {
+        return playerData.stats.overall // Check if overall stats exist
+      }
+      return playerData.stats[skill] // Only include skills that exist in the data
+    })
+    .map(skill => {
+      if (skill === 'overall' && playerData.stats.overall) {
+        return [skill, {
+          level: playerData.stats.overall.level,
+          rank: playerData.stats.overall.rank,
+          xp: playerData.stats.overall.xp,
+          level_change: 0, // Overall doesn't track level changes
+          rank_change: 0,  // Overall doesn't track rank changes
+          xp_change: 0     // Overall doesn't track XP changes
+        }] as [string, any]
+      }
+      return [skill, playerData.stats[skill]] as [string, any]
+    })
 
   const overallStats = playerData.stats.overall
   
