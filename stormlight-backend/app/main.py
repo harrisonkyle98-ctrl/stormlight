@@ -105,6 +105,10 @@ XP_TABLE = [
     0, 83, 174, 276, 388, 512, 650, 801, 969, 1154, 1358, 1584, 1833, 2107, 2411, 2746, 3115, 3523, 3973, 4470, 5018, 5624, 6291, 7028, 7842, 8740, 9730, 10824, 12031, 13363, 14833, 16456, 18247, 20224, 22406, 24815, 27473, 30408, 33648, 37224, 41171, 45529, 50339, 55649, 61512, 67983, 75127, 83014, 91721, 101333, 111945, 123660, 136594, 150872, 166636, 184040, 203254, 224466, 247886, 273742, 302288, 333804, 368599, 407015, 449428, 496254, 547953, 605032, 668051, 737627, 814445, 899257, 992895, 1096278, 1210421, 1336443, 1475581, 1629200, 1798808, 1986068, 2192818, 2421087, 2673114, 2951373, 3258594, 3597792, 3972294, 4385776, 4842295, 5346332, 5902831, 6517253, 7195629, 7944614, 8771558, 9684577, 10692629, 11805606, 13034431, 14391160, 15889109, 17542976, 19368992, 21385073, 23611006, 26068632, 28782069, 31777943, 35085654, 38737661, 42769801, 47221641, 52136869, 57563718, 63555443, 70170840, 77474828, 85539082, 94442737, 104273167, 115126838, 127110260, 140341028, 154948977, 171077457, 188884740
 ]
 
+ELITE_XP_TABLE = [
+    37608773, 39270442, 40978509, 42733789, 44537107, 46389292, 48291180, 50243611, 52247435, 54303504, 56412678, 58575824, 60793812, 63067521, 65397835, 67785643, 70231841, 72737330, 75303019, 77929820, 80618654, 83370445, 86186124, 89066630, 92012904, 95025896, 98106559, 101255855, 104474750, 107764216, 111125230, 114558777, 118065845, 121647430, 125304532, 129038159, 132849323, 136739041, 140708338, 144758242, 148889790, 153104021, 157401983, 161784728, 166253312, 170808801, 175452262, 180184770, 185007406, 189921255, 194927409
+]
+
 def calculate_virtual_level(xp: int) -> int:
     """Calculate virtual level (1-120) based on XP using RuneScape experience table"""
     if xp <= 0:
@@ -115,6 +119,23 @@ def calculate_virtual_level(xp: int) -> int:
             return level
     
     return 1
+
+def calculate_elite_virtual_level(xp: int) -> int:
+    """Calculate elite virtual level (1-150) for elite skills like Invention"""
+    if xp <= 0:
+        return 1
+    
+    for level in range(99, 0, -1):
+        if level <= len(XP_TABLE) and xp >= XP_TABLE[level - 1]:
+            if level < 99:
+                return level
+            break
+    
+    for i in range(len(ELITE_XP_TABLE) - 1, -1, -1):
+        if xp >= ELITE_XP_TABLE[i]:
+            return 100 + i
+    
+    return 99
 competitions_db = {}
 
 activities_cache = {
@@ -228,7 +249,12 @@ async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Di
                         if skill_name and skill_name != 'overall':
                             xp = skill_data.get('xp', 0)
                             api_level = skill_data.get('level', 1)
-                            virtual_level = calculate_virtual_level(xp)
+                            
+                            if skill_name == 'invention':
+                                virtual_level = calculate_elite_virtual_level(xp)
+                            else:
+                                virtual_level = calculate_virtual_level(xp)
+                            
                             total_virtual_level += virtual_level
                             
                             if xp > 100000000:  # 100M+ XP
