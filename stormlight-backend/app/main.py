@@ -94,12 +94,11 @@ RUNEMETRICS_SKILL_MAPPING = {
     21: 'runecrafting',
     22: 'hunter',
     23: 'construction',
-    24: 'summoning',
-    25: 'dungeoneering',
-    26: 'divination',
-    27: 'invention',
-    28: 'archaeology',
-    29: 'necromancy'
+    24: 'dungeoneering',
+    25: 'divination',
+    26: 'invention',
+    27: 'archaeology',
+    28: 'necromancy'
 }
 
 XP_TABLE = [
