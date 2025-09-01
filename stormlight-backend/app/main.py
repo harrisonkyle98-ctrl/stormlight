@@ -687,7 +687,17 @@ async def get_clan_members_paginated(
     
     if search:
         search_lower = search.lower()
-        members = [m for m in members if search_lower in m['username'].lower()]
+        search_normalized = search_lower.replace('%20', ' ').replace('+', ' ')
+        
+        filtered_members = []
+        for m in members:
+            username_lower = m['username'].lower()
+            username_normalized = username_lower.replace('\u00A0', ' ')
+            
+            if search_normalized in username_normalized:
+                filtered_members.append(m)
+        
+        members = filtered_members
     
     if sort_by == "xp":
         members.sort(key=lambda x: x['total_xp'], reverse=True)

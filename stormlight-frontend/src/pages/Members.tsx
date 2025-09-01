@@ -51,11 +51,11 @@ const Members = () => {
         limit: pageSize.toString(),
         sort_by: sortBy
       })
-      
+
       if (searchQuery.trim()) {
         params.set('search', searchQuery.trim())
       }
-      
+
       const response = await fetch(`${API_URL}/api/clan/members?${params}`)
       if (response.ok) {
         const data = await response.json()
@@ -176,7 +176,7 @@ const Members = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
@@ -240,7 +240,7 @@ const Members = () => {
                         #{memberRank}
                       </Badge>
                       <Avatar className="w-10 h-10">
-                        <AvatarImage 
+                        <AvatarImage
                           src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(member.username.replace(/\s+/g, '%20'))}/chat.png`}
                           alt={member.username}
                         />
@@ -250,7 +250,7 @@ const Members = () => {
                       </Avatar>
                     </div>
                     <div>
-                      <Link 
+                      <Link
                         to={`/clan-member/${encodeURIComponent(member.username.replace(/\u00A0/g, ' '))}`}
                         className="text-lg font-semibold hover:text-blue-400 transition-colors"
                         style={getGradientStyle(member.username, member.clan_rank)}
@@ -259,8 +259,8 @@ const Members = () => {
                       </Link>
                       <div className="flex items-center space-x-2 mt-1">
                         {getRankIcon(member.clan_rank) ? (
-                          <img 
-                            src={getRankIcon(member.clan_rank)!} 
+                          <img
+                            src={getRankIcon(member.clan_rank)!}
                             alt={member.clan_rank}
                             className="w-5 h-5"
                           />
@@ -271,11 +271,11 @@ const Members = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="text-right">
                     <div className="flex items-center space-x-4">
                       <div>
-                        <p className="text-sm text-slate-400">Total XP</p>
+                        <p className="text-sm text-slate-400">Clan XP</p>
                         <p className="text-xl font-bold text-green-400">
                           {member.total_xp.toLocaleString()}
                         </p>
@@ -314,7 +314,7 @@ const Members = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
