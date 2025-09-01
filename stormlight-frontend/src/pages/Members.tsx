@@ -85,8 +85,8 @@ const Members = () => {
   }
 
   const fetchMemberBadges = async (members: ClanMember[]) => {
-    for (let i = 0; i < members.length; i += 3) {
-      const batch = members.slice(i, i + 3)
+    for (let i = 0; i < members.length; i += 2) {
+      const batch = members.slice(i, i + 2)
       
       await Promise.all(batch.map(async (member) => {
         try {
@@ -107,7 +107,7 @@ const Members = () => {
               questData = await questResponse.json()
             }
             
-            badges = checkPlayerMilestones(statsData.stats, questData, member.clan_rank)
+            badges = checkPlayerMilestones(statsData.stats, questData, member.clan_rank, member.username)
           }
           
           setMembersWithBadges(prev => 
@@ -122,15 +122,15 @@ const Members = () => {
           setMembersWithBadges(prev => 
             prev.map(m => 
               m.username === member.username 
-                ? { ...m, badgesLoading: false }
+                ? { ...m, badges: [], badgesLoading: false }
                 : m
             )
           )
         }
       }))
       
-      if (i + 3 < members.length) {
-        await new Promise(resolve => setTimeout(resolve, 500))
+      if (i + 2 < members.length) {
+        await new Promise(resolve => setTimeout(resolve, 1000))
       }
     }
   }
@@ -316,7 +316,9 @@ const Members = () => {
                               <div
                                 key={badge.id}
                                 className="w-6 h-6 rounded flex items-center justify-center"
-                                style={{ backgroundColor: badge.backgroundColor }}
+                                style={{ 
+                                  background: badge.gradientBackground || badge.backgroundColor 
+                                }}
                                 title={badge.name}
                               >
                                 <img

@@ -83,10 +83,11 @@ export interface MilestoneBadge {
   id: string
   name: string
   backgroundColor: string
+  gradientBackground?: string
   icon: string
 }
 
-export const checkPlayerMilestones = (stats: any, questData?: any, clanRank?: string): MilestoneBadge[] => {
+export const checkPlayerMilestones = (stats: any, questData?: any, clanRank?: string, username?: string): MilestoneBadge[] => {
   const badges: MilestoneBadge[] = []
   
   if (clanRank) {
@@ -122,10 +123,18 @@ export const checkPlayerMilestones = (stats: any, questData?: any, clanRank?: st
     
     const imageName = rankImageMap[clanRank]
     if (imageName) {
+      let gradientBackground = undefined
+      
+      if (username && ['Owner', 'Deputy Owner', 'Overseer'].includes(clanRank)) {
+        const [color1, color2] = getGradientColors(username, clanRank)
+        gradientBackground = `linear-gradient(135deg, ${color1}, ${color2})`
+      }
+      
       badges.push({
         id: `rank-${clanRank.toLowerCase().replace(/\s+/g, '-')}`,
         name: clanRank,
         backgroundColor: rankColors[clanRank] || '#b78d5b',
+        gradientBackground,
         icon: `/assets/ranks/${imageName}`
       })
     }
