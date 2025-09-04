@@ -1,0 +1,140 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-py"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(cuid())
+  discordId         String   @unique @map("discord_id")
+  username          String
+  discriminator     String?
+  avatar            String?
+  email             String?
+  roles             String[] @default([])
+  preferences       Json?
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  
+  competitionEntries CompetitionEntry[]
+  
+  @@map("users")
+}
+
+model ClanMember {
+  id              String   @id @default(cuid())
+  username        String   @unique
+  displayName     String?  @map("display_name")
+  clanRank        String   @map("clan_rank")
+  totalXp         BigInt   @map("total_xp")
+  totalLevel      Int      @map("total_level")
+  combatLevel     Int      @map("combat_level")
+  questPoints     Int      @default(0) @map("quest_points")
+  kills           Int      @default(0)
+  stats           Json?
+  questData       Json?    @map("quest_data")
+  lastUpdated     DateTime @map("last_updated")
+  createdAt       DateTime @default(now()) @map("created_at")
+  
+  @@map("clan_members")
+}
+
+model Competition {
+  id          String            @id @default(cuid())
+  name        String
+  description String?
+  type        CompetitionType
+  skill       String?
+  startDate   DateTime          @map("start_date")
+  endDate     DateTime          @map("end_date")
+  isActive    Boolean           @default(true) @map("is_active")
+  createdBy   String?           @map("created_by")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+  
+  entries     CompetitionEntry[]
+  
+  @@map("competitions")
+}
+
+model CompetitionEntry {
+  id            String      @id @default(cuid())
+  competitionId String      @map("competition_id")
+  userId        String      @map("user_id")
+  username      String
+  xpStart       BigInt      @map("xp_start")
+  xpEnd         BigInt?     @map("xp_end")
+  xpGained      BigInt      @default(0) @map("xp_gained")
+  rank          Int?
+  isActive      Boolean     @default(true) @map("is_active")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  
+  competition   Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([competitionId, userId])
+  @@map("competition_entries")
+}
+
+// Keep existing tables for historical data
+model PlayerStatsHistory {
+  id           Int      @id @default(autoincrement())
+  username     String
+  skillName    String   @map("skill_name")
+  level        Int
+  xp           BigInt
+  rank         Int?
+  combatLevel  Int?     @map("combat_level")
+  snapshotDate DateTime @map("snapshot_date") @db.Date
+  createdAt    DateTime @default(now()) @map("created_at")
+  
+  @@unique([username, skillName, snapshotDate])
+  @@index([username, snapshotDate])
+  @@map("player_stats_history")
+}
+
+model PlayerStatChanges {
+  id           Int      @id @default(autoincrement())
+  username     String
+  skillName    String   @map("skill_name")
+  date         DateTime @db.Date
+  levelChange  Int      @default(0) @map("level_change")
+  xpChange     BigInt   @default(0) @map("xp_change")
+  rankChange   Int      @default(0) @map("rank_change")
+  xpToday      BigInt   @default(0) @map("xp_today")
+  xpYesterday  BigInt   @default(0) @map("xp_yesterday")
+  createdAt    DateTime @default(now()) @map("created_at")
+  
+  @@unique([username, skillName, date])
+  @@index([username, date])
+  @@map("player_stat_changes")
+}
+
+model ClanActivity {
+  id                Int      @id @default(autoincrement())
+  username          String
+  text              String
+  details           String?
+  activityDate      String   @map("activity_date")
+  activityTimestamp BigInt   @map("activity_timestamp")
+  createdAt         DateTime @default(now()) @map("created_at")
+  
+  @@unique([username, text, activityTimestamp])
+  @@index([activityTimestamp])
+  @@index([username])
+  @@map("clan_activities")
+}
+
+enum CompetitionType {
+  XP_GAIN
+  LEVEL_GAIN
+  BOSS_KILLS
+  CUSTOM
+}

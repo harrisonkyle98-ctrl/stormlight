@@ -16,6 +16,7 @@ import random
 import time as time_module
 from datetime import time as datetime_time
 from collections import defaultdict
+from prisma import Prisma
 try:
     from .database import init_database, get_db_connection, collect_daily_player_stats
 except ImportError:
@@ -24,6 +25,8 @@ except ImportError:
 load_dotenv()
 
 app = FastAPI(title="Stormlight Clan API", version="1.0.0")
+
+prisma = Prisma()
 
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("JWT_SECRET_KEY", "fallback-secret"))
 
@@ -375,6 +378,66 @@ async def get_clan_members() -> List[str]:
         "Kingduffy", "Lilyuffie88", "Bluerose13x", "N0valyfe", "Forsberg888"
     ]
 
+async def sync_clan_members_to_database():
+    """Sync clan members from RuneScape API to database"""
+    try:
+        clan_data = await fetch_clan_members()
+        
+        for member_data in clan_data:
+            try:
+                stats_data = await fetch_player_stats(member_data['username'])
+                
+                clan_member_data = {
+                    'username': member_data['username'],
+                    'displayName': member_data.get('display_name', member_data['username']),
+                    'clanRank': member_data['clan_rank'],
+                    'totalXp': member_data['total_xp'],
+                    'totalLevel': stats_data.get('total_level', 0) if stats_data else 0,
+                    'combatLevel': stats_data.get('combat_level', 0) if stats_data else 0,
+                    'questPoints': 0,
+                    'kills': member_data.get('kills', 0),
+                    'stats': stats_data.get('stats') if stats_data else None,
+                    'lastUpdated': datetime.now()
+                }
+                
+                await prisma.clanmember.upsert(
+                    where={'username': member_data['username']},
+                    data={
+                        'username': clan_member_data['username'],
+                        'displayName': clan_member_data['displayName'],
+                        'clanRank': clan_member_data['clanRank'],
+                        'totalXp': clan_member_data['totalXp'],
+                        'totalLevel': clan_member_data['totalLevel'],
+                        'combatLevel': clan_member_data['combatLevel'],
+                        'questPoints': clan_member_data['questPoints'],
+                        'kills': clan_member_data['kills'],
+                        'stats': clan_member_data['stats'],
+                        'lastUpdated': clan_member_data['lastUpdated']
+                    },
+                    create={
+                        'username': clan_member_data['username'],
+                        'displayName': clan_member_data['displayName'],
+                        'clanRank': clan_member_data['clanRank'],
+                        'totalXp': clan_member_data['totalXp'],
+                        'totalLevel': clan_member_data['totalLevel'],
+                        'combatLevel': clan_member_data['combatLevel'],
+                        'questPoints': clan_member_data['questPoints'],
+                        'kills': clan_member_data['kills'],
+                        'stats': clan_member_data['stats'],
+                        'lastUpdated': clan_member_data['lastUpdated']
+                    }
+                )
+                
+                print(f"✅ Synced {member_data['username']} to database")
+                
+            except Exception as e:
+                print(f"❌ Error syncing {member_data['username']}: {e}")
+                continue
+                
+    except Exception as e:
+        print(f"❌ Error in sync_clan_members_to_database: {e}")
+        raise
+
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(hours=24)
@@ -444,21 +507,54 @@ async def discord_callback(code: str):
             user_data = user_response.json()
             
             user_id = user_data['id']
-            users_db[user_id] = {
-                'id': user_id,
-                'username': user_data['username'],
-                'discriminator': user_data.get('discriminator', '0'),
-                'email': user_data.get('email'),
-                'avatar': user_data.get('avatar'),
-                'created_at': datetime.now()
-            }
+            
+            try:
+                user = await prisma.user.upsert(
+                    where={'discordId': user_id},
+                    data={
+                        'discordId': user_id,
+                        'username': user_data['username'],
+                        'discriminator': user_data.get('discriminator', '0'),
+                        'email': user_data.get('email'),
+                        'avatar': user_data.get('avatar'),
+                        'updatedAt': datetime.now()
+                    },
+                    create={
+                        'discordId': user_id,
+                        'username': user_data['username'],
+                        'discriminator': user_data.get('discriminator', '0'),
+                        'email': user_data.get('email'),
+                        'avatar': user_data.get('avatar')
+                    }
+                )
+                
+                user_dict = {
+                    'id': user.discordId,
+                    'username': user.username,
+                    'discriminator': user.discriminator,
+                    'email': user.email,
+                    'avatar': user.avatar,
+                    'created_at': user.createdAt
+                }
+                
+            except Exception as db_error:
+                print(f"❌ Database error, falling back to in-memory storage: {db_error}")
+                users_db[user_id] = {
+                    'id': user_id,
+                    'username': user_data['username'],
+                    'discriminator': user_data.get('discriminator', '0'),
+                    'email': user_data.get('email'),
+                    'avatar': user_data.get('avatar'),
+                    'created_at': datetime.now()
+                }
+                user_dict = users_db[user_id]
             
             jwt_token = create_access_token({"sub": user_id})
             
             return {
                 "access_token": jwt_token,
                 "token_type": "bearer",
-                "user": users_db[user_id]
+                "user": user_dict
             }
             
     except Exception as e:
@@ -467,6 +563,20 @@ async def discord_callback(code: str):
 @app.get("/api/user/me")
 async def get_current_user(user_id: str = Depends(verify_token)):
     """Get current user info"""
+    try:
+        user = await prisma.user.find_unique(where={'discordId': user_id})
+        if user:
+            return {
+                'id': user.discordId,
+                'username': user.username,
+                'discriminator': user.discriminator,
+                'email': user.email,
+                'avatar': user.avatar,
+                'created_at': user.createdAt
+            }
+    except Exception as e:
+        print(f"❌ Database error in get_current_user: {e}")
+    
     if user_id not in users_db:
         raise HTTPException(status_code=404, detail="User not found")
     return users_db[user_id]
@@ -705,7 +815,27 @@ async def get_clan_members_paginated(
     if limit not in [15, 30, 50]:
         limit = 15
     
-    members = await fetch_clan_members()
+    try:
+        db_members = await prisma.clanmember.find_many()
+        if db_members and len(db_members) > 0:
+            members = []
+            for member in db_members:
+                members.append({
+                    'username': member.username,
+                    'clan_rank': member.clanRank,
+                    'total_xp': int(member.totalXp),
+                    'total_level': member.totalLevel,
+                    'combat_level': member.combatLevel,
+                    'kills': member.kills,
+                    'last_updated': member.lastUpdated.isoformat()
+                })
+            print(f"✅ Retrieved {len(members)} members from database")
+        else:
+            raise Exception("No members found in database")
+            
+    except Exception as db_error:
+        print(f"❌ Database error, falling back to API: {db_error}")
+        members = await fetch_clan_members()
     
     if search:
         search_lower = search.lower()
@@ -1374,6 +1504,13 @@ async def get_player_stats_with_history(
 async def startup_event():
     """Initialize database and start scheduled tasks"""
     try:
+        try:
+            await prisma.connect()
+            print("✅ Prisma database connected successfully")
+        except Exception as e:
+            print(f"❌ Prisma database connection failed: {e}")
+            print("Falling back to legacy database connection...")
+        
         await init_database()
         
         async def daily_scheduler():
@@ -1388,6 +1525,12 @@ async def startup_event():
                     print(f"Next daily stats collection scheduled in {sleep_seconds/3600:.1f} hours")
                     await asyncio.sleep(sleep_seconds)
                     await collect_daily_player_stats()
+                    
+                    try:
+                        await sync_clan_members_to_database()
+                        print("✅ Clan members synced to database")
+                    except Exception as e:
+                        print(f"❌ Error syncing clan members: {e}")
                     
                     try:
                         conn = await get_db_connection()
@@ -1409,3 +1552,12 @@ async def startup_event():
         print(f"Error during startup: {e}")
         import traceback
         traceback.print_exc()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup database connections"""
+    try:
+        await prisma.disconnect()
+        print("✅ Prisma database disconnected")
+    except Exception as e:
+        print(f"❌ Error disconnecting Prisma: {e}")
