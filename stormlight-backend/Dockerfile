@@ -19,11 +19,15 @@ RUN poetry config virtualenvs.create false
 # Install dependencies
 RUN poetry install --no-dev
 
-# Copy application code
+# Copy application code (including prisma schema)
 COPY . .
 
-# Generate Prisma client
+# Generate Prisma client after copying schema
 RUN poetry run prisma generate
+
+# Verify Prisma client was generated
+RUN ls -la /usr/local/lib/python3.12/site-packages/ | grep prisma || echo "Prisma not found in site-packages"
+RUN python -c "from prisma import Prisma; print('Prisma import successful')" || echo "Prisma import failed"
 
 # Expose port
 EXPOSE 8000
