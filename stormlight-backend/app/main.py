@@ -692,7 +692,12 @@ async def discord_callback(code: str):
                 }
                 user_dict = users_db[user_id]
             
-            jwt_token = create_access_token({"sub": user_id})
+            try:
+                jwt_token = create_access_token({"sub": user_id})
+                print(f"✅ JWT token created successfully for user {user_id}")
+            except Exception as jwt_error:
+                print(f"❌ JWT token creation failed: {jwt_error}")
+                raise HTTPException(status_code=500, detail=f"Token creation failed: {str(jwt_error)}")
             
             return {
                 "access_token": jwt_token,
@@ -701,6 +706,7 @@ async def discord_callback(code: str):
             }
             
     except Exception as e:
+        print(f"❌ OAuth callback error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Authentication failed: {str(e)}")
 
 

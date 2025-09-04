@@ -86,12 +86,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (code: string) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/callback/discord`, {
+      const response = await fetch(`${API_URL}/api/auth/callback/discord?code=${encodeURIComponent(code)}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ code })
+        }
       })
 
       if (response.ok) {
