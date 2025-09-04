@@ -25,4 +25,4 @@ primary_region = "iad"
   path = "/healthz"
 
 [deploy]
-  release_command = "poetry install && poetry run prisma generate && poetry run prisma db push"
+  release_command = "poetry install --no-dev && poetry run prisma generate && poetry run prisma db push"
