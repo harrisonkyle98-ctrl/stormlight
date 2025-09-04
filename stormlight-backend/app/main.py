@@ -378,6 +378,8 @@ async def get_clan_members() -> List[str]:
         "Kingduffy", "Lilyuffie88", "Bluerose13x", "N0valyfe", "Forsberg888"
     ]
 
+failed_member_queue = []
+
 async def sync_clan_members_to_database():
     """Sync clan members from RuneScape API to database"""
     try:
@@ -396,35 +398,15 @@ async def sync_clan_members_to_database():
                     'combatLevel': stats_data.get('combat_level', 0) if stats_data else 0,
                     'questPoints': 0,
                     'kills': member_data.get('kills', 0),
-                    'stats': stats_data.get('stats') if stats_data else None,
+                    'stats': json.dumps(stats_data.get('stats')) if stats_data and stats_data.get('stats') else None,
                     'lastUpdated': datetime.now()
                 }
                 
                 await prisma.clanmember.upsert(
                     where={'username': member_data['username']},
                     data={
-                        'username': clan_member_data['username'],
-                        'displayName': clan_member_data['displayName'],
-                        'clanRank': clan_member_data['clanRank'],
-                        'totalXp': clan_member_data['totalXp'],
-                        'totalLevel': clan_member_data['totalLevel'],
-                        'combatLevel': clan_member_data['combatLevel'],
-                        'questPoints': clan_member_data['questPoints'],
-                        'kills': clan_member_data['kills'],
-                        'stats': clan_member_data['stats'],
-                        'lastUpdated': clan_member_data['lastUpdated']
-                    },
-                    create={
-                        'username': clan_member_data['username'],
-                        'displayName': clan_member_data['displayName'],
-                        'clanRank': clan_member_data['clanRank'],
-                        'totalXp': clan_member_data['totalXp'],
-                        'totalLevel': clan_member_data['totalLevel'],
-                        'combatLevel': clan_member_data['combatLevel'],
-                        'questPoints': clan_member_data['questPoints'],
-                        'kills': clan_member_data['kills'],
-                        'stats': clan_member_data['stats'],
-                        'lastUpdated': clan_member_data['lastUpdated']
+                        'update': clan_member_data,
+                        'create': clan_member_data
                     }
                 )
                 
@@ -437,6 +419,142 @@ async def sync_clan_members_to_database():
     except Exception as e:
         print(f"❌ Error in sync_clan_members_to_database: {e}")
         raise
+
+async def sync_clan_members_to_database_with_queue():
+    """Enhanced sync with queue for failed requests and retry logic"""
+    try:
+        if failed_member_queue:
+            print(f"🔄 Processing {len(failed_member_queue)} queued failed members...")
+            await process_failed_member_queue()
+        
+        clan_data = await fetch_clan_members()
+        print(f"📥 Fetched {len(clan_data)} clan members for sync")
+        
+        successful_syncs = 0
+        failed_syncs = 0
+        
+        for i, member_data in enumerate(clan_data):
+            try:
+                if i > 0:
+                    await asyncio.sleep(random.uniform(1.0, 2.0))
+                
+                stats_data = await fetch_player_stats(member_data['username'], max_retries=2)
+                
+                if stats_data is None:
+                    failed_member_queue.append({
+                        'member_data': member_data,
+                        'retry_count': 0,
+                        'last_attempt': datetime.now()
+                    })
+                    failed_syncs += 1
+                    print(f"⚠️ Queued {member_data['username']} for retry (stats fetch failed)")
+                    continue
+                
+                clan_member_data = {
+                    'username': member_data['username'],
+                    'displayName': member_data.get('display_name', member_data['username']),
+                    'clanRank': member_data['clan_rank'],
+                    'totalXp': member_data['total_xp'],
+                    'totalLevel': stats_data.get('total_level', 0) if stats_data else 0,
+                    'combatLevel': stats_data.get('combat_level', 0) if stats_data else 0,
+                    'questPoints': stats_data.get('quest_points', 0) if stats_data else 0,
+                    'kills': member_data.get('kills', 0),
+                    'stats': json.dumps(stats_data.get('stats')) if stats_data and stats_data.get('stats') else None,
+                    'lastUpdated': datetime.now()
+                }
+                
+                await prisma.clanmember.upsert(
+                    where={'username': member_data['username']},
+                    data={
+                        'update': clan_member_data,
+                        'create': clan_member_data
+                    }
+                )
+                
+                successful_syncs += 1
+                if successful_syncs % 10 == 0:
+                    print(f"✅ Synced {successful_syncs}/{len(clan_data)} members...")
+                
+            except Exception as e:
+                failed_member_queue.append({
+                    'member_data': member_data,
+                    'retry_count': 0,
+                    'last_attempt': datetime.now(),
+                    'error': str(e)
+                })
+                failed_syncs += 1
+                print(f"❌ Error syncing {member_data['username']}, queued for retry: {e}")
+                continue
+        
+        print(f"📊 Sync complete: {successful_syncs} successful, {failed_syncs} failed, {len(failed_member_queue)} in queue")
+        
+    except Exception as e:
+        print(f"❌ Error in sync_clan_members_to_database_with_queue: {e}")
+        raise
+
+async def process_failed_member_queue():
+    """Process members in the failed queue with exponential backoff"""
+    if not failed_member_queue:
+        return
+    
+    processed = 0
+    max_retries = 3
+    
+    members_to_process = failed_member_queue[:10]
+    
+    for queued_member in members_to_process:
+        try:
+            member_data = queued_member['member_data']
+            retry_count = queued_member['retry_count']
+            
+            if retry_count >= max_retries:
+                print(f"⚠️ Removing {member_data['username']} from queue after {max_retries} failed attempts")
+                failed_member_queue.remove(queued_member)
+                continue
+            
+            base_delay = 2.0
+            delay = base_delay * (2 ** retry_count)
+            await asyncio.sleep(delay)
+            
+            stats_data = await fetch_player_stats(member_data['username'], max_retries=1)
+            
+            if stats_data is not None:
+                clan_member_data = {
+                    'username': member_data['username'],
+                    'displayName': member_data.get('display_name', member_data['username']),
+                    'clanRank': member_data['clan_rank'],
+                    'totalXp': member_data['total_xp'],
+                    'totalLevel': stats_data.get('total_level', 0),
+                    'combatLevel': stats_data.get('combat_level', 0),
+                    'questPoints': stats_data.get('quest_points', 0),
+                    'kills': member_data.get('kills', 0),
+                    'stats': json.dumps(stats_data.get('stats')) if stats_data.get('stats') else None,
+                    'lastUpdated': datetime.now()
+                }
+                
+                await prisma.clanmember.upsert(
+                    where={'username': member_data['username']},
+                    data={
+                        'update': clan_member_data,
+                        'create': clan_member_data
+                    }
+                )
+                
+                print(f"✅ Successfully synced queued member: {member_data['username']}")
+                failed_member_queue.remove(queued_member)
+                processed += 1
+            else:
+                queued_member['retry_count'] += 1
+                queued_member['last_attempt'] = datetime.now()
+                print(f"⚠️ Retry {retry_count + 1}/{max_retries} failed for {member_data['username']}")
+                
+        except Exception as e:
+            queued_member['retry_count'] += 1
+            queued_member['last_attempt'] = datetime.now()
+            print(f"❌ Error processing queued member {member_data['username']}: {e}")
+    
+    if processed > 0:
+        print(f"✅ Processed {processed} members from failed queue")
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -1545,8 +1663,27 @@ async def startup_event():
                 except Exception as e:
                     print(f"Error in daily scheduler: {e}")
                     await asyncio.sleep(3600)
+
+        async def frequent_scheduler():
+            """Scheduler for frequent clan data updates every 20 minutes"""
+            await asyncio.sleep(120)
+            
+            while True:
+                try:
+                    print("🔄 Starting frequent clan data update...")
+                    await sync_clan_members_to_database_with_queue()
+                    print("✅ Frequent clan data update completed")
+                    
+                except Exception as e:
+                    print(f"❌ Error in frequent scheduler: {e}")
+                    import traceback
+                    traceback.print_exc()
+                
+                print("⏰ Next frequent update scheduled in 20 minutes")
+                await asyncio.sleep(1200)
         
         asyncio.create_task(daily_scheduler())
+        asyncio.create_task(frequent_scheduler())
         
     except Exception as e:
         print(f"Error during startup: {e}")
