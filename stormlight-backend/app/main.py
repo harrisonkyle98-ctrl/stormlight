@@ -16,7 +16,13 @@ import random
 import time as time_module
 from datetime import time as datetime_time
 from collections import defaultdict
-from prisma import Prisma
+try:
+    from prisma import Prisma
+    PRISMA_AVAILABLE = True
+except Exception as e:
+    print(f"Prisma not available: {e}")
+    PRISMA_AVAILABLE = False
+    Prisma = None
 try:
     from .database import init_database, get_db_connection, collect_daily_player_stats
 except ImportError:
@@ -26,7 +32,7 @@ load_dotenv()
 
 app = FastAPI(title="Stormlight Clan API", version="1.0.0")
 
-prisma = Prisma()
+prisma = Prisma() if PRISMA_AVAILABLE else None
 
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("JWT_SECRET_KEY", "fallback-secret"))
 
@@ -1623,8 +1629,11 @@ async def startup_event():
     """Initialize database and start scheduled tasks"""
     try:
         try:
-            await prisma.connect()
-            print("✅ Prisma database connected successfully")
+            if PRISMA_AVAILABLE and prisma:
+                await prisma.connect()
+                print("✅ Prisma database connected successfully")
+            else:
+                print("⚠️ Prisma not available, skipping Prisma connection")
         except Exception as e:
             print(f"❌ Prisma database connection failed: {e}")
             print("Falling back to legacy database connection...")
@@ -1694,7 +1703,10 @@ async def startup_event():
 async def shutdown_event():
     """Cleanup database connections"""
     try:
-        await prisma.disconnect()
-        print("✅ Prisma database disconnected")
+        if PRISMA_AVAILABLE and prisma:
+            await prisma.disconnect()
+            print("✅ Prisma database disconnected")
+        else:
+            print("⚠️ Prisma not available, skipping disconnect")
     except Exception as e:
         print(f"❌ Error disconnecting Prisma: {e}")
