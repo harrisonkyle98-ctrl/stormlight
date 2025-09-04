@@ -1770,8 +1770,37 @@ async def startup_event():
                 print(f"🔍 After failure - PRISMA_AVAILABLE: {PRISMA_AVAILABLE}")
                 print(f"🔍 After failure - prisma object: {prisma}")
         else:
-            print("⚠️ Prisma not available, skipping Prisma connection")
-            print(f"🔍 PRISMA_AVAILABLE is False - check Prisma import at startup")
+            print("⚠️ Prisma not available, attempting runtime generation...")
+            print(f"🔍 PRISMA_AVAILABLE is False - trying to generate Prisma client")
+            
+            try:
+                import subprocess
+                result = subprocess.run(
+                    ["poetry", "run", "prisma", "generate"], 
+                    capture_output=True, 
+                    text=True, 
+                    cwd="/app"
+                )
+                if result.returncode == 0:
+                    print("✅ Prisma client generated successfully at runtime")
+                    try:
+                        from prisma import Prisma
+                        PRISMA_AVAILABLE = True
+                        prisma = Prisma()
+                        print("✅ Prisma import successful after runtime generation")
+                        
+                        print("🔍 Attempting Prisma connection after runtime generation...")
+                        await prisma.connect()
+                        print("✅ Prisma database connected successfully after runtime generation")
+                    except Exception as import_error:
+                        print(f"❌ Prisma import still failed after generation: {import_error}")
+                else:
+                    print(f"❌ Prisma generation failed: {result.stderr}")
+            except Exception as gen_error:
+                print(f"❌ Runtime Prisma generation error: {gen_error}")
+            
+            if not PRISMA_AVAILABLE:
+                print("⚠️ Prisma still not available after runtime generation attempt")
         
         await init_database()
         
