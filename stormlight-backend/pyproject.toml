@@ -24,6 +24,7 @@ prisma = {extras = ["cli"], version = "^0.15.0"}
 
 [tool.poetry.scripts]
 start = "app.main:start_server"
+postinstall = "prisma generate"
 
 [build-system]
 requires = ["poetry-core"]
