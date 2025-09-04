@@ -573,14 +573,23 @@ def create_access_token(data: dict):
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
+        print(f"🔍 Token verification attempt - Token: {credentials.credentials[:20]}...")
         secret_key = os.getenv("JWT_SECRET_KEY", "fallback-secret")
         algorithm = os.getenv("JWT_ALGORITHM", "HS256")
+        print(f"🔍 Using secret key: {secret_key[:10]}... and algorithm: {algorithm}")
         payload = jwt.decode(credentials.credentials, secret_key, algorithms=[algorithm])
         user_id = payload.get("sub")
+        print(f"🔍 Decoded payload: {payload}")
         if user_id is None:
+            print("❌ No 'sub' field in token payload")
             raise HTTPException(status_code=401, detail="Invalid token")
+        print(f"✅ Token verification successful for user: {user_id}")
         return str(user_id)
-    except jwt.PyJWTError:
+    except jwt.PyJWTError as e:
+        print(f"❌ JWT decode error: {e}")
+        raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception as e:
+        print(f"❌ Unexpected error in token verification: {e}")
         raise HTTPException(status_code=401, detail="Invalid token")
 
 @app.get("/healthz")
@@ -717,24 +726,29 @@ async def link_discord_to_clan_member(
 ):
     """Link Discord account to clan member"""
     try:
+        print(f"🔗 Account linking attempt for user: {user_id}")
         runescape_username = request.get('username')
+        print(f"🔗 Requested username: {runescape_username}")
         if not runescape_username:
             raise HTTPException(status_code=400, detail="Username required")
         
         clan_member = await prisma.clanmember.find_unique(
             where={'username': runescape_username}
         )
+        print(f"🔗 Found clan member: {clan_member is not None}")
         
         if not clan_member:
             raise HTTPException(status_code=404, detail="Clan member not found")
         
         if clan_member.discordId:
+            print(f"🔗 Member already linked to Discord ID: {clan_member.discordId}")
             raise HTTPException(status_code=400, detail="This account is already linked to another Discord user")
         
         updated_member = await prisma.clanmember.update(
             where={'username': runescape_username},
             data={'discordId': user_id}
         )
+        print(f"✅ Successfully linked {runescape_username} to Discord user {user_id}")
         
         return {
             'success': True,
@@ -749,6 +763,7 @@ async def link_discord_to_clan_member(
         }
         
     except Exception as e:
+        print(f"❌ Account linking failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Linking failed: {str(e)}")
 
 @app.get("/api/user/me")
