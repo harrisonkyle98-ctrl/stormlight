@@ -13,21 +13,22 @@ RUN pip install poetry
 # Copy poetry files
 COPY pyproject.toml poetry.lock ./
 
-# Configure poetry
+# Configure poetry to not create virtualenvs
 RUN poetry config virtualenvs.create false
 
-# Install dependencies
+# Install dependencies including Prisma
 RUN poetry install --no-dev
 
 # Copy application code (including prisma schema)
 COPY . .
 
-# Generate Prisma client after copying schema
-RUN poetry run prisma generate
+# Set environment variable for Prisma
+ENV PRISMA_PYTHON_CLIENT_GENERATOR_CACHE_DIR=/app/.prisma
 
-# Verify Prisma client was generated
-RUN ls -la /usr/local/lib/python3.12/site-packages/ | grep prisma || echo "Prisma not found in site-packages"
-RUN python -c "from prisma import Prisma; print('Prisma import successful')" || echo "Prisma import failed"
+# Generate Prisma client with explicit cache directory
+RUN mkdir -p /app/.prisma && \
+    poetry run prisma generate && \
+    python -c "from prisma import Prisma; print('✅ Prisma client generation verified')"
 
 # Expose port
 EXPOSE 8000
