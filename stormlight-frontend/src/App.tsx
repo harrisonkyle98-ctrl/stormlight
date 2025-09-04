@@ -8,6 +8,7 @@ import PlayerProfile from './pages/PlayerProfile'
 import Competitions from './pages/Competitions'
 import CompetitionDetail from './pages/CompetitionDetail'
 import Login from './pages/Login'
+import LinkAccount from './pages/LinkAccount'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import './App.css'
 
@@ -24,6 +25,10 @@ function AppContent() {
 
   if (!user) {
     return <Login />
+  }
+
+  if (user.requiresLinking) {
+    return <LinkAccount />
   }
 
   return (

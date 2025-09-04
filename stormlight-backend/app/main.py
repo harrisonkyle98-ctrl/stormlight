@@ -590,7 +590,7 @@ async def healthz():
 @app.get("/api/auth/discord")
 async def discord_login():
     """Initiate Discord OAuth login"""
-    redirect_uri = os.getenv("DISCORD_REDIRECT_URI", "http://localhost:3000/auth/callback")
+    redirect_uri = os.getenv("DISCORD_REDIRECT_URI", "https://runescape-clan-website-q4g9hn1a.devinapps.com/api/auth/callback/discord")
     return {
         "auth_url": f"https://discord.com/api/oauth2/authorize?client_id={os.getenv('DISCORD_CLIENT_ID')}&redirect_uri={redirect_uri}&response_type=code&scope=identify%20email"
     }
@@ -652,14 +652,30 @@ async def discord_callback(code: str):
                     }
                 )
                 
-                user_dict = {
-                    'id': user.discordId,
-                    'username': user.username,
-                    'discriminator': user.discriminator,
-                    'email': user.email,
-                    'avatar': user.avatar,
-                    'created_at': user.createdAt
-                }
+                linked_member = await prisma.clanmember.find_first(
+                    where={'discordId': user_id}
+                )
+                
+                if linked_member:
+                    user_dict = {
+                        'id': user_id,
+                        'username': linked_member.username,
+                        'displayName': linked_member.displayName or linked_member.username,
+                        'clanRank': linked_member.clanRank,
+                        'isLinked': True,
+                        'discordId': user_id
+                    }
+                else:
+                    user_dict = {
+                        'id': user_id,
+                        'username': user_data['username'],
+                        'discriminator': user_data.get('discriminator', '0'),
+                        'email': user_data.get('email'),
+                        'avatar': user_data.get('avatar'),
+                        'isLinked': False,
+                        'requiresLinking': True,
+                        'discordId': user_id
+                    }
                 
             except Exception as db_error:
                 print(f"❌ Database error, falling back to in-memory storage: {db_error}")
@@ -669,7 +685,10 @@ async def discord_callback(code: str):
                     'discriminator': user_data.get('discriminator', '0'),
                     'email': user_data.get('email'),
                     'avatar': user_data.get('avatar'),
-                    'created_at': datetime.now()
+                    'created_at': datetime.now(),
+                    'isLinked': False,
+                    'requiresLinking': True,
+                    'discordId': user_id
                 }
                 user_dict = users_db[user_id]
             
@@ -684,20 +703,78 @@ async def discord_callback(code: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Authentication failed: {str(e)}")
 
+
+@app.post("/api/auth/link-account")
+async def link_discord_to_clan_member(
+    request: dict,
+    user_id: str = Depends(verify_token)
+):
+    """Link Discord account to clan member"""
+    try:
+        runescape_username = request.get('username')
+        if not runescape_username:
+            raise HTTPException(status_code=400, detail="Username required")
+        
+        clan_member = await prisma.clanmember.find_unique(
+            where={'username': runescape_username}
+        )
+        
+        if not clan_member:
+            raise HTTPException(status_code=404, detail="Clan member not found")
+        
+        if clan_member.discordId:
+            raise HTTPException(status_code=400, detail="This account is already linked to another Discord user")
+        
+        updated_member = await prisma.clanmember.update(
+            where={'username': runescape_username},
+            data={'discordId': user_id}
+        )
+        
+        return {
+            'success': True,
+            'user': {
+                'id': user_id,
+                'username': updated_member.username,
+                'displayName': updated_member.displayName or updated_member.username,
+                'clanRank': updated_member.clanRank,
+                'isLinked': True,
+                'discordId': user_id
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Linking failed: {str(e)}")
+
 @app.get("/api/user/me")
 async def get_current_user(user_id: str = Depends(verify_token)):
     """Get current user info"""
     try:
         user = await prisma.user.find_unique(where={'discordId': user_id})
         if user:
-            return {
-                'id': user.discordId,
-                'username': user.username,
-                'discriminator': user.discriminator,
-                'email': user.email,
-                'avatar': user.avatar,
-                'created_at': user.createdAt
-            }
+            linked_member = await prisma.clanmember.find_first(
+                where={'discordId': user_id}
+            )
+            
+            if linked_member:
+                return {
+                    'id': user_id,
+                    'username': linked_member.username,
+                    'displayName': linked_member.displayName or linked_member.username,
+                    'clanRank': linked_member.clanRank,
+                    'isLinked': True,
+                    'discordId': user_id
+                }
+            else:
+                return {
+                    'id': user.discordId,
+                    'username': user.username,
+                    'discriminator': user.discriminator,
+                    'email': user.email,
+                    'avatar': user.avatar,
+                    'isLinked': False,
+                    'requiresLinking': True,
+                    'discordId': user_id
+                }
     except Exception as e:
         print(f"❌ Database error in get_current_user: {e}")
     

@@ -3,10 +3,14 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 interface User {
   id: string
   username: string
-  discriminator: string
+  displayName?: string
+  clanRank?: string
+  discriminator?: string
   email?: string
   avatar?: string
-  created_at: string
+  isLinked: boolean
+  requiresLinking?: boolean
+  discordId: string
 }
 
 interface AuthContextType {
@@ -15,6 +19,7 @@ interface AuthContextType {
   login: (code: string) => Promise<void>
   logout: () => void
   getAuthUrl: () => Promise<string>
+  linkAccount: (username: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -32,15 +37,8 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>({
-    id: 'test-user',
-    username: 'TestUser',
-    discriminator: '1234',
-    avatar: undefined,
-    email: 'test@example.com',
-    created_at: new Date().toISOString()
-  })
-  const [loading, setLoading] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -114,12 +112,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null)
   }
 
+  const linkAccount = async (username: string) => {
+    try {
+      const token = localStorage.getItem('access_token')
+      const response = await fetch(`${API_URL}/api/auth/link-account`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ username })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setUser(data.user)
+      } else {
+        throw new Error('Account linking failed')
+      }
+    } catch (error) {
+      console.error('Link account error:', error)
+      throw error
+    }
+  }
+
   const value: AuthContextType = {
     user,
     loading,
     login,
     logout,
-    getAuthUrl
+    getAuthUrl,
+    linkAccount
   }
 
   return (
