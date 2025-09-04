@@ -1734,6 +1734,9 @@ async def startup_event():
     global prisma, PRISMA_AVAILABLE
     
     try:
+        print(f"🔍 Startup debugging - Initial PRISMA_AVAILABLE: {PRISMA_AVAILABLE}")
+        print(f"🔍 Startup debugging - Initial prisma object: {prisma}")
+        
         database_url = os.getenv("DATABASE_URL")
         if not database_url:
             print("❌ DATABASE_URL environment variable not set")
@@ -1741,19 +1744,34 @@ async def startup_event():
             print(f"✅ DATABASE_URL found: {database_url[:50]}...")
         
         if PRISMA_AVAILABLE:
+            print("🔍 PRISMA_AVAILABLE is True, attempting to initialize...")
             try:
                 if not prisma:
+                    print("🔍 Creating new Prisma instance...")
                     prisma = Prisma()
+                    print(f"🔍 Prisma instance created: {prisma}")
+                else:
+                    print("🔍 Using existing Prisma instance")
+                
+                print("🔍 Attempting Prisma connection...")
                 await prisma.connect()
                 print("✅ Prisma database connected successfully")
                 PRISMA_AVAILABLE = True
+                print(f"🔍 Final PRISMA_AVAILABLE: {PRISMA_AVAILABLE}")
+                print(f"🔍 Final prisma object: {prisma}")
             except Exception as e:
                 print(f"❌ Prisma database connection failed: {e}")
+                print(f"❌ Exception type: {type(e)}")
+                import traceback
+                traceback.print_exc()
                 print("Falling back to legacy database connection...")
                 PRISMA_AVAILABLE = False
                 prisma = None
+                print(f"🔍 After failure - PRISMA_AVAILABLE: {PRISMA_AVAILABLE}")
+                print(f"🔍 After failure - prisma object: {prisma}")
         else:
             print("⚠️ Prisma not available, skipping Prisma connection")
+            print(f"🔍 PRISMA_AVAILABLE is False - check Prisma import at startup")
         
         await init_database()
         
