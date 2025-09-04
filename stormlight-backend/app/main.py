@@ -19,8 +19,10 @@ from collections import defaultdict
 try:
     from prisma import Prisma
     PRISMA_AVAILABLE = True
+    print("✅ Prisma import successful")
 except Exception as e:
-    print(f"Prisma not available: {e}")
+    print(f"❌ Prisma not available: {e}")
+    print("Run 'poetry run prisma generate' to generate the Prisma client")
     PRISMA_AVAILABLE = False
     Prisma = None
 try:
@@ -731,6 +733,10 @@ async def link_discord_to_clan_member(
         print(f"🔗 Requested username: {runescape_username}")
         if not runescape_username:
             raise HTTPException(status_code=400, detail="Username required")
+        
+        if not PRISMA_AVAILABLE or not prisma:
+            print("❌ Prisma not available for account linking")
+            raise HTTPException(status_code=500, detail="Database connection not available")
         
         clan_member = await prisma.clanmember.find_unique(
             where={'username': runescape_username}
@@ -1725,16 +1731,29 @@ async def get_player_stats_with_history(
 @app.on_event("startup")
 async def startup_event():
     """Initialize database and start scheduled tasks"""
+    global prisma, PRISMA_AVAILABLE
+    
     try:
-        try:
-            if PRISMA_AVAILABLE and prisma:
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            print("❌ DATABASE_URL environment variable not set")
+        else:
+            print(f"✅ DATABASE_URL found: {database_url[:50]}...")
+        
+        if PRISMA_AVAILABLE:
+            try:
+                if not prisma:
+                    prisma = Prisma()
                 await prisma.connect()
                 print("✅ Prisma database connected successfully")
-            else:
-                print("⚠️ Prisma not available, skipping Prisma connection")
-        except Exception as e:
-            print(f"❌ Prisma database connection failed: {e}")
-            print("Falling back to legacy database connection...")
+                PRISMA_AVAILABLE = True
+            except Exception as e:
+                print(f"❌ Prisma database connection failed: {e}")
+                print("Falling back to legacy database connection...")
+                PRISMA_AVAILABLE = False
+                prisma = None
+        else:
+            print("⚠️ Prisma not available, skipping Prisma connection")
         
         await init_database()
         
