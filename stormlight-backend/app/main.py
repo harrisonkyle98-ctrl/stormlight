@@ -574,6 +574,10 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    print(f"🔍 ENTRY: verify_token called")
+    print(f"🔍 ENTRY: credentials type: {type(credentials)}")
+    print(f"🔍 ENTRY: credentials: {credentials}")
+    
     try:
         print(f"🔍 Token verification attempt - Token: {credentials.credentials[:20]}...")
         secret_key = os.getenv("JWT_SECRET_KEY", "fallback-secret")
@@ -727,6 +731,11 @@ async def link_discord_to_clan_member(
     user_id: str = Depends(verify_token)
 ):
     """Link Discord account to clan member"""
+    print(f"🔗 ENTRY: Account linking function called")
+    print(f"🔗 ENTRY: Request type: {type(request)}")
+    print(f"🔗 ENTRY: Request content: {request}")
+    print(f"🔗 ENTRY: User ID: {user_id}")
+    
     try:
         print(f"🔗 Account linking attempt for user: {user_id}")
         runescape_username = request.get('username')
@@ -734,40 +743,88 @@ async def link_discord_to_clan_member(
         if not runescape_username:
             raise HTTPException(status_code=400, detail="Username required")
         
-        if not PRISMA_AVAILABLE or not prisma:
-            print("❌ Prisma not available for account linking")
-            raise HTTPException(status_code=500, detail="Database connection not available")
+        if PRISMA_AVAILABLE and prisma:
+            print("🔗 Using Prisma client for account linking")
+            try:
+                clan_member = await prisma.clanmember.find_unique(
+                    where={'username': runescape_username}
+                )
+                print(f"🔗 Found clan member: {clan_member is not None}")
+                
+                if not clan_member:
+                    raise HTTPException(status_code=404, detail="Clan member not found")
+                
+                if clan_member.discordId:
+                    print(f"🔗 Member already linked to Discord ID: {clan_member.discordId}")
+                    raise HTTPException(status_code=400, detail="This account is already linked to another Discord user")
+                
+                updated_member = await prisma.clanmember.update(
+                    where={'username': runescape_username},
+                    data={'discordId': user_id}
+                )
+                print(f"✅ Successfully linked {runescape_username} to Discord user {user_id} via Prisma")
+                
+                return {
+                    'success': True,
+                    'user': {
+                        'id': user_id,
+                        'username': updated_member.username,
+                        'displayName': updated_member.displayName or updated_member.username,
+                        'clanRank': updated_member.clanRank,
+                        'isLinked': True,
+                        'discordId': user_id
+                    }
+                }
+            except Exception as prisma_error:
+                print(f"❌ Prisma account linking failed: {prisma_error}")
+                print("🔄 Falling back to direct database connection...")
         
-        clan_member = await prisma.clanmember.find_unique(
-            where={'username': runescape_username}
-        )
-        print(f"🔗 Found clan member: {clan_member is not None}")
+        print("🔗 Using direct database connection for account linking")
+        try:
+            conn = await get_db_connection()
+            async with conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        "SELECT username, display_name, clan_rank, discord_id FROM clan_members WHERE username = %s",
+                        (runescape_username,)
+                    )
+                    result = await cur.fetchone()
+                
+                if not result:
+                    print(f"❌ Clan member '{runescape_username}' not found in database")
+                    raise HTTPException(status_code=404, detail="Clan member not found")
+                
+                username, display_name, clan_rank, existing_discord_id = result
+                if existing_discord_id:
+                    print(f"🔗 Member already linked to Discord ID: {existing_discord_id}")
+                    raise HTTPException(status_code=400, detail="This account is already linked to another Discord user")
+                
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        "UPDATE clan_members SET discord_id = %s WHERE username = %s",
+                        (user_id, runescape_username)
+                    )
+                
+                print(f"✅ Successfully linked {runescape_username} to Discord user {user_id} via direct DB")
+                
+                return {
+                    'success': True,
+                    'user': {
+                        'id': user_id,
+                        'username': username,
+                        'displayName': display_name or username,
+                        'clanRank': clan_rank,
+                        'isLinked': True,
+                        'discordId': user_id
+                    }
+                }
+                
+        except Exception as db_error:
+            print(f"❌ Direct database account linking failed: {db_error}")
+            raise HTTPException(status_code=500, detail=f"Database linking failed: {str(db_error)}")
         
-        if not clan_member:
-            raise HTTPException(status_code=404, detail="Clan member not found")
-        
-        if clan_member.discordId:
-            print(f"🔗 Member already linked to Discord ID: {clan_member.discordId}")
-            raise HTTPException(status_code=400, detail="This account is already linked to another Discord user")
-        
-        updated_member = await prisma.clanmember.update(
-            where={'username': runescape_username},
-            data={'discordId': user_id}
-        )
-        print(f"✅ Successfully linked {runescape_username} to Discord user {user_id}")
-        
-        return {
-            'success': True,
-            'user': {
-                'id': user_id,
-                'username': updated_member.username,
-                'displayName': updated_member.displayName or updated_member.username,
-                'clanRank': updated_member.clanRank,
-                'isLinked': True,
-                'discordId': user_id
-            }
-        }
-        
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"❌ Account linking failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Linking failed: {str(e)}")
@@ -1770,37 +1827,32 @@ async def startup_event():
                 print(f"🔍 After failure - PRISMA_AVAILABLE: {PRISMA_AVAILABLE}")
                 print(f"🔍 After failure - prisma object: {prisma}")
         else:
-            print("⚠️ Prisma not available, attempting runtime generation...")
-            print(f"🔍 PRISMA_AVAILABLE is False - trying to generate Prisma client")
+            print("⚠️ Prisma not available at startup, attempting to use pre-generated client...")
+            print(f"🔍 PRISMA_AVAILABLE is False - trying to import pre-generated client")
             
             try:
-                import subprocess
-                result = subprocess.run(
-                    ["poetry", "run", "prisma", "generate"], 
-                    capture_output=True, 
-                    text=True, 
-                    cwd="/app"
-                )
-                if result.returncode == 0:
-                    print("✅ Prisma client generated successfully at runtime")
-                    try:
-                        from prisma import Prisma
-                        PRISMA_AVAILABLE = True
-                        prisma = Prisma()
-                        print("✅ Prisma import successful after runtime generation")
-                        
-                        print("🔍 Attempting Prisma connection after runtime generation...")
-                        await prisma.connect()
-                        print("✅ Prisma database connected successfully after runtime generation")
-                    except Exception as import_error:
-                        print(f"❌ Prisma import still failed after generation: {import_error}")
-                else:
-                    print(f"❌ Prisma generation failed: {result.stderr}")
-            except Exception as gen_error:
-                print(f"❌ Runtime Prisma generation error: {gen_error}")
+                import sys
+                import importlib
+                
+                if 'prisma' in sys.modules:
+                    importlib.reload(sys.modules['prisma'])
+                
+                from prisma import Prisma
+                print("✅ Successfully imported pre-generated Prisma client")
+                PRISMA_AVAILABLE = True
+                prisma = Prisma()
+                print("✅ Prisma import successful using pre-generated client")
+                
+                print("🔍 Attempting Prisma connection with pre-generated client...")
+                await prisma.connect()
+                print("✅ Prisma database connected successfully with pre-generated client")
+            except Exception as import_error:
+                print(f"❌ Failed to import pre-generated Prisma client: {import_error}")
+                PRISMA_AVAILABLE = False
+                prisma = None
             
             if not PRISMA_AVAILABLE:
-                print("⚠️ Prisma still not available after runtime generation attempt")
+                print("⚠️ Prisma client not available - database operations will be disabled")
         
         await init_database()
         

@@ -7,9 +7,11 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 async def get_db_connection():
     """Get database connection"""
-    if not DATABASE_URL:
+    db_url = os.getenv("DATABASE_URL")
+    print(f"🔍 get_db_connection: DATABASE_URL = {db_url[:50] if db_url else 'None'}...")
+    if not db_url:
         raise Exception("DATABASE_URL environment variable not set")
-    return await psycopg.AsyncConnection.connect(DATABASE_URL)
+    return await psycopg.AsyncConnection.connect(db_url)
 
 async def init_database():
     """Initialize database schema"""
