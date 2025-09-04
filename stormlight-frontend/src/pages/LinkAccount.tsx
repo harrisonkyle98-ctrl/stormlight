@@ -14,7 +14,7 @@ interface ClanMember {
 }
 
 const LinkAccount = () => {
-  const { user, linkAccount } = useAuth()
+  const { linkAccount } = useAuth()
   const [clanMembers, setClanMembers] = useState<ClanMember[]>([])
   const [selectedUsername, setSelectedUsername] = useState('')
   const [customUsername, setCustomUsername] = useState('')
