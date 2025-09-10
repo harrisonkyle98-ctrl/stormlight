@@ -27,7 +27,7 @@ function AppContent() {
     return <Login />
   }
 
-  if (user.requiresLinking) {
+  if (user.requiresLinking && !user.isLinked) {
     return <LinkAccount />
   }
 

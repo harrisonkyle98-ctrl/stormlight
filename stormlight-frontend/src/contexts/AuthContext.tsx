@@ -61,6 +61,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.ok) {
         const userData = await response.json()
+        console.log('User data from /api/user/me:', userData)
         setUser(userData)
       } else {
         localStorage.removeItem('access_token')
@@ -125,9 +126,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.ok) {
         const data = await response.json()
+        console.log('User data after linking:', data.user)
         setUser(data.user)
       } else {
-        throw new Error('Account linking failed')
+        const errorData = await response.json().catch(() => ({ detail: 'Account linking failed' }))
+        throw new Error(errorData.detail || 'Account linking failed')
       }
     } catch (error) {
       console.error('Link account error:', error)

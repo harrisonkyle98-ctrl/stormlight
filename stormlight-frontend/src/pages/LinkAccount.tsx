@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
-import { toast } from 'sonner'
+import { toast, Toaster } from 'sonner'
 
 interface ClanMember {
   username: string
@@ -53,7 +53,8 @@ const LinkAccount = () => {
       await linkAccount(username)
       toast.success('Account linked successfully!')
     } catch (error) {
-      toast.error('Failed to link account. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to link account. Please try again.'
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -115,6 +116,7 @@ const LinkAccount = () => {
           </Button>
         </CardContent>
       </Card>
+      <Toaster />
     </div>
   )
 }
