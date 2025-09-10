@@ -831,6 +831,18 @@ async def link_discord_to_clan_member(
                 
                 if clan_member.discordId:
                     print(f"🔗 Member already linked to Discord ID: {clan_member.discordId}")
+                    if clan_member.discordId == user_id:
+                        return {
+                            'success': True,
+                            'user': {
+                                'id': user_id,
+                                'username': clan_member.username,
+                                'displayName': clan_member.displayName or clan_member.username,
+                                'clanRank': clan_member.clanRank,
+                                'isLinked': True,
+                                'discordId': user_id
+                            }
+                        }
                     raise HTTPException(status_code=400, detail="This account is already linked to another Discord user")
                 
                 updated_member = await prisma.clanmember.update(
@@ -873,12 +885,22 @@ async def link_discord_to_clan_member(
                     print(f"❌ FALLBACK ERROR: Clan member not found: {runescape_username}")
                     raise HTTPException(status_code=404, detail=f"RuneScape account '{runescape_username}' is not a member of the Stormlight clan")
                 
-                if clan_member_row[3]:  # discord_id field
-                    print(f"❌ FALLBACK ERROR: Member already linked to Discord ID: {clan_member_row[3]}")
-                    if clan_member_row[3] == user_id:
-                        raise HTTPException(status_code=400, detail=f"Your Discord account is already linked to '{runescape_username}'")
-                    else:
-                        raise HTTPException(status_code=400, detail=f"The RuneScape account '{runescape_username}' is already linked to another Discord user")
+                username, display_name, clan_rank, existing_discord_id = clan_member_row
+                if existing_discord_id:
+                    print(f"🔗 Member already linked to Discord ID: {existing_discord_id}")
+                    if existing_discord_id == user_id:
+                        return {
+                            'success': True,
+                            'user': {
+                                'id': user_id,
+                                'username': username,
+                                'displayName': display_name or username,
+                                'clanRank': clan_rank,
+                                'isLinked': True,
+                                'discordId': user_id
+                            }
+                        }
+                    raise HTTPException(status_code=400, detail="This account is already linked to another Discord user")
                 
                 print(f"🔗 FALLBACK: Updating clan member with Discord ID: {user_id}")
                 await cursor.execute(
