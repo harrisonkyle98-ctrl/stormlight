@@ -756,6 +756,18 @@ async def link_discord_to_clan_member(
                 
                 if clan_member.discordId:
                     print(f"🔗 Member already linked to Discord ID: {clan_member.discordId}")
+                    if clan_member.discordId == user_id:
+                        return {
+                            'success': True,
+                            'user': {
+                                'id': user_id,
+                                'username': clan_member.username,
+                                'displayName': clan_member.displayName or clan_member.username,
+                                'clanRank': clan_member.clanRank,
+                                'isLinked': True,
+                                'discordId': user_id
+                            }
+                        }
                     raise HTTPException(status_code=400, detail="This account is already linked to another Discord user")
                 
                 updated_member = await prisma.clanmember.update(
@@ -797,6 +809,18 @@ async def link_discord_to_clan_member(
                 username, display_name, clan_rank, existing_discord_id = result
                 if existing_discord_id:
                     print(f"🔗 Member already linked to Discord ID: {existing_discord_id}")
+                    if existing_discord_id == user_id:
+                        return {
+                            'success': True,
+                            'user': {
+                                'id': user_id,
+                                'username': username,
+                                'displayName': display_name or username,
+                                'clanRank': clan_rank,
+                                'isLinked': True,
+                                'discordId': user_id
+                            }
+                        }
                     raise HTTPException(status_code=400, detail="This account is already linked to another Discord user")
                 
                 async with conn.cursor() as cur:

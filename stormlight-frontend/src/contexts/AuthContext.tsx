@@ -19,7 +19,7 @@ interface AuthContextType {
   login: (code: string) => Promise<void>
   logout: () => void
   getAuthUrl: () => Promise<string>
-  linkAccount: (username: string) => Promise<void>
+  linkAccount: (username: string) => Promise<{ status: 'linked' | 'already-linked' }>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -111,7 +111,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null)
   }
 
-  const linkAccount = async (username: string) => {
+  const linkAccount = async (username: string): Promise<{ status: 'linked' | 'already-linked' }> => {
     try {
       const token = localStorage.getItem('access_token')
       const response = await fetch(`${API_URL}/api/auth/link-account`, {
@@ -126,8 +126,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.ok) {
         const data = await response.json()
         setUser(data.user)
+        return { status: 'linked' }
       } else {
-        throw new Error('Account linking failed')
+        let detail = 'Account linking failed'
+        try {
+          const err = await response.json()
+          detail = err?.detail || detail
+        } catch (_) {}
+
+        if (response.status === 400 && /already linked/i.test(detail)) {
+          if (token) {
+            await fetchCurrentUser(token)
+          }
+          return { status: 'already-linked' }
+        }
+        throw new Error(detail)
       }
     } catch (error) {
       console.error('Link account error:', error)

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
@@ -15,6 +16,7 @@ interface ClanMember {
 
 const LinkAccount = () => {
   const { linkAccount } = useAuth()
+  const navigate = useNavigate()
   const [clanMembers, setClanMembers] = useState<ClanMember[]>([])
   const [selectedUsername, setSelectedUsername] = useState('')
   const [customUsername, setCustomUsername] = useState('')
@@ -50,10 +52,15 @@ const LinkAccount = () => {
 
     setLoading(true)
     try {
-      await linkAccount(username)
-      toast.success('Account linked successfully!')
-    } catch (error) {
-      toast.error('Failed to link account. Please try again.')
+      const result = await linkAccount(username)
+      if (result?.status === 'already-linked') {
+        toast.info('RuneScape account already linked; continuing...')
+      } else {
+        toast.success('Account linked successfully!')
+      }
+      navigate('/')
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to link account. Please try again.')
     } finally {
       setLoading(false)
     }
