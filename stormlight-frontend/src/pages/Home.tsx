@@ -312,11 +312,12 @@ const Home = () => {
                     <p className="text-white font-medium mb-1">
                       <Link 
                         to={`/clan-member/${usernameToUrl(activity.username)}`}
-                        className="hover:text-blue-300 transition-colors"
+                        className="hover:text-blue-300 transition-colors mr-2"
                         style={getGradientStyle(activity.username, clanMembers.find(m => m.username === activity.username)?.clan_rank)}
                       >
                         {activity.username}
-                      </Link> {activity.text}
+                      </Link>
+                      <span className="text-slate-300">{activity.text}</span>
                     </p>
                     <p className="text-slate-400 text-xs">{formatTimeAgo(activity.timestamp)}</p>
                   </div>
