@@ -709,19 +709,21 @@ async def discord_callback(code: str):
                     print(f"🔐 DATABASE: Acquired database lock for user upsert")
                     user = await prisma.user.upsert(
                         where={'discordId': user_id},
-                        update={
-                            'username': user_data['username'],
-                            'discriminator': user_data.get('discriminator', '0'),
-                            'email': user_data.get('email'),
-                            'avatar': user_data.get('avatar'),
-                            'updatedAt': datetime.now()
-                        },
-                        create={
-                            'discordId': user_id,
-                            'username': user_data['username'],
-                            'discriminator': user_data.get('discriminator', '0'),
-                            'email': user_data.get('email'),
-                            'avatar': user_data.get('avatar')
+                        data={
+                            'create': {
+                                'discordId': user_id,
+                                'username': user_data['username'],
+                                'discriminator': user_data.get('discriminator', '0'),
+                                'email': user_data.get('email'),
+                                'avatar': user_data.get('avatar')
+                            },
+                            'update': {
+                                'username': user_data['username'],
+                                'discriminator': user_data.get('discriminator', '0'),
+                                'email': user_data.get('email'),
+                                'avatar': user_data.get('avatar'),
+                                'updatedAt': datetime.now()
+                            }
                         }
                     )
                     print(f"🔐 DATABASE: User upsert successful: {user.discordId}")
