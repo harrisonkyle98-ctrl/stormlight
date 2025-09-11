@@ -207,6 +207,19 @@ const Home = () => {
 
         <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-300">Total XP</CardTitle>
+            <TrendingUp className="h-4 w-4 text-purple-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-white">
+              {loading ? '...' : formatNumber(clanStats?.total_xp || 0)}
+            </div>
+            <p className="text-xs text-slate-400">Combined clan XP</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-300">Competitions</CardTitle>
             <Swords className="h-4 w-4 text-green-400" />
           </CardHeader>
@@ -226,19 +239,6 @@ const Home = () => {
               {loading ? '...' : (user?.isLinked && user?.clanRank) ? user.clanRank : user ? 'Not a member' : 'Unknown'}
             </div>
             <p className="text-xs text-slate-400">{user?.isLinked ? 'Your clan rank' : 'Clan membership'}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Total XP</CardTitle>
-            <TrendingUp className="h-4 w-4 text-purple-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">
-              {loading ? '...' : formatNumber(clanStats?.total_xp || 0)}
-            </div>
-            <p className="text-xs text-slate-400">Combined clan XP</p>
           </CardContent>
         </Card>
       </div>
