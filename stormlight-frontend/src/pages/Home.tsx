@@ -298,18 +298,18 @@ const Home = () => {
           <div className="space-y-4">
             {activities.length > 0 ? (
               activities.map((activity, index) => (
-                <div key={`${activity.username}-${activity.timestamp}-${index}`} className="flex items-center p-3 bg-slate-700/50 rounded-lg">
-                  <Avatar className="h-8 w-8 flex-shrink-0 mr-2">
-                    <AvatarImage 
-                      src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(activity.username.replace(/\u00A0/g, ' '))}/chat.png`}
-                      alt={activity.username}
-                    />
-                    <AvatarFallback className="bg-blue-600 text-white text-xs">
-                      {activity.username.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium mb-1">
+                <div key={`${activity.username}-${activity.timestamp}-${index}`} className="p-3 bg-slate-700/50 rounded-lg">
+                  <div className="flex items-center">
+                    <Avatar className="h-8 w-8 flex-shrink-0">
+                      <AvatarImage 
+                        src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(activity.username.replace(/\u00A0/g, ' '))}/chat.png`}
+                        alt={activity.username}
+                      />
+                      <AvatarFallback className="bg-blue-600 text-white text-xs">
+                        {activity.username.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <p className="text-white font-medium ml-2 mb-0">
                       <Link 
                         to={`/clan-member/${usernameToUrl(activity.username)}`}
                         className="hover:text-blue-300 transition-colors"
@@ -319,8 +319,8 @@ const Home = () => {
                       </Link>{' '}
                       <span className="text-slate-300">{activity.text}</span>
                     </p>
-                    <p className="text-slate-400 text-xs">{formatTimeAgo(activity.timestamp)}</p>
                   </div>
+                  <p className="text-slate-400 text-xs mt-1 ml-10">{formatTimeAgo(activity.timestamp)}</p>
                 </div>
               ))
             ) : (
