@@ -309,7 +309,7 @@ const Home = () => {
                         {activity.username.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <p className="text-white font-medium ml-2 mb-0">
+                    <p className="text-white font-medium mb-0">
                       <Link 
                         to={`/clan-member/${usernameToUrl(activity.username)}`}
                         className="hover:text-blue-300 transition-colors"
