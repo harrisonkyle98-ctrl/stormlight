@@ -298,8 +298,8 @@ const Home = () => {
           <div className="space-y-4">
             {activities.length > 0 ? (
               activities.map((activity, index) => (
-                <div key={`${activity.username}-${activity.timestamp}-${index}`} className="flex items-center space-x-3 p-3 bg-slate-700/50 rounded-lg">
-                  <Avatar className="h-8 w-8 flex-shrink-0">
+                <div key={`${activity.username}-${activity.timestamp}-${index}`} className="flex items-center p-3 bg-slate-700/50 rounded-lg">
+                  <Avatar className="h-8 w-8 flex-shrink-0 mr-2">
                     <AvatarImage 
                       src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(activity.username.replace(/\u00A0/g, ' '))}/chat.png`}
                       alt={activity.username}
