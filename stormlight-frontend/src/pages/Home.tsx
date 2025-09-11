@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button'
 import { Trophy, Users, Swords, TrendingUp } from 'lucide-react'
 import { fetchClanMembers, getGradientStyle } from '../utils/gradientUtils'
+import { useAuth } from '../contexts/AuthContext'
 
 interface ClanStats {
   members: string[]
@@ -37,6 +38,7 @@ interface ActivityResponse {
 }
 
 const Home = () => {
+  const { user } = useAuth()
   const [clanStats, setClanStats] = useState<ClanStats | null>(null)
   const [activities, setActivities] = useState<Activity[]>([])
   const [activityLoading, setActivityLoading] = useState(true)
@@ -170,7 +172,7 @@ const Home = () => {
     <div className="space-y-8">
       <div className="text-center">
         <h1 className="text-4xl font-bold text-white mb-4">
-          Welcome to <span className="text-blue-400">⚡ Stormlight</span>
+          Welcome back, <span className="text-blue-400">{user?.username || 'Guest'}</span>
         </h1>
         <p className="text-xl text-slate-300 max-w-2xl mx-auto">
           World 98 based. Track your progress, compete with fellow members,
