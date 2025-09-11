@@ -709,8 +709,7 @@ async def discord_callback(code: str):
                     print(f"🔐 DATABASE: Acquired database lock for user upsert")
                     user = await prisma.user.upsert(
                         where={'discordId': user_id},
-                        data={
-                            'discordId': user_id,
+                        update={
                             'username': user_data['username'],
                             'discriminator': user_data.get('discriminator', '0'),
                             'email': user_data.get('email'),
@@ -743,6 +742,7 @@ async def discord_callback(code: str):
                             'requiresLinking': False,
                             'discordId': user_id
                         }
+                        print(f"🔐 OAUTH DEBUG: Linked user dict created: {user_dict}")
                     else:
                         print(f"🔐 DATABASE: User {user_id} is not linked to any clan member")
                         user_dict = {
@@ -755,6 +755,7 @@ async def discord_callback(code: str):
                             'requiresLinking': True,
                             'discordId': user_id
                         }
+                        print(f"🔐 OAUTH DEBUG: Unlinked user dict created: {user_dict}")
                 
             except Exception as db_error:
                 print(f"❌ DATABASE ERROR: User operations failed: {db_error}")
@@ -771,6 +772,7 @@ async def discord_callback(code: str):
                 }
                 user_dict = users_db[user_id]
                 print(f"🔐 FALLBACK: User stored in memory: {user_id}")
+                print(f"🔐 FALLBACK DEBUG: Memory user dict: {user_dict}")
             
             print(f"🔐 JWT: Creating JWT token for user: {user_id}")
             try:
@@ -786,6 +788,7 @@ async def discord_callback(code: str):
                 "user": user_dict
             }
             
+            print(f"🔐 OAUTH DEBUG: Final response data: {response_data}")
             print(f"✅ OAUTH SUCCESS: Authentication completed for user: {user_id}")
             return response_data
             
@@ -950,14 +953,19 @@ async def link_discord_to_clan_member(
 @app.get("/api/user/me")
 async def get_current_user(user_id: str = Depends(verify_token)):
     """Get current user info"""
+    print(f"🔍 ===== USER/ME ENDPOINT CALLED =====")
     print(f"🔍 get_current_user called for user_id: {user_id}")
+    print(f"🔍 Request headers available, user authenticated via JWT")
+    print(f"🔍 Prisma client status: {prisma is not None}")
     
     try:
         print(f"🔍 Attempting Prisma query for user: {user_id}")
+        print(f"🔍 Prisma client connected: {prisma.is_connected()}")
         user = await prisma.user.find_unique(where={'discordId': user_id})
         print(f"🔍 Prisma user query result: {user}")
         
         if user:
+            print(f"🔍 User found in Prisma, checking for linked clan member...")
             linked_member = await prisma.clanmember.find_first(
                 where={'discordId': user_id}
             )
@@ -973,7 +981,7 @@ async def get_current_user(user_id: str = Depends(verify_token)):
                     'requiresLinking': False,
                     'discordId': user_id
                 }
-                print(f"✅ Returning linked user data: {result}")
+                print(f"✅ USER/ME DEBUG: Returning LINKED user data from Prisma: {result}")
                 return result
             else:
                 result = {
@@ -986,10 +994,15 @@ async def get_current_user(user_id: str = Depends(verify_token)):
                     'requiresLinking': True,
                     'discordId': user_id
                 }
-                print(f"✅ Returning unlinked user data: {result}")
+                print(f"✅ USER/ME DEBUG: Returning UNLINKED user data from Prisma: {result}")
                 return result
+        else:
+            print(f"🔍 User not found in Prisma, trying direct database...")
     except Exception as e:
         print(f"❌ Prisma database error in get_current_user: {e}")
+        print(f"❌ Error type: {type(e).__name__}")
+        import traceback
+        print(f"❌ Prisma traceback: {traceback.format_exc()}")
     
     # Fallback to direct database connection
     try:
@@ -1005,6 +1018,7 @@ async def get_current_user(user_id: str = Depends(verify_token)):
             print(f"🔍 Direct DB user query result: {user_row}")
             
             if user_row:
+                print(f"🔍 User found in direct DB, checking for linked clan member...")
                 member_cursor = await conn.execute(
                     "SELECT username, display_name, clan_rank FROM clan_members WHERE discord_id = %s",
                     (user_id,)
@@ -1022,7 +1036,7 @@ async def get_current_user(user_id: str = Depends(verify_token)):
                         'requiresLinking': False,
                         'discordId': user_id
                     }
-                    print(f"✅ Returning linked user data from direct DB: {result}")
+                    print(f"✅ USER/ME DEBUG: Returning LINKED user data from direct DB: {result}")
                     return result
                 else:
                     result = {
@@ -1035,23 +1049,33 @@ async def get_current_user(user_id: str = Depends(verify_token)):
                         'requiresLinking': True,
                         'discordId': user_id
                     }
-                    print(f"✅ Returning unlinked user data from direct DB: {result}")
+                    print(f"✅ USER/ME DEBUG: Returning UNLINKED user data from direct DB: {result}")
                     return result
+            else:
+                print(f"🔍 User not found in direct DB, trying in-memory...")
     except Exception as e:
         print(f"❌ Direct database error in get_current_user: {e}")
+        import traceback
+        print(f"❌ Direct DB traceback: {traceback.format_exc()}")
     
     print(f"🔍 Checking in-memory users_db for user: {user_id}")
+    print(f"🔍 users_db keys: {list(users_db.keys())}")
     if user_id not in users_db:
         print(f"❌ User {user_id} not found in users_db")
+        print(f"❌ Available users in memory: {list(users_db.keys())}")
         raise HTTPException(status_code=404, detail="User not found")
     
     user_data = users_db[user_id].copy()
+    print(f"🔍 Raw user_data from memory: {user_data}")
+    
     if 'isLinked' not in user_data:
         user_data['isLinked'] = False
         user_data['requiresLinking'] = True
-        user_data['discordId'] = user_id
+        print(f"🔍 Added missing linking flags to user_data")
     
-    print(f"✅ Returning enhanced in-memory user data: {user_data}")
+    user_data['discordId'] = user_id
+    print(f"✅ USER/ME DEBUG: Returning MEMORY user data: {user_data}")
+    
     return user_data
 
 
