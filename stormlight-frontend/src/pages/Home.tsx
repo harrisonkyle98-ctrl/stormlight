@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button'
 import { Trophy, Users, Swords, TrendingUp } from 'lucide-react'
 import { fetchClanMembers, getGradientStyle } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
+import { usernameToUrl } from '../utils/urlUtils'
 
 interface ClanStats {
   members: string[]
@@ -172,7 +173,16 @@ const Home = () => {
     <div className="space-y-8">
       <div className="text-center">
         <h1 className="text-4xl font-bold text-white mb-4">
-          Welcome back, <span className="text-blue-400">{user?.username || 'Guest'}</span>
+          Welcome back, {user?.username ? (
+            <Link 
+              to={`/clan-member/${usernameToUrl(user.username)}`}
+              className="text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              {user.username}
+            </Link>
+          ) : (
+            <span className="text-blue-400">Guest</span>
+          )}
         </h1>
         <p className="text-xl text-slate-300 max-w-2xl mx-auto">
           World 98 based. Track your progress, compete with fellow members,
