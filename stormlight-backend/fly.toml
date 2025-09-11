@@ -23,6 +23,3 @@ primary_region = "iad"
   grace_period = "5s"
   method = "GET"
   path = "/healthz"
-
-[deploy]
-  release_command = "poetry run prisma generate"
