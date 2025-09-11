@@ -54,7 +54,7 @@ const Navbar = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-8 w-8 bg-blue-600">
                     <AvatarImage 
                       src={
                         user?.isLinked && user?.username
@@ -64,6 +64,7 @@ const Navbar = () => {
                             : undefined
                       } 
                       alt={user?.username} 
+                      className="relative z-10"
                     />
                     <AvatarFallback className="bg-blue-600 text-white">
                       {user?.username?.charAt(0).toUpperCase()}
