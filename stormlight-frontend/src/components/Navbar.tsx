@@ -56,7 +56,13 @@ const Navbar = () => {
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
                     <AvatarImage 
-                      src={user?.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : undefined} 
+                      src={
+                        user?.isLinked && user?.username
+                          ? `http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(user.username.replace(/\u00A0/g, ' '))}/chat.png`
+                          : user?.avatar 
+                            ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
+                            : undefined
+                      } 
                       alt={user?.username} 
                     />
                     <AvatarFallback className="bg-blue-600 text-white">
