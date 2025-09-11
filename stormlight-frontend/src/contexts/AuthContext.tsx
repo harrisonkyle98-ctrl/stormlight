@@ -61,7 +61,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.ok) {
         const userData = await response.json()
-        console.log('User data from /api/user/me:', userData)
         setUser(userData)
       } else {
         localStorage.removeItem('access_token')
@@ -126,7 +125,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.ok) {
         const data = await response.json()
-        console.log('User data after linking:', data.user)
         setUser(data.user)
         return { status: 'linked' }
       } else {

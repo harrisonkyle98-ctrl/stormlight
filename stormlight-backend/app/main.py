@@ -740,6 +740,7 @@ async def discord_callback(code: str):
                             'displayName': linked_member.displayName or linked_member.username,
                             'clanRank': linked_member.clanRank,
                             'isLinked': True,
+                            'requiresLinking': False,
                             'discordId': user_id
                         }
                     else:
@@ -840,6 +841,7 @@ async def link_discord_to_clan_member(
                                 'displayName': clan_member.displayName or clan_member.username,
                                 'clanRank': clan_member.clanRank,
                                 'isLinked': True,
+                                'requiresLinking': False,
                                 'discordId': user_id
                             }
                         }
@@ -860,6 +862,7 @@ async def link_discord_to_clan_member(
                         'displayName': updated_member.displayName or updated_member.username,
                         'clanRank': updated_member.clanRank,
                         'isLinked': True,
+                        'requiresLinking': False,
                         'discordId': user_id
                     }
                 }
@@ -897,6 +900,7 @@ async def link_discord_to_clan_member(
                                 'displayName': display_name or username,
                                 'clanRank': clan_rank,
                                 'isLinked': True,
+                                'requiresLinking': False,
                                 'discordId': user_id
                             }
                         }
@@ -917,6 +921,7 @@ async def link_discord_to_clan_member(
                         'displayName': clan_member_row[1] or clan_member_row[0],
                         'clanRank': clan_member_row[2],
                         'isLinked': True,
+                        'requiresLinking': False,
                         'discordId': user_id
                     }
                 }
@@ -965,6 +970,7 @@ async def get_current_user(user_id: str = Depends(verify_token)):
                     'displayName': linked_member.displayName or linked_member.username,
                     'clanRank': linked_member.clanRank,
                     'isLinked': True,
+                    'requiresLinking': False,
                     'discordId': user_id
                 }
                 print(f"✅ Returning linked user data: {result}")
@@ -1013,6 +1019,7 @@ async def get_current_user(user_id: str = Depends(verify_token)):
                         'displayName': member_row[1] or member_row[0],
                         'clanRank': member_row[2],
                         'isLinked': True,
+                        'requiresLinking': False,
                         'discordId': user_id
                     }
                     print(f"✅ Returning linked user data from direct DB: {result}")
