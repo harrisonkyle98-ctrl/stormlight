@@ -299,7 +299,7 @@ const Home = () => {
             {activities.length > 0 ? (
               activities.map((activity, index) => (
                 <div key={`${activity.username}-${activity.timestamp}-${index}`} className="p-3 bg-slate-700/50 rounded-lg">
-                  <div className="flex items-center mb-2">
+                  <div className="flex items-center justify-center mb-2">
                     <Avatar className="h-8 w-8 flex-shrink-0 mr-2">
                       <AvatarImage 
                         src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(activity.username.replace(/\u00A0/g, ' '))}/chat.png`}
