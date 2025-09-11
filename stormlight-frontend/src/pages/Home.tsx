@@ -330,8 +330,7 @@ const Home = () => {
                 <Button 
                   onClick={loadMoreActivities}
                   disabled={activityLoading}
-                  variant="outline"
-                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                  className="bg-blue-600 hover:bg-blue-700"
                 >
                   {activityLoading ? 'Loading...' : 'See More'}
                 </Button>
