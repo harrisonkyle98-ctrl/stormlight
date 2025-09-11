@@ -223,9 +223,9 @@ const Home = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
-              {loading ? '...' : clanStats?.clan_rank || 'Unknown'}
+              {loading ? '...' : (user?.isLinked && user?.clanRank) ? user.clanRank : user ? 'Not a member' : 'Unknown'}
             </div>
-            <p className="text-xs text-slate-400">Overall ranking</p>
+            <p className="text-xs text-slate-400">{user?.isLinked ? 'Your clan rank' : 'Clan membership'}</p>
           </CardContent>
         </Card>
 
