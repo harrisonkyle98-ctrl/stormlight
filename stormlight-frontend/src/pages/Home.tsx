@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
+import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { Trophy, Users, Swords, TrendingUp } from 'lucide-react'
 import { fetchClanMembers, getGradientStyle } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
@@ -298,7 +299,15 @@ const Home = () => {
             {activities.length > 0 ? (
               activities.map((activity, index) => (
                 <div key={`${activity.username}-${activity.timestamp}-${index}`} className="flex items-center space-x-3 p-3 bg-slate-700/50 rounded-lg">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage 
+                      src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(activity.username.replace(/\u00A0/g, ' '))}/chat.png`}
+                      alt={activity.username}
+                    />
+                    <AvatarFallback className="bg-blue-600 text-white text-xs">
+                      {activity.username.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
                   <div className="flex-1">
                     <p className="text-white font-medium">
                       <Link 
