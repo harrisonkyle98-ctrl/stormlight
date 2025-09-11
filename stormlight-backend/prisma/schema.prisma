@@ -39,6 +39,7 @@ model ClanMember {
   kills           Int      @default(0)
   stats           Json?
   questData       Json?    @map("quest_data")
+  badges          Json?    @default("[]")
   discordId       String?  @unique @map("discord_id")
   lastUpdated     DateTime @map("last_updated")
   createdAt       DateTime @default(now()) @map("created_at")

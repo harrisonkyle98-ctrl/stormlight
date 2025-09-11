@@ -461,6 +461,24 @@ async def sync_clan_members_to_database_with_queue():
                 
                 stats_data = await fetch_player_stats(member_data['username'], max_retries=2)
                 
+                quest_data = None
+                try:
+                    async with httpx.AsyncClient() as client:
+                        profile_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={member_data['username']}"
+                        profile_response = await client.get(profile_url)
+                        
+                        if profile_response.status_code == 200:
+                            profile_data = profile_response.json()
+                            quest_data = {
+                                'quest_summary': {
+                                    'questsstarted': profile_data.get('questsstarted', 0),
+                                    'questscomplete': profile_data.get('questscomplete', 0),
+                                    'questsnotstarted': profile_data.get('questsnotstarted', 0)
+                                }
+                            }
+                except Exception as e:
+                    print(f"⚠️ Failed to fetch quest data for {member_data['username']}: {e}")
+                
                 if stats_data is None:
                     failed_member_queue.append({
                         'member_data': member_data,
@@ -470,6 +488,14 @@ async def sync_clan_members_to_database_with_queue():
                     failed_syncs += 1
                     print(f"⚠️ Queued {member_data['username']} for retry (stats fetch failed)")
                     continue
+                
+                badges = []
+                try:
+                    from .badge_utils import compute_member_badges
+                    badges = compute_member_badges(stats_data, quest_data, member_data['clan_rank'], member_data['username'])
+                except Exception as e:
+                    print(f"⚠️ Failed to compute badges for {member_data['username']}: {e}")
+                    badges = []
                 
                 clan_member_data = {
                     'username': member_data['username'],
@@ -481,6 +507,8 @@ async def sync_clan_members_to_database_with_queue():
                     'questPoints': stats_data.get('quest_points', 0) if stats_data else 0,
                     'kills': member_data.get('kills', 0),
                     'stats': json.dumps(stats_data.get('stats')) if stats_data and stats_data.get('stats') else None,
+                    'questData': json.dumps(quest_data) if quest_data else None,
+                    'badges': json.dumps(badges),
                     'lastUpdated': datetime.now()
                 }
                 
@@ -494,7 +522,7 @@ async def sync_clan_members_to_database_with_queue():
                 
                 successful_syncs += 1
                 if successful_syncs % 10 == 0:
-                    print(f"✅ Synced {successful_syncs}/{len(clan_data)} members...")
+                    print(f"✅ Synced {successful_syncs}/{len(clan_data)} members with badges...")
                 
             except Exception as e:
                 failed_member_queue.append({
@@ -1319,6 +1347,13 @@ async def get_clan_members_paginated(
         if db_members and len(db_members) > 0:
             members = []
             for member in db_members:
+                badges = []
+                if member.badges:
+                    try:
+                        badges = json.loads(member.badges)
+                    except:
+                        badges = []
+                
                 members.append({
                     'username': member.username,
                     'clan_rank': member.clanRank,
@@ -1326,7 +1361,8 @@ async def get_clan_members_paginated(
                     'total_level': member.totalLevel,
                     'combat_level': member.combatLevel,
                     'kills': member.kills,
-                    'last_updated': member.lastUpdated.isoformat()
+                    'last_updated': member.lastUpdated.isoformat(),
+                    'badges': badges
                 })
             print(f"✅ Retrieved {len(members)} members from database")
         else:

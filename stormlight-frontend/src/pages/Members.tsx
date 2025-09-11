@@ -7,7 +7,7 @@ import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Search, Users, User } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { getGradientStyle, checkPlayerMilestones, MilestoneBadge } from '../utils/gradientUtils'
+import { getGradientStyle, MilestoneBadge } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
 
 interface ClanMember {
@@ -16,6 +16,7 @@ interface ClanMember {
   total_xp: number
   kills: number
   last_updated: string
+  badges?: MilestoneBadge[]
 }
 
 interface MemberWithBadges extends ClanMember {
@@ -68,14 +69,12 @@ const Members = () => {
         const data = await response.json()
         setMembersData(data)
         
-        const membersWithBadgesInit: MemberWithBadges[] = data.members.map((member: ClanMember) => ({
+        const membersWithBadgesInit: MemberWithBadges[] = data.members.map((member: ClanMember & { badges?: MilestoneBadge[] }) => ({
           ...member,
-          badges: [],
-          badgesLoading: true
+          badges: member.badges || [],
+          badgesLoading: false
         }))
         setMembersWithBadges(membersWithBadgesInit)
-        
-        fetchMemberBadges(data.members)
       }
     } catch (error) {
       console.error('Error fetching clan members:', error)
@@ -84,56 +83,6 @@ const Members = () => {
     }
   }
 
-  const fetchMemberBadges = async (members: ClanMember[]) => {
-    for (let i = 0; i < members.length; i += 2) {
-      const batch = members.slice(i, i + 2)
-      
-      await Promise.all(batch.map(async (member) => {
-        try {
-          const urlUsername = usernameToUrl(member.username)
-          
-          const [statsResponse, questResponse] = await Promise.all([
-            fetch(`${API_URL}/api/player/${urlUsername}/stats`),
-            fetch(`${API_URL}/api/player/${urlUsername}/quests`)
-          ])
-          
-          let badges: MilestoneBadge[] = []
-          
-          if (statsResponse.ok) {
-            const statsData = await statsResponse.json()
-            let questData = null
-            
-            if (questResponse.ok) {
-              questData = await questResponse.json()
-            }
-            
-            badges = checkPlayerMilestones(statsData.stats, questData, member.clan_rank, member.username)
-          }
-          
-          setMembersWithBadges(prev => 
-            prev.map(m => 
-              m.username === member.username 
-                ? { ...m, badges, badgesLoading: false }
-                : m
-            )
-          )
-        } catch (error) {
-          console.error(`Error fetching badges for ${member.username}:`, error)
-          setMembersWithBadges(prev => 
-            prev.map(m => 
-              m.username === member.username 
-                ? { ...m, badges: [], badgesLoading: false }
-                : m
-            )
-          )
-        }
-      }))
-      
-      if (i + 2 < members.length) {
-        await new Promise(resolve => setTimeout(resolve, 1000))
-      }
-    }
-  }
 
 
 
