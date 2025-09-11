@@ -154,7 +154,7 @@ const Home = () => {
 
   const formatTimeAgo = (timestamp: number) => {
     const now = Date.now() / 1000
-    const diff = now - timestamp
+    const diff = now - Math.abs(timestamp)
     
     if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`
     if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`
@@ -301,12 +301,13 @@ const Home = () => {
                   <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
                   <div className="flex-1">
                     <p className="text-white font-medium">
-                      <span 
-                        className="text-blue-400"
+                      <Link 
+                        to={`/clan-member/${usernameToUrl(activity.username)}`}
+                        className="hover:text-blue-300 transition-colors"
                         style={getGradientStyle(activity.username, clanMembers.find(m => m.username === activity.username)?.clan_rank)}
                       >
                         {activity.username}
-                      </span> {activity.text}
+                      </Link> {activity.text}
                     </p>
                     <p className="text-slate-400 text-sm">{formatTimeAgo(activity.timestamp)}</p>
                   </div>
