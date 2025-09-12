@@ -7,7 +7,7 @@ import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Search, Users, User } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { getGradientStyle, MilestoneBadge } from '../utils/gradientUtils'
+import { getGradientStyle, MilestoneBadge, checkPlayerMilestones } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
 
 interface ClanMember {
@@ -74,11 +74,17 @@ const Members = () => {
         const data = await response.json()
         setMembersData(data)
 
-        const membersWithBadgesInit: MemberWithBadges[] = data.members.map((member: ClanMember & { badges?: MilestoneBadge[] }) => ({
-          ...member,
-          badges: member.badges ?? [],
-          badgesLoading: false,
-        }))
+        const membersWithBadgesInit: MemberWithBadges[] = data.members.map((member: ClanMember & { badges?: MilestoneBadge[] }) => {
+          const serverRankBadge = (member.badges || []).find(b => b.id?.startsWith('rank-'))
+          const computedRankBadges = checkPlayerMilestones(null, null, member.clan_rank, member.username)
+          const rankBadge = serverRankBadge || (computedRankBadges.length ? computedRankBadges[0] : undefined)
+
+          return {
+            ...member,
+            badges: rankBadge ? [rankBadge] : [],
+            badgesLoading: false,
+          }
+        })
         setMembersWithBadges(membersWithBadgesInit)
       }
     } catch (error) {
@@ -259,40 +265,31 @@ const Members = () => {
                       </Link>
                       <div className="flex items-center space-x-2 mt-1">
                         {member.badgesLoading ? (
-                          <div className="flex items-center space-x-1">
-                            <div className="w-6 h-6 bg-slate-600 rounded animate-pulse"></div>
-                            <div className="w-6 h-6 bg-slate-600 rounded animate-pulse"></div>
-                            <div className="w-6 h-6 bg-slate-600 rounded animate-pulse"></div>
-                          </div>
+                          <div className="w-24 h-6 bg-slate-600 rounded animate-pulse"></div>
                         ) : member.badges.length > 0 ? (
-                          <div className="flex items-center space-x-1">
-                            {member.badges.slice(0, 3).map((badge) => (
+                          (() => {
+                            const rankBadge = member.badges[0]
+                            return (
                               <div
-                                key={badge.id}
-                                className="w-6 h-6 rounded flex items-center justify-center"
-                                style={{ 
-                                  background: badge.gradientBackground || badge.backgroundColor 
+                                className="px-2 py-1 text-xs font-semibold flex items-center space-x-1 rounded-md text-white"
+                                style={{
+                                  background: rankBadge.gradientBackground || rankBadge.backgroundColor
                                 }}
-                                title={badge.name}
+                                title={rankBadge.name}
                               >
                                 <img
-                                  src={badge.icon}
-                                  alt={badge.name}
-                                  className="w-4 h-4"
+                                  src={rankBadge.icon}
+                                  alt={rankBadge.name}
+                                  className="w-3 h-3"
                                 />
+                                <span>{rankBadge.name}</span>
                               </div>
-                            ))}
-                            {member.badges.length > 3 && (
-                              <div 
-                                className="w-6 h-6 bg-slate-600 rounded flex items-center justify-center text-xs text-white font-medium"
-                                title={`${member.badges.length - 3} more badges`}
-                              >
-                                +{member.badges.length - 3}
-                              </div>
-                            )}
-                          </div>
+                            )
+                          })()
                         ) : (
-                          <p className="text-sm text-slate-500">No badges</p>
+                          <div className="px-2 py-1 text-xs font-semibold flex items-center space-x-1 rounded-md text-white bg-slate-600">
+                            <span>{member.clan_rank || 'Member'}</span>
+                          </div>
                         )}
                       </div>
                     </div>
