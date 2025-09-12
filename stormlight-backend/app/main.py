@@ -195,6 +195,12 @@ profile_history_cache = {
     'ttl': 3600  # 1 hour cache (same as profile_cache)
 }
 
+clan_members_cache = {
+    'data': [],
+    'timestamp': 0,
+    'ttl': 600  # 10 minutes
+}
+
 def is_rate_limited(client_ip: str, endpoint: str) -> bool:
     """Check if client is rate limited for profile endpoints"""
     if not endpoint.startswith('/api/player/'):
@@ -1341,6 +1347,11 @@ async def get_competition(competition_id: int):
 async def fetch_clan_members() -> List[Dict[str, Any]]:
     """Fetch clan members from RuneScape Clan API"""
     try:
+        current_time = time_module.time()
+        if (clan_members_cache['data'] and
+            current_time - clan_members_cache['timestamp'] < clan_members_cache['ttl']):
+            return clan_members_cache['data']
+
         async with httpx.AsyncClient(timeout=10.0) as client:
             clan_url = "https://secure.runescape.com/m=clan-hiscores/members_lite.ws?clanName=Stormlight"
             response = await client.get(clan_url)
@@ -1366,6 +1377,8 @@ async def fetch_clan_members() -> List[Dict[str, Any]]:
                                 'last_updated': datetime.now().isoformat()
                             })
                 
+                clan_members_cache['data'] = members
+                clan_members_cache['timestamp'] = current_time
                 return members
             return []
     except Exception as e:
@@ -1401,8 +1414,10 @@ async def get_clan_members_paginated(
     if limit not in [15, 30, 50]:
         limit = 15
     
+    t0 = time_module.time()
     try:
         db_members = await prisma.clanmember.find_many()
+        t_db = time_module.time()
         if db_members and len(db_members) > 0:
             members = []
             for member in db_members:
@@ -1423,13 +1438,17 @@ async def get_clan_members_paginated(
                     'last_updated': member.lastUpdated.isoformat(),
                     'badges': badges
                 })
-            print(f"✅ Retrieved {len(members)} members from database")
+            t_transform = time_module.time()
+            print(f"[Perf] /api/clan/members DB={int((t_db - t0)*1000)}ms transform={int((t_transform - t_db)*1000)}ms rows={len(db_members)}")
         else:
             raise Exception("No members found in database")
             
     except Exception as db_error:
         print(f"❌ Database error, falling back to API: {db_error}")
+        t_api0 = time_module.time()
         members = await fetch_clan_members()
+        t_api = time_module.time()
+        print(f"[Perf] /api/clan/members FALLBACK external fetch={int((t_api - t_api0)*1000)}ms count={len(members)}")
     
     if search:
         search_lower = search.lower()
@@ -1445,6 +1464,7 @@ async def get_clan_members_paginated(
         
         members = filtered_members
     
+    t_sort0 = time_module.time()
     if sort_by == "xp":
         members.sort(key=lambda x: x['total_xp'], reverse=True)
     else:
@@ -1453,6 +1473,8 @@ async def get_clan_members_paginated(
     start_idx = (page - 1) * limit
     end_idx = start_idx + limit
     paginated_members = members[start_idx:end_idx]
+    t_done = time_module.time()
+    print(f"[Perf] /api/clan/members sort+paginate={int((t_done - t_sort0)*1000)}ms page={page} limit={limit} total={len(members)}")
     
     return {
         "members": paginated_members,
