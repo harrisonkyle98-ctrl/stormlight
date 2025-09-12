@@ -7,7 +7,7 @@ import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Search, Users, User } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { getGradientStyle, MilestoneBadge } from '../utils/gradientUtils'
+import { getGradientStyle, MilestoneBadge, checkPlayerMilestones } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
 
 interface ClanMember {
@@ -69,11 +69,14 @@ const Members = () => {
         const data = await response.json()
         setMembersData(data)
         
-        const membersWithBadgesInit: MemberWithBadges[] = data.members.map((member: ClanMember & { badges?: MilestoneBadge[] }) => ({
-          ...member,
-          badges: member.badges || [],
-          badgesLoading: false
-        }))
+        const membersWithBadgesInit: MemberWithBadges[] = data.members.map((member: ClanMember & { badges?: MilestoneBadge[] }) => {
+          const generatedBadges = checkPlayerMilestones(null, null, member.clan_rank, member.username)
+          return {
+            ...member,
+            badges: generatedBadges,
+            badgesLoading: false
+          }
+        })
         setMembersWithBadges(membersWithBadgesInit)
       }
     } catch (error) {
