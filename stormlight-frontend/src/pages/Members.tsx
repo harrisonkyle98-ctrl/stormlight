@@ -57,17 +57,22 @@ const Members = () => {
       let playerStats = null
       let questData = null
 
+      let clanRank = ''
+
       if (statsResponse.ok) {
         const statsData = await statsResponse.json()
         playerStats = statsData.stats
+        clanRank = statsData.clan_rank || ''
       }
 
       if (questsResponse.ok) {
         questData = await questsResponse.json()
       }
 
-      const member = membersData?.members.find(m => m.username === username)
-      const clanRank = member?.clan_rank || ''
+      if (!clanRank) {
+        const member = membersData?.members.find(m => m.username === username)
+        clanRank = member?.clan_rank || ''
+      }
 
       return checkPlayerMilestones(playerStats, questData, clanRank, username)
     } catch (error) {
