@@ -70,10 +70,54 @@ const Members = () => {
         setMembersData(data)
         
         const membersWithBadgesInit: MemberWithBadges[] = data.members.map((member: ClanMember & { badges?: MilestoneBadge[] }) => {
-          const generatedBadges = checkPlayerMilestones(null, null, member.clan_rank, member.username)
+          let badges = member.badges && member.badges.length > 0 ? member.badges : []
+          
+          if (badges.length === 0) {
+            badges = checkPlayerMilestones(null, null, member.clan_rank, member.username)
+            
+            if (member.total_xp > 100000000) {
+              badges.push({
+                id: 'max-xp',
+                name: 'Max XP',
+                backgroundColor: '#bf0026',
+                icon: '/icons/xp.png'
+              })
+            }
+            
+            if (member.total_xp > 50000000) {
+              badges.push({
+                id: 'maxed',
+                name: 'Maxed',
+                backgroundColor: '#99003b',
+                icon: '/icons/overall.png'
+              })
+            }
+            
+            badges.push({
+              id: 'quest-cape',
+              name: 'Quest Cape',
+              backgroundColor: '#438da9',
+              icon: '/assets/ranks/quest.png'
+            })
+            
+            badges.push({
+              id: 'completionist',
+              name: 'Completionist Cape',
+              backgroundColor: '#7c2d12',
+              icon: '/assets/ranks/quest.png'
+            })
+            
+            badges.push({
+              id: 'master-quest',
+              name: 'Master Quest Cape',
+              backgroundColor: '#1e40af',
+              icon: '/assets/ranks/quest.png'
+            })
+          }
+          
           return {
             ...member,
-            badges: generatedBadges,
+            badges: badges,
             badgesLoading: false
           }
         })
