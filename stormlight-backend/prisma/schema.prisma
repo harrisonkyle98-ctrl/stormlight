@@ -134,6 +134,20 @@ model ClanActivity {
   @@map("clan_activities")
 }
 
+model ClanLog {
+  id        Int      @id @default(autoincrement())
+  username  String
+  eventType String   @map("event_type")
+  oldRank   String?  @map("old_rank")
+  newRank   String?  @map("new_rank")
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  @@index([timestamp])
+  @@index([username])
+  @@map("clan_log")
+}
+
 enum CompetitionType {
   XP_GAIN
   LEVEL_GAIN

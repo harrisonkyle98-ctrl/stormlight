@@ -24,6 +24,25 @@ interface Activity {
   timestamp: number
 }
 
+interface ClanLogEntry {
+  id: number
+  username: string
+  event_type: 'join' | 'leave' | 'rank_up'
+  old_rank?: string
+  new_rank?: string
+  timestamp: string
+}
+
+interface ClanLogResponse {
+  log_entries: ClanLogEntry[]
+  pagination: {
+    page: number
+    limit: number
+    total_entries: number
+    has_next: boolean
+  }
+}
+
 interface ActivityResponse {
   activities: Activity[]
   pagination: {
@@ -49,17 +68,21 @@ const Home = () => {
   const [loading, setLoading] = useState(true)
   const [clanMembers, setClanMembers] = useState<any[]>([])
   const [loadingStatus, setLoadingStatus] = useState<{is_complete: boolean, processed_members: number, total_members: number} | null>(null)
+  const [clanLogEntries, setClanLogEntries] = useState<ClanLogEntry[]>([])
+  const [clanLogLoading, setClanLogLoading] = useState(true)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
   useEffect(() => {
     fetchClanStats()
     fetchActivities()
+    fetchClanLog()
     loadClanMembers()
 
     const statsInterval = setInterval(() => {
       console.log('🔄 Refreshing Total XP data (hourly)')
       fetchClanStats()
+      fetchClanLog()
     }, 60 * 60 * 1000) // 1 hour in milliseconds
 
     return () => {
@@ -161,6 +184,21 @@ const Home = () => {
     if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`
     if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`
     return `${Math.floor(diff / 604800)} weeks ago`
+  }
+
+  const fetchClanLog = async () => {
+    try {
+      setClanLogLoading(true)
+      const response = await fetch(`${API_URL}/api/clan/log?page=1&limit=10`)
+      if (response.ok) {
+        const data: ClanLogResponse = await response.json()
+        setClanLogEntries(data.log_entries)
+      }
+    } catch (error) {
+      console.error('Error fetching clan log:', error)
+    } finally {
+      setClanLogLoading(false)
+    }
   }
 
   const formatNumber = (num: number) => {
@@ -286,6 +324,55 @@ const Home = () => {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="bg-slate-800/50 border-slate-700">
+        <CardHeader>
+          <CardTitle className="text-white">Clan Log</CardTitle>
+          <CardDescription className="text-slate-400">
+            Recent clan member activity
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {clanLogEntries.length > 0 ? (
+              clanLogEntries.map((entry) => (
+                <div key={entry.id} className="p-3 bg-slate-700/50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex-shrink-0">
+                      {entry.event_type === 'join' && <span className="text-green-400 text-lg">✅</span>}
+                      {entry.event_type === 'leave' && <span className="text-red-400 text-lg">❌</span>}
+                      {entry.event_type === 'rank_up' && <span className="text-blue-400 text-lg">⬆️</span>}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <Link 
+                          to={`/clan-member/${usernameToUrl(entry.username)}`}
+                          className="text-white font-medium hover:text-blue-300 transition-colors"
+                          style={getGradientStyle(entry.username, entry.new_rank || entry.old_rank)}
+                        >
+                          {entry.username}
+                        </Link>
+                        <span className="text-slate-300">
+                          {entry.event_type === 'join' && `joined the clan as ${entry.new_rank}`}
+                          {entry.event_type === 'leave' && `left the clan`}
+                          {entry.event_type === 'rank_up' && `promoted from ${entry.old_rank} to ${entry.new_rank}`}
+                        </span>
+                      </div>
+                      <p className="text-slate-400 text-xs">{formatTimeAgo(new Date(entry.timestamp).getTime() / 1000)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-slate-400">
+                  {clanLogLoading ? 'Loading clan events...' : 'No recent clan events'}
+                </p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader>

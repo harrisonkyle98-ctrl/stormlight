@@ -448,6 +448,14 @@ async def sync_clan_members_to_database_with_queue():
             print(f"🔄 Processing {len(failed_member_queue)} queued failed members...")
             await process_failed_member_queue()
         
+        current_db_members = {}
+        try:
+            db_members = await prisma.clanmember.find_many()
+            current_db_members = {member.username: member.clanRank for member in db_members}
+            print(f"📊 Loaded {len(current_db_members)} existing members for change detection")
+        except Exception as e:
+            print(f"⚠️ Could not fetch current members for change detection: {e}")
+        
         clan_data = await fetch_clan_members()
         print(f"📥 Fetched {len(clan_data)} clan members for sync")
         
@@ -520,6 +528,27 @@ async def sync_clan_members_to_database_with_queue():
                     }
                 )
                 
+                try:
+                    if member_data['username'] not in current_db_members:
+                        await prisma.clanlog.create(data={
+                            'username': member_data['username'],
+                            'eventType': 'join',
+                            'newRank': member_data['clan_rank'],
+                            'timestamp': datetime.now()
+                        })
+                        print(f"📝 Logged join event for {member_data['username']}")
+                    elif current_db_members[member_data['username']] != member_data['clan_rank']:
+                        await prisma.clanlog.create(data={
+                            'username': member_data['username'],
+                            'eventType': 'rank_up',
+                            'oldRank': current_db_members[member_data['username']],
+                            'newRank': member_data['clan_rank'],
+                            'timestamp': datetime.now()
+                        })
+                        print(f"📝 Logged rank change for {member_data['username']}: {current_db_members[member_data['username']]} → {member_data['clan_rank']}")
+                except Exception as log_error:
+                    print(f"⚠️ Failed to log clan event for {member_data['username']}: {log_error}")
+                
                 successful_syncs += 1
                 if successful_syncs % 10 == 0:
                     print(f"✅ Synced {successful_syncs}/{len(clan_data)} members with badges...")
@@ -534,6 +563,37 @@ async def sync_clan_members_to_database_with_queue():
                 failed_syncs += 1
                 print(f"❌ Error syncing {member_data['username']}, queued for retry: {e}")
                 continue
+        
+        current_usernames = {member['username'] for member in clan_data}
+        for db_username in current_db_members:
+            if db_username not in current_usernames:
+                try:
+                    await prisma.clanlog.create(data={
+                        'username': db_username,
+                        'eventType': 'leave',
+                        'oldRank': current_db_members[db_username],
+                        'timestamp': datetime.now()
+                    })
+                    print(f"📝 Logged leave event for {db_username}")
+                except Exception as log_error:
+                    print(f"⚠️ Failed to log leave event for {db_username}: {log_error}")
+        
+        try:
+            total_entries = await prisma.clanlog.count()
+            if total_entries > 1000:
+                entries_to_keep = await prisma.clanlog.find_many(
+                    order_by={'timestamp': 'desc'},
+                    take=1,
+                    skip=999
+                )
+                if entries_to_keep:
+                    cutoff_timestamp = entries_to_keep[0].timestamp
+                    deleted_result = await prisma.clanlog.delete_many(
+                        where={'timestamp': {'lt': cutoff_timestamp}}
+                    )
+                    print(f"🗑️ Pruned {deleted_result.count if hasattr(deleted_result, 'count') else 'some'} old clan log entries")
+        except Exception as prune_error:
+            print(f"⚠️ Failed to prune old clan log entries: {prune_error}")
         
         print(f"📊 Sync complete: {successful_syncs} successful, {failed_syncs} failed, {len(failed_member_queue)} in queue")
         
@@ -1806,6 +1866,49 @@ async def get_clan_activities(
                 "total_members": 0
             }
         }
+
+@app.get("/api/clan/log")
+async def get_clan_log(
+    page: int = 1,
+    limit: int = 20
+):
+    """Get recent clan log events with pagination"""
+    try:
+        offset = (page - 1) * limit
+        
+        log_entries = await prisma.clanlog.find_many(
+            order_by={'timestamp': 'desc'},
+            skip=offset,
+            take=limit
+        )
+        
+        total_count = await prisma.clanlog.count()
+        
+        formatted_entries = []
+        for entry in log_entries:
+            formatted_entry = {
+                'id': entry.id,
+                'username': entry.username,
+                'event_type': entry.eventType,
+                'old_rank': entry.oldRank,
+                'new_rank': entry.newRank,
+                'timestamp': entry.timestamp.isoformat()
+            }
+            formatted_entries.append(formatted_entry)
+        
+        return {
+            "log_entries": formatted_entries,
+            "pagination": {
+                "page": page,
+                "limit": limit,
+                "total_entries": total_count,
+                "has_next": offset + limit < total_count
+            }
+        }
+        
+    except Exception as e:
+        print(f"❌ Error fetching clan log: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch clan log")
 
 @app.get("/api/player/{username}/activities")
 async def get_player_activities(username: str, page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50)):
