@@ -241,13 +241,13 @@ const Members = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-14 flex-shrink-0">
+                    <div className="flex items-center">
+                      <div className="w-14 mr-3 flex-shrink-0">
                         <Badge variant="outline" className="text-yellow-400 border-yellow-400 w-full justify-center tabular-nums">
                           #{memberRank}
                         </Badge>
                       </div>
-                      <Avatar className="w-10 h-10 flex-shrink-0">
+                      <Avatar className="w-10 h-10 mr-3 flex-shrink-0">
                         <AvatarImage
                           src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(member.username.replace(/\u00A0/g, ' '))}/chat.png`}
                           alt={member.username}
@@ -256,17 +256,20 @@ const Members = () => {
                           <User className="w-5 h-5" />
                         </AvatarFallback>
                       </Avatar>
-                      <div className="min-w-0 flex-1">
+                      <div className="flex-1">
                         <Link
                           to={`/clan-member/${usernameToUrl(member.username)}`}
-                          className="block truncate"
+                          className="text-lg font-semibold hover:text-blue-400 transition-colors block truncate"
+                          style={{
+                            ...getGradientStyle(member.username, member.clan_rank),
+                            textAlign: 'left',
+                            margin: 0,
+                            padding: 0,
+                            textIndent: 0,
+                            paddingLeft: '1px'
+                          }}
                         >
-                          <span
-                            className="text-lg font-semibold hover:text-blue-400 transition-colors block m-0 p-0 indent-0 leading-tight tracking-normal antialiased"
-                            style={getGradientStyle(member.username, member.clan_rank)}
-                          >
-                            {normalizeDisplayUsername(member.username)}
-                          </span>
+                          {normalizeDisplayUsername(member.username)}
                         </Link>
                         <div className="flex items-center mt-1">
                           {member.badgesLoading ? (
