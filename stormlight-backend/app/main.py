@@ -582,7 +582,6 @@ async def sync_clan_members_to_database_with_queue():
             total_entries = await prisma.clanlog.count()
             if total_entries > 1000:
                 entries_to_keep = await prisma.clanlog.find_many(
-                    order_by={'timestamp': 'desc'},
                     take=1,
                     skip=999
                 )
@@ -1867,6 +1866,33 @@ async def get_clan_activities(
             }
         }
 
+@app.get("/api/clan/log/test")
+async def test_clan_log():
+    """Test clan log database access"""
+    try:
+        # Test basic connection
+        member_count = await prisma.clanmember.count()
+        
+        try:
+            log_count = await prisma.clanlog.count()
+            return {
+                "status": "success", 
+                "member_count": member_count,
+                "log_count": log_count,
+                "clanlog_accessible": True
+            }
+        except Exception as log_error:
+            return {
+                "status": "partial_success",
+                "member_count": member_count,
+                "clanlog_accessible": False,
+                "clanlog_error": str(log_error),
+                "clanlog_error_type": str(type(log_error))
+            }
+        
+    except Exception as e:
+        return {"error": str(e), "type": str(type(e))}
+
 @app.get("/api/clan/log")
 async def get_clan_log(
     page: int = 1,
@@ -1874,10 +1900,20 @@ async def get_clan_log(
 ):
     """Get recent clan log events with pagination"""
     try:
+        if not prisma:
+            return {
+                "log_entries": [],
+                "pagination": {
+                    "page": page,
+                    "limit": limit,
+                    "total_entries": 0,
+                    "has_next": False
+                }
+            }
+        
         offset = (page - 1) * limit
         
         log_entries = await prisma.clanlog.find_many(
-            order_by={'timestamp': 'desc'},
             skip=offset,
             take=limit
         )
@@ -1895,6 +1931,8 @@ async def get_clan_log(
                 'timestamp': entry.timestamp.isoformat()
             }
             formatted_entries.append(formatted_entry)
+        
+        formatted_entries.sort(key=lambda x: x['timestamp'], reverse=True)
         
         return {
             "log_entries": formatted_entries,
