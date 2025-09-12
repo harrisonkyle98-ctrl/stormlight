@@ -78,6 +78,8 @@ const Members = () => {
           const serverRankBadge = (member.badges || []).find(b => b.id?.startsWith('rank-'))
           const computedRankBadges = checkPlayerMilestones(null, null, member.clan_rank, member.username)
           const rankBadge = serverRankBadge || (computedRankBadges.length ? computedRankBadges[0] : undefined)
+          
+          console.log(`[Debug] ${member.username}: clan_rank="${member.clan_rank}", serverRankBadge=${!!serverRankBadge}, computedRankBadges=${computedRankBadges.length}, finalBadge=${!!rankBadge}`)
 
           return {
             ...member,
