@@ -47,6 +47,37 @@ const Members = () => {
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
+  const fetchPlayerBadges = async (username: string): Promise<MilestoneBadge[]> => {
+    try {
+      const [statsResponse, questsResponse] = await Promise.all([
+        fetch(`${API_URL}/api/player/${encodeURIComponent(username)}/stats`),
+        fetch(`${API_URL}/api/player/${encodeURIComponent(username)}/quests`)
+      ])
+
+      let playerStats = null
+      let questData = null
+
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json()
+        playerStats = statsData.stats
+      }
+
+      if (questsResponse.ok) {
+        questData = await questsResponse.json()
+      }
+
+      const member = membersData?.members.find(m => m.username === username)
+      const clanRank = member?.clan_rank || ''
+
+      return checkPlayerMilestones(playerStats, questData, clanRank, username)
+    } catch (error) {
+      console.error(`Error fetching badges for ${username}:`, error)
+      const member = membersData?.members.find(m => m.username === username)
+      const clanRank = member?.clan_rank || ''
+      return checkPlayerMilestones(null, null, clanRank, username)
+    }
+  }
+
   useEffect(() => {
     fetchMembers()
   }, [currentPage, pageSize, searchQuery, sortBy])
@@ -70,19 +101,23 @@ const Members = () => {
         setMembersData(data)
         
         const membersWithBadgesInit: MemberWithBadges[] = data.members.map((member: ClanMember & { badges?: MilestoneBadge[] }) => {
-          let badges = member.badges && member.badges.length > 0 ? member.badges : []
-          
-          if (badges.length === 0) {
-            badges = checkPlayerMilestones(null, null, member.clan_rank, member.username)
-          }
-          
           return {
             ...member,
-            badges: badges,
-            badgesLoading: false
+            badges: [],
+            badgesLoading: true
           }
         })
         setMembersWithBadges(membersWithBadgesInit)
+
+        data.members.forEach(async (member: ClanMember, index: number) => {
+          const badges = await fetchPlayerBadges(member.username)
+          
+          setMembersWithBadges(prev => 
+            prev.map((m, i) => 
+              i === index ? { ...m, badges, badgesLoading: false } : m
+            )
+          )
+        })
       }
     } catch (error) {
       console.error('Error fetching clan members:', error)
