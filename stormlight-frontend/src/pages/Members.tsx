@@ -74,6 +74,7 @@ const Members = () => {
       console.error(`Error fetching badges for ${username}:`, error)
       const member = membersData?.members.find(m => m.username === username)
       const clanRank = member?.clan_rank || ''
+      
       return checkPlayerMilestones(null, null, clanRank, username)
     }
   }
