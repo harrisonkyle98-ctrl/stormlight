@@ -109,15 +109,29 @@ const Members = () => {
         })
         setMembersWithBadges(membersWithBadgesInit)
 
-        data.members.forEach(async (member: ClanMember, index: number) => {
-          const badges = await fetchPlayerBadges(member.username)
-          
-          setMembersWithBadges(prev => 
-            prev.map((m, i) => 
-              i === index ? { ...m, badges, badgesLoading: false } : m
+        for (let index = 0; index < data.members.length; index++) {
+          const member = data.members[index]
+          try {
+            const badges = await fetchPlayerBadges(member.username)
+            
+            setMembersWithBadges(prev => 
+              prev.map((m, i) => 
+                i === index ? { ...m, badges, badgesLoading: false } : m
+              )
             )
-          )
-        })
+          } catch (error) {
+            console.error(`Failed to fetch badges for ${member.username}:`, error)
+            setMembersWithBadges(prev => 
+              prev.map((m, i) => 
+                i === index ? { 
+                  ...m, 
+                  badges: checkPlayerMilestones(null, null, member.clan_rank, member.username),
+                  badgesLoading: false 
+                } : m
+              )
+            )
+          }
+        }
       }
     } catch (error) {
       console.error('Error fetching clan members:', error)
