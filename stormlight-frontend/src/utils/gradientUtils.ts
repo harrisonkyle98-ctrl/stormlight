@@ -130,59 +130,70 @@ export const checkPlayerMilestones = (stats: any, questData?: any, clanRank?: st
         gradientBackground = `linear-gradient(135deg, ${color1}, ${color2})`
       }
       
-      badges.push({
+      const rankBadge = {
         id: `rank-${clanRank.toLowerCase().replace(/\s+/g, '-')}`,
         name: clanRank,
         backgroundColor: rankColors[clanRank] || '#b78d5b',
         gradientBackground,
         icon: `/assets/ranks/${imageName}`
-      })
+      }
+      
+      badges.push(rankBadge)
     }
   }
   
-  if (!stats) return badges
+  if (!stats) {
+    return badges
+  }
   
   const skills = Object.entries(stats).filter(([key]) => key !== 'overall')
   
-  if (skills.length === 0) return badges
+  if (skills.length === 0) {
+    return badges
+  }
   
   const totalXp = skills.reduce((sum, [_, data]: [string, any]) => sum + (data.xp || 0), 0)
+  
   if (totalXp >= 5800000000) {
-    badges.push({
+    const maxXpBadge = {
       id: 'max-xp',
       name: 'Max XP',
       backgroundColor: '#bf0026',
       icon: '/icons/xp.png'
-    })
+    }
+    badges.push(maxXpBadge)
   }
   
   const masterMaxedSkills = skills.filter(([_, data]: [string, any]) => data.level >= 120)
   if (masterMaxedSkills.length === skills.length) {
-    badges.push({
+    const masterMaxedBadge = {
       id: 'master-maxed',
       name: 'Master Maxed',
       backgroundColor: '#99001f',
       icon: '/icons/overall.png'
-    })
+    }
+    badges.push(masterMaxedBadge)
   }
   
   const maxedSkills = skills.filter(([_, data]: [string, any]) => data.level >= 99)
   if (maxedSkills.length === skills.length) {
-    badges.push({
+    const maxedBadge = {
       id: 'maxed',
       name: 'Maxed',
       backgroundColor: '#99003b',
       icon: '/icons/overall.png'
-    })
+    }
+    badges.push(maxedBadge)
   }
   
   if (questData && questData.quest_summary && questData.quest_summary.questsnotstarted === 0) {
-    badges.push({
+    const questBadge = {
       id: 'quest-cape',
       name: 'Quest Cape',
       backgroundColor: '#438da9',
       icon: '/assets/ranks/quest.png'
-    })
+    }
+    badges.push(questBadge)
   }
   
   return badges

@@ -56,7 +56,6 @@ const Members = () => {
 
       let playerStats = null
       let questData = null
-
       let clanRank = ''
 
       if (statsResponse.ok) {
