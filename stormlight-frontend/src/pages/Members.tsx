@@ -50,7 +50,7 @@ const Members = () => {
   const fetchPlayerBadges = async (username: string): Promise<MilestoneBadge[]> => {
     try {
       const [statsResponse, questsResponse] = await Promise.all([
-        fetch(`${API_URL}/api/player/${encodeURIComponent(username)}/stats`),
+        fetch(`${API_URL}/api/player/${encodeURIComponent(username)}/stats/history?period1=today&period2=yesterday`),
         fetch(`${API_URL}/api/player/${encodeURIComponent(username)}/quests`)
       ])
 
