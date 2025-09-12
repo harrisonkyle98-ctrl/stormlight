@@ -8,7 +8,7 @@ import { Button } from '../components/ui/button'
 import { Search, Users, User } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { getGradientStyle, MilestoneBadge, checkPlayerMilestones } from '../utils/gradientUtils'
-import { usernameToUrl } from '../utils/urlUtils'
+import { usernameToUrl, normalizeDisplayUsername } from '../utils/urlUtils'
 
 interface ClanMember {
   username: string
@@ -259,10 +259,14 @@ const Members = () => {
                       <div className="min-w-0 flex-1">
                         <Link
                           to={`/clan-member/${usernameToUrl(member.username)}`}
-                          className="text-lg font-semibold hover:text-blue-400 transition-colors block truncate"
-                          style={getGradientStyle(member.username, member.clan_rank)}
+                          className="block truncate"
                         >
-                          {member.username}
+                          <span
+                            className="text-lg font-semibold hover:text-blue-400 transition-colors block m-0 p-0 indent-0 leading-tight tracking-normal antialiased"
+                            style={getGradientStyle(member.username, member.clan_rank)}
+                          >
+                            {normalizeDisplayUsername(member.username)}
+                          </span>
                         </Link>
                         <div className="flex items-center mt-1">
                           {member.badgesLoading ? (
