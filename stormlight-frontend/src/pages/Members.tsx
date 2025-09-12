@@ -241,13 +241,15 @@ const Members = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <div className="flex items-center space-x-3 min-w-0">
-                      <Badge variant="outline" className="text-yellow-400 border-yellow-400 flex-shrink-0">
-                        #{memberRank}
-                      </Badge>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-14 flex-shrink-0">
+                        <Badge variant="outline" className="text-yellow-400 border-yellow-400 w-full justify-center tabular-nums">
+                          #{memberRank}
+                        </Badge>
+                      </div>
                       <Avatar className="w-10 h-10 flex-shrink-0">
                         <AvatarImage
-                          src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(member.username.replace(/\u00A0/g, ' '))}/chat.png`}
+                          src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(member.username.replace(/\u00A0/g, ' '))}/chat.png`}
                           alt={member.username}
                         />
                         <AvatarFallback className="bg-blue-600 text-white">
@@ -257,7 +259,7 @@ const Members = () => {
                       <div className="min-w-0 flex-1">
                         <Link
                           to={`/clan-member/${usernameToUrl(member.username)}`}
-                          className="text-lg font-semibold hover:text-blue-400 transition-colors block"
+                          className="text-lg font-semibold hover:text-blue-400 transition-colors block truncate"
                           style={getGradientStyle(member.username, member.clan_rank)}
                         >
                           {member.username}
@@ -270,7 +272,7 @@ const Members = () => {
                               const rankBadge = member.badges[0]
                               return (
                                 <div
-                                  className="px-2 py-1 text-xs font-semibold flex items-center space-x-1 rounded-md text-white"
+                                  className="px-2 py-1 text-xs font-semibold flex items-center gap-1 rounded-md text-white"
                                   style={{
                                     background: rankBadge.gradientBackground || rankBadge.backgroundColor
                                   }}
@@ -286,7 +288,7 @@ const Members = () => {
                               )
                             })()
                           ) : (
-                            <div className="px-2 py-1 text-xs font-semibold flex items-center space-x-1 rounded-md text-white bg-slate-600">
+                            <div className="px-2 py-1 text-xs font-semibold flex items-center gap-1 rounded-md text-white bg-slate-600">
                               <span>{member.clan_rank || 'Member'}</span>
                             </div>
                           )}
