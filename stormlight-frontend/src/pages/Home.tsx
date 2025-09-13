@@ -27,7 +27,7 @@ interface Activity {
 interface ClanLogEntry {
   id: number
   username: string
-  event_type: 'join' | 'leave' | 'rank_up'
+  event_type: 'join' | 'leave' | 'rank_up' | 'name_change'
   old_rank?: string
   new_rank?: string
   timestamp: string
@@ -342,6 +342,7 @@ const Home = () => {
                       {entry.event_type === 'join' && <span className="text-green-400 text-lg">✅</span>}
                       {entry.event_type === 'leave' && <span className="text-red-400 text-lg">❌</span>}
                       {entry.event_type === 'rank_up' && <span className="text-blue-400 text-lg">⬆️</span>}
+                      {entry.event_type === 'name_change' && <span className="text-yellow-400 text-lg">✏️</span>}
                     </div>
                     <Link 
                       to={`/clan-member/${usernameToUrl(entry.username)}`}
@@ -355,6 +356,7 @@ const Home = () => {
                     {entry.event_type === 'join' && `joined the clan as ${entry.new_rank}`}
                     {entry.event_type === 'leave' && `left the clan`}
                     {entry.event_type === 'rank_up' && `promoted from ${entry.old_rank} to ${entry.new_rank}`}
+                    {entry.event_type === 'name_change' && `${entry.old_rank} changed their name to ${entry.username}`}
                   </p>
                   <p className="text-slate-400 text-xs text-center">{formatTimeAgo(new Date(entry.timestamp).getTime() / 1000)}</p>
                 </div>

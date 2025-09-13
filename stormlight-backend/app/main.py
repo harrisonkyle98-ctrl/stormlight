@@ -201,6 +201,24 @@ clan_members_cache = {
     'ttl': 600  # 10 minutes
 }
 
+def compute_profile_signature(stats: Dict[str, Any], quest_points: int) -> str:
+    """
+    Deterministic signature of a player's profile based on skill levels, XP, and quest points.
+    Matches when profiles are exactly identical (strict equality).
+    """
+    try:
+        parts: List[str] = []
+        ov = stats.get('overall') or {}
+        parts.append(f"overall:{int(ov.get('level', 0))}:{int(ov.get('xp', 0))}")
+        for name in sorted(k for k in stats.keys() if k != 'overall'):
+            s = stats.get(name) or {}
+            parts.append(f"{name}:{int(s.get('level', 0))}:{int(s.get('xp', 0))}")
+        parts.append(f"qp:{int(quest_points)}")
+        return "|".join(parts)
+    except Exception as e:
+        print(f"[NameChange] signature error: {e}")
+        return ""
+
 def is_rate_limited(client_ip: str, endpoint: str) -> bool:
     """Check if client is rate limited for profile endpoints"""
     if not endpoint.startswith('/api/player/'):
@@ -454,16 +472,28 @@ async def sync_clan_members_to_database_with_queue():
             print(f"🔄 Processing {len(failed_member_queue)} queued failed members...")
             await process_failed_member_queue()
         
+        clan_data = await fetch_clan_members()
+        print(f"📥 Fetched {len(clan_data)} clan members for sync")
+        current_usernames_set = {m['username'] for m in clan_data}
+
+        db_signature_map: Dict[str, str] = {}
         current_db_members = {}
         try:
             db_members = await prisma.clanmember.find_many()
             current_db_members = {member.username: member.clanRank for member in db_members}
             print(f"📊 Loaded {len(current_db_members)} existing members for change detection")
+
+            for m in db_members:
+                if m.username not in current_usernames_set and m.stats:
+                    try:
+                        m_stats = json.loads(m.stats)
+                        sig = compute_profile_signature(m_stats, m.questPoints or 0)
+                        if sig:
+                            db_signature_map[sig] = m.username
+                    except Exception as e:
+                        print(f"[NameChange] failed to prep DB signature for {m.username}: {e}")
         except Exception as e:
             print(f"⚠️ Could not fetch current members for change detection: {e}")
-        
-        clan_data = await fetch_clan_members()
-        print(f"📥 Fetched {len(clan_data)} clan members for sync")
         
         successful_syncs = 0
         failed_syncs = 0
@@ -525,6 +555,34 @@ async def sync_clan_members_to_database_with_queue():
                     'badges': json.dumps(badges),
                     'lastUpdated': datetime.now()
                 }
+                
+                try:
+                    if member_data['username'] not in current_db_members and stats_data and stats_data.get('stats'):
+                        new_sig = compute_profile_signature(stats_data['stats'], stats_data.get('quest_points', 0) or 0)
+                        old_username = db_signature_map.get(new_sig)
+                        if old_username and old_username not in current_usernames_set:
+                            print(f"[NameChange] Detected rename: {old_username} -> {member_data['username']}")
+                            rename_data = {**clan_member_data, 'username': member_data['username']}
+                            await prisma.clanmember.update(
+                                where={'username': old_username},
+                                data=rename_data
+                            )
+                            try:
+                                await prisma.clanlog.create(data={
+                                    'username': member_data['username'],
+                                    'eventType': 'name_change',
+                                    'oldRank': old_username,
+                                    'timestamp': datetime.now()
+                                })
+                                print(f"📝 Logged name change: {old_username} → {member_data['username']}")
+                            except Exception as log_error:
+                                print(f"⚠️ Failed to log name change for {old_username} -> {member_data['username']}: {log_error}")
+
+                            current_db_members.pop(old_username, None)
+                            current_db_members[member_data['username']] = member_data['clan_rank']
+                            db_signature_map.pop(new_sig, None)
+                except Exception as e:
+                    print(f"[NameChange] Error while processing rename detection for {member_data['username']}: {e}")
                 
                 await prisma.clanmember.upsert(
                     where={'username': member_data['username']},
