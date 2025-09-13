@@ -2125,6 +2125,68 @@ async def get_player_activities(username: str, page: int = Query(1, ge=1), limit
             "total_activities": 0
         }
 
+@app.get("/api/player/{username}/log")
+async def get_player_log(
+    username: str,
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=50)
+):
+    """Get log events for a specific player with pagination"""
+    from urllib.parse import unquote
+    decoded_username = unquote(username).replace('-', ' ')
+    
+    try:
+        if not prisma:
+            return {
+                "log_entries": [],
+                "pagination": {
+                    "page": page,
+                    "limit": limit,
+                    "total_entries": 0,
+                    "has_next": False
+                }
+            }
+        
+        offset = (page - 1) * limit
+        
+        log_entries = await prisma.clanlog.find_many(
+            where={'username': decoded_username},
+            skip=offset,
+            take=limit,
+            order_by={'timestamp': 'desc'}
+        )
+        
+        total_count = await prisma.clanlog.count(
+            where={'username': decoded_username}
+        )
+        
+        formatted_entries = []
+        for entry in log_entries:
+            formatted_entry = {
+                'id': entry.id,
+                'username': entry.username,
+                'event_type': entry.eventType,
+                'old_rank': entry.oldRank,
+                'new_rank': entry.newRank,
+                'timestamp': entry.timestamp.isoformat()
+            }
+            formatted_entries.append(formatted_entry)
+        
+        return {
+            "log_entries": formatted_entries,
+            "pagination": {
+                "page": page,
+                "limit": limit,
+                "total_entries": total_count,
+                "has_next": offset + limit < total_count
+            }
+        }
+        
+    except Exception as e:
+        print(f"❌ Error fetching player log for {decoded_username}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch player log")
+
+
 @app.get("/api/player/{username}/quests")
 async def get_player_quests(username: str):
     """Get player quest data from RuneScape RuneMetrics API"""
