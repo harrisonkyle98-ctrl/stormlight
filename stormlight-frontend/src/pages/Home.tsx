@@ -337,30 +337,26 @@ const Home = () => {
             {clanLogEntries.length > 0 ? (
               clanLogEntries.map((entry) => (
                 <div key={entry.id} className="p-3 bg-slate-700/50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-shrink-0">
+                  <div className="flex items-center justify-center mb-2">
+                    <div className="flex-shrink-0 mr-2">
                       {entry.event_type === 'join' && <span className="text-green-400 text-lg">✅</span>}
                       {entry.event_type === 'leave' && <span className="text-red-400 text-lg">❌</span>}
                       {entry.event_type === 'rank_up' && <span className="text-blue-400 text-lg">⬆️</span>}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <Link 
-                          to={`/clan-member/${usernameToUrl(entry.username)}`}
-                          className="text-white font-medium hover:text-blue-300 transition-colors"
-                          style={getGradientStyle(entry.username, entry.new_rank || entry.old_rank)}
-                        >
-                          {entry.username}
-                        </Link>
-                        <span className="text-slate-300">
-                          {entry.event_type === 'join' && `joined the clan as ${entry.new_rank}`}
-                          {entry.event_type === 'leave' && `left the clan`}
-                          {entry.event_type === 'rank_up' && `promoted from ${entry.old_rank} to ${entry.new_rank}`}
-                        </span>
-                      </div>
-                      <p className="text-slate-400 text-xs">{formatTimeAgo(new Date(entry.timestamp).getTime() / 1000)}</p>
-                    </div>
+                    <Link 
+                      to={`/clan-member/${usernameToUrl(entry.username)}`}
+                      className="text-white font-medium hover:text-blue-300 transition-colors"
+                      style={getGradientStyle(entry.username, entry.new_rank || entry.old_rank)}
+                    >
+                      {entry.username}
+                    </Link>
                   </div>
+                  <p className="text-slate-300 text-center mb-1">
+                    {entry.event_type === 'join' && `joined the clan as ${entry.new_rank}`}
+                    {entry.event_type === 'leave' && `left the clan`}
+                    {entry.event_type === 'rank_up' && `promoted from ${entry.old_rank} to ${entry.new_rank}`}
+                  </p>
+                  <p className="text-slate-400 text-xs text-center">{formatTimeAgo(new Date(entry.timestamp).getTime() / 1000)}</p>
                 </div>
               ))
             ) : (
