@@ -267,6 +267,8 @@ SKILL_TABLE_MAPPING = {
     'dungeoneering': 25, 'divination': 26, 'invention': 27, 'archaeology': 28, 'necromancy': 29
 }
 
+HISCORE_SKILL_ORDER = [name for name, idx in sorted(SKILL_TABLE_MAPPING.items(), key=lambda kv: kv[1])]
+
 
 async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Dict[str, Any]]:
     """Fetch player stats from RuneScape Runemetrics API with rate limiting"""
@@ -322,6 +324,16 @@ async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Di
                     }
                     
                     stats.update(skill_stats)
+                    
+                    try:
+                        hiscore_ranks = await fetch_hiscore_ranks(username, client)
+                        for skill_name, rnk in hiscore_ranks.items():
+                            if skill_name in stats:
+                                stats[skill_name]['rank'] = rnk
+                        if 'overall' in hiscore_ranks and hiscore_ranks['overall'] is not None:
+                            stats['overall']['rank'] = hiscore_ranks['overall']
+                    except Exception as e:
+                        print(f"[Hiscores] Overlay failed for {username}: {e}")
                     
                     all_skills = ['overall'] + list(RUNEMETRICS_SKILL_MAPPING.values())
                     for skill_name in all_skills:
@@ -386,6 +398,35 @@ async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Di
     
     print(f"Failed to fetch stats for {username} after {max_retries} attempts")
     return None
+
+async def fetch_hiscore_ranks(username: str, client: httpx.AsyncClient, timeout: float = 6.0) -> Dict[str, Optional[int]]:
+    """
+    Returns map of skill_name -> rank (int) using index_lite.ws (rank,level,xp); 
+    Missing/unranked (-1/0) -> None. Includes 'overall'.
+    """
+    ranks: Dict[str, Optional[int]] = {}
+    try:
+        url = f"https://secure.runescape.com/m=hiscore/index_lite.ws?player={username}"
+        resp = await client.get(url, timeout=timeout, follow_redirects=True)
+        if resp.status_code != 200:
+            return ranks
+        lines = resp.text.strip().splitlines()
+        count = min(len(lines), len(HISCORE_SKILL_ORDER))
+        for i in range(count):
+            parts = lines[i].split(',')
+            if len(parts) < 3:
+                continue
+            try:
+                r = int(parts[0])
+            except:
+                r = -1
+            rank_val = r if r and r > 0 else None
+            skill = HISCORE_SKILL_ORDER[i]
+            ranks[skill] = rank_val
+        return ranks
+    except Exception as e:
+        print(f"[Hiscores] Failed to fetch ranks for {username}: {e}")
+        return ranks
 
 async def fetch_top_players(skill: str = 'overall', size: int = 50) -> List[Dict[str, Any]]:
     """Fetch top players from RuneScape ranking API"""
