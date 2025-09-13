@@ -131,6 +131,40 @@ def get_date_for_period(period: str, reference_date: date = None) -> date:
     
     return period_map.get(period.lower(), reference_date)
 
+async def get_snapshot_rows_on_or_before(conn, username: str, target_date):
+    """Return rows for the nearest snapshot_date <= target_date, or [] if none."""
+    cursor = await conn.execute("""
+        SELECT MAX(snapshot_date) FROM player_stats_history
+        WHERE username = %s AND snapshot_date <= %s
+    """, (username, target_date))
+    row = await cursor.fetchone()
+    if not row or not row[0]:
+        return []
+    snapshot_date = row[0]
+    rows_cur = await conn.execute("""
+        SELECT skill_name, level, xp, rank FROM player_stats_history
+        WHERE username = %s AND snapshot_date = %s
+    """, (username, snapshot_date))
+    return await rows_cur.fetchall()
+
+async def ensure_today_snapshot(conn, username: str, stats: dict):
+    """Ensure a 'today' snapshot exists for a user by upserting current stats."""
+    today = date.today()
+    if not stats or 'stats' not in stats:
+        return
+    for skill_name, skill_data in stats['stats'].items():
+        combat_level = stats['stats'].get('overall', {}).get('combatlevel', 0) if skill_name == 'overall' else 0
+        await conn.execute("""
+            INSERT INTO player_stats_history
+            (username, skill_name, level, xp, rank, combat_level, snapshot_date)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (username, skill_name, snapshot_date)
+            DO UPDATE SET level = EXCLUDED.level, xp = EXCLUDED.xp, rank = EXCLUDED.rank
+        """, (
+            username, skill_name, skill_data.get('level', 0), skill_data.get('xp', 0),
+            skill_data.get('rank'), combat_level, today
+        ))
+
 async def get_player_stats_for_periods(conn, username: str, period1: str, period2: str):
     """Get player stats comparison between two time periods"""
     date1 = get_date_for_period(period1)
@@ -149,6 +183,11 @@ async def get_player_stats_for_periods(conn, username: str, period1: str, period
     period1_rows = await period1_cursor.fetchall()
     period2_rows = await period2_cursor.fetchall()
     
+    if not period1_rows:
+        period1_rows = await get_snapshot_rows_on_or_before(conn, username, date1)
+    if not period2_rows:
+        period2_rows = await get_snapshot_rows_on_or_before(conn, username, date2)
+    
     period1_dict = {row[0]: row for row in period1_rows}
     period2_dict = {row[0]: row for row in period2_rows}
     
@@ -163,7 +202,9 @@ async def get_player_stats_for_periods(conn, username: str, period1: str, period
         if period1_data and period2_data:
             level_change = period1_data[1] - period2_data[1]
             xp_change = period1_data[2] - period2_data[2]
-            rank_change = (period2_data[3] or 0) - (period1_data[3] or 0)
+            rank1 = (period1_data[3] or 0)
+            rank2 = (period2_data[3] or 0)
+            rank_change = rank2 - rank1
             
             changes_data[skill_name] = {
                 'level_change': level_change,

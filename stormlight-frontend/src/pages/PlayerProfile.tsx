@@ -204,6 +204,16 @@ const PlayerProfile = () => {
     'dungeoneering', 'divination', 'invention', 'archaeology', 'necromancy'
   ]
 
+  console.log('=== PlayerData Debug ===', {
+    hasStats: !!playerData.stats,
+    overallKeys: playerData.stats?.overall ? Object.keys(playerData.stats.overall) : [],
+    overallXpPeriod1: playerData.stats?.overall?.xp_period1,
+    overallXpPeriod2: playerData.stats?.overall?.xp_period2,
+    attackKeys: playerData.stats?.attack ? Object.keys(playerData.stats.attack) : [],
+    attackXpPeriod1: playerData.stats?.attack?.xp_period1,
+    attackXpPeriod2: playerData.stats?.attack?.xp_period2
+  })
+
   const skills = skillOrder
     .filter(skill => {
       if (skill === 'overall') {
@@ -214,30 +224,30 @@ const PlayerProfile = () => {
     .map(skill => {
       if (skill === 'overall' && playerData.stats.overall) {
         return [skill, {
-          level: playerData.stats.overall.level,
-          rank: playerData.stats.overall.rank,
-          xp: playerData.stats.overall.xp,
-          level_change: 0, // Overall doesn't track level changes
-          rank_change: 0,  // Overall doesn't track rank changes
-          xp_change: 0     // Overall doesn't track XP changes
+          ...playerData.stats.overall,
+          level_change: playerData.stats.overall.level_change || 0,
+          rank_change: playerData.stats.overall.rank_change || 0,
+          xp_change: playerData.stats.overall.xp_change || 0,
+          xp_period1: playerData.stats.overall.xp_period1 || playerData.stats.overall.xp,
+          xp_period2: playerData.stats.overall.xp_period2 || 0,
+          xp_today: playerData.stats.overall.xp_today || playerData.stats.overall.xp,
+          xp_yesterday: playerData.stats.overall.xp_yesterday || 0
         }] as [string, any]
       }
-      return [skill, playerData.stats[skill]] as [string, any]
+      return [skill, {
+        ...playerData.stats[skill],
+        level_change: playerData.stats[skill]?.level_change || 0,
+        rank_change: playerData.stats[skill]?.rank_change || 0,
+        xp_change: playerData.stats[skill]?.xp_change || 0,
+        xp_period1: playerData.stats[skill]?.xp_period1 || playerData.stats[skill]?.xp,
+        xp_period2: playerData.stats[skill]?.xp_period2 || 0,
+        xp_today: playerData.stats[skill]?.xp_today || playerData.stats[skill]?.xp,
+        xp_yesterday: playerData.stats[skill]?.xp_yesterday || 0
+      }] as [string, any]
     })
 
   const overallStats = playerData.stats.overall
   
-  console.log('=== Conditional Rendering Debug ===')
-  const firstSkill = skills[0]
-  if (firstSkill) {
-    const [skillName, skillData] = firstSkill
-    console.log(`${skillName} conditional check:`, {
-      level_change: skillData.level_change,
-      level_change_check: skillData.level_change && skillData.level_change !== 0,
-      rank_change: skillData.rank_change,
-      rank_change_check: skillData.rank_change && skillData.rank_change !== 0
-    })
-  }
 
   const tabs = [
     { id: 'skills', label: 'Skill Breakdown', icon: TrendingUp },
@@ -367,12 +377,12 @@ const PlayerProfile = () => {
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-green-400 font-medium">
-                        {data.xp_change ? `+${data.xp_change.toLocaleString()}` : '0'}
+                        {data.xp_period1 ? data.xp_period1.toLocaleString() : data.xp.toLocaleString()}
                       </span>
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-slate-400 font-medium">
-                        {data.xp_period2 ? data.xp_period2.toLocaleString() : '0'}
+                        {data.xp_period2 && data.xp_period2 !== data.xp_period1 ? data.xp_period2.toLocaleString() : '0'}
                       </span>
                     </TableCell>
                   </TableRow>

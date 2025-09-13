@@ -2402,9 +2402,11 @@ async def get_player_stats_with_history(
             
             async with conn:
                 try:
-                    from .database import get_player_stats_for_periods
+                    from .database import ensure_today_snapshot, get_player_stats_for_periods
                 except ImportError:
-                    from database import get_player_stats_for_periods
+                    from database import ensure_today_snapshot, get_player_stats_for_periods
+                
+                await ensure_today_snapshot(conn, decoded_username, current_stats)
                 changes_data = await get_player_stats_for_periods(conn, decoded_username, period1, period2)
         except Exception as db_error:
             print(f"Database error fetching changes (historical tracking disabled): {db_error}")
@@ -2423,15 +2425,17 @@ async def get_player_stats_with_history(
         for skill_name, skill_data in enhanced_stats['stats'].items():
             if skill_name in changes_data:
                 skill_data.update(changes_data[skill_name])
+                skill_data['xp_today'] = changes_data[skill_name].get('xp_period1', skill_data['xp'])
+                skill_data['xp_yesterday'] = changes_data[skill_name].get('xp_period2', 0)
             else:
                 skill_data.update({
                     'level_change': 0,
                     'xp_change': 0,
                     'rank_change': 0,
                     'xp_today': skill_data['xp'],
-                    'xp_yesterday': 0,  # Show 0 instead of current XP
+                    'xp_yesterday': 0,
                     'xp_period1': skill_data['xp'],
-                    'xp_period2': 0  # Show 0 instead of current XP
+                    'xp_period2': 0
                 })
         
         profile_history_cache['data'][cache_key] = enhanced_stats
@@ -2543,8 +2547,8 @@ async def startup_event():
             while True:
                 try:
                     now = datetime.now()
-                    next_run = now.replace(hour=2, minute=0, second=0, microsecond=0)
-                    if now.time() > datetime_time(2, 0):
+                    next_run = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                    if now.time() > datetime_time(0, 0):
                         next_run += timedelta(days=1)
                     
                     sleep_seconds = (next_run - now).total_seconds()
