@@ -2435,7 +2435,9 @@ async def get_player_stats_with_history(
                     'xp_today': skill_data['xp'],
                     'xp_yesterday': 0,
                     'xp_period1': skill_data['xp'],
-                    'xp_period2': 0
+                    'xp_period2': 0,
+                    'xp_gain_period1': 0,
+                    'xp_gain_period2': 0
                 })
         
         profile_history_cache['data'][cache_key] = enhanced_stats

@@ -131,6 +131,30 @@ def get_date_for_period(period: str, reference_date: date = None) -> date:
     
     return period_map.get(period.lower(), reference_date)
 
+def get_period_window(period: str, reference_date: date = None) -> tuple[date, date]:
+    """Calculate start and end dates for a period window to compute gains"""
+    if reference_date is None:
+        reference_date = date.today()
+    
+    p = period.lower()
+    if p == 'today':
+        return (reference_date - timedelta(days=1), reference_date)
+    if p == 'yesterday':
+        return (reference_date - timedelta(days=2), reference_date - timedelta(days=1))
+    if p == 'week':
+        return (reference_date - timedelta(days=7), reference_date)
+    if p == 'last_week':
+        return (reference_date - timedelta(days=14), reference_date - timedelta(days=7))
+    if p == 'month':
+        return (reference_date - timedelta(days=30), reference_date)
+    if p == 'last_month':
+        return (reference_date - timedelta(days=60), reference_date - timedelta(days=30))
+    if p == 'year':
+        return (reference_date - timedelta(days=365), reference_date)
+    if p == 'last_year':
+        return (reference_date - timedelta(days=730), reference_date - timedelta(days=365))
+    return (reference_date, reference_date)
+
 async def get_snapshot_rows_on_or_before(conn, username: str, target_date):
     """Return rows for the nearest snapshot_date <= target_date, or [] if none."""
     cursor = await conn.execute("""
@@ -146,6 +170,11 @@ async def get_snapshot_rows_on_or_before(conn, username: str, target_date):
         WHERE username = %s AND snapshot_date = %s
     """, (username, snapshot_date))
     return await rows_cur.fetchall()
+
+async def get_snapshot_dict_on_or_before(conn, username: str, target_date: date) -> dict:
+    """Return snapshot dict for the nearest snapshot_date <= target_date"""
+    rows = await get_snapshot_rows_on_or_before(conn, username, target_date)
+    return {row[0]: row for row in rows}
 
 async def ensure_today_snapshot(conn, username: str, stats: dict):
     """Ensure a 'today' snapshot exists for a user by upserting current stats."""
@@ -211,7 +240,9 @@ async def get_player_stats_for_periods(conn, username: str, period1: str, period
                 'xp_change': xp_change,
                 'rank_change': rank_change,
                 'xp_period1': period1_data[2],
-                'xp_period2': period2_data[2]
+                'xp_period2': period2_data[2],
+                'xp_gain_period1': 0,
+                'xp_gain_period2': 0
             }
         elif period1_data:
             changes_data[skill_name] = {
@@ -219,9 +250,53 @@ async def get_player_stats_for_periods(conn, username: str, period1: str, period
                 'xp_change': 0,
                 'rank_change': 0,
                 'xp_period1': period1_data[2],
-                'xp_period2': period1_data[2]
+                'xp_period2': 0,
+                'xp_gain_period1': 0,
+                'xp_gain_period2': 0
             }
     
+    start1_date, end1_window_date = get_period_window(period1)
+    start2_date, end2_window_date = get_period_window(period2)
+    end1_window_dict = await get_snapshot_dict_on_or_before(conn, username, end1_window_date)
+    start1_dict = await get_snapshot_dict_on_or_before(conn, username, start1_date)
+    end2_window_dict = await get_snapshot_dict_on_or_before(conn, username, end2_window_date)
+    start2_dict = await get_snapshot_dict_on_or_before(conn, username, start2_date)
+
+    all_skills_combined = set(changes_data.keys()) | set(end1_window_dict.keys()) | set(start1_dict.keys()) | set(end2_window_dict.keys()) | set(start2_dict.keys())
+
+    for skill_name in all_skills_combined:
+        e1w = end1_window_dict.get(skill_name)
+        s1 = start1_dict.get(skill_name)
+        e2w = end2_window_dict.get(skill_name)
+        s2 = start2_dict.get(skill_name)
+
+        def safe_xp(row): 
+            return row[2] if row else None
+        
+        xp_end1 = safe_xp(e1w)
+        xp_start1 = safe_xp(s1)
+        xp_end2 = safe_xp(e2w)
+        xp_start2 = safe_xp(s2)
+
+        xp_gain_p1 = (xp_end1 - xp_start1) if (xp_end1 is not None and xp_start1 is not None) else 0
+        xp_gain_p2 = (xp_end2 - xp_start2) if (xp_end2 is not None and xp_start2 is not None) else 0
+
+        if skill_name in changes_data:
+            changes_data[skill_name].update({
+                'xp_gain_period1': xp_gain_p1,
+                'xp_gain_period2': xp_gain_p2,
+            })
+        else:
+            changes_data[skill_name] = {
+                'level_change': 0,
+                'xp_change': 0,
+                'rank_change': 0,
+                'xp_period1': xp_end1 if xp_end1 is not None else 0,
+                'xp_period2': xp_end2 if xp_end2 is not None else 0,
+                'xp_gain_period1': xp_gain_p1,
+                'xp_gain_period2': xp_gain_p2,
+            }
+
     return changes_data
 
 async def calculate_daily_changes(conn, username: str, today: date):
