@@ -2134,6 +2134,7 @@ async def get_player_log(
     """Get log events for a specific player with pagination"""
     from urllib.parse import unquote
     decoded_username = unquote(username).replace('-', ' ')
+    decoded_username = decoded_username.replace('\xa0', ' ').strip()
     
     try:
         if not prisma:
@@ -2152,8 +2153,7 @@ async def get_player_log(
         log_entries = await prisma.clanlog.find_many(
             where={'username': decoded_username},
             skip=offset,
-            take=limit,
-            order_by={'timestamp': 'desc'}
+            take=limit
         )
         
         total_count = await prisma.clanlog.count(
@@ -2172,6 +2172,8 @@ async def get_player_log(
             }
             formatted_entries.append(formatted_entry)
         
+        formatted_entries.sort(key=lambda x: x['timestamp'], reverse=True)
+        
         return {
             "log_entries": formatted_entries,
             "pagination": {
@@ -2183,7 +2185,9 @@ async def get_player_log(
         }
         
     except Exception as e:
-        print(f"❌ Error fetching player log for {decoded_username}: {e}")
+        import traceback
+        traceback.print_exc()
+        print(f"❌ Error fetching player log for '{decoded_username}': {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch player log")
 
 
