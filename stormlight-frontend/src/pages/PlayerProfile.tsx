@@ -204,15 +204,6 @@ const PlayerProfile = () => {
     'dungeoneering', 'divination', 'invention', 'archaeology', 'necromancy'
   ]
 
-  console.log('=== PlayerData Debug ===', {
-    hasStats: !!playerData.stats,
-    overallKeys: playerData.stats?.overall ? Object.keys(playerData.stats.overall) : [],
-    overallXpPeriod1: playerData.stats?.overall?.xp_period1,
-    overallXpPeriod2: playerData.stats?.overall?.xp_period2,
-    attackKeys: playerData.stats?.attack ? Object.keys(playerData.stats.attack) : [],
-    attackXpPeriod1: playerData.stats?.attack?.xp_period1,
-    attackXpPeriod2: playerData.stats?.attack?.xp_period2
-  })
 
   const skills = skillOrder
     .filter(skill => {
@@ -230,8 +221,8 @@ const PlayerProfile = () => {
           xp_change: playerData.stats.overall.xp_change || 0,
           xp_period1: playerData.stats.overall.xp_period1 || playerData.stats.overall.xp,
           xp_period2: playerData.stats.overall.xp_period2 || 0,
-          xp_today: playerData.stats.overall.xp_today || playerData.stats.overall.xp,
-          xp_yesterday: playerData.stats.overall.xp_yesterday || 0
+          xp_gain_period1: (playerData.stats.overall as any)?.xp_gain_period1 || 0,
+          xp_gain_period2: (playerData.stats.overall as any)?.xp_gain_period2 || 0
         }] as [string, any]
       }
       return [skill, {
@@ -241,8 +232,8 @@ const PlayerProfile = () => {
         xp_change: playerData.stats[skill]?.xp_change || 0,
         xp_period1: playerData.stats[skill]?.xp_period1 || playerData.stats[skill]?.xp,
         xp_period2: playerData.stats[skill]?.xp_period2 || 0,
-        xp_today: playerData.stats[skill]?.xp_today || playerData.stats[skill]?.xp,
-        xp_yesterday: playerData.stats[skill]?.xp_yesterday || 0
+        xp_gain_period1: (playerData.stats[skill] as any)?.xp_gain_period1 || 0,
+        xp_gain_period2: (playerData.stats[skill] as any)?.xp_gain_period2 || 0
       }] as [string, any]
     })
 
@@ -377,12 +368,12 @@ const PlayerProfile = () => {
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-green-400 font-medium">
-                        {data.xp_period1 ? data.xp_period1.toLocaleString() : data.xp.toLocaleString()}
+                        {typeof data.xp_gain_period1 === 'number' ? `+${data.xp_gain_period1.toLocaleString()}` : '0'}
                       </span>
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-slate-400 font-medium">
-                        {data.xp_period2 && data.xp_period2 !== data.xp_period1 ? data.xp_period2.toLocaleString() : '0'}
+                        {typeof data.xp_gain_period2 === 'number' ? `+${data.xp_gain_period2.toLocaleString()}` : '0'}
                       </span>
                     </TableCell>
                   </TableRow>
