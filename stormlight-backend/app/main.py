@@ -1975,56 +1975,96 @@ async def test_clan_log():
 
 @app.get("/api/clan/log")
 async def get_clan_log(
-    page: int = 1,
-    limit: int = 20
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100)
 ):
     """Get recent clan log events with pagination"""
+    offset = (page - 1) * limit
+    
     try:
+        entries = []
+        total_count = 0
+        used_fallback = False
+        
         if not prisma:
-            return {
-                "log_entries": [],
-                "pagination": {
-                    "page": page,
-                    "limit": limit,
-                    "total_entries": 0,
-                    "has_next": False
-                }
-            }
+            used_fallback = True
+        else:
+            try:
+                import asyncio
+                log_entries = await asyncio.wait_for(
+                    prisma.clanlog.find_many(skip=offset, take=limit),
+                    timeout=2.0
+                )
+                prisma_total = await asyncio.wait_for(
+                    prisma.clanlog.count(),
+                    timeout=2.0
+                )
+                
+                entries = [
+                    {
+                        'id': e.id,
+                        'username': e.username,
+                        'event_type': e.eventType,
+                        'old_rank': e.oldRank,
+                        'new_rank': e.newRank,
+                        'timestamp': e.timestamp.isoformat(),
+                    }
+                    for e in log_entries
+                ]
+                total_count = prisma_total
+            except Exception as pe:
+                print(f"[ClanLog] Prisma error: {type(pe)} {pe} - falling back to SQL")
+                used_fallback = True
         
-        offset = (page - 1) * limit
+        if used_fallback:
+            try:
+                from .database import get_db_connection
+            except ImportError:
+                from database import get_db_connection
+            
+            conn = await get_db_connection()
+            async with conn:
+                cnt_cur = await conn.execute("SELECT COUNT(*) FROM \"ClanLog\"")
+                cnt_row = await cnt_cur.fetchone()
+                total_count = cnt_row[0] if cnt_row else 0
+                
+                cur = await conn.execute(
+                    """
+                    SELECT id, username, "eventType", "oldRank", "newRank", timestamp
+                    FROM "ClanLog"
+                    ORDER BY timestamp DESC
+                    LIMIT %s OFFSET %s
+                    """,
+                    (limit, offset)
+                )
+                rows = await cur.fetchall()
+                entries = [
+                    {
+                        'id': r[0],
+                        'username': r[1],
+                        'event_type': r[2],
+                        'old_rank': r[3],
+                        'new_rank': r[4],
+                        'timestamp': r[5].isoformat() if hasattr(r[5], "isoformat") else str(r[5]),
+                    }
+                    for r in rows
+                ]
         
-        log_entries = await prisma.clanlog.find_many(
-            skip=offset,
-            take=limit
-        )
-        
-        total_count = await prisma.clanlog.count()
-        
-        formatted_entries = []
-        for entry in log_entries:
-            formatted_entry = {
-                'id': entry.id,
-                'username': entry.username,
-                'event_type': entry.eventType,
-                'old_rank': entry.oldRank,
-                'new_rank': entry.newRank,
-                'timestamp': entry.timestamp.isoformat()
-            }
-            formatted_entries.append(formatted_entry)
-        
-        formatted_entries.sort(key=lambda x: x['timestamp'], reverse=True)
+        entries.sort(key=lambda x: x['timestamp'], reverse=True)
         
         return {
-            "log_entries": formatted_entries,
+            "log_entries": entries,
             "pagination": {
                 "page": page,
                 "limit": limit,
                 "total_entries": total_count,
-                "has_next": offset + limit < total_count
-            }
+                "has_next": offset + limit < total_count,
+            },
         }
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"❌ Error fetching clan log: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch clan log")
 
@@ -2136,52 +2176,95 @@ async def get_player_log(
     decoded_username = unquote(username).replace('-', ' ')
     decoded_username = decoded_username.replace('\xa0', ' ').strip()
     
+    offset = (page - 1) * limit
+    
     try:
+        entries = []
+        total_count = 0
+        used_fallback = False
+        
         if not prisma:
-            return {
-                "log_entries": [],
-                "pagination": {
-                    "page": page,
-                    "limit": limit,
-                    "total_entries": 0,
-                    "has_next": False
-                }
-            }
+            used_fallback = True
+        else:
+            try:
+                import asyncio
+                log_entries = await asyncio.wait_for(
+                    prisma.clanlog.find_many(
+                        where={'username': decoded_username},
+                        skip=offset,
+                        take=limit
+                    ),
+                    timeout=2.0
+                )
+                prisma_total = await asyncio.wait_for(
+                    prisma.clanlog.count(where={'username': decoded_username}),
+                    timeout=2.0
+                )
+                
+                entries = [
+                    {
+                        'id': e.id,
+                        'username': e.username,
+                        'event_type': e.eventType,
+                        'old_rank': e.oldRank,
+                        'new_rank': e.newRank,
+                        'timestamp': e.timestamp.isoformat(),
+                    }
+                    for e in log_entries
+                ]
+                total_count = prisma_total
+            except Exception as pe:
+                print(f"[PlayerLog] Prisma error for '{decoded_username}': {type(pe)} {pe} - falling back to SQL")
+                used_fallback = True
         
-        offset = (page - 1) * limit
+        if used_fallback:
+            try:
+                from .database import get_db_connection
+            except ImportError:
+                from database import get_db_connection
+            
+            conn = await get_db_connection()
+            async with conn:
+                cnt_cur = await conn.execute(
+                    "SELECT COUNT(*) FROM \"ClanLog\" WHERE username = %s",
+                    (decoded_username,)
+                )
+                cnt_row = await cnt_cur.fetchone()
+                total_count = cnt_row[0] if cnt_row else 0
+                
+                cur = await conn.execute(
+                    """
+                    SELECT id, username, "eventType", "oldRank", "newRank", timestamp
+                    FROM "ClanLog"
+                    WHERE username = %s
+                    ORDER BY timestamp DESC
+                    LIMIT %s OFFSET %s
+                    """,
+                    (decoded_username, limit, offset)
+                )
+                rows = await cur.fetchall()
+                entries = [
+                    {
+                        'id': r[0],
+                        'username': r[1],
+                        'event_type': r[2],
+                        'old_rank': r[3],
+                        'new_rank': r[4],
+                        'timestamp': r[5].isoformat() if hasattr(r[5], "isoformat") else str(r[5]),
+                    }
+                    for r in rows
+                ]
         
-        log_entries = await prisma.clanlog.find_many(
-            where={'username': decoded_username},
-            skip=offset,
-            take=limit
-        )
-        
-        total_count = await prisma.clanlog.count(
-            where={'username': decoded_username}
-        )
-        
-        formatted_entries = []
-        for entry in log_entries:
-            formatted_entry = {
-                'id': entry.id,
-                'username': entry.username,
-                'event_type': entry.eventType,
-                'old_rank': entry.oldRank,
-                'new_rank': entry.newRank,
-                'timestamp': entry.timestamp.isoformat()
-            }
-            formatted_entries.append(formatted_entry)
-        
-        formatted_entries.sort(key=lambda x: x['timestamp'], reverse=True)
+        entries.sort(key=lambda x: x['timestamp'], reverse=True)
         
         return {
-            "log_entries": formatted_entries,
+            "log_entries": entries,
             "pagination": {
                 "page": page,
                 "limit": limit,
                 "total_entries": total_count,
-                "has_next": offset + limit < total_count
-            }
+                "has_next": offset + limit < total_count,
+            },
         }
         
     except Exception as e:
