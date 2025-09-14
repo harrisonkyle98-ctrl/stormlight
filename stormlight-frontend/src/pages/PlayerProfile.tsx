@@ -353,7 +353,7 @@ const PlayerProfile = () => {
                         <span className="text-sm">
                           {data.rank_change && data.rank_change !== 0 ? (
                             <span className={data.rank_change < 0 ? 'text-green-400' : 'text-red-400'}>
-                              {data.rank_change > 0 ? '+' : ''}{data.rank_change}
+                              {data.rank_change < 0 ? '+' : '-'}{Math.abs(data.rank_change)}
                             </span>
                           ) : (
                             <span>&nbsp;</span>
