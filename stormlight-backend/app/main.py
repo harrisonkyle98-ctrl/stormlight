@@ -274,7 +274,7 @@ async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Di
     """Fetch player stats from RuneScape Runemetrics API with rate limiting"""
     for attempt in range(max_retries):
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=30.0) as client:
                 runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={username}&activities=20"
                 response = await client.get(runemetrics_url)
                 
@@ -2582,12 +2582,12 @@ async def collect_snapshots_now(
         print(f"🔍 Manual snapshot collection triggered by admin user: {user_id} (concurrency={concurrency}, limit={limit})")
         async def run():
             try:
-                from .database import collect_daily_player_stats
+                from .database import collect_daily_player_stats_multi_cycle
             except ImportError:
-                from database import collect_daily_player_stats
-            await collect_daily_player_stats(concurrency=concurrency, limit=limit)
+                from database import collect_daily_player_stats_multi_cycle
+            await collect_daily_player_stats_multi_cycle()
         asyncio.create_task(run())
-        return {"status": "queued", "message": "Bulk snapshot collection started in background", "concurrency": concurrency, "limit": limit}
+        return {"status": "queued", "message": "Started multi-cycle collection (~60 members x 4-5 cycles, 3min delays). Check /api/admin/check-snapshots."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -2669,20 +2669,20 @@ async def trigger_bulk_collection_temp():
         print("🔍 TEMPORARY: Manual bulk snapshot collection triggered without auth")
         async def run():
             try:
-                from .database import collect_daily_player_stats
+                from .database import collect_daily_player_stats_multi_cycle
             except ImportError:
-                from database import collect_daily_player_stats
-            await collect_daily_player_stats()
+                from database import collect_daily_player_stats_multi_cycle
+            await collect_daily_player_stats_multi_cycle()
         asyncio.create_task(run())
-        return {"status": "queued", "message": "TEMPORARY: Bulk snapshot collection started in background"}
+        return {"status": "queued", "message": "Started multi-cycle collection (~60 members x 4-5 cycles, 3min delays). Check /api/admin/check-snapshots."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/admin/trigger-snapshots")
 async def trigger_snapshots_get():
-    """TEMPORARY: GET endpoint to trigger bulk collection without auth for easy browser testing - REMOVE AFTER USE"""
+    """TEMPORARY: GET endpoint to trigger multi-cycle collection without auth for testing"""
     try:
-        print("🔍 TEMPORARY: GET bulk snapshot collection triggered without auth")
+        print("[Trigger] TEMPORARY: GET multi-cycle snapshot collection triggered without auth")
         async def run():
             try:
                 from .database import collect_daily_player_stats_multi_cycle
@@ -2690,7 +2690,8 @@ async def trigger_snapshots_get():
                 from database import collect_daily_player_stats_multi_cycle
             await collect_daily_player_stats_multi_cycle()
         asyncio.create_task(run())
-        return {"status": "queued", "message": "Started multi-cycle collection (~60 members x 4-5 cycles, 3min delays). Check /api/admin/check-snapshots."}
+        return {"status": "queued", 
+                "message": "Started multi-cycle collection (~60 members x 4–5 cycles, 3min delays). Check /api/admin/check-snapshots."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
