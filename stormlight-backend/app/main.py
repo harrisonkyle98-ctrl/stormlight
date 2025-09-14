@@ -2672,7 +2672,7 @@ async def trigger_bulk_collection_temp():
                 from .database import collect_daily_player_stats
             except ImportError:
                 from database import collect_daily_player_stats
-            await collect_daily_player_stats(concurrency=1)
+            await collect_daily_player_stats()
         asyncio.create_task(run())
         return {"status": "queued", "message": "TEMPORARY: Bulk snapshot collection started in background"}
     except Exception as e:
