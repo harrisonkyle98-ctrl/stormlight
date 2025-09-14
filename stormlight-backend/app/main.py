@@ -27,9 +27,9 @@ except Exception as e:
     PRISMA_AVAILABLE = False
     Prisma = None
 try:
-    from .database import init_database, get_db_connection, collect_daily_player_stats
+    from .database import init_database, get_db_connection, collect_daily_player_stats, collect_daily_player_stats_multi_cycle
 except ImportError:
-    from database import init_database, get_db_connection, collect_daily_player_stats
+    from database import init_database, get_db_connection, collect_daily_player_stats, collect_daily_player_stats_multi_cycle
 
 load_dotenv()
 
@@ -2685,12 +2685,12 @@ async def trigger_snapshots_get():
         print("🔍 TEMPORARY: GET bulk snapshot collection triggered without auth")
         async def run():
             try:
-                from .database import collect_daily_player_stats
+                from .database import collect_daily_player_stats_multi_cycle
             except ImportError:
-                from database import collect_daily_player_stats
-            await collect_daily_player_stats(concurrency=8)
+                from database import collect_daily_player_stats_multi_cycle
+            await collect_daily_player_stats_multi_cycle()
         asyncio.create_task(run())
-        return {"status": "queued", "message": "Started collection with conservative pacing (batch=5, sequential, long backoff). Check /api/admin/check-snapshots."}
+        return {"status": "queued", "message": "Started multi-cycle collection (~60 members x 4-5 cycles, 3min delays). Check /api/admin/check-snapshots."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -2790,15 +2790,18 @@ async def startup_event():
         async def daily_scheduler():
             while True:
                 try:
-                    now = datetime.now()
+                    from datetime import timezone
+                    now = datetime.now(timezone.utc)
                     next_run = now.replace(hour=0, minute=0, second=0, microsecond=0)
                     if now.time() > datetime_time(0, 0):
                         next_run += timedelta(days=1)
                     
                     sleep_seconds = (next_run - now).total_seconds()
-                    print(f"Next daily stats collection scheduled in {sleep_seconds/3600:.1f} hours")
-                    await asyncio.sleep(sleep_seconds)
-                    await collect_daily_player_stats(concurrency=1)
+                    print(f"[Scheduler] Next daily multi-cycle run (UTC) in {sleep_seconds/3600:.1f} hours (at {next_run.isoformat()})")
+                    await asyncio.sleep(max(0, sleep_seconds))
+                    
+                    print(f"[Scheduler] 🚀 Starting scheduled multi-cycle snapshot collection at {datetime.now(timezone.utc).isoformat()}")
+                    await collect_daily_player_stats_multi_cycle()
                     
                     try:
                         await sync_clan_members_to_database()
@@ -2817,7 +2820,9 @@ async def startup_event():
                     except Exception as e:
                         print(f"Error cleaning up activities: {e}")
                 except Exception as e:
-                    print(f"Error in daily scheduler: {e}")
+                    print(f"[Scheduler] Error in daily scheduler: {e}")
+                    import traceback
+                    traceback.print_exc()
                     await asyncio.sleep(3600)
 
         async def frequent_scheduler():

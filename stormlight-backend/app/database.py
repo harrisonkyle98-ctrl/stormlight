@@ -82,6 +82,162 @@ async def init_database():
         print(f"Database initialization failed: {e}")
         print("Historical tracking will be disabled")
 
+async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int, total_cycles: int):
+    """Collect daily snapshots for a subset of clan members (one cycle)."""
+    import asyncio
+    
+    try:
+        from .main import fetch_player_stats
+    except ImportError:
+        from main import fetch_player_stats
+
+    print(f"[Bulk Snapshots] Cycle {cycle_num}/{total_cycles}: Starting collection for {len(usernames)} members in batches of 5")
+
+    processed = 0
+    succeeded = 0
+    failed = 0
+    failed_users: list[str] = []
+    
+    batch_size = 5
+    batches = [usernames[i:i + batch_size] for i in range(0, len(usernames), batch_size)]
+    
+    async def process_member_with_retry(username: str, max_retries: int = 5) -> bool:
+        """Process a single member with exponential backoff retry logic."""
+        retry_delays = [30, 60, 120, 180, 300]  # 30s, 60s, 120s, 180s, 300s exponential backoff
+        
+        for attempt in range(max_retries + 1):
+            try:
+                stats_data = await fetch_player_stats(username)
+                
+                if not stats_data or 'stats' not in stats_data:
+                    print(f"[Bulk Snapshots] ❌ No stats for {username}")
+                    return False
+
+                conn = await get_db_connection()
+                async with conn:
+                    await ensure_today_snapshot(conn, username, stats_data)
+                
+                print(f"[Bulk Snapshots] ✅ Completed {username}")
+                return True
+                
+            except Exception as e:
+                if attempt < max_retries:
+                    delay = retry_delays[attempt]
+                    print(f"[Bulk Snapshots] ⚠️ Retry {attempt + 1}/{max_retries} for {username} after {delay}s: {e}")
+                    await asyncio.sleep(delay)
+                else:
+                    print(f"[Bulk Snapshots] ❌ Final failure for {username}: {e}")
+                    return False
+        
+        return False
+
+    per_call_delay_secs = 2.0
+    batch_delay_secs = 10.0
+    
+    print(f"[Bulk Snapshots] Cycle {cycle_num} Configuration: batch_size={batch_size}, per_call_delay={per_call_delay_secs}s, batch_delay={batch_delay_secs}s")
+    
+    for batch_idx, batch in enumerate(batches):
+        print(f"[Bulk Snapshots] Cycle {cycle_num} - Processing batch {batch_idx + 1}/{len(batches)} ({len(batch)} members)")
+        
+        for username in batch:
+            ok = await process_member_with_retry(username, max_retries=5)
+            processed += 1
+            if ok:
+                succeeded += 1
+            else:
+                failed += 1
+                failed_users.append(username)
+            await asyncio.sleep(per_call_delay_secs)
+        
+        print(f"[Bulk Snapshots] Cycle {cycle_num} - Batch {batch_idx + 1} complete: {succeeded}/{processed} total succeeded")
+        
+        if batch_idx < len(batches) - 1:
+            await asyncio.sleep(batch_delay_secs)
+
+    from datetime import datetime
+    max_minutes = 10  # Reduced per cycle since we have multiple cycles
+    start_time = datetime.now()
+    
+    while failed_users:
+        if (datetime.now() - start_time).total_seconds() > max_minutes * 60:
+            print(f"[Bulk Snapshots] Cycle {cycle_num} ⏳ Safety stop after {max_minutes} minutes with {len(failed_users)} still failing")
+            break
+            
+        retry_usernames = failed_users.copy()
+        failed_users = []
+        retry_batches = [retry_usernames[i:i + batch_size] for i in range(0, len(retry_usernames), batch_size)]
+        
+        for batch_idx, batch in enumerate(retry_batches):
+            print(f"[Bulk Snapshots] Cycle {cycle_num} - Retry batch {batch_idx + 1}/{len(retry_batches)} ({len(batch)} members)")
+            
+            for username in batch:
+                ok = await process_member_with_retry(username, max_retries=5)
+                if ok:
+                    succeeded += 1
+                    print(f"[Bulk Snapshots] ✅ Retry success for {username}")
+                else:
+                    failed_users.append(username)
+                await asyncio.sleep(per_call_delay_secs)
+            
+            if batch_idx < len(retry_batches) - 1:
+                await asyncio.sleep(batch_delay_secs * 2)  # Extra spacing on retries
+        
+        if failed_users:
+            print(f"[Bulk Snapshots] Cycle {cycle_num} - Still {len(failed_users)} failed; cooling down 60s before next retry sweep")
+            await asyncio.sleep(60)
+    
+    print(f"[Bulk Snapshots] Cycle {cycle_num} Finished. Processed={processed} Succeeded={succeeded} Failed={len(failed_users)}")
+    if failed_users:
+        sample = failed_users[:10]
+        print(f"[Bulk Snapshots] Cycle {cycle_num} Final failed users (sample {len(sample)}/{len(failed_users)}): {sample}")
+    else:
+        print(f"[Bulk Snapshots] Cycle {cycle_num} 🎉 All {succeeded} members processed successfully!")
+    
+    return succeeded, len(failed_users)
+
+async def collect_daily_player_stats_multi_cycle():
+    """Collect daily snapshots of all clan members using multiple cycles to respect API limits."""
+    import asyncio
+    from datetime import datetime
+    
+    try:
+        from .main import fetch_clan_members
+    except ImportError:
+        from main import fetch_clan_members
+
+    print(f"[Multi-Cycle Snapshots] Starting daily collection at {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}")
+    
+    members = await fetch_clan_members()
+    usernames = [m['username'] for m in members if m.get('username')]
+    
+    total_members = len(usernames)
+    members_per_cycle = 60  # ~60 members per cycle
+    cycles = [usernames[i:i + members_per_cycle] for i in range(0, len(usernames), members_per_cycle)]
+    total_cycles = len(cycles)
+    
+    print(f"[Multi-Cycle Snapshots] Breaking {total_members} members into {total_cycles} cycles of ~{members_per_cycle} members each")
+    
+    total_succeeded = 0
+    total_failed = 0
+    cycle_delay_minutes = 3  # 3 minutes between cycles
+    
+    for cycle_idx, cycle_usernames in enumerate(cycles):
+        cycle_num = cycle_idx + 1
+        print(f"[Multi-Cycle Snapshots] Starting cycle {cycle_num}/{total_cycles} with {len(cycle_usernames)} members")
+        
+        succeeded, failed = await collect_daily_player_stats_cycle(cycle_usernames, cycle_num, total_cycles)
+        total_succeeded += succeeded
+        total_failed += failed
+        
+        print(f"[Multi-Cycle Snapshots] Cycle {cycle_num} complete: {succeeded} succeeded, {failed} failed")
+        
+        if cycle_num < total_cycles:
+            print(f"[Multi-Cycle Snapshots] Waiting {cycle_delay_minutes} minutes before next cycle...")
+            await asyncio.sleep(cycle_delay_minutes * 60)
+    
+    print(f"[Multi-Cycle Snapshots] 🎉 All cycles complete! Total: {total_succeeded} succeeded, {total_failed} failed out of {total_members} members")
+    return total_succeeded, total_failed
+
 async def collect_daily_player_stats(concurrency: int = 8, limit: int | None = None):
     """Collect daily snapshots of all clan member stats with batch processing and retry logic."""
     import asyncio
@@ -199,6 +355,8 @@ async def collect_daily_player_stats(concurrency: int = 8, limit: int | None = N
         print(f"[Bulk Snapshots] Final failed users (sample {len(sample)}/{len(failed_users)}): {sample}")
     else:
         print(f"[Bulk Snapshots] 🎉 All {succeeded} members processed successfully!")
+    
+    return succeeded, len(failed_users)
 
 def get_date_for_period(period: str, reference_date: date = None) -> date:
     """Calculate date for a given time period"""
