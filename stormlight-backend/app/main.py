@@ -2417,16 +2417,23 @@ async def get_player_stats_with_history(
                 p1_start, p1_end = get_period_window(period1)
                 p2_start, p2_end = get_period_window(period2)
                 
+                print(f"[History] Period window check: p1_end={p1_end}, today={today}, condition_met={p1_end == today}")
                 if p1_end == today:
                     print(f"[History] Recomputing live gains for period1={period1} ending today")
                     
                     if period1.lower() == 'today':
+                        print(f"[History] Querying baseline snapshots for {decoded_username} on {today}")
                         baseline_rows_cur = await conn.execute("""
                             SELECT skill_name, level, xp, rank FROM player_stats_history
                             WHERE username = %s AND snapshot_date = %s
                         """, (decoded_username, today))
-                        baseline_dict = {r[0]: r for r in await baseline_rows_cur.fetchall()}
+                        baseline_rows = await baseline_rows_cur.fetchall()
+                        baseline_dict = {r[0]: r for r in baseline_rows}
                         print(f"[History] Found {len(baseline_dict)} baseline snapshot rows for today's 00:00 UTC reset")
+                        if baseline_dict:
+                            sample_skill = list(baseline_dict.keys())[0]
+                            sample_row = baseline_dict[sample_skill]
+                            print(f"[History] Sample baseline: {sample_skill} = level:{sample_row[1]}, xp:{sample_row[2]:,}, rank:{sample_row[3]}")
                     else:
                         baseline_dict = await get_snapshot_dict_on_or_before(conn, decoded_username, p1_start)
                         print(f"[History] Found {len(baseline_dict)} baseline snapshot rows on or before {p1_start}")
