@@ -2603,6 +2603,52 @@ async def migrate_snapshots(user_id: str = Depends(verify_admin_access)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/admin/check-snapshots")
+async def check_snapshots():
+    """Temporary endpoint to check today's snapshot count without authentication"""
+    try:
+        from datetime import date
+        today = date.today()
+        
+        try:
+            from .database import get_db_connection
+        except ImportError:
+            from database import get_db_connection
+        
+        conn = await get_db_connection()
+        async with conn:
+            cursor = await conn.execute(
+                "SELECT COUNT(*) FROM player_daily_snapshots WHERE snapshot_date = %s",
+                (today,)
+            )
+            count_result = await cursor.fetchone()
+            today_count = count_result[0] if count_result else 0
+            
+            cursor = await conn.execute(
+                "SELECT COUNT(DISTINCT username) FROM player_daily_snapshots WHERE snapshot_date = %s",
+                (today,)
+            )
+            unique_result = await cursor.fetchone()
+            unique_count = unique_result[0] if unique_result else 0
+            
+            cursor = await conn.execute(
+                "SELECT COUNT(*) FROM player_daily_snapshots"
+            )
+            total_result = await cursor.fetchone()
+            total_count = total_result[0] if total_result else 0
+            
+        return {
+            "status": "success",
+            "date": today.isoformat(),
+            "snapshots_today": today_count,
+            "unique_members_today": unique_count,
+            "total_snapshots_all_time": total_count,
+            "message": f"Found {today_count} snapshots for {unique_count} unique members today"
+        }
+    except Exception as e:
+        print(f"Error checking snapshots: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.on_event("startup")
 async def startup_event():
