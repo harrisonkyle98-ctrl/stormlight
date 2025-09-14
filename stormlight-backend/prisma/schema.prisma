@@ -148,6 +148,20 @@ model ClanLog {
   @@map("clan_log")
 }
 
+model PlayerDailySnapshot {
+  id           Int      @id @default(autoincrement())
+  username     String
+  snapshotDate DateTime @db.Date @map("snapshot_date")
+  stats        Json
+  combatLevel  Int?     @map("combat_level")
+  totalXp      BigInt?  @map("total_xp")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@unique([username, snapshotDate])
+  @@index([username, snapshotDate])
+  @@map("player_daily_snapshots")
+}
+
 enum CompetitionType {
   XP_GAIN
   LEVEL_GAIN

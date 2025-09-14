@@ -2404,9 +2404,9 @@ async def get_player_stats_with_history(
             
             async with conn:
                 try:
-                    from .database import ensure_today_snapshot, get_player_stats_for_periods, get_period_window, get_snapshot_dict_on_or_before
+                    from .database import ensure_today_snapshot, get_player_stats_for_periods, get_period_window, get_snapshot_json_on_date, get_snapshot_json_on_or_before
                 except ImportError:
-                    from database import ensure_today_snapshot, get_player_stats_for_periods, get_period_window, get_snapshot_dict_on_or_before
+                    from database import ensure_today_snapshot, get_player_stats_for_periods, get_period_window, get_snapshot_json_on_date, get_snapshot_json_on_or_before
                 
                 print(f"[History] Live API fetched for {decoded_username} (overall xp={current_stats['stats']['overall']['xp']:,})")
                 
@@ -2422,33 +2422,28 @@ async def get_player_stats_with_history(
                     print(f"[History] Recomputing live gains for period1={period1} ending today")
                     
                     if period1.lower() == 'today':
-                        print(f"[History] Querying baseline snapshots for {decoded_username} on {today}")
-                        baseline_rows_cur = await conn.execute("""
-                            SELECT skill_name, level, xp, rank FROM player_stats_history
-                            WHERE username = %s AND snapshot_date = %s
-                        """, (decoded_username, today))
-                        baseline_rows = await baseline_rows_cur.fetchall()
-                        baseline_dict = {r[0]: r for r in baseline_rows}
-                        print(f"[History] Found {len(baseline_dict)} baseline snapshot rows for today's 00:00 UTC reset")
-                        if baseline_dict:
-                            sample_skill = list(baseline_dict.keys())[0]
-                            sample_row = baseline_dict[sample_skill]
-                            print(f"[History] Sample baseline: {sample_skill} = level:{sample_row[1]}, xp:{sample_row[2]:,}, rank:{sample_row[3]}")
+                        baseline_json = await get_snapshot_json_on_date(conn, decoded_username, today)
+                        cnt = len(baseline_json or {})
+                        print(f"[History] Found {cnt} baseline skills in today's snapshot")
+                        if baseline_json:
+                            sample_skill = list(baseline_json.keys())[0]
+                            sample_data = baseline_json[sample_skill]
+                            print(f"[History] Sample baseline: {sample_skill} = level:{sample_data.get('level')}, xp:{sample_data.get('xp'):,}, rank:{sample_data.get('rank')}")
                     else:
-                        baseline_dict = await get_snapshot_dict_on_or_before(conn, decoded_username, p1_start)
-                        print(f"[History] Found {len(baseline_dict)} baseline snapshot rows on or before {p1_start}")
+                        baseline_json = await get_snapshot_json_on_or_before(conn, decoded_username, p1_start)
+                        print(f"[History] Found {len(baseline_json or {})} baseline skills on/before {p1_start}")
                     
                     for skill_name in current_stats['stats'].keys():
                         cur_level = current_stats['stats'][skill_name].get('level', 0)
                         cur_xp = current_stats['stats'][skill_name].get('xp', 0)
                         cur_rank = current_stats['stats'][skill_name].get('rank') or 0
                         
-                        baseline_row = baseline_dict.get(skill_name)
+                        baseline_data = baseline_json.get(skill_name) if baseline_json else None
                         
-                        if baseline_row:
-                            base_level = baseline_row[1]
-                            base_xp = baseline_row[2]
-                            base_rank = baseline_row[3] or 0
+                        if baseline_data:
+                            base_level = baseline_data.get('level', 0)
+                            base_xp = baseline_data.get('xp', 0)
+                            base_rank = baseline_data.get('rank') or 0
                             
                             xp_gain_p1 = max(cur_xp - base_xp, 0)
                             level_delta = max(cur_level - base_level, 0)
@@ -2524,20 +2519,33 @@ async def get_player_stats_with_history(
 
 @app.post("/api/admin/collect-snapshots")
 async def collect_snapshots_now(user=Depends(get_current_user)):
-    """Manual trigger for bulk snapshot collection"""
+    """Manual trigger for bulk snapshot collection (background task)"""
+    try:
+        async def run():
+            try:
+                from .database import collect_daily_player_stats
+            except ImportError:
+                from database import collect_daily_player_stats
+            await collect_daily_player_stats()
+        asyncio.create_task(run())
+        return {"status": "queued", "message": "Bulk snapshot collection started in background"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/admin/migrate-snapshots")
+async def migrate_snapshots(user=Depends(get_current_user)):
+    """One-time migration from legacy player_stats_history to consolidated snapshots"""
     try:
         try:
-            from .database import collect_daily_player_stats
+            from .database import migrate_history_to_daily_snapshots, get_db_connection
         except ImportError:
-            from database import collect_daily_player_stats
-        
-        print("[Manual Trigger] Starting bulk snapshot collection...")
-        await collect_daily_player_stats()
-        print("[Manual Trigger] Bulk snapshot collection completed")
-        return {"status": "success", "message": "Bulk snapshot collection completed"}
+            from database import migrate_history_to_daily_snapshots, get_db_connection
+        conn = await get_db_connection()
+        async with conn:
+            await migrate_history_to_daily_snapshots(conn)
+        return {"status": "success", "message": "Migration completed"}
     except Exception as e:
-        print(f"[Manual Trigger] Error in bulk snapshot collection: {e}")
-        raise HTTPException(status_code=500, detail=f"Error collecting snapshots: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.on_event("startup")

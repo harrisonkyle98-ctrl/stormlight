@@ -49,6 +49,20 @@ async def init_database():
                 CREATE INDEX IF NOT EXISTS idx_player_stats_username_date ON player_stats_history(username, snapshot_date);
                 CREATE INDEX IF NOT EXISTS idx_player_changes_username_date ON player_stat_changes(username, date);
                 
+                CREATE TABLE IF NOT EXISTS player_daily_snapshots (
+                    id SERIAL PRIMARY KEY,
+                    username VARCHAR(255) NOT NULL,
+                    snapshot_date DATE NOT NULL,
+                    stats JSONB NOT NULL,
+                    combat_level INTEGER,
+                    total_xp BIGINT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(username, snapshot_date)
+                );
+                
+                CREATE INDEX IF NOT EXISTS idx_pds_username_date ON player_daily_snapshots(username, snapshot_date);
+                CREATE INDEX IF NOT EXISTS idx_pds_date ON player_daily_snapshots(snapshot_date);
+                
                 CREATE TABLE IF NOT EXISTS clan_activities (
                     id SERIAL PRIMARY KEY,
                     username VARCHAR(255) NOT NULL,
@@ -166,128 +180,104 @@ async def get_snapshot_dict_on_or_before(conn, username: str, target_date: date)
     rows = await get_snapshot_rows_on_or_before(conn, username, target_date)
     return {row[0]: row for row in rows}
 
+async def get_snapshot_json_on_or_before(conn, username: str, target_date: date) -> dict | None:
+    """Get consolidated JSON snapshot on or before target date with legacy fallback"""
+    cur = await conn.execute("""
+        SELECT stats FROM player_daily_snapshots
+        WHERE username = %s AND snapshot_date <= %s
+        ORDER BY snapshot_date DESC
+        LIMIT 1
+    """, (username, target_date))
+    row = await cur.fetchone()
+    if row and row[0]:
+        return row[0] if isinstance(row[0], dict) else None
+    
+    rows = await get_snapshot_rows_on_or_before(conn, username, target_date)
+    return {r[0]: {'level': r[1], 'xp': r[2], 'rank': r[3]} for r in rows} if rows else None
+
+async def get_snapshot_json_on_date(conn, username: str, snap_date: date) -> dict | None:
+    """Get consolidated JSON snapshot for exact date with legacy fallback"""
+    cur = await conn.execute("""
+        SELECT stats FROM player_daily_snapshots
+        WHERE username = %s AND snapshot_date = %s
+    """, (username, snap_date))
+    row = await cur.fetchone()
+    if row and row[0]:
+        return row[0] if isinstance(row[0], dict) else None
+    
+    cur = await conn.execute("""
+        SELECT skill_name, level, xp, rank FROM player_stats_history
+        WHERE username = %s AND snapshot_date = %s
+    """, (username, snap_date))
+    rows = await cur.fetchall()
+    return {r[0]: {'level': r[1], 'xp': r[2], 'rank': r[3]} for r in rows} if rows else None
+
+async def upsert_daily_snapshot(conn, username: str, stats: dict, snap_date: date):
+    """Insert consolidated daily snapshot with all skills in JSON format"""
+    if not stats or 'stats' not in stats:
+        return
+    
+    minimal = {
+        sk: {'level': v.get('level', 0), 'xp': v.get('xp', 0), 'rank': v.get('rank')}
+        for sk, v in stats['stats'].items()
+    }
+    combat_level = stats['stats'].get('overall', {}).get('combatlevel')
+    total_xp = stats['stats'].get('overall', {}).get('xp')
+    
+    import json
+    await conn.execute("""
+        INSERT INTO player_daily_snapshots (username, snapshot_date, stats, combat_level, total_xp)
+        VALUES (%s, %s, %s::jsonb, %s, %s)
+        ON CONFLICT (username, snapshot_date) DO NOTHING
+    """, (username, snap_date, json.dumps(minimal), combat_level, total_xp))
+
 async def ensure_today_snapshot(conn, username: str, stats: dict):
     """Ensure a 'today' baseline snapshot exists for a user (preserve existing baseline)."""
     today = date.today()
-    if not stats or 'stats' not in stats:
-        return
-    for skill_name, skill_data in stats['stats'].items():
-        combat_level = stats['stats'].get('overall', {}).get('combatlevel', 0) if skill_name == 'overall' else 0
-        await conn.execute("""
-            INSERT INTO player_stats_history
-            (username, skill_name, level, xp, rank, combat_level, snapshot_date)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (username, skill_name, snapshot_date)
-            DO NOTHING
-        """, (
-            username, skill_name, skill_data.get('level', 0), skill_data.get('xp', 0),
-            skill_data.get('rank'), combat_level, today
-        ))
+    await upsert_daily_snapshot(conn, username, stats, today)
 
 async def get_player_stats_for_periods(conn, username: str, period1: str, period2: str):
-    """Get player stats comparison between two time periods"""
-    date1 = get_date_for_period(period1)
-    date2 = get_date_for_period(period2)
-    
-    period1_cursor = await conn.execute("""
-        SELECT skill_name, level, xp, rank FROM player_stats_history 
-        WHERE username = %s AND snapshot_date = %s
-    """, (username, date1))
-    
-    period2_cursor = await conn.execute("""
-        SELECT skill_name, level, xp, rank FROM player_stats_history 
-        WHERE username = %s AND snapshot_date = %s
-    """, (username, date2))
-    
-    period1_rows = await period1_cursor.fetchall()
-    period2_rows = await period2_cursor.fetchall()
-    
-    if not period1_rows:
-        period1_rows = await get_snapshot_rows_on_or_before(conn, username, date1)
-    if not period2_rows:
-        period2_rows = await get_snapshot_rows_on_or_before(conn, username, date2)
-    
-    period1_dict = {row[0]: row for row in period1_rows}
-    period2_dict = {row[0]: row for row in period2_rows}
-    
-    changes_data = {}
-    
-    all_skills = set(period1_dict.keys()) | set(period2_dict.keys())
-    
-    for skill_name in all_skills:
-        period1_data = period1_dict.get(skill_name)
-        period2_data = period2_dict.get(skill_name)
-        
-        if period1_data and period2_data:
-            level_change = period1_data[1] - period2_data[1]
-            xp_change = period1_data[2] - period2_data[2]
-            rank1 = (period1_data[3] or 0)
-            rank2 = (period2_data[3] or 0)
-            rank_change = rank2 - rank1
-            
-            changes_data[skill_name] = {
-                'level_change': level_change,
-                'xp_change': xp_change,
-                'rank_change': rank_change,
-                'xp_period1': period1_data[2],
-                'xp_period2': period2_data[2],
-                'xp_gain_period1': 0,
-                'xp_gain_period2': 0
-            }
-        elif period1_data:
-            changes_data[skill_name] = {
-                'level_change': 0,
-                'xp_change': 0,
-                'rank_change': 0,
-                'xp_period1': period1_data[2],
-                'xp_period2': 0,
-                'xp_gain_period1': 0,
-                'xp_gain_period2': 0
-            }
-    
-    start1_date, end1_window_date = get_period_window(period1)
-    start2_date, end2_window_date = get_period_window(period2)
-    end1_window_dict = await get_snapshot_dict_on_or_before(conn, username, end1_window_date)
-    start1_dict = await get_snapshot_dict_on_or_before(conn, username, start1_date)
-    end2_window_dict = await get_snapshot_dict_on_or_before(conn, username, end2_window_date)
-    start2_dict = await get_snapshot_dict_on_or_before(conn, username, start2_date)
+    """Get player stats comparison between two time periods using consolidated snapshots"""
+    d1 = get_date_for_period(period1)
+    d2 = get_date_for_period(period2)
 
-    all_skills_combined = set(changes_data.keys()) | set(end1_window_dict.keys()) | set(start1_dict.keys()) | set(end2_window_dict.keys()) | set(start2_dict.keys())
+    snap1 = await get_snapshot_json_on_date(conn, username, d1) or await get_snapshot_json_on_or_before(conn, username, d1) or {}
+    snap2 = await get_snapshot_json_on_date(conn, username, d2) or await get_snapshot_json_on_or_before(conn, username, d2) or {}
 
-    for skill_name in all_skills_combined:
-        e1w = end1_window_dict.get(skill_name)
-        s1 = start1_dict.get(skill_name)
-        e2w = end2_window_dict.get(skill_name)
-        s2 = start2_dict.get(skill_name)
+    skills = set(snap1.keys()) | set(snap2.keys())
+    changes = {}
+    for sk in skills:
+        s1 = snap1.get(sk, {})
+        s2 = snap2.get(sk, {})
+        lvl1, xp1, rk1 = s1.get('level', 0), s1.get('xp', 0), (s1.get('rank') or 0)
+        lvl2, xp2, rk2 = s2.get('level', 0), s2.get('xp', 0), (s2.get('rank') or 0)
+        changes[sk] = {
+            'level_change': lvl1 - lvl2,
+            'xp_change': xp1 - xp2,
+            'rank_change': rk2 - rk1,
+            'xp_period1': xp1,
+            'xp_period2': xp2,
+            'xp_gain_period1': 0,
+            'xp_gain_period2': 0
+        }
 
-        def safe_xp(row): 
-            return row[2] if row else None
-        
-        xp_end1 = safe_xp(e1w)
-        xp_start1 = safe_xp(s1)
-        xp_end2 = safe_xp(e2w)
-        xp_start2 = safe_xp(s2)
+    start1, end1 = get_period_window(period1)
+    start2, end2 = get_period_window(period2)
+    end1_json = await get_snapshot_json_on_or_before(conn, username, end1) or {}
+    start1_json = await get_snapshot_json_on_or_before(conn, username, start1) or {}
+    end2_json = await get_snapshot_json_on_or_before(conn, username, end2) or {}
+    start2_json = await get_snapshot_json_on_or_before(conn, username, start2) or {}
 
-        xp_gain_p1 = (xp_end1 - xp_start1) if (xp_end1 is not None and xp_start1 is not None) else 0
-        xp_gain_p2 = (xp_end2 - xp_start2) if (xp_end2 is not None and xp_start2 is not None) else 0
+    for sk in set(list(changes.keys()) + list(end1_json.keys()) + list(start1_json.keys()) + list(end2_json.keys()) + list(start2_json.keys())):
+        e1, s1 = end1_json.get(sk, {}), start1_json.get(sk, {})
+        e2, s2 = end2_json.get(sk, {}), start2_json.get(sk, {})
+        gain1 = (e1.get('xp') or 0) - (s1.get('xp') or 0)
+        gain2 = (e2.get('xp') or 0) - (s2.get('xp') or 0)
+        base = changes.get(sk, {'level_change': 0, 'xp_change': 0, 'rank_change': 0, 'xp_period1': e1.get('xp', 0), 'xp_period2': e2.get('xp', 0)})
+        base.update({'xp_gain_period1': max(gain1, 0), 'xp_gain_period2': max(gain2, 0)})
+        changes[sk] = base
 
-        if skill_name in changes_data:
-            changes_data[skill_name].update({
-                'xp_gain_period1': xp_gain_p1,
-                'xp_gain_period2': xp_gain_p2,
-            })
-        else:
-            changes_data[skill_name] = {
-                'level_change': 0,
-                'xp_change': 0,
-                'rank_change': 0,
-                'xp_period1': xp_end1 if xp_end1 is not None else 0,
-                'xp_period2': xp_end2 if xp_end2 is not None else 0,
-                'xp_gain_period1': xp_gain_p1,
-                'xp_gain_period2': xp_gain_p2,
-            }
-
-    return changes_data
+    return changes
 
 async def calculate_daily_changes(conn, username: str, today: date):
     """Calculate daily changes for a player"""
@@ -381,3 +371,23 @@ async def cleanup_old_activities(conn, days_to_keep: int = 30):
         print(f"Cleaned up activities older than {days_to_keep} days")
     except Exception as e:
         print(f"Error cleaning up old activities: {e}")
+
+async def migrate_history_to_daily_snapshots(conn):
+    """Migrate legacy player_stats_history into consolidated player_daily_snapshots"""
+    await conn.execute("""
+        INSERT INTO player_daily_snapshots (username, snapshot_date, stats, combat_level, total_xp)
+        SELECT
+            username,
+            snapshot_date,
+            jsonb_object_agg(
+                skill_name,
+                jsonb_build_object('level', level, 'xp', xp, 'rank', rank)
+                ORDER BY skill_name
+            ) AS stats,
+            MAX(CASE WHEN skill_name='overall' THEN combat_level END) AS combat_level,
+            MAX(CASE WHEN skill_name='overall' THEN xp END) AS total_xp
+        FROM player_stats_history
+        GROUP BY username, snapshot_date
+        ON CONFLICT (username, snapshot_date) DO NOTHING
+    """)
+    print("[Migration] Backfill into player_daily_snapshots completed")
