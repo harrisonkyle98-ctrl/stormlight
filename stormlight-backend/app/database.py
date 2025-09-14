@@ -110,9 +110,9 @@ async def collect_daily_player_stats(concurrency: int = 1, limit: int | None = N
         nonlocal processed, succeeded, failed
         try:
             async with sem:
-                await asyncio.sleep(3.0)
+                await asyncio.sleep(5.0)
                 stats_data = await fetch_player_stats(username)
-                await asyncio.sleep(1.0)
+                await asyncio.sleep(2.0)
                 
             if not stats_data or 'stats' not in stats_data:
                 failed += 1
