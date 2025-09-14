@@ -82,8 +82,8 @@ async def init_database():
         print(f"Database initialization failed: {e}")
         print("Historical tracking will be disabled")
 
-async def collect_daily_player_stats(concurrency: int = 1, limit: int | None = None):
-    """Collect daily snapshots of all clan member stats for ALL members."""
+async def collect_daily_player_stats(concurrency: int = 8, limit: int | None = None):
+    """Collect daily snapshots of all clan member stats with batch processing and retry logic."""
     import asyncio
     today = date.today()
 
@@ -98,42 +98,67 @@ async def collect_daily_player_stats(concurrency: int = 1, limit: int | None = N
     if limit:
         usernames = usernames[:limit]
 
-    print(f"[Bulk Snapshots] Starting collection for {len(usernames)} members with concurrency={concurrency}")
+    print(f"[Bulk Snapshots] Starting collection for {len(usernames)} members in batches of 10")
 
-    sem = asyncio.Semaphore(concurrency)
     processed = 0
     succeeded = 0
     failed = 0
     failed_users: list[str] = []
-
-    async def process(username: str):
-        nonlocal processed, succeeded, failed
-        try:
-            async with sem:
-                await asyncio.sleep(10.0)
+    
+    batch_size = 10
+    batches = [usernames[i:i + batch_size] for i in range(0, len(usernames), batch_size)]
+    
+    async def process_member_with_retry(username: str, max_retries: int = 3) -> bool:
+        """Process a single member with exponential backoff retry logic."""
+        retry_delays = [5, 10, 20]  # 5s, 10s, 20s exponential backoff
+        
+        for attempt in range(max_retries + 1):
+            try:
                 stats_data = await fetch_player_stats(username)
-                await asyncio.sleep(3.0)
                 
-            if not stats_data or 'stats' not in stats_data:
-                failed += 1
-                failed_users.append(username)
-                print(f"[Bulk Snapshots] ❌ No stats for {username}")
-                return
+                if not stats_data or 'stats' not in stats_data:
+                    print(f"[Bulk Snapshots] ❌ No stats for {username}")
+                    return False
 
-            conn = await get_db_connection()
-            async with conn:
-                await ensure_today_snapshot(conn, username, stats_data)
-            succeeded += 1
-            print(f"[Bulk Snapshots] ✅ Completed {username} ({succeeded}/{len(usernames)})")
-        except Exception as e:
-            failed += 1
-            failed_users.append(username)
-            print(f"[Bulk Snapshots] ❌ Error for {username}: {e}")
+                conn = await get_db_connection()
+                async with conn:
+                    await ensure_today_snapshot(conn, username, stats_data)
+                
+                print(f"[Bulk Snapshots] ✅ Completed {username}")
+                return True
+                
+            except Exception as e:
+                if attempt < max_retries:
+                    delay = retry_delays[attempt]
+                    print(f"[Bulk Snapshots] ⚠️ Retry {attempt + 1}/{max_retries} for {username} after {delay}s: {e}")
+                    await asyncio.sleep(delay)
+                else:
+                    print(f"[Bulk Snapshots] ❌ Final failure for {username}: {e}")
+                    return False
+        
+        return False
 
-        finally:
+    for batch_idx, batch in enumerate(batches):
+        print(f"[Bulk Snapshots] Processing batch {batch_idx + 1}/{len(batches)} ({len(batch)} members)")
+        
+        batch_tasks = [process_member_with_retry(username) for username in batch]
+        batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+        
+        for i, result in enumerate(batch_results):
             processed += 1
-
-    await asyncio.gather(*(process(u) for u in usernames))
+            if isinstance(result, Exception):
+                failed += 1
+                failed_users.append(batch[i])
+            elif result:
+                succeeded += 1
+            else:
+                failed += 1
+                failed_users.append(batch[i])
+        
+        print(f"[Bulk Snapshots] Batch {batch_idx + 1} complete: {succeeded}/{processed} total succeeded")
+        
+        if batch_idx < len(batches) - 1:
+            await asyncio.sleep(2.0)
 
     print(f"[Bulk Snapshots] Finished. Processed={processed} Succeeded={succeeded} Failed={failed}")
     if failed_users:
