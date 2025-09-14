@@ -233,7 +233,7 @@ async def get_player_stats_for_periods(conn, username: str, period1: str, period
             xp_change = period1_data[2] - period2_data[2]
             rank1 = (period1_data[3] or 0)
             rank2 = (period2_data[3] or 0)
-            rank_change = rank2 - rank1
+            rank_change = rank1 - rank2
             
             changes_data[skill_name] = {
                 'level_change': level_change,
