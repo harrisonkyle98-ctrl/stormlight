@@ -87,26 +87,16 @@ async def collect_daily_player_stats():
         conn = await get_db_connection()
         async with conn:
             for member in members:
-                username = member['name']
+                username = member['username']
+                print(f"[Bulk Snapshots] Processing {username}...")
                 stats_data = await fetch_player_stats(username)
                 
                 if stats_data and 'stats' in stats_data:
-                    stats = stats_data['stats']
-                    
-                    for skill_name, skill_data in stats.items():
-                        combat_level = stats.get('overall', {}).get('combatlevel', 0) if skill_name == 'overall' else 0
-                        await conn.execute("""
-                            INSERT INTO player_stats_history 
-                            (username, skill_name, level, xp, rank, combat_level, snapshot_date)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s)
-                            ON CONFLICT (username, skill_name, snapshot_date) 
-                            DO UPDATE SET level = EXCLUDED.level, xp = EXCLUDED.xp, rank = EXCLUDED.rank
-                        """, (
-                            username, skill_name, skill_data['level'], skill_data['xp'], 
-                            skill_data.get('rank'), combat_level, today
-                        ))
-                    
+                    await ensure_today_snapshot(conn, username, stats_data)
                     await calculate_daily_changes(conn, username, today)
+                    print(f"[Bulk Snapshots] ✅ Completed {username}")
+                else:
+                    print(f"[Bulk Snapshots] ❌ Failed to fetch stats for {username}")
                 
                 await asyncio.sleep(2)
                 

@@ -2522,6 +2522,24 @@ async def get_player_stats_with_history(
         print(f"Error fetching player history: {e}")
         raise HTTPException(status_code=500, detail="Error fetching player history")
 
+@app.post("/api/admin/collect-snapshots")
+async def collect_snapshots_now(user=Depends(get_current_user)):
+    """Manual trigger for bulk snapshot collection"""
+    try:
+        try:
+            from .database import collect_daily_player_stats
+        except ImportError:
+            from database import collect_daily_player_stats
+        
+        print("[Manual Trigger] Starting bulk snapshot collection...")
+        await collect_daily_player_stats()
+        print("[Manual Trigger] Bulk snapshot collection completed")
+        return {"status": "success", "message": "Bulk snapshot collection completed"}
+    except Exception as e:
+        print(f"[Manual Trigger] Error in bulk snapshot collection: {e}")
+        raise HTTPException(status_code=500, detail=f"Error collecting snapshots: {str(e)}")
+
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize database and start scheduled tasks"""
