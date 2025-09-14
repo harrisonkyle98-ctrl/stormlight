@@ -82,7 +82,7 @@ async def init_database():
         print(f"Database initialization failed: {e}")
         print("Historical tracking will be disabled")
 
-async def collect_daily_player_stats(concurrency: int = 8, limit: int | None = None):
+async def collect_daily_player_stats(concurrency: int = 2, limit: int | None = None):
     """Collect daily snapshots of all clan member stats for ALL members."""
     import asyncio
     today = date.today()
@@ -98,7 +98,7 @@ async def collect_daily_player_stats(concurrency: int = 8, limit: int | None = N
     if limit:
         usernames = usernames[:limit]
 
-    print(f"[Bulk Snapshots] Starting collection for {len(usernames)} members")
+    print(f"[Bulk Snapshots] Starting collection for {len(usernames)} members with concurrency={concurrency}")
 
     sem = asyncio.Semaphore(concurrency)
     processed = 0
@@ -110,7 +110,10 @@ async def collect_daily_player_stats(concurrency: int = 8, limit: int | None = N
         nonlocal processed, succeeded, failed
         try:
             async with sem:
+                await asyncio.sleep(1.5)
                 stats_data = await fetch_player_stats(username)
+                await asyncio.sleep(0.5)
+                
             if not stats_data or 'stats' not in stats_data:
                 failed += 1
                 failed_users.append(username)
@@ -121,7 +124,7 @@ async def collect_daily_player_stats(concurrency: int = 8, limit: int | None = N
             async with conn:
                 await ensure_today_snapshot(conn, username, stats_data)
             succeeded += 1
-            print(f"[Bulk Snapshots] ✅ Completed {username}")
+            print(f"[Bulk Snapshots] ✅ Completed {username} ({succeeded}/{len(usernames)})")
         except Exception as e:
             failed += 1
             failed_users.append(username)
