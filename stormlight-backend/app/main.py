@@ -2452,7 +2452,7 @@ async def get_player_stats_with_history(
                             
                             xp_gain_p1 = max(cur_xp - base_xp, 0)
                             level_delta = max(cur_level - base_level, 0)
-                            rank_delta = base_rank - cur_rank
+                            rank_delta = cur_rank - base_rank
                             
                             print(f"[History] {skill_name}: live_rank={cur_rank} baseline_rank={base_rank} rank_delta={rank_delta}")
                             print(f"[History] {skill_name}: live_xp={cur_xp:,} baseline_xp={base_xp:,} gain={xp_gain_p1:,}")
