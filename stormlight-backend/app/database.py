@@ -82,40 +82,60 @@ async def init_database():
         print(f"Database initialization failed: {e}")
         print("Historical tracking will be disabled")
 
-async def collect_daily_player_stats():
-    """Collect daily snapshots of all clan member stats"""
+async def collect_daily_player_stats(concurrency: int = 8, limit: int | None = None):
+    """Collect daily snapshots of all clan member stats for ALL members."""
+    import asyncio
+    today = date.today()
+
     try:
-        import sys
-        import os
-        sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-        
+        from .main import fetch_clan_members, fetch_player_stats
+    except ImportError:
+        from main import fetch_clan_members, fetch_player_stats
+
+    members = await fetch_clan_members()
+    usernames = [m['username'] for m in members if m.get('username')]
+    
+    if limit:
+        usernames = usernames[:limit]
+
+    print(f"[Bulk Snapshots] Starting collection for {len(usernames)} members")
+
+    sem = asyncio.Semaphore(concurrency)
+    processed = 0
+    succeeded = 0
+    failed = 0
+    failed_users: list[str] = []
+
+    async def process(username: str):
+        nonlocal processed, succeeded, failed
         try:
-            from .main import fetch_clan_members, fetch_player_stats
-        except ImportError:
-            from main import fetch_clan_members, fetch_player_stats
-        import asyncio
-        
-        members = await fetch_clan_members()
-        today = date.today()
-        
-        conn = await get_db_connection()
-        async with conn:
-            for member in members:
-                username = member['username']
-                print(f"[Bulk Snapshots] Processing {username}...")
+            async with sem:
                 stats_data = await fetch_player_stats(username)
-                
-                if stats_data and 'stats' in stats_data:
-                    await ensure_today_snapshot(conn, username, stats_data)
-                    await calculate_daily_changes(conn, username, today)
-                    print(f"[Bulk Snapshots] ✅ Completed {username}")
-                else:
-                    print(f"[Bulk Snapshots] ❌ Failed to fetch stats for {username}")
-                
-                await asyncio.sleep(2)
-                
-    except Exception as e:
-        print(f"Error in daily stats collection: {e}")
+            if not stats_data or 'stats' not in stats_data:
+                failed += 1
+                failed_users.append(username)
+                print(f"[Bulk Snapshots] ❌ No stats for {username}")
+                return
+
+            conn = await get_db_connection()
+            async with conn:
+                await ensure_today_snapshot(conn, username, stats_data)
+            succeeded += 1
+            print(f"[Bulk Snapshots] ✅ Completed {username}")
+        except Exception as e:
+            failed += 1
+            failed_users.append(username)
+            print(f"[Bulk Snapshots] ❌ Error for {username}: {e}")
+
+        finally:
+            processed += 1
+
+    await asyncio.gather(*(process(u) for u in usernames))
+
+    print(f"[Bulk Snapshots] Finished. Processed={processed} Succeeded={succeeded} Failed={failed}")
+    if failed_users:
+        sample = failed_users[:20]
+        print(f"[Bulk Snapshots] Failed users (sample {len(sample)}/{len(failed_users)}): {sample}")
 
 def get_date_for_period(period: str, reference_date: date = None) -> date:
     """Calculate date for a given time period"""

@@ -2526,7 +2526,7 @@ async def collect_snapshots_now(user=Depends(get_current_user)):
                 from .database import collect_daily_player_stats
             except ImportError:
                 from database import collect_daily_player_stats
-            await collect_daily_player_stats()
+            await collect_daily_player_stats(concurrency=8)
         asyncio.create_task(run())
         return {"status": "queued", "message": "Bulk snapshot collection started in background"}
     except Exception as e:
@@ -2652,7 +2652,7 @@ async def startup_event():
                     sleep_seconds = (next_run - now).total_seconds()
                     print(f"Next daily stats collection scheduled in {sleep_seconds/3600:.1f} hours")
                     await asyncio.sleep(sleep_seconds)
-                    await collect_daily_player_stats()
+                    await collect_daily_player_stats(concurrency=8)
                     
                     try:
                         await sync_clan_members_to_database()
