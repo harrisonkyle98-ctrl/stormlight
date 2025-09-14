@@ -177,7 +177,7 @@ async def get_snapshot_dict_on_or_before(conn, username: str, target_date: date)
     return {row[0]: row for row in rows}
 
 async def ensure_today_snapshot(conn, username: str, stats: dict):
-    """Ensure a 'today' snapshot exists for a user by upserting current stats."""
+    """Ensure a 'today' baseline snapshot exists for a user (preserve existing baseline)."""
     today = date.today()
     if not stats or 'stats' not in stats:
         return
@@ -188,7 +188,7 @@ async def ensure_today_snapshot(conn, username: str, stats: dict):
             (username, skill_name, level, xp, rank, combat_level, snapshot_date)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (username, skill_name, snapshot_date)
-            DO UPDATE SET level = EXCLUDED.level, xp = EXCLUDED.xp, rank = EXCLUDED.rank
+            DO NOTHING
         """, (
             username, skill_name, skill_data.get('level', 0), skill_data.get('xp', 0),
             skill_data.get('rank'), combat_level, today
