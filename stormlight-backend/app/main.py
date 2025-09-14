@@ -2690,7 +2690,7 @@ async def trigger_snapshots_get():
                 from database import collect_daily_player_stats
             await collect_daily_player_stats(concurrency=8)
         asyncio.create_task(run())
-        return {"status": "queued", "message": "TEMPORARY: Bulk snapshot collection started in background (concurrency=8)", "note": "Check /api/admin/check-snapshots for progress"}
+        return {"status": "queued", "message": "Started collection with conservative pacing (batch=5, sequential, long backoff). Check /api/admin/check-snapshots."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

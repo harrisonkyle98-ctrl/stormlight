@@ -98,19 +98,19 @@ async def collect_daily_player_stats(concurrency: int = 8, limit: int | None = N
     if limit:
         usernames = usernames[:limit]
 
-    print(f"[Bulk Snapshots] Starting collection for {len(usernames)} members in batches of 10")
+    print(f"[Bulk Snapshots] Starting collection for {len(usernames)} members in batches of 5")
 
     processed = 0
     succeeded = 0
     failed = 0
     failed_users: list[str] = []
     
-    batch_size = 10
+    batch_size = 5
     batches = [usernames[i:i + batch_size] for i in range(0, len(usernames), batch_size)]
     
-    async def process_member_with_retry(username: str, max_retries: int = 3) -> bool:
+    async def process_member_with_retry(username: str, max_retries: int = 5) -> bool:
         """Process a single member with exponential backoff retry logic."""
-        retry_delays = [5, 10, 20]  # 5s, 10s, 20s exponential backoff
+        retry_delays = [30, 60, 120, 180, 300]  # 30s, 60s, 120s, 180s, 300s exponential backoff
         
         for attempt in range(max_retries + 1):
             try:
@@ -138,32 +138,67 @@ async def collect_daily_player_stats(concurrency: int = 8, limit: int | None = N
         
         return False
 
+    per_call_delay_secs = 2.0
+    batch_delay_secs = 10.0
+    
+    print(f"[Bulk Snapshots] Configuration: batch_size={batch_size}, per_call_delay={per_call_delay_secs}s, batch_delay={batch_delay_secs}s")
+    
     for batch_idx, batch in enumerate(batches):
         print(f"[Bulk Snapshots] Processing batch {batch_idx + 1}/{len(batches)} ({len(batch)} members)")
         
-        batch_tasks = [process_member_with_retry(username) for username in batch]
-        batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
-        
-        for i, result in enumerate(batch_results):
+        for username in batch:
+            ok = await process_member_with_retry(username, max_retries=5)
             processed += 1
-            if isinstance(result, Exception):
-                failed += 1
-                failed_users.append(batch[i])
-            elif result:
+            if ok:
                 succeeded += 1
             else:
                 failed += 1
-                failed_users.append(batch[i])
+                failed_users.append(username)
+            await asyncio.sleep(per_call_delay_secs)
         
         print(f"[Bulk Snapshots] Batch {batch_idx + 1} complete: {succeeded}/{processed} total succeeded")
         
         if batch_idx < len(batches) - 1:
-            await asyncio.sleep(2.0)
+            await asyncio.sleep(batch_delay_secs)
 
-    print(f"[Bulk Snapshots] Finished. Processed={processed} Succeeded={succeeded} Failed={failed}")
+    from datetime import datetime
+    max_minutes = 20
+    start_time = datetime.now()
+    
+    while failed_users:
+        if (datetime.now() - start_time).total_seconds() > max_minutes * 60:
+            print(f"[Bulk Snapshots] ⏳ Safety stop after {max_minutes} minutes with {len(failed_users)} still failing")
+            break
+            
+        retry_usernames = failed_users.copy()
+        failed_users = []
+        retry_batches = [retry_usernames[i:i + batch_size] for i in range(0, len(retry_usernames), batch_size)]
+        
+        for batch_idx, batch in enumerate(retry_batches):
+            print(f"[Bulk Snapshots] Retry batch {batch_idx + 1}/{len(retry_batches)} ({len(batch)} members)")
+            
+            for username in batch:
+                ok = await process_member_with_retry(username, max_retries=5)
+                if ok:
+                    succeeded += 1
+                    print(f"[Bulk Snapshots] ✅ Retry success for {username}")
+                else:
+                    failed_users.append(username)
+                await asyncio.sleep(per_call_delay_secs)
+            
+            if batch_idx < len(retry_batches) - 1:
+                await asyncio.sleep(batch_delay_secs * 2)  # Extra spacing on retries
+        
+        if failed_users:
+            print(f"[Bulk Snapshots] Still {len(failed_users)} failed; cooling down 60s before next retry sweep")
+            await asyncio.sleep(60)
+    
+    print(f"[Bulk Snapshots] Finished. Processed={processed} Succeeded={succeeded} Failed={len(failed_users)}")
     if failed_users:
         sample = failed_users[:20]
-        print(f"[Bulk Snapshots] Failed users (sample {len(sample)}/{len(failed_users)}): {sample}")
+        print(f"[Bulk Snapshots] Final failed users (sample {len(sample)}/{len(failed_users)}): {sample}")
+    else:
+        print(f"[Bulk Snapshots] 🎉 All {succeeded} members processed successfully!")
 
 def get_date_for_period(period: str, reference_date: date = None) -> date:
     """Calculate date for a given time period"""
