@@ -2573,7 +2573,7 @@ async def get_player_stats_with_history(
 
 @app.post("/api/admin/collect-snapshots")
 async def collect_snapshots_now(
-    concurrency: int = 2,
+    concurrency: int = 1,
     limit: int | None = None,
     user_id: str = Depends(verify_admin_access),
 ):
@@ -2672,7 +2672,7 @@ async def trigger_bulk_collection_temp():
                 from .database import collect_daily_player_stats
             except ImportError:
                 from database import collect_daily_player_stats
-            await collect_daily_player_stats(concurrency=2)
+            await collect_daily_player_stats(concurrency=1)
         asyncio.create_task(run())
         return {"status": "queued", "message": "TEMPORARY: Bulk snapshot collection started in background"}
     except Exception as e:
@@ -2782,7 +2782,7 @@ async def startup_event():
                     sleep_seconds = (next_run - now).total_seconds()
                     print(f"Next daily stats collection scheduled in {sleep_seconds/3600:.1f} hours")
                     await asyncio.sleep(sleep_seconds)
-                    await collect_daily_player_stats(concurrency=2)
+                    await collect_daily_player_stats(concurrency=1)
                     
                     try:
                         await sync_clan_members_to_database()

@@ -82,7 +82,7 @@ async def init_database():
         print(f"Database initialization failed: {e}")
         print("Historical tracking will be disabled")
 
-async def collect_daily_player_stats(concurrency: int = 2, limit: int | None = None):
+async def collect_daily_player_stats(concurrency: int = 1, limit: int | None = None):
     """Collect daily snapshots of all clan member stats for ALL members."""
     import asyncio
     today = date.today()
@@ -110,9 +110,9 @@ async def collect_daily_player_stats(concurrency: int = 2, limit: int | None = N
         nonlocal processed, succeeded, failed
         try:
             async with sem:
-                await asyncio.sleep(1.5)
+                await asyncio.sleep(3.0)
                 stats_data = await fetch_player_stats(username)
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(1.0)
                 
             if not stats_data or 'stats' not in stats_data:
                 failed += 1
