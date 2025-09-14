@@ -2662,6 +2662,22 @@ async def check_snapshots():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/admin/trigger-bulk-collection-temp")
+async def trigger_bulk_collection_temp():
+    """TEMPORARY: Trigger bulk collection without auth for testing - REMOVE AFTER USE"""
+    try:
+        print("🔍 TEMPORARY: Manual bulk snapshot collection triggered without auth")
+        async def run():
+            try:
+                from .database import collect_daily_player_stats
+            except ImportError:
+                from database import collect_daily_player_stats
+            await collect_daily_player_stats(concurrency=8)
+        asyncio.create_task(run())
+        return {"status": "queued", "message": "TEMPORARY: Bulk snapshot collection started in background"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize database and start scheduled tasks"""
