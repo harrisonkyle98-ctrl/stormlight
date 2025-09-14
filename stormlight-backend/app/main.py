@@ -2572,18 +2572,22 @@ async def get_player_stats_with_history(
         raise HTTPException(status_code=500, detail="Error fetching player history")
 
 @app.post("/api/admin/collect-snapshots")
-async def collect_snapshots_now(user_id: str = Depends(verify_admin_access)):
+async def collect_snapshots_now(
+    concurrency: int = 8,
+    limit: int | None = None,
+    user_id: str = Depends(verify_admin_access),
+):
     """Manual trigger for bulk snapshot collection (background task) - Admin only"""
     try:
-        print(f"🔍 Manual snapshot collection triggered by admin user: {user_id}")
+        print(f"🔍 Manual snapshot collection triggered by admin user: {user_id} (concurrency={concurrency}, limit={limit})")
         async def run():
             try:
                 from .database import collect_daily_player_stats
             except ImportError:
                 from database import collect_daily_player_stats
-            await collect_daily_player_stats(concurrency=8)
+            await collect_daily_player_stats(concurrency=concurrency, limit=limit)
         asyncio.create_task(run())
-        return {"status": "queued", "message": "Bulk snapshot collection started in background"}
+        return {"status": "queued", "message": "Bulk snapshot collection started in background", "concurrency": concurrency, "limit": limit}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -2637,13 +2641,21 @@ async def check_snapshots():
             total_result = await cursor.fetchone()
             total_count = total_result[0] if total_result else 0
             
+        try:
+            from .main import fetch_clan_members as _fetch
+        except ImportError:
+            from main import fetch_clan_members as _fetch
+        members = await _fetch()
+        expected_members = len(members)
+        
         return {
             "status": "success",
             "date": today.isoformat(),
             "snapshots_today": today_count,
             "unique_members_today": unique_count,
             "total_snapshots_all_time": total_count,
-            "message": f"Found {today_count} snapshots for {unique_count} unique members today"
+            "expected_members": expected_members,
+            "message": f"Found {today_count} snapshots for {unique_count} unique members today (expected ~{expected_members})"
         }
     except Exception as e:
         print(f"Error checking snapshots: {e}")
