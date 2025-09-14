@@ -1502,6 +1502,60 @@ def get_rank_priority(rank: str) -> int:
     }
     return rank_priority.get(rank, 999)
 
+async def verify_admin_access(user_id: str = Depends(verify_token)):
+    """Verify user has admin access (Owner, Deputy Owner, or Overseer rank only)"""
+    print(f"🔐 ADMIN ACCESS: Verifying admin access for user: {user_id}")
+    
+    try:
+        if prisma and prisma.is_connected():
+            print(f"🔐 ADMIN ACCESS: Checking Prisma for user: {user_id}")
+            linked_member = await prisma.clanmember.find_first(
+                where={'discordId': user_id}
+            )
+            if linked_member and linked_member.clanRank:
+                clan_rank = linked_member.clanRank
+                print(f"🔐 ADMIN ACCESS: Found clan rank from Prisma: {clan_rank}")
+                rank_priority = get_rank_priority(clan_rank)
+                if rank_priority <= 3:  # Owner=1, Deputy Owner=2, Overseer=3
+                    print(f"✅ ADMIN ACCESS: User {user_id} has admin access with rank {clan_rank}")
+                    return user_id
+                else:
+                    print(f"❌ ADMIN ACCESS: User {user_id} has insufficient rank: {clan_rank} (priority {rank_priority})")
+                    raise HTTPException(status_code=403, detail=f"Admin access required. Your rank: {clan_rank}. Required: Owner, Deputy Owner, or Overseer.")
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ ADMIN ACCESS: Prisma error: {e}")
+    
+    # Fallback to direct database
+    try:
+        print(f"🔐 ADMIN ACCESS: Checking direct database for user: {user_id}")
+        from .database import get_db_connection
+        conn = await get_db_connection()
+        async with conn:
+            cursor = await conn.execute(
+                "SELECT clan_rank FROM clan_members WHERE discord_id = %s",
+                (user_id,)
+            )
+            result = await cursor.fetchone()
+            if result and result[0]:
+                clan_rank = result[0]
+                print(f"🔐 ADMIN ACCESS: Found clan rank from direct DB: {clan_rank}")
+                rank_priority = get_rank_priority(clan_rank)
+                if rank_priority <= 3:  # Owner=1, Deputy Owner=2, Overseer=3
+                    print(f"✅ ADMIN ACCESS: User {user_id} has admin access with rank {clan_rank}")
+                    return user_id
+                else:
+                    print(f"❌ ADMIN ACCESS: User {user_id} has insufficient rank: {clan_rank} (priority {rank_priority})")
+                    raise HTTPException(status_code=403, detail=f"Admin access required. Your rank: {clan_rank}. Required: Owner, Deputy Owner, or Overseer.")
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ ADMIN ACCESS: Direct DB error: {e}")
+    
+    print(f"❌ ADMIN ACCESS: User {user_id} not found or not linked to clan member")
+    raise HTTPException(status_code=403, detail="Admin access required. Please link your Discord account to a clan member with Owner, Deputy Owner, or Overseer rank.")
+
 @app.get("/api/clan/members")
 async def get_clan_members_paginated(
     page: int = 1,
@@ -2518,9 +2572,10 @@ async def get_player_stats_with_history(
         raise HTTPException(status_code=500, detail="Error fetching player history")
 
 @app.post("/api/admin/collect-snapshots")
-async def collect_snapshots_now(user=Depends(get_current_user)):
-    """Manual trigger for bulk snapshot collection (background task)"""
+async def collect_snapshots_now(user_id: str = Depends(verify_admin_access)):
+    """Manual trigger for bulk snapshot collection (background task) - Admin only"""
     try:
+        print(f"🔍 Manual snapshot collection triggered by admin user: {user_id}")
         async def run():
             try:
                 from .database import collect_daily_player_stats
@@ -2533,9 +2588,10 @@ async def collect_snapshots_now(user=Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/admin/migrate-snapshots")
-async def migrate_snapshots(user=Depends(get_current_user)):
-    """One-time migration from legacy player_stats_history to consolidated snapshots"""
+async def migrate_snapshots(user_id: str = Depends(verify_admin_access)):
+    """One-time migration from legacy player_stats_history to consolidated snapshots - Admin only"""
     try:
+        print(f"🔍 Snapshot migration triggered by admin user: {user_id}")
         try:
             from .database import migrate_history_to_daily_snapshots, get_db_connection
         except ImportError:
