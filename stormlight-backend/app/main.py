@@ -2408,6 +2408,8 @@ async def get_player_stats_with_history(
                 except ImportError:
                     from database import ensure_today_snapshot, get_player_stats_for_periods, get_period_window, get_snapshot_dict_on_or_before
                 
+                print(f"[History] Live API fetched for {decoded_username} (overall xp={current_stats['stats']['overall']['xp']:,})")
+                
                 await ensure_today_snapshot(conn, decoded_username, current_stats)
                 changes_data = await get_player_stats_for_periods(conn, decoded_username, period1, period2)
                 
@@ -2415,42 +2417,54 @@ async def get_player_stats_with_history(
                 p1_start, p1_end = get_period_window(period1)
                 p2_start, p2_end = get_period_window(period2)
                 
-                start1_dict = await get_snapshot_dict_on_or_before(conn, decoded_username, p1_start)
-                print(f"[History] Period1 start baseline rows: {len(start1_dict)}; period1={period1}")
-                
                 if p1_end == today:
+                    print(f"[History] Recomputing live gains for period1={period1} ending today")
+                    
+                    baseline_rows_cur = await conn.execute("""
+                        SELECT skill_name, level, xp, rank FROM player_stats_history
+                        WHERE username = %s AND snapshot_date = %s
+                    """, (decoded_username, today))
+                    baseline_dict = {r[0]: r for r in await baseline_rows_cur.fetchall()}
+                    print(f"[History] Found {len(baseline_dict)} baseline snapshot rows for today")
+                    
                     for skill_name in current_stats['stats'].keys():
                         cur_level = current_stats['stats'][skill_name].get('level', 0)
                         cur_xp = current_stats['stats'][skill_name].get('xp', 0)
                         cur_rank = current_stats['stats'][skill_name].get('rank') or 0
                         
-                        start_row = start1_dict.get(skill_name)
+                        baseline_row = baseline_dict.get(skill_name)
                         
-                        if not start_row and period1.lower() == 'today':
-                            rows_cur = await conn.execute("""
-                                SELECT skill_name, level, xp, rank FROM player_stats_history
-                                WHERE username = %s AND snapshot_date = %s
-                            """, (decoded_username, today))
-                            today_dict = {r[0]: r for r in await rows_cur.fetchall()}
-                            start_row = today_dict.get(skill_name)
-                        
-                        base_level = start_row[1] if start_row else cur_level
-                        base_xp = start_row[2] if start_row else cur_xp
-                        base_rank = (start_row[3] or 0) if start_row else cur_rank
-                        
-                        xp_gain_p1 = max(cur_xp - base_xp, 0)
-                        level_delta = max(cur_level - base_level, 0)
-                        rank_delta = base_rank - cur_rank
-                        
-                        cd = changes_data.get(skill_name, {})
-                        cd.update({
-                            'xp_period1': cur_xp,
-                            'xp_gain_period1': xp_gain_p1,
-                            'level_change': level_delta,
-                            'xp_change': cur_xp - base_xp,
-                            'rank_change': rank_delta
-                        })
-                        changes_data[skill_name] = cd
+                        if baseline_row:
+                            base_level = baseline_row[1]
+                            base_xp = baseline_row[2]
+                            base_rank = baseline_row[3] or 0
+                            
+                            xp_gain_p1 = max(cur_xp - base_xp, 0)
+                            level_delta = max(cur_level - base_level, 0)
+                            rank_delta = base_rank - cur_rank
+                            
+                            print(f"[History] {skill_name}: live_xp={cur_xp:,} baseline_xp={base_xp:,} gain={xp_gain_p1:,}")
+                            
+                            cd = changes_data.get(skill_name, {})
+                            cd.update({
+                                'xp_period1': cur_xp,
+                                'xp_gain_period1': xp_gain_p1,
+                                'level_change': level_delta,
+                                'xp_change': cur_xp - base_xp,
+                                'rank_change': rank_delta
+                            })
+                            changes_data[skill_name] = cd
+                        else:
+                            print(f"[History] No baseline snapshot found for {skill_name}, showing 0 gains")
+                            cd = changes_data.get(skill_name, {})
+                            cd.update({
+                                'xp_period1': cur_xp,
+                                'xp_gain_period1': 0,
+                                'level_change': 0,
+                                'xp_change': 0,
+                                'rank_change': 0
+                            })
+                            changes_data[skill_name] = cd
                         
         except Exception as db_error:
             print(f"Database error fetching changes (historical tracking disabled): {db_error}")
