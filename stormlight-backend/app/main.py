@@ -2827,7 +2827,26 @@ async def daily_clan_member_refresh():
             await prisma.clanmember.delete_many()
             
             print("📥 Inserting all members into database...")
-            await prisma.clanmember.create_many(data=members_data)
+            print(f"🔍 Sample member data: {members_data[0] if members_data else 'None'}")
+            
+            try:
+                result = await prisma.clanmember.create_many(data=members_data)
+                print(f"✅ create_many result: {result}")
+            except Exception as create_error:
+                print(f"❌ create_many failed: {create_error}")
+                print(f"❌ Error type: {type(create_error)}")
+                import traceback
+                traceback.print_exc()
+                
+                print("🔍 Testing single member insert...")
+                try:
+                    single_result = await prisma.clanmember.create(data=members_data[0])
+                    print(f"✅ Single insert successful: {single_result.username}")
+                except Exception as single_error:
+                    print(f"❌ Single insert also failed: {single_error}")
+                    import traceback
+                    traceback.print_exc()
+                return
             
             final_count = await prisma.clanmember.count()
             print(f"✅ Daily clan refresh completed: {final_count} members in database")
