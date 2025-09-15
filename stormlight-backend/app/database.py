@@ -91,7 +91,7 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
     except ImportError:
         from main import fetch_player_stats
 
-    print(f"[Bulk Snapshots] Cycle {cycle_num}/{total_cycles}: Starting collection for {len(usernames)} members in batches of 5")
+    print(f"[Bulk Snapshots] Cycle {cycle_num}/{total_cycles}: Starting collection for {len(usernames)} members sequentially (1 at a time)")
 
     processed = 0
     succeeded = 0
