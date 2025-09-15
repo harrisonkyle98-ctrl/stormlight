@@ -2768,6 +2768,31 @@ async def trigger_snapshots_get():
                 "message": "Started multi-cycle collection (sequential processing: 1 member at a time, 8s delays). Check /api/admin/check-snapshots."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+@app.get("/api/admin/trigger-clan-members")
+async def trigger_clan_members_get(debug: bool = False):
+    """GET endpoint to trigger clan member refresh"""
+    async def run():
+        try:
+            await daily_clan_member_refresh()
+            final_count = await prisma.clanmember.count()
+            return {
+                "status": "success", 
+                "message": "Clan member refresh completed",
+                "total_members": final_count
+            }
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+    
+    if debug:
+        return {"debug_mode": True, "message": "Would trigger clan member refresh"}
+    
+    try:
+        result = await run()
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 
 async def daily_clan_member_refresh():
     """Daily clan member refresh: upsert all CSV data while preserving Discord IDs"""
