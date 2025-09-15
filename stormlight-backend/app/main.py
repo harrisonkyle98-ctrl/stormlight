@@ -2847,75 +2847,89 @@ async def trigger_clan_members_impl():
         except Exception as e:
             print(f"⚠️ Could not fetch existing members: {e}")
         
-        print(f"🔍 Processing {fetched} members with direct lightweight upsert...")
+        print(f"🔍 Using proven sync method with timeout protection...")
         
-        processed = 0
-        created = 0
-        updated = 0
-        
-        for i, member in enumerate(roster):
-            try:
+        try:
+            await asyncio.wait_for(
+                sync_clan_members_to_database_with_queue(),
+                timeout=60.0  # 60 second timeout for HTTP context
+            )
+            print(f"✅ Sync method completed successfully within timeout")
+            
+            processed = fetched
+            created = 0
+            updated = 0
+            
+            for member in roster:
                 username = member.get('username', '').strip()
-                if not username:
-                    print(f"⚠️ Skipping member {i+1}: no username")
+                if username:
+                    if username in existing_usernames:
+                        updated += 1
+                    else:
+                        created += 1
+                        
+        except asyncio.TimeoutError:
+            print(f"⚠️ Sync method timed out after 60 seconds - falling back to direct upsert")
+            # Fallback to direct upsert without individual API calls
+            processed = 0
+            created = 0
+            updated = 0
+            
+            for i, member in enumerate(roster):
+                try:
+                    username = member.get('username', '').strip()
+                    if not username:
+                        continue
+                    
+                    total_xp = member.get('total_xp', 0) or 0
+                    if isinstance(total_xp, str):
+                        total_xp = int(total_xp) if total_xp.isdigit() else 0
+                    elif not isinstance(total_xp, int):
+                        total_xp = int(total_xp) if total_xp else 0
+                    
+                    kills = member.get('kills', 0) or 0
+                    if isinstance(kills, str):
+                        kills = int(kills) if kills.isdigit() else 0
+                    elif not isinstance(kills, int):
+                        kills = int(kills) if kills else 0
+                    
+                    clan_rank = member.get('clan_rank') or 'Recruit'
+                    
+                    result = await prisma.clanmember.upsert(
+                        where={'username': username},
+                        data={
+                            'update': {
+                                'clanRank': clan_rank,
+                                'totalXp': total_xp,
+                                'kills': kills,
+                                'lastUpdated': now,
+                            },
+                            'create': {
+                                'username': username,
+                                'displayName': username,
+                                'clanRank': clan_rank,
+                                'totalXp': total_xp,
+                                'totalLevel': 0,
+                                'combatLevel': 0,
+                                'questPoints': 0,
+                                'kills': kills,
+                                'stats': None,
+                                'questData': None,
+                                'lastUpdated': now,
+                            }
+                        }
+                    )
+                    
+                    if username in existing_usernames:
+                        updated += 1
+                    else:
+                        created += 1
+                    
+                    processed += 1
+                    
+                except Exception as e:
+                    print(f"❌ Error processing member {i+1}: {e}")
                     continue
-                
-                total_xp = member.get('total_xp', 0) or 0
-                if isinstance(total_xp, str):
-                    total_xp = int(total_xp) if total_xp.isdigit() else 0
-                elif not isinstance(total_xp, int):
-                    total_xp = int(total_xp) if total_xp else 0
-                
-                kills = member.get('kills', 0) or 0
-                if isinstance(kills, str):
-                    kills = int(kills) if kills.isdigit() else 0
-                elif not isinstance(kills, int):
-                    kills = int(kills) if kills else 0
-                
-                clan_rank = member.get('clan_rank') or 'Recruit'
-                
-                update_data = {
-                    'clanRank': clan_rank,
-                    'totalXp': total_xp,
-                    'kills': kills,
-                    'lastUpdated': now,
-                }
-                
-                create_data = {
-                    'username': username,
-                    'displayName': username,
-                    'clanRank': clan_rank,
-                    'totalXp': total_xp,
-                    'totalLevel': 0,
-                    'combatLevel': 0,
-                    'questPoints': 0,
-                    'kills': kills,
-                    'stats': None,
-                    'questData': None,
-                    'lastUpdated': now,
-                }
-                
-                result = await prisma.clanmember.upsert(
-                    where={'username': username},
-                    data={
-                        'update': update_data,
-                        'create': create_data
-                    }
-                )
-                
-                if username in existing_usernames:
-                    updated += 1
-                else:
-                    created += 1
-                
-                processed += 1
-                
-                if processed % 50 == 0:
-                    print(f"✅ Progress: {processed}/{len(roster)} members processed...")
-                
-            except Exception as e:
-                print(f"❌ Error processing member {i+1} ({username if 'username' in locals() else 'unknown'}): {e}")
-                continue
         
         print(f"✅ Sync completed: {processed} processed, {created} created, {updated} updated")
 
