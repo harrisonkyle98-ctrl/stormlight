@@ -2823,83 +2823,128 @@ async def trigger_clan_members_impl():
         from datetime import datetime as _dt
         now = _dt.now()
 
-        print(f"🔄 Processing {fetched} members...")
+        print(f"🔄 Processing {fetched} members with batch SQL upsert...")
         
-        for i, m in enumerate(roster):
-            try:
-                username = m.get('username', '').strip()
-                if not username:
-                    print(f"⚠️ Skipping member {i+1}: no username")
-                    continue
-
-                if i < 3:  # Log first 3 members for debugging
-                    print(f"🔍 Processing member {i+1}: {username}")
-
-                total_xp_value = m.get('total_xp', 0) or 0
-                kills_value = m.get('kills', 0) or 0
-                
-                if isinstance(total_xp_value, str):
-                    total_xp_value = int(total_xp_value) if total_xp_value.isdigit() else 0
-                elif not isinstance(total_xp_value, int):
-                    total_xp_value = int(total_xp_value)
-                
-                if isinstance(kills_value, str):
-                    kills_value = int(kills_value) if kills_value.isdigit() else 0
-                elif not isinstance(kills_value, int):
-                    kills_value = int(kills_value)
-
-                update_data = {
-                    'clanRank': m.get('clan_rank') or 'Recruit',
-                    'totalXp': total_xp_value,
-                    'kills': kills_value,
-                    'lastUpdated': now,
-                }
-                create_data = {
-                    'username': username,
-                    'displayName': None,
-                    'clanRank': update_data['clanRank'],
-                    'totalXp': update_data['totalXp'],
-                    'totalLevel': 0,
-                    'combatLevel': 0,
-                    'questPoints': 0,
-                    'kills': update_data['kills'],
-                    'stats': None,
-                    'questData': None,
-                    'lastUpdated': update_data['lastUpdated'],
-                }
-
-                if i < 3:  # Log data for first 3 members
-                    print(f"🔍 Update data for {username}: {update_data}")
-
-                exists = await prisma.clanmember.find_unique(
-                    where={'username': username},
-                    select={'id': True}
-                )
-
-                result = await prisma.clanmember.upsert(
-                    where={'username': username},
-                    data={'update': update_data, 'create': create_data}
-                )
-
-                if i < 3:  # Log result for first 3 members
-                    print(f"✅ Upsert successful for {username}: {result.id}")
-
-                processed += 1
-                if exists:
-                    updated += 1
-                else:
-                    created += 1
-
-            except Exception as e:
-                print(f"⚠️ Upsert failed for {m.get('username', 'unknown')}: {e}")
-                import traceback
-                traceback.print_exc()
-                print(f"Debug - Member data: {m}")
-                if 'update_data' in locals():
-                    print(f"Debug - Update data: {update_data}")
-                if 'create_data' in locals():
-                    print(f"Debug - Create data: {create_data}")
+        existing_usernames = set()
+        try:
+            existing_members = await prisma.clanmember.find_many(select={'username': True})
+            existing_usernames = {m.username for m in existing_members}
+            print(f"🔍 Found {len(existing_usernames)} existing members in database")
+        except Exception as e:
+            print(f"⚠️ Could not fetch existing members: {e}")
+        
+        processed = 0
+        created = 0
+        updated = 0
+        batch_data = []
+        
+        for member in roster:
+            username = member.get('username', '').strip()
+            if not username:
                 continue
+                
+            total_xp_value = member.get('total_xp', 0) or 0
+            kills_value = member.get('kills', 0) or 0
+            
+            if isinstance(total_xp_value, str):
+                total_xp_value = int(total_xp_value) if total_xp_value.isdigit() else 0
+            elif not isinstance(total_xp_value, int):
+                total_xp_value = int(total_xp_value)
+            
+            if isinstance(kills_value, str):
+                kills_value = int(kills_value) if kills_value.isdigit() else 0
+            elif not isinstance(kills_value, int):
+                kills_value = int(kills_value)
+            
+            batch_data.append({
+                'username': username,
+                'displayName': member.get('display_name', username),
+                'clanRank': member.get('clan_rank') or 'Recruit',
+                'totalXp': total_xp_value,
+                'kills': kills_value,
+                'lastUpdated': now,
+                'is_existing': username in existing_usernames
+            })
+            
+            if username in existing_usernames:
+                updated += 1
+            else:
+                created += 1
+            processed += 1
+        
+        print(f"🔍 Prepared {len(batch_data)} members for batch upsert")
+        
+        try:
+            values_list = []
+            for data in batch_data:
+                values_list.append(f"('{data['username']}', '{data['displayName']}', '{data['clanRank']}', {data['totalXp']}, 0, 0, 0, {data['kills']}, NULL, NULL, NULL, '{data['lastUpdated'].isoformat()}')")
+            
+            values_str = ',\n'.join(values_list)
+            
+            sql_query = f"""
+            INSERT INTO "ClanMember" (
+                "username", "displayName", "clanRank", "totalXp", 
+                "totalLevel", "combatLevel", "questPoints", "kills",
+                "stats", "questData", "badges", "lastUpdated"
+            ) VALUES 
+            {values_str}
+            ON CONFLICT ("username") DO UPDATE SET
+                "displayName" = EXCLUDED."displayName",
+                "clanRank" = EXCLUDED."clanRank", 
+                "totalXp" = EXCLUDED."totalXp",
+                "kills" = EXCLUDED."kills",
+                "lastUpdated" = EXCLUDED."lastUpdated"
+            """
+            
+            print(f"🔍 Executing batch SQL upsert for {len(batch_data)} members...")
+            await prisma.execute_raw(sql_query)
+            print(f"✅ Batch SQL upsert completed successfully")
+            
+        except Exception as sql_error:
+            print(f"❌ Batch SQL upsert failed: {sql_error}")
+            print("🔄 Falling back to individual upserts...")
+            
+            # Fallback to individual upserts if batch fails
+            processed = 0
+            created = 0
+            updated = 0
+            
+            for data in batch_data[:10]:  # Limit to 10 for timeout safety
+                try:
+                    clan_member_data = {
+                        'username': data['username'],
+                        'displayName': data['displayName'],
+                        'clanRank': data['clanRank'],
+                        'totalXp': data['totalXp'],
+                        'totalLevel': 0,
+                        'combatLevel': 0,
+                        'questPoints': 0,
+                        'kills': data['kills'],
+                        'stats': None,
+                        'questData': None,
+                        'badges': None,
+                        'lastUpdated': data['lastUpdated'],
+                    }
+                    
+                    await prisma.clanmember.upsert(
+                        where={'username': data['username']},
+                        data={
+                            'update': clan_member_data,
+                            'create': clan_member_data
+                        }
+                    )
+                    
+                    if data['is_existing']:
+                        updated += 1
+                    else:
+                        created += 1
+                    processed += 1
+                    
+                except Exception as e:
+                    print(f"❌ Individual upsert failed for {data['username']}: {e}")
+                    continue
+        
+        print(f"✅ Member processing completed: {processed} processed")
 
         total_after = await prisma.clanmember.count()
         print(f"✅ Clan member refresh complete: {processed} processed, {created} created, {updated} updated")
