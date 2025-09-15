@@ -1462,7 +1462,7 @@ async def fetch_clan_members() -> List[Dict[str, Any]]:
             current_time - clan_members_cache['timestamp'] < clan_members_cache['ttl']):
             return clan_members_cache['data']
 
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
             clan_url = "https://secure.runescape.com/m=clan-hiscores/members_lite.ws?clanName=Stormlight"
             response = await client.get(clan_url)
             
@@ -2777,7 +2777,7 @@ async def daily_clan_member_refresh():
             return
         
         print("🔄 Fetching clan roster from RuneScape CSV API...")
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
             clan_url = "https://apps.runescape.com/runemetrics/members_lite.ws?clanName=Stormlight"
             response = await client.get(clan_url)
             
@@ -2842,12 +2842,12 @@ async def debug_csv(response: Response):
     response.headers["Cache-Control"] = "no-store"
     
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
             clan_url = "https://apps.runescape.com/runemetrics/members_lite.ws?clanName=Stormlight"
             response_data = await client.get(clan_url)
             
             if response_data.status_code != 200:
-                return {"status": "error", "message": f"HTTP {response_data.status_code}"}
+                return {"status": "error", "message": f"HTTP {response_data.status_code}", "url": str(response_data.url)}
             
             content = response_data.content.decode('latin-1')
             lines = content.strip().split('\n')
@@ -2876,7 +2876,8 @@ async def debug_csv(response: Response):
                 "data_lines_count": len(data_lines),
                 "valid_members": valid_members,
                 "invalid_lines": invalid_lines[:10],  # Show first 10 invalid lines
-                "sample_valid_lines": [line for line in data_lines[:5] if line.strip() and len(line.split(',')) >= 4]
+                "sample_valid_lines": [line for line in data_lines[:5] if line.strip() and len(line.split(',')) >= 4],
+                "final_url": str(response_data.url)
             }
             
     except Exception as e:
