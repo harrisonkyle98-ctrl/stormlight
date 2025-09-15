@@ -2882,8 +2882,6 @@ async def trigger_clan_members_impl():
                             "combatLevel": 0,
                             "questPoints": 0,
                             "kills": kills,
-                            "stats": None,
-                            "questData": None,
                             "lastUpdated": now,
                         },
                     },
