@@ -84,14 +84,8 @@ const Home = () => {
       fetchClanStats()
     }, 60 * 60 * 1000) // 1 hour in milliseconds
 
-    const clanLogInterval = setInterval(() => {
-      console.log('🔄 Refreshing Clan Log data (5 minutes)')
-      fetchClanLog()
-    }, 5 * 60 * 1000) // 5 minutes in milliseconds
-
     return () => {
       clearInterval(statsInterval)
-      clearInterval(clanLogInterval)
     }
   }, [])
 
@@ -359,8 +353,8 @@ const Home = () => {
             {clanLogEntries.length > 0 ? (
               clanLogEntries.map((entry) => (
                 <div key={entry.id} className="p-3 bg-slate-700/50 rounded-lg">
-                  <div className="flex items-center justify-center mb-2">
-                    <div className="flex-shrink-0 mr-2">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <div className="flex-shrink-0">
                       {entry.event_type === 'join' && <span className="text-green-400 text-lg">✅</span>}
                       {entry.event_type === 'leave' && <span className="text-red-400 text-lg">❌</span>}
                       {entry.event_type === 'rank_up' && <span className="text-blue-400 text-lg">⬆️</span>}
@@ -373,13 +367,13 @@ const Home = () => {
                     >
                       {entry.username}
                     </Link>
+                    <span className="text-slate-300">
+                      {entry.event_type === 'join' && `joined the clan as ${entry.new_rank}`}
+                      {entry.event_type === 'leave' && `left the clan`}
+                      {entry.event_type === 'rank_up' && `promoted from ${entry.old_rank} to ${entry.new_rank}`}
+                      {entry.event_type === 'name_change' && `${entry.old_rank} changed their name to ${entry.username}`}
+                    </span>
                   </div>
-                  <p className="text-slate-300 text-center mb-1">
-                    {entry.event_type === 'join' && `joined the clan as ${entry.new_rank}`}
-                    {entry.event_type === 'leave' && `left the clan`}
-                    {entry.event_type === 'rank_up' && `promoted from ${entry.old_rank} to ${entry.new_rank}`}
-                    {entry.event_type === 'name_change' && `${entry.old_rank} changed their name to ${entry.username}`}
-                  </p>
                   <p className="text-slate-400 text-xs text-center">{formatTimeAgo(new Date(entry.timestamp).getTime() / 1000)}</p>
                 </div>
               ))
