@@ -2812,8 +2812,8 @@ async def daily_clan_member_refresh():
                             'combatLevel': 0,
                             'questPoints': 0,
                             'kills': kills,
-                            'stats': {},
-                            'questData': {},
+                            'stats': None,
+                            'questData': None,
                             'lastUpdated': datetime.now(),
                         })
             
@@ -2967,8 +2967,8 @@ async def test_daily_refresh(response: Response):
                             'combatLevel': 0,
                             'questPoints': 0,
                             'kills': kills,
-                            'stats': {},
-                            'questData': {},
+                            'stats': None,
+                            'questData': None,
                             'lastUpdated': datetime.now(),
                         })
             
