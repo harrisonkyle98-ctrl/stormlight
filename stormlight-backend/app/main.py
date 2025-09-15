@@ -2802,6 +2802,7 @@ async def daily_clan_member_refresh():
                         total_xp = int(parts[2]) if parts[2].isdigit() else 0
                         kills = int(parts[3]) if parts[3].isdigit() else 0
                         
+                        from datetime import datetime
                         members_data.append({
                             'username': username,
                             'displayName': username,
