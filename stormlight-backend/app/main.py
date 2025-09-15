@@ -2774,7 +2774,7 @@ async def trigger_clan_members_get(debug: bool = False):
     if debug:
         try:
             async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
-                clan_url = "https://apps.runescape.com/runemetrics/members_lite.ws?clanName=Stormlight"
+                clan_url = "https://secure.runescape.com/m=clan-hiscores/members_lite.ws?clanName=Stormlight"
                 response = await client.get(clan_url)
                 
                 if response.status_code != 200:
@@ -2804,7 +2804,7 @@ async def trigger_clan_members_get(debug: bool = False):
             }
         
         async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
-            clan_url = "https://apps.runescape.com/runemetrics/members_lite.ws?clanName=Stormlight"
+            clan_url = "https://secure.runescape.com/m=clan-hiscores/members_lite.ws?clanName=Stormlight"
             response = await client.get(clan_url)
             
             if response.status_code != 200:
@@ -2909,7 +2909,7 @@ async def daily_clan_member_refresh():
         
         print("🔄 Fetching clan roster from RuneScape CSV API...")
         async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
-            clan_url = "https://apps.runescape.com/runemetrics/members_lite.ws?clanName=Stormlight"
+            clan_url = "https://secure.runescape.com/m=clan-hiscores/members_lite.ws?clanName=Stormlight"
             response = await client.get(clan_url)
             
             if response.status_code != 200:
