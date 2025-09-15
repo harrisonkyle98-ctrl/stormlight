@@ -2706,7 +2706,7 @@ async def trigger_snapshots_get():
                 traceback.print_exc()
         asyncio.create_task(run())
         return {"status": "queued", 
-                "message": "Started multi-cycle collection (~50 members x 5 cycles, 3min delays). Check /api/admin/check-snapshots."}
+                "message": "Started multi-cycle collection (sequential processing: 1 member at a time, 8s delays). Check /api/admin/check-snapshots."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
