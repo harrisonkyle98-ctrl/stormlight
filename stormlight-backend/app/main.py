@@ -2867,9 +2867,7 @@ async def trigger_clan_members_impl():
         processed = 0
         errors = []
         
-        batch_size = min(50, len(roster))
-        
-        for i in range(batch_size):
+        for i in range(len(roster)):
             try:
                 m = roster[i]
                 username = (m.get("username") or "").strip()
@@ -2926,12 +2924,10 @@ async def trigger_clan_members_impl():
             "status": "success",
             "members_fetched": fetched,
             "members_updated": processed,
-            "batch_processed": batch_size,
             "before_count": before_count,
             "total_after": total_after,
             "expected_members": 245,
-            "errors": errors[:3],
-            "note": f"Processed {batch_size} of {fetched} members for quick response"
+            "errors": errors[:3] if errors else []
         }
     except Exception as e:
         return {
