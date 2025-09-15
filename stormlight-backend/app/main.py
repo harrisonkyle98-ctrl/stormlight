@@ -2786,8 +2786,21 @@ async def trigger_clan_members_get(debug: bool = False):
 
 async def trigger_clan_members_impl():
     try:
-        if not (PRISMA_AVAILABLE and prisma):
-            raise HTTPException(status_code=503, detail="Database not initialized")
+        global prisma, PRISMA_AVAILABLE
+        
+        if not PRISMA_AVAILABLE:
+            raise HTTPException(status_code=503, detail="Prisma not available")
+            
+        if not prisma:
+            raise HTTPException(status_code=503, detail="Prisma instance not initialized")
+
+        # Test the connection
+        try:
+            test_count = await prisma.clanmember.count()
+            print(f"🔍 Database connection test successful, current count: {test_count}")
+        except Exception as conn_error:
+            print(f"❌ Database connection test failed: {conn_error}")
+            raise HTTPException(status_code=503, detail=f"Database connection failed: {conn_error}")
 
         global clan_members_cache
         try:
@@ -2810,11 +2823,17 @@ async def trigger_clan_members_impl():
         from datetime import datetime as _dt
         now = _dt.now()
 
-        for m in roster:
+        print(f"🔄 Processing {fetched} members...")
+        
+        for i, m in enumerate(roster):
             try:
                 username = m.get('username', '').strip()
                 if not username:
+                    print(f"⚠️ Skipping member {i+1}: no username")
                     continue
+
+                if i < 3:  # Log first 3 members for debugging
+                    print(f"🔍 Processing member {i+1}: {username}")
 
                 total_xp_value = m.get('total_xp', 0) or 0
                 kills_value = m.get('kills', 0) or 0
@@ -2849,15 +2868,21 @@ async def trigger_clan_members_impl():
                     'lastUpdated': update_data['lastUpdated'],
                 }
 
+                if i < 3:  # Log data for first 3 members
+                    print(f"🔍 Update data for {username}: {update_data}")
+
                 exists = await prisma.clanmember.find_unique(
                     where={'username': username},
                     select={'id': True}
                 )
 
-                await prisma.clanmember.upsert(
+                result = await prisma.clanmember.upsert(
                     where={'username': username},
                     data={'update': update_data, 'create': create_data}
                 )
+
+                if i < 3:  # Log result for first 3 members
+                    print(f"✅ Upsert successful for {username}: {result.id}")
 
                 processed += 1
                 if exists:
@@ -2866,12 +2891,14 @@ async def trigger_clan_members_impl():
                     created += 1
 
             except Exception as e:
-                print(f"⚠️ Upsert failed for {m.get('username')}: {e}")
+                print(f"⚠️ Upsert failed for {m.get('username', 'unknown')}: {e}")
                 import traceback
                 traceback.print_exc()
                 print(f"Debug - Member data: {m}")
-                print(f"Debug - Update data: {update_data}")
-                print(f"Debug - Create data: {create_data}")
+                if 'update_data' in locals():
+                    print(f"Debug - Update data: {update_data}")
+                if 'create_data' in locals():
+                    print(f"Debug - Create data: {create_data}")
                 continue
 
         total_after = await prisma.clanmember.count()
