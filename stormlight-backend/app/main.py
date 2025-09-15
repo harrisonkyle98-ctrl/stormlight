@@ -2905,31 +2905,139 @@ async def debug_csv(response: Response):
 
 @app.get("/api/admin/test-daily-refresh")
 async def test_daily_refresh(response: Response):
-    """Test the daily clan member refresh logic manually"""
+    """Test the daily clan member refresh logic manually with detailed debugging"""
     response.headers["Cache-Control"] = "no-store"
     
+    debug_messages = []
+    
     try:
-        await daily_clan_member_refresh()
-        
         if not PRISMA_AVAILABLE or not prisma:
             return {
                 "status": "error",
-                "message": "Database client not available after refresh",
-                "db_count": 0
+                "message": "Database client not available",
+                "db_count": 0,
+                "debug_messages": ["❌ Daily clan refresh: Database client not available"]
             }
         
-        db_count = await prisma.clanmember.count()
-        return {
-            "status": "success", 
-            "message": "Daily refresh test completed",
-            "db_count": db_count
-        }
+        debug_messages.append("🔄 Starting daily clan member refresh test...")
+        
+        debug_messages.append("🔄 Fetching clan roster from RuneScape CSV API...")
+        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+            clan_url = "https://secure.runescape.com/m=clan-hiscores/members_lite.ws?clanName=Stormlight"
+            response_data = await client.get(clan_url)
+            
+            if response_data.status_code != 200:
+                debug_messages.append(f"❌ Failed to fetch clan roster: HTTP {response_data.status_code}")
+                return {
+                    "status": "error",
+                    "message": f"HTTP {response_data.status_code}",
+                    "db_count": 0,
+                    "debug_messages": debug_messages
+                }
+            
+            content = response_data.content.decode('latin-1')
+            lines = content.strip().split('\n')
+            
+            if len(lines) < 2:
+                debug_messages.append("❌ Invalid CSV response: insufficient data")
+                return {
+                    "status": "error",
+                    "message": "Invalid CSV response",
+                    "db_count": 0,
+                    "debug_messages": debug_messages
+                }
+            
+            members_data = []
+            for line in lines[1:]:
+                if line.strip():
+                    parts = line.split(',')
+                    if len(parts) >= 4:
+                        username = parts[0].strip().replace('\u00A0', ' ')
+                        clan_rank = parts[1].strip()
+                        total_xp = int(parts[2]) if parts[2].isdigit() else 0
+                        kills = int(parts[3]) if parts[3].isdigit() else 0
+                        
+                        from datetime import datetime
+                        members_data.append({
+                            'username': username,
+                            'displayName': None,
+                            'clanRank': clan_rank,
+                            'totalXp': total_xp,
+                            'totalLevel': 0,
+                            'combatLevel': 0,
+                            'questPoints': 0,
+                            'kills': kills,
+                            'stats': None,
+                            'questData': None,
+                            'lastUpdated': datetime.now(),
+                        })
+            
+            debug_messages.append(f"📊 Parsed {len(members_data)} members from CSV")
+            
+            if not members_data:
+                debug_messages.append("❌ No valid member data parsed from CSV")
+                return {
+                    "status": "error",
+                    "message": "No valid member data",
+                    "db_count": 0,
+                    "debug_messages": debug_messages
+                }
+            
+            debug_messages.append("🗑️ Truncating clan_members table...")
+            try:
+                await prisma.clanmember.delete_many()
+                debug_messages.append("✅ Truncate successful")
+            except Exception as truncate_error:
+                debug_messages.append(f"❌ Truncate failed: {truncate_error}")
+                return {
+                    "status": "error",
+                    "message": f"Truncate failed: {truncate_error}",
+                    "db_count": 0,
+                    "debug_messages": debug_messages
+                }
+            
+            debug_messages.append("📥 Inserting all members into database...")
+            debug_messages.append(f"🔍 Sample member data: {members_data[0] if members_data else 'None'}")
+            
+            try:
+                result = await prisma.clanmember.create_many(data=members_data)
+                debug_messages.append(f"✅ create_many result: {result}")
+            except Exception as create_error:
+                debug_messages.append(f"❌ create_many failed: {create_error}")
+                debug_messages.append(f"❌ Error type: {type(create_error)}")
+                
+                debug_messages.append("🔍 Testing single member insert...")
+                try:
+                    single_result = await prisma.clanmember.create(data=members_data[0])
+                    debug_messages.append(f"✅ Single insert successful: {single_result.username}")
+                except Exception as single_error:
+                    debug_messages.append(f"❌ Single insert also failed: {single_error}")
+                
+                return {
+                    "status": "error",
+                    "message": f"create_many failed: {create_error}",
+                    "db_count": 0,
+                    "debug_messages": debug_messages
+                }
+            
+            final_count = await prisma.clanmember.count()
+            debug_messages.append(f"✅ Daily clan refresh completed: {final_count} members in database")
+            
+            return {
+                "status": "success", 
+                "message": "Daily refresh test completed",
+                "db_count": final_count,
+                "members_parsed": len(members_data),
+                "debug_messages": debug_messages
+            }
         
     except Exception as e:
+        debug_messages.append(f"❌ Error in daily clan member refresh: {e}")
         return {
             "status": "error",
             "message": str(e),
-            "db_count": 0
+            "db_count": 0,
+            "debug_messages": debug_messages
         }
 
 @app.get("/api/admin/check-clan-members")
