@@ -2847,21 +2847,75 @@ async def trigger_clan_members_impl():
         except Exception as e:
             print(f"⚠️ Could not fetch existing members: {e}")
         
-        print(f"🔍 Calling sync_clan_members_to_database_with_queue() - the method used by hourly scheduler...")
-        await sync_clan_members_to_database_with_queue()
-        print(f"✅ Sync method completed successfully")
+        print(f"🔍 Processing {fetched} members with direct lightweight upsert...")
         
-        processed = fetched
+        processed = 0
         created = 0
         updated = 0
         
-        for member in roster:
-            username = member.get('username', '').strip()
-            if username:
+        for i, member in enumerate(roster):
+            try:
+                username = member.get('username', '').strip()
+                if not username:
+                    print(f"⚠️ Skipping member {i+1}: no username")
+                    continue
+                
+                total_xp = member.get('total_xp', 0) or 0
+                if isinstance(total_xp, str):
+                    total_xp = int(total_xp) if total_xp.isdigit() else 0
+                elif not isinstance(total_xp, int):
+                    total_xp = int(total_xp) if total_xp else 0
+                
+                kills = member.get('kills', 0) or 0
+                if isinstance(kills, str):
+                    kills = int(kills) if kills.isdigit() else 0
+                elif not isinstance(kills, int):
+                    kills = int(kills) if kills else 0
+                
+                clan_rank = member.get('clan_rank') or 'Recruit'
+                
+                update_data = {
+                    'clanRank': clan_rank,
+                    'totalXp': total_xp,
+                    'kills': kills,
+                    'lastUpdated': now,
+                }
+                
+                create_data = {
+                    'username': username,
+                    'displayName': username,
+                    'clanRank': clan_rank,
+                    'totalXp': total_xp,
+                    'totalLevel': 0,
+                    'combatLevel': 0,
+                    'questPoints': 0,
+                    'kills': kills,
+                    'stats': None,
+                    'questData': None,
+                    'lastUpdated': now,
+                }
+                
+                result = await prisma.clanmember.upsert(
+                    where={'username': username},
+                    data={
+                        'update': update_data,
+                        'create': create_data
+                    }
+                )
+                
                 if username in existing_usernames:
                     updated += 1
                 else:
                     created += 1
+                
+                processed += 1
+                
+                if processed % 50 == 0:
+                    print(f"✅ Progress: {processed}/{len(roster)} members processed...")
+                
+            except Exception as e:
+                print(f"❌ Error processing member {i+1} ({username if 'username' in locals() else 'unknown'}): {e}")
+                continue
         
         print(f"✅ Sync completed: {processed} processed, {created} created, {updated} updated")
 
