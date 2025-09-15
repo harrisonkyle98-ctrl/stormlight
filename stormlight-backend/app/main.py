@@ -2843,84 +2843,91 @@ async def trigger_clan_members_impl():
                 "expected_members": 245
             }
 
+        from datetime import datetime as _dt
+        now = _dt.now()
+        processed = 0
+        errors = []
+        
         try:
-            await sync_clan_members_to_database_with_queue()
-            
-            total_after = await prisma.clanmember.count()
-            members_updated = total_after - before_count + len(failed_member_queue)
-            
-            return {
-                "status": "success",
-                "members_fetched": fetched,
-                "members_updated": members_updated,
-                "before_count": before_count,
-                "total_after": total_after,
-                "expected_members": 245,
-                "failed_queue_size": len(failed_member_queue)
-            }
-            
-        except Exception as sync_error:
-            print(f"⚠️ Full sync failed, falling back to roster-only sync: {sync_error}")
-            
-            from datetime import datetime as _dt
-            now = _dt.now()
-            processed = 0
-            errors = []
-            
-            for member in roster:
-                try:
-                    username = (member.get("username") or "").strip()
-                    if not username:
-                        continue
+            existing_members = await prisma.clanmember.find_many(select={"username": True})
+            existing_usernames = {m.username for m in existing_members}
+        except Exception as e:
+            existing_usernames = set()
+            errors.append({"error": f"Failed to fetch existing members: {str(e)}"})
+        
+        created = 0
+        updated = 0
+        
+        for member in roster:
+            try:
+                username = (member.get("username") or "").strip()
+                if not username:
+                    continue
 
-                    total_xp = int(member.get("total_xp", 0) or 0)
-                    kills = int(member.get("kills", 0) or 0)
-                    clan_rank = member.get("clan_rank") or "Recruit"
+                total_xp_value = member.get("total_xp", 0) or 0
+                if isinstance(total_xp_value, str):
+                    total_xp_value = int(total_xp_value) if total_xp_value.isdigit() else 0
+                else:
+                    total_xp_value = int(total_xp_value)
+                
+                kills_value = member.get("kills", 0) or 0
+                if isinstance(kills_value, str):
+                    kills_value = int(kills_value) if kills_value.isdigit() else 0
+                else:
+                    kills_value = int(kills_value)
 
-                    await prisma.clanmember.upsert(
-                        where={"username": username},
-                        data={
-                            "update": {
-                                "clanRank": clan_rank,
-                                "totalXp": total_xp,
-                                "kills": kills,
-                                "lastUpdated": now,
-                            },
-                            "create": {
-                                "username": username,
-                                "displayName": username,
-                                "clanRank": clan_rank,
-                                "totalXp": total_xp,
-                                "totalLevel": 0,
-                                "combatLevel": 0,
-                                "questPoints": 0,
-                                "kills": kills,
-                                "stats": None,
-                                "questData": None,
-                                "lastUpdated": now,
-                            },
+                clan_rank = member.get("clan_rank") or "Recruit"
+
+                await prisma.clanmember.upsert(
+                    where={"username": username},
+                    data={
+                        "update": {
+                            "clanRank": clan_rank,
+                            "totalXp": total_xp_value,
+                            "kills": kills_value,
+                            "lastUpdated": now,
                         },
-                    )
-                    processed += 1
+                        "create": {
+                            "username": username,
+                            "displayName": username,
+                            "clanRank": clan_rank,
+                            "totalXp": total_xp_value,
+                            "totalLevel": 0,
+                            "combatLevel": 0,
+                            "questPoints": 0,
+                            "kills": kills_value,
+                            "stats": None,
+                            "questData": None,
+                            "lastUpdated": now,
+                        },
+                    },
+                )
+                
+                if username in existing_usernames:
+                    updated += 1
+                else:
+                    created += 1
                     
-                except Exception as e:
-                    errors.append({"username": member.get("username"), "error": str(e)})
-                    if len(errors) > 10:
-                        break
+                processed += 1
+                
+            except Exception as e:
+                errors.append({"username": member.get("username"), "error": str(e)})
+                if len(errors) > 10:
+                    break
 
-            total_after = await prisma.clanmember.count()
-            
-            return {
-                "status": "partial_success",
-                "message": "Full sync failed, completed roster-only sync",
-                "members_fetched": fetched,
-                "members_updated": processed,
-                "before_count": before_count,
-                "total_after": total_after,
-                "expected_members": 245,
-                "errors": errors[:3] if errors else [],
-                "sync_error": str(sync_error)
-            }
+        total_after = await prisma.clanmember.count()
+        
+        return {
+            "status": "success",
+            "members_fetched": fetched,
+            "members_updated": processed,
+            "created": created,
+            "updated": updated,
+            "before_count": before_count,
+            "total_after": total_after,
+            "expected_members": 245,
+            "errors": errors[:3] if errors else []
+        }
             
     except Exception as e:
         return {
