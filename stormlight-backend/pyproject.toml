@@ -28,3 +28,6 @@ start = "app.main:start_server"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+postinstall = "prisma:generate"
