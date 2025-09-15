@@ -2751,6 +2751,95 @@ async def trigger_snapshots_get():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/admin/trigger-clan-members")
+async def trigger_clan_members(user_id: str = Depends(verify_admin_access)):
+    """Manual trigger to refresh clan_members table from RuneScape roster (admin only)"""
+    try:
+        if not (PRISMA_AVAILABLE and prisma):
+            raise HTTPException(status_code=503, detail="Database not initialized")
+
+        try:
+            clan_members_cache['timestamp'] = 0
+        except Exception:
+            pass
+
+        roster = await fetch_clan_members()
+        fetched = len(roster)
+
+        created = 0
+        updated = 0
+        processed = 0
+
+        try:
+            before_count = await prisma.clanmember.count()
+        except Exception:
+            before_count = None
+
+        from datetime import datetime as _dt
+        now = _dt.now()
+
+        for m in roster:
+            try:
+                username = m.get('username', '').strip()
+                if not username:
+                    continue
+
+                update_data = {
+                    'clanRank': m.get('clan_rank') or 'Recruit',
+                    'totalXp': int(m.get('total_xp', 0) or 0),
+                    'kills': int(m.get('kills', 0) or 0),
+                    'lastUpdated': now,
+                }
+                create_data = {
+                    'username': username,
+                    'displayName': None,
+                    'clanRank': update_data['clanRank'],
+                    'totalXp': update_data['totalXp'],
+                    'totalLevel': 0,
+                    'combatLevel': 0,
+                    'questPoints': 0,
+                    'kills': update_data['kills'],
+                    'stats': None,
+                    'questData': None,
+                    'lastUpdated': update_data['lastUpdated'],
+                }
+
+                exists = await prisma.clanmember.find_unique(
+                    where={'username': username},
+                    select={'id': True}
+                )
+
+                await prisma.clanmember.upsert(
+                    where={'username': username},
+                    data={'update': update_data, 'create': create_data}
+                )
+
+                processed += 1
+                if exists:
+                    updated += 1
+                else:
+                    created += 1
+
+            except Exception as e:
+                print(f"⚠️ Upsert failed for {m.get('username')}: {e}")
+                continue
+
+        total_after = await prisma.clanmember.count()
+        return {
+            'status': 'ok',
+            'fetched': fetched,
+            'processed': processed,
+            'created': created,
+            'updated': updated,
+            'before_count': before_count,
+            'total_after': total_after,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error in trigger-clan-members: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize database and start scheduled tasks"""
