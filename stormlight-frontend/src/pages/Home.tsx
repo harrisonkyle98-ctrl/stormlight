@@ -388,26 +388,8 @@ const Home = () => {
                     <div className="flex-shrink-0">
                       {entry.event_type === 'join' && <Badge className="bg-green-500 text-white hover:bg-green-500">Joined</Badge>}
                       {entry.event_type === 'leave' && <Badge className="bg-red-500 text-white hover:bg-red-500">Left</Badge>}
-                      {entry.event_type === 'rank_up' && (
-                        <Badge className="bg-green-500 text-white hover:bg-green-500 flex items-center gap-1">
-                          <img 
-                            src={getRankIcon(entry.new_rank || '')} 
-                            alt={entry.new_rank} 
-                            className="w-3 h-3"
-                          />
-                          Promoted
-                        </Badge>
-                      )}
-                      {entry.event_type === 'rank_down' && (
-                        <Badge className="bg-red-500 text-white hover:bg-red-500 flex items-center gap-1">
-                          <img 
-                            src={getRankIcon(entry.old_rank || '')} 
-                            alt={entry.old_rank} 
-                            className="w-3 h-3"
-                          />
-                          Demoted
-                        </Badge>
-                      )}
+                      {entry.event_type === 'rank_up' && <Badge className="bg-green-500 text-white hover:bg-green-500">Promoted</Badge>}
+                      {entry.event_type === 'rank_down' && <Badge className="bg-red-500 text-white hover:bg-red-500">Demoted</Badge>}
                       {entry.event_type === 'name_change' && <Badge className="bg-yellow-500 text-white hover:bg-yellow-500">Name</Badge>}
                     </div>
                     <Link 
