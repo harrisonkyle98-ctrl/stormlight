@@ -22,6 +22,7 @@ const Login = () => {
     try {
       await login(code)
       window.history.replaceState({}, document.title, window.location.pathname)
+      window.location.assign('/')
     } catch (error) {
       toast.error('Authentication failed. Please try again.')
     } finally {

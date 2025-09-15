@@ -99,6 +99,7 @@ async def init_database():
                 
                 CREATE INDEX IF NOT EXISTS idx_activities_timestamp ON clan_activities(activity_timestamp DESC);
                 CREATE INDEX IF NOT EXISTS idx_activities_username ON clan_activities(username);
+                CREATE INDEX IF NOT EXISTS idx_clan_members_discord_id ON clan_members(discord_id);
             """)
             print("Database schema initialized successfully")
     except Exception as e:
