@@ -2903,56 +2903,36 @@ async def startup_event():
         app.state.snapshot_lock = asyncio.Lock()
         app.state.sync_lock = asyncio.Lock()
         
-        async def daily_scheduler():
-            while True:
-                try:
-                    from datetime import timezone
-                    now = datetime.now(timezone.utc)
-                    next_run = now.replace(hour=0, minute=0, second=0, microsecond=0)
-                    if now.time() > datetime_time(0, 0):
-                        next_run += timedelta(days=1)
-                    
-                    sleep_seconds = (next_run - now).total_seconds()
-                    print(f"[Scheduler] Next daily multi-cycle run (UTC) in {sleep_seconds/3600:.1f} hours (at {next_run.isoformat()})")
-                    await asyncio.sleep(max(0, sleep_seconds))
-                    
-                    print(f"[Scheduler] 🚀 Starting scheduled multi-cycle snapshot collection at {datetime.now(timezone.utc).isoformat()}")
-                    async with app.state.snapshot_lock:
-                        await collect_daily_player_stats_multi_cycle()
-                    
-                    try:
-                        async with app.state.sync_lock:
-                            await sync_clan_members_to_database()
-                        print("✅ Clan members synced to database")
-                    except Exception as e:
-                        print(f"❌ Error syncing clan members: {e}")
-                    
-                    try:
-                        conn = await get_db_connection()
-                        async with conn:
-                            try:
-                                from .database import cleanup_old_activities
-                            except ImportError:
-                                from database import cleanup_old_activities
-                            await cleanup_old_activities(conn, days_to_keep=30)
-                    except Exception as e:
-                        print(f"Error cleaning up activities: {e}")
-                except Exception as e:
-                    print(f"[Scheduler] Error in daily scheduler: {e}")
-                    import traceback
-                    traceback.print_exc()
-                    await asyncio.sleep(3600)
-
         async def hourly_scheduler():
-            """Scheduler for hourly clan data updates"""
+            """Single 1-hour scheduler for all clan data updates"""
             await asyncio.sleep(120)
             
             while True:
                 try:
-                    print("🔄 Starting hourly clan data update...")
+                    from datetime import timezone
+                    now = datetime.now(timezone.utc)
+                    
+                    print(f"🔄 Starting hourly clan data update at {now.isoformat()}...")
+                    
                     async with app.state.sync_lock:
                         await sync_clan_members_to_database_with_queue()
                     print("✅ Hourly clan data update completed")
+                    
+                    if now.hour == 0 and now.minute < 5:
+                        print(f"[Scheduler] 🚀 Starting daily multi-cycle snapshot collection at {now.isoformat()}")
+                        async with app.state.snapshot_lock:
+                            await collect_daily_player_stats_multi_cycle()
+                        
+                        try:
+                            conn = await get_db_connection()
+                            async with conn:
+                                try:
+                                    from .database import cleanup_old_activities
+                                except ImportError:
+                                    from database import cleanup_old_activities
+                                await cleanup_old_activities(conn, days_to_keep=30)
+                        except Exception as e:
+                            print(f"Error cleaning up activities: {e}")
                     
                 except Exception as e:
                     print(f"❌ Error in hourly scheduler: {e}")
@@ -2962,7 +2942,6 @@ async def startup_event():
                 print("⏰ Next hourly update scheduled in 1 hour")
                 await asyncio.sleep(3600)
         
-        asyncio.create_task(daily_scheduler())
         asyncio.create_task(hourly_scheduler())
         
     except Exception as e:
