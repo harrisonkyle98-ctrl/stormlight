@@ -353,7 +353,7 @@ const Home = () => {
             {clanLogEntries.length > 0 ? (
               clanLogEntries.map((entry) => (
                 <div key={entry.id} className="p-3 bg-slate-700/50 rounded-lg">
-                  <div className="flex items-center space-x-2 mb-1">
+                  <div className="flex items-center justify-center space-x-2 mb-1">
                     <div className="flex-shrink-0">
                       {entry.event_type === 'join' && <span className="text-green-400 text-lg">✅</span>}
                       {entry.event_type === 'leave' && <span className="text-red-400 text-lg">❌</span>}
