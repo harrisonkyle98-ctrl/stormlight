@@ -2311,7 +2311,8 @@ async def get_player_log(
                     prisma.clanlog.find_many(
                         where={'username': decoded_username},
                         skip=offset,
-                        take=limit
+                        take=limit,
+                        order_by={'timestamp': 'desc'}
                     ),
                     timeout=2.0
                 )
@@ -2345,7 +2346,7 @@ async def get_player_log(
             conn = await get_db_connection()
             async with conn:
                 cnt_cur = await conn.execute(
-                    "SELECT COUNT(*) FROM \"ClanLog\" WHERE username = %s",
+                    "SELECT COUNT(*) FROM clan_log WHERE username = %s",
                     (decoded_username,)
                 )
                 cnt_row = await cnt_cur.fetchone()
@@ -2353,8 +2354,8 @@ async def get_player_log(
                 
                 cur = await conn.execute(
                     """
-                    SELECT id, username, "eventType", "oldRank", "newRank", timestamp
-                    FROM "ClanLog"
+                    SELECT id, username, event_type, old_rank, new_rank, timestamp
+                    FROM clan_log
                     WHERE username = %s
                     ORDER BY timestamp DESC
                     LIMIT %s OFFSET %s
