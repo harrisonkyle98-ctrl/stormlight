@@ -2862,8 +2862,6 @@ async def trigger_clan_members_get(debug: bool = False):
                                         'combatLevel': 0,
                                         'questPoints': 0,
                                         'kills': kills,
-                                        'stats': None,
-                                        'questData': None,
                                         'lastUpdated': now,
                                     }
                                 }
