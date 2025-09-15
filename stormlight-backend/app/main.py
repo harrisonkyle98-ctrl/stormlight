@@ -2836,6 +2836,52 @@ async def daily_clan_member_refresh():
         import traceback
         traceback.print_exc()
 
+@app.get("/api/admin/debug-csv")
+async def debug_csv(response: Response):
+    """Debug CSV parsing to see what's being filtered out"""
+    response.headers["Cache-Control"] = "no-store"
+    
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            clan_url = "https://apps.runescape.com/runemetrics/members_lite.ws?clanName=Stormlight"
+            response_data = await client.get(clan_url)
+            
+            if response_data.status_code != 200:
+                return {"status": "error", "message": f"HTTP {response_data.status_code}"}
+            
+            content = response_data.content.decode('latin-1')
+            lines = content.strip().split('\n')
+            
+            total_lines = len(lines)
+            header = lines[0] if lines else ""
+            data_lines = lines[1:] if len(lines) > 1 else []
+            
+            valid_members = 0
+            invalid_lines = []
+            
+            for i, line in enumerate(data_lines):
+                if line.strip():
+                    parts = line.split(',')
+                    if len(parts) >= 4:
+                        valid_members += 1
+                    else:
+                        invalid_lines.append({"line_num": i+2, "content": line, "parts_count": len(parts)})
+                else:
+                    invalid_lines.append({"line_num": i+2, "content": repr(line), "reason": "empty_or_whitespace"})
+            
+            return {
+                "status": "success",
+                "total_lines": total_lines,
+                "header": header,
+                "data_lines_count": len(data_lines),
+                "valid_members": valid_members,
+                "invalid_lines": invalid_lines[:10],  # Show first 10 invalid lines
+                "sample_valid_lines": [line for line in data_lines[:5] if line.strip() and len(line.split(',')) >= 4]
+            }
+            
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @app.get("/api/admin/test-daily-refresh")
 async def test_daily_refresh(response: Response):
     """Test the daily clan member refresh logic manually"""
