@@ -2770,27 +2770,132 @@ async def trigger_snapshots_get():
         raise HTTPException(status_code=500, detail=str(e))
 @app.get("/api/admin/trigger-clan-members")
 async def trigger_clan_members_get(debug: bool = False):
-    """GET endpoint to trigger clan member refresh"""
-    async def run():
-        try:
-            await daily_clan_member_refresh()
-            final_count = await prisma.clanmember.count()
-            return {
-                "status": "success", 
-                "message": "Clan member refresh completed",
-                "total_members": final_count
-            }
-        except Exception as e:
-            return {"status": "error", "message": str(e)}
-    
+    """GET endpoint to trigger clan member refresh with detailed reporting"""
     if debug:
-        return {"debug_mode": True, "message": "Would trigger clan member refresh"}
+        try:
+            async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+                clan_url = "https://apps.runescape.com/runemetrics/members_lite.ws?clanName=Stormlight"
+                response = await client.get(clan_url)
+                
+                if response.status_code != 200:
+                    return {"debug_mode": True, "error": f"HTTP {response.status_code}"}
+                
+                content = response.content.decode('latin-1')
+                lines = content.strip().split('\n')
+                
+                existing_count = await prisma.clanmember.count() if PRISMA_AVAILABLE and prisma else 0
+                
+                return {
+                    "debug_mode": True,
+                    "fetched_from_api": len(lines) - 1 if len(lines) > 1 else 0,
+                    "existing_in_db": existing_count,
+                    "sample_lines": lines[:3] if lines else []
+                }
+        except Exception as e:
+            return {"debug_mode": True, "error": str(e)}
     
     try:
-        result = await run()
-        return result
+        if not PRISMA_AVAILABLE or not prisma:
+            return {
+                "status": "error",
+                "message": "Database client not available",
+                "members_fetched": 0,
+                "members_updated": 0
+            }
+        
+        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+            clan_url = "https://apps.runescape.com/runemetrics/members_lite.ws?clanName=Stormlight"
+            response = await client.get(clan_url)
+            
+            if response.status_code != 200:
+                return {
+                    "status": "error",
+                    "message": f"Failed to fetch clan roster: HTTP {response.status_code}",
+                    "members_fetched": 0,
+                    "members_updated": 0
+                }
+            
+            content = response.content.decode('latin-1')
+            lines = content.strip().split('\n')
+            
+            if len(lines) < 2:
+                return {
+                    "status": "error",
+                    "message": "Invalid CSV response: insufficient data",
+                    "members_fetched": 0,
+                    "members_updated": 0
+                }
+            
+            members_fetched = len(lines) - 1  # Exclude header
+            processed_count = 0
+            error_count = 0
+            errors = []
+            
+            for i, line in enumerate(lines[1:]):  # Skip header
+                if line.strip():
+                    try:
+                        parts = line.split(',')
+                        if len(parts) >= 4:
+                            username = parts[0].strip().replace('\u00A0', ' ')
+                            clan_rank = parts[1].strip()
+                            total_xp = int(parts[2]) if parts[2].isdigit() else 0
+                            kills = int(parts[3]) if parts[3].isdigit() else 0
+                            
+                            from datetime import datetime
+                            now = datetime.now()
+                            
+                            await prisma.clanmember.upsert(
+                                where={'username': username},
+                                data={
+                                    'update': {
+                                        'clanRank': clan_rank,
+                                        'totalXp': total_xp,
+                                        'kills': kills,
+                                        'lastUpdated': now,
+                                    },
+                                    'create': {
+                                        'username': username,
+                                        'displayName': username,
+                                        'clanRank': clan_rank,
+                                        'totalXp': total_xp,
+                                        'totalLevel': 0,
+                                        'combatLevel': 0,
+                                        'questPoints': 0,
+                                        'kills': kills,
+                                        'stats': None,
+                                        'questData': None,
+                                        'lastUpdated': now,
+                                    }
+                                }
+                            )
+                            processed_count += 1
+                        else:
+                            error_count += 1
+                            if len(errors) < 5:  # Limit error samples
+                                errors.append(f"Line {i+1}: insufficient CSV fields")
+                    except Exception as e:
+                        error_count += 1
+                        if len(errors) < 5:  # Limit error samples
+                            errors.append(f"Line {i+1} ({username if 'username' in locals() else 'unknown'}): {str(e)}")
+            
+            final_count = await prisma.clanmember.count()
+            
+            return {
+                "status": "success",
+                "members_fetched": members_fetched,
+                "members_updated": processed_count,
+                "errors": error_count,
+                "error_samples": errors,
+                "total_in_db": final_count
+            }
+            
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        return {
+            "status": "error",
+            "message": str(e),
+            "members_fetched": 0,
+            "members_updated": 0
+        }
 
 
 
