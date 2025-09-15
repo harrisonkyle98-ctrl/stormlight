@@ -82,11 +82,16 @@ const Home = () => {
     const statsInterval = setInterval(() => {
       console.log('🔄 Refreshing Total XP data (hourly)')
       fetchClanStats()
-      fetchClanLog()
     }, 60 * 60 * 1000) // 1 hour in milliseconds
+
+    const clanLogInterval = setInterval(() => {
+      console.log('🔄 Refreshing Clan Log data (5 minutes)')
+      fetchClanLog()
+    }, 5 * 60 * 1000) // 5 minutes in milliseconds
 
     return () => {
       clearInterval(statsInterval)
+      clearInterval(clanLogInterval)
     }
   }, [])
 
