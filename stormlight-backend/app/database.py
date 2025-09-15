@@ -155,7 +155,7 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
             await asyncio.sleep(batch_delay_secs)
 
     from datetime import datetime
-    max_minutes = 30  # Increased to allow cycles to complete under API throttling
+    max_minutes = 60  # Further increased to allow cycles to complete under heavy API throttling
     start_time = datetime.now()
     
     while failed_users:
@@ -195,7 +195,7 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
     
     return succeeded, len(failed_users)
 
-async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 25, cycle_delay_minutes: int = 5):
+async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 50, cycle_delay_minutes: int = 3):
     """Collect daily snapshots of all clan members using persistent multi-cycle approach."""
     import asyncio
     from datetime import datetime
