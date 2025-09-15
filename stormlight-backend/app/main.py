@@ -2752,12 +2752,21 @@ async def trigger_snapshots_get():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/admin/trigger-clan-members")
-async def trigger_clan_members(user_id: str = Depends(verify_admin_access)):
+async def trigger_clan_members_post(user_id: str = Depends(verify_admin_access)):
     """Manual trigger to refresh clan_members table from RuneScape roster (admin only)"""
+    return await trigger_clan_members_impl()
+
+@app.get("/api/admin/trigger-clan-members")
+async def trigger_clan_members_get():
+    """Manual trigger to refresh clan_members table from RuneScape roster (no auth required)"""
+    return await trigger_clan_members_impl()
+
+async def trigger_clan_members_impl():
     try:
         if not (PRISMA_AVAILABLE and prisma):
             raise HTTPException(status_code=503, detail="Database not initialized")
 
+        global clan_members_cache
         try:
             clan_members_cache['timestamp'] = 0
         except Exception:
