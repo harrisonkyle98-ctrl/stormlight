@@ -2090,8 +2090,7 @@ async def get_clan_log(
         total_count = 0
         used_fallback = False
         
-        if not prisma:
-            used_fallback = True
+        if prisma:
             try:
                 import asyncio
                 log_entries = await asyncio.wait_for(
@@ -2123,6 +2122,8 @@ async def get_clan_log(
             except Exception as pe:
                 print(f"❌ [ClanLog API] Prisma error: {type(pe)} {pe} - falling back to SQL")
                 used_fallback = True
+        else:
+            used_fallback = True
         
         if used_fallback:
             try:
@@ -2132,14 +2133,14 @@ async def get_clan_log(
             
             conn = await get_db_connection()
             async with conn:
-                cnt_cur = await conn.execute("SELECT COUNT(*) FROM \"ClanLog\"")
+                cnt_cur = await conn.execute("SELECT COUNT(*) FROM clan_log")
                 cnt_row = await cnt_cur.fetchone()
                 total_count = cnt_row[0] if cnt_row else 0
                 
                 cur = await conn.execute(
                     """
-                    SELECT id, username, "eventType", "oldRank", "newRank", timestamp
-                    FROM "ClanLog"
+                    SELECT id, username, event_type, old_rank, new_rank, timestamp
+                    FROM clan_log
                     ORDER BY timestamp DESC
                     LIMIT %s OFFSET %s
                     """,
