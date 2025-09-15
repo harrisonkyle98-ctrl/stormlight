@@ -2775,13 +2775,27 @@ async def trigger_clan_members_post(user_id: str = Depends(verify_admin_access))
 @app.get("/api/admin/trigger-clan-members")
 async def trigger_clan_members_get(debug: bool = False):
     """Manual trigger to refresh clan_members table from RuneScape roster (no auth required)"""
-    result = await trigger_clan_members_impl()
     if debug:
-        result['debug_info'] = {
-            'prisma_available': PRISMA_AVAILABLE,
-            'prisma_object': str(prisma) if prisma else None,
-            'timestamp': datetime.now().isoformat()
-        }
+        try:
+            roster = await fetch_clan_members()
+            existing_count = await prisma.clanmember.count() if PRISMA_AVAILABLE and prisma else 0
+            
+            return {
+                'debug_mode': True,
+                'fetched_from_api': len(roster),
+                'existing_in_db': existing_count,
+                'prisma_available': PRISMA_AVAILABLE,
+                'sample_member': roster[0] if roster else None,
+                'note': 'Debug mode - no database operations performed'
+            }
+        except Exception as e:
+            return {
+                'debug_mode': True,
+                'error': str(e),
+                'note': 'Debug mode failed'
+            }
+    
+    result = await trigger_clan_members_impl()
     return result
 
 async def trigger_clan_members_impl():
