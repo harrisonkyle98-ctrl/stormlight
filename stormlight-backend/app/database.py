@@ -3,6 +3,28 @@ import os
 from datetime import datetime, date, timedelta
 from typing import Optional, Dict, Any, List
 
+
+async def cleanup_clan_log_duplicates(conn):
+    """Remove duplicate clan log entries from database"""
+    sql = '''
+    WITH dupes AS (
+      SELECT id,
+             ROW_NUMBER() OVER (
+               PARTITION BY username, event_type, old_rank, new_rank, DATE_TRUNC('minute', timestamp)
+               ORDER BY id
+             ) AS rn
+      FROM clan_log
+    )
+    DELETE FROM clan_log
+    USING dupes
+    WHERE clan_log.id = dupes.id
+      AND dupes.rn > 1;
+    '''
+    async with conn.cursor() as cur:
+        await cur.execute(sql)
+        print(f"🗑️ Removed duplicate clan log entries")
+
+
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 async def get_db_connection():

@@ -206,7 +206,17 @@ const Home = () => {
           first_entry: data.log_entries[0]?.username,
           response_url: response.url
         })
-        setClanLogEntries(data.log_entries)
+        
+        const seen = new Set<string>()
+        const deduped = data.log_entries.filter((e) => {
+          const d = new Date(e.timestamp)
+          d.setSeconds(0, 0)
+          const key = `${e.username}|${e.event_type}|${e.old_rank ?? ''}|${e.new_rank ?? ''}|${d.toISOString()}`
+          if (seen.has(key)) return false
+          seen.add(key)
+          return true
+        })
+        setClanLogEntries(deduped)
       } else {
         console.error('❌ Clan log fetch failed:', response.status, response.statusText)
       }

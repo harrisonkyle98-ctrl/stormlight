@@ -219,6 +219,39 @@ def compute_profile_signature(stats: Dict[str, Any], quest_points: int) -> str:
         print(f"[NameChange] signature error: {e}")
         return ""
 
+async def log_clan_event_if_new(username: str, event_type: str, old_rank: str = None, new_rank: str = None, window_minutes: int = 5):
+    """Log clan event only if no similar event exists within the time window"""
+    try:
+        now = datetime.now()
+        cutoff = now - timedelta(minutes=window_minutes)
+        
+        existing = await prisma.clanlog.find_first(
+            where={
+                'username': username,
+                'eventType': event_type,
+                'oldRank': old_rank,
+                'newRank': new_rank,
+                'timestamp': {'gte': cutoff},
+            },
+            order={'timestamp': 'desc'}
+        )
+        
+        if existing:
+            print(f"🔁 Skipping duplicate {event_type} for {username} ({old_rank}→{new_rank}) within {window_minutes}m")
+            return None
+            
+        return await prisma.clanlog.create(data={
+            'username': username,
+            'eventType': event_type,
+            'oldRank': old_rank,
+            'newRank': new_rank,
+            'timestamp': now,
+        })
+    except Exception as e:
+        print(f"⚠️ Failed to log clan event for {username}: {e}")
+        return None
+
+
 def is_rate_limited(client_ip: str, endpoint: str) -> bool:
     """Check if client is rate limited for profile endpoints"""
     if not endpoint.startswith('/api/player/'):
@@ -609,12 +642,12 @@ async def sync_clan_members_to_database_with_queue():
                                 data=rename_data
                             )
                             try:
-                                await prisma.clanlog.create(data={
-                                    'username': member_data['username'],
-                                    'eventType': 'name_change',
-                                    'oldRank': old_username,
-                                    'timestamp': datetime.now()
-                                })
+                                await log_clan_event_if_new(
+                                    member_data['username'], 
+                                    'name_change', 
+                                    old_rank=old_username, 
+                                    new_rank=member_data['username']
+                                )
                                 print(f"📝 Logged name change: {old_username} → {member_data['username']}")
                             except Exception as log_error:
                                 print(f"⚠️ Failed to log name change for {old_username} -> {member_data['username']}: {log_error}")
@@ -635,22 +668,22 @@ async def sync_clan_members_to_database_with_queue():
                 
                 try:
                     if member_data['username'] not in current_db_members:
-                        await prisma.clanlog.create(data={
-                            'username': member_data['username'],
-                            'eventType': 'join',
-                            'newRank': member_data['clan_rank'],
-                            'timestamp': datetime.now()
-                        })
+                        await log_clan_event_if_new(
+                            member_data['username'], 
+                            'join', 
+                            old_rank=None, 
+                            new_rank=member_data['clan_rank']
+                        )
                         print(f"📝 Logged join event for {member_data['username']}")
                     elif current_db_members[member_data['username']] != member_data['clan_rank']:
-                        await prisma.clanlog.create(data={
-                            'username': member_data['username'],
-                            'eventType': 'rank_up',
-                            'oldRank': current_db_members[member_data['username']],
-                            'newRank': member_data['clan_rank'],
-                            'timestamp': datetime.now()
-                        })
+                        await log_clan_event_if_new(
+                            member_data['username'], 
+                            'rank_up', 
+                            old_rank=current_db_members[member_data['username']], 
+                            new_rank=member_data['clan_rank']
+                        )
                         print(f"📝 Logged rank change for {member_data['username']}: {current_db_members[member_data['username']]} → {member_data['clan_rank']}")
+                        current_db_members[member_data['username']] = member_data['clan_rank']
                 except Exception as log_error:
                     print(f"⚠️ Failed to log clan event for {member_data['username']}: {log_error}")
                 
@@ -673,12 +706,12 @@ async def sync_clan_members_to_database_with_queue():
         for db_username in current_db_members:
             if db_username not in current_usernames:
                 try:
-                    await prisma.clanlog.create(data={
-                        'username': db_username,
-                        'eventType': 'leave',
-                        'oldRank': current_db_members[db_username],
-                        'timestamp': datetime.now()
-                    })
+                    await log_clan_event_if_new(
+                        db_username, 
+                        'leave', 
+                        old_rank=current_db_members[db_username], 
+                        new_rank=None
+                    )
                     print(f"📝 Logged leave event for {db_username}")
                 except Exception as log_error:
                     print(f"⚠️ Failed to log leave event for {db_username}: {log_error}")
@@ -2160,11 +2193,26 @@ async def get_clan_log(
                 ]
                 print(f"✅ [ClanLog API] SQL OK: returned={len(entries)} total={total_count}")
         
-        first = entries[0] if entries else None
-        print(f"📊 [ClanLog API] Returning {len(entries)} entries; first={first['username'] if first else 'none'} ts={first['timestamp'] if first else 'n/a'}")
+        seen = set()
+        deduped = []
+        for e in entries:
+            t = e['timestamp']
+            minute_key = t[:16] if isinstance(t, str) else e['timestamp'].isoformat()[:16]
+            key = f"{e['username']}|{e['event_type']}|{e.get('old_rank','')}|{e.get('new_rank','')}|{minute_key}"
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(e)
+        
+        first = deduped[0] if deduped else None
+        print(f"📊 [ClanLog API] Returning {len(deduped)} entries (deduped from {len(entries)}); first={first['username'] if first else 'none'} ts={first['timestamp'] if first else 'n/a'}")
+        
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
         
         return {
-            "log_entries": entries,
+            "log_entries": deduped,
             "pagination": {
                 "page": page,
                 "limit": limit,
@@ -2694,6 +2742,22 @@ async def trigger_bulk_collection_temp():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@app.get("/api/admin/cleanup-clan-log-duplicates")
+async def cleanup_clan_log_duplicates_endpoint():
+    """Remove duplicate clan log entries from database"""
+    try:
+        conn = await get_db_connection()
+        async with conn:
+            try:
+                from .database import cleanup_clan_log_duplicates
+            except ImportError:
+                from database import cleanup_clan_log_duplicates
+            await cleanup_clan_log_duplicates(conn)
+        return {"status": "ok", "message": "Duplicate clan logs removed"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/admin/trigger-snapshots")
 async def trigger_snapshots_get():
     """TEMPORARY: GET endpoint to trigger multi-cycle collection without auth for testing"""
@@ -2820,6 +2884,7 @@ async def startup_event():
         await init_database()
         
         app.state.snapshot_lock = asyncio.Lock()
+        app.state.sync_lock = asyncio.Lock()
         
         async def daily_scheduler():
             while True:
@@ -2839,7 +2904,8 @@ async def startup_event():
                         await collect_daily_player_stats_multi_cycle()
                     
                     try:
-                        await sync_clan_members_to_database()
+                        async with app.state.sync_lock:
+                            await sync_clan_members_to_database()
                         print("✅ Clan members synced to database")
                     except Exception as e:
                         print(f"❌ Error syncing clan members: {e}")
@@ -2860,26 +2926,27 @@ async def startup_event():
                     traceback.print_exc()
                     await asyncio.sleep(3600)
 
-        async def frequent_scheduler():
-            """Scheduler for frequent clan data updates every 20 minutes"""
+        async def hourly_scheduler():
+            """Scheduler for hourly clan data updates"""
             await asyncio.sleep(120)
             
             while True:
                 try:
-                    print("🔄 Starting frequent clan data update...")
-                    await sync_clan_members_to_database_with_queue()
-                    print("✅ Frequent clan data update completed")
+                    print("🔄 Starting hourly clan data update...")
+                    async with app.state.sync_lock:
+                        await sync_clan_members_to_database_with_queue()
+                    print("✅ Hourly clan data update completed")
                     
                 except Exception as e:
-                    print(f"❌ Error in frequent scheduler: {e}")
+                    print(f"❌ Error in hourly scheduler: {e}")
                     import traceback
                     traceback.print_exc()
                 
-                print("⏰ Next frequent update scheduled in 20 minutes")
-                await asyncio.sleep(1200)
+                print("⏰ Next hourly update scheduled in 1 hour")
+                await asyncio.sleep(3600)
         
         asyncio.create_task(daily_scheduler())
-        asyncio.create_task(frequent_scheduler())
+        asyncio.create_task(hourly_scheduler())
         
     except Exception as e:
         print(f"Error during startup: {e}")
