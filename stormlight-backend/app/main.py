@@ -2773,9 +2773,16 @@ async def trigger_clan_members_post(user_id: str = Depends(verify_admin_access))
     return await trigger_clan_members_impl()
 
 @app.get("/api/admin/trigger-clan-members")
-async def trigger_clan_members_get():
+async def trigger_clan_members_get(debug: bool = False):
     """Manual trigger to refresh clan_members table from RuneScape roster (no auth required)"""
-    return await trigger_clan_members_impl()
+    result = await trigger_clan_members_impl()
+    if debug:
+        result['debug_info'] = {
+            'prisma_available': PRISMA_AVAILABLE,
+            'prisma_object': str(prisma) if prisma else None,
+            'timestamp': datetime.now().isoformat()
+        }
+    return result
 
 async def trigger_clan_members_impl():
     try:
@@ -2809,10 +2816,23 @@ async def trigger_clan_members_impl():
                 if not username:
                     continue
 
+                total_xp_value = m.get('total_xp', 0) or 0
+                kills_value = m.get('kills', 0) or 0
+                
+                if isinstance(total_xp_value, str):
+                    total_xp_value = int(total_xp_value) if total_xp_value.isdigit() else 0
+                elif not isinstance(total_xp_value, int):
+                    total_xp_value = int(total_xp_value)
+                
+                if isinstance(kills_value, str):
+                    kills_value = int(kills_value) if kills_value.isdigit() else 0
+                elif not isinstance(kills_value, int):
+                    kills_value = int(kills_value)
+
                 update_data = {
                     'clanRank': m.get('clan_rank') or 'Recruit',
-                    'totalXp': int(m.get('total_xp', 0) or 0),
-                    'kills': int(m.get('kills', 0) or 0),
+                    'totalXp': total_xp_value,
+                    'kills': kills_value,
                     'lastUpdated': now,
                 }
                 create_data = {
@@ -2847,9 +2867,34 @@ async def trigger_clan_members_impl():
 
             except Exception as e:
                 print(f"⚠️ Upsert failed for {m.get('username')}: {e}")
+                import traceback
+                traceback.print_exc()
+                print(f"Debug - Member data: {m}")
+                print(f"Debug - Update data: {update_data}")
+                print(f"Debug - Create data: {create_data}")
                 continue
 
         total_after = await prisma.clanmember.count()
+        print(f"✅ Clan member refresh complete: {processed} processed, {created} created, {updated} updated")
+        
+        if processed == 0 and fetched > 0:
+            print("⚠️ No members processed despite fetching data - falling back to SQL sync method")
+            try:
+                await sync_clan_members_to_database_with_queue()
+                total_after = await prisma.clanmember.count()
+                return {
+                    'status': 'ok_fallback',
+                    'fetched': fetched,
+                    'processed': 'fallback_sync',
+                    'created': 'unknown',
+                    'updated': 'unknown', 
+                    'before_count': before_count,
+                    'total_after': total_after,
+                    'note': 'Used fallback SQL sync method due to Prisma upsert failures'
+                }
+            except Exception as fallback_error:
+                print(f"❌ Fallback sync also failed: {fallback_error}")
+        
         return {
             'status': 'ok',
             'fetched': fetched,
