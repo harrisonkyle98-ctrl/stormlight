@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
+import { Badge } from '../components/ui/badge'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { Trophy, Users, Swords, TrendingUp } from 'lucide-react'
 import { fetchClanMembers, getGradientStyle } from '../utils/gradientUtils'
@@ -27,7 +28,7 @@ interface Activity {
 interface ClanLogEntry {
   id: number
   username: string
-  event_type: 'join' | 'leave' | 'rank_up' | 'name_change'
+  event_type: 'join' | 'leave' | 'rank_up' | 'rank_down' | 'name_change'
   old_rank?: string
   new_rank?: string
   timestamp: string
@@ -365,10 +366,11 @@ const Home = () => {
                 <div key={entry.id} className="p-3 bg-slate-700/50 rounded-lg">
                   <div className="flex items-center justify-center space-x-2 mb-1">
                     <div className="flex-shrink-0">
-                      {entry.event_type === 'join' && <span className="text-green-400 text-lg">✅</span>}
-                      {entry.event_type === 'leave' && <span className="text-red-400 text-lg">❌</span>}
-                      {entry.event_type === 'rank_up' && <span className="text-blue-400 text-lg">⬆️</span>}
-                      {entry.event_type === 'name_change' && <span className="text-yellow-400 text-lg">✏️</span>}
+                      {entry.event_type === 'join' && <Badge className="bg-green-500 text-white">Joined</Badge>}
+                      {entry.event_type === 'leave' && <Badge className="bg-red-500 text-white">Left</Badge>}
+                      {entry.event_type === 'rank_up' && <Badge className="bg-green-500 text-white">Promoted</Badge>}
+                      {entry.event_type === 'rank_down' && <Badge className="bg-red-500 text-white">Demoted</Badge>}
+                      {entry.event_type === 'name_change' && <Badge className="bg-yellow-500 text-white">Name</Badge>}
                     </div>
                     <Link 
                       to={`/clan-member/${usernameToUrl(entry.username)}`}
