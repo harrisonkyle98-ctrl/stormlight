@@ -2769,57 +2769,72 @@ async def trigger_snapshots_get():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/admin/refresh-clan-members")
-async def refresh_clan_members(response: Response):
-    """Refresh clan_members table from RuneScape roster using existing sync logic"""
-    response.headers["Cache-Control"] = "no-store"
-    
+async def daily_clan_member_refresh():
+    """Daily clan member refresh: truncate table and insert all CSV data"""
     try:
         if not PRISMA_AVAILABLE or not prisma:
-            return {
-                "status": "error",
-                "message": "Database client not available",
-                "db_count_after": 0,
-                "expected_members": 245,
-                "failures": []
-            }
-
-        await sync_clan_members_to_database_with_queue()
+            print("❌ Daily clan refresh: Database client not available")
+            return
         
-        try:
-            db_count_after = await prisma.clanmember.count()
-        except Exception as e:
-            return {
-                "status": "error", 
-                "message": f"Failed to count database members after sync: {str(e)}",
-                "db_count_after": 0,
-                "expected_members": 245,
-                "failures": []
-            }
-
-        try:
-            roster = await fetch_clan_members()
-            expected_members = len(roster)
-        except Exception:
-            expected_members = 245
-
-        failures = [item['member_data']['username'] for item in failed_member_queue if 'member_data' in item and 'username' in item['member_data']]
-
-        return {
-            "status": "success",
-            "db_count_after": db_count_after,
-            "expected_members": expected_members,
-            "failures": failures
-        }
-        
+        print("🔄 Fetching clan roster from RuneScape CSV API...")
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            clan_url = "https://apps.runescape.com/runemetrics/members_lite.ws?clanName=Stormlight"
+            response = await client.get(clan_url)
+            
+            if response.status_code != 200:
+                print(f"❌ Failed to fetch clan roster: HTTP {response.status_code}")
+                return
+            
+            content = response.content.decode('latin-1')
+            lines = content.strip().split('\n')
+            
+            if len(lines) < 2:
+                print("❌ Invalid CSV response: insufficient data")
+                return
+            
+            members_data = []
+            for line in lines[1:]:  # Skip header
+                if line.strip():
+                    parts = line.split(',')
+                    if len(parts) >= 4:
+                        username = parts[0].strip().replace('\u00A0', ' ')
+                        clan_rank = parts[1].strip()
+                        total_xp = int(parts[2]) if parts[2].isdigit() else 0
+                        kills = int(parts[3]) if parts[3].isdigit() else 0
+                        
+                        members_data.append({
+                            'username': username,
+                            'displayName': username,
+                            'clanRank': clan_rank,
+                            'totalXp': total_xp,
+                            'totalLevel': 0,
+                            'combatLevel': 0,
+                            'questPoints': 0,
+                            'kills': kills,
+                            'stats': None,
+                            'questData': None,
+                            'lastUpdated': datetime.now(),
+                        })
+            
+            print(f"📊 Parsed {len(members_data)} members from CSV")
+            
+            if not members_data:
+                print("❌ No valid member data parsed from CSV")
+                return
+            
+            print("🗑️ Truncating clan_members table...")
+            await prisma.clanmember.delete_many()
+            
+            print("📥 Inserting all members into database...")
+            await prisma.clanmember.create_many(data=members_data)
+            
+            final_count = await prisma.clanmember.count()
+            print(f"✅ Daily clan refresh completed: {final_count} members in database")
+            
     except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e),
-            "db_count_after": 0,
-            "expected_members": 245,
-            "failures": []
-        }
+        print(f"❌ Error in daily clan member refresh: {e}")
+        import traceback
+        traceback.print_exc()
 
 @app.get("/api/admin/check-clan-members")
 async def check_clan_members(response: Response):
@@ -2974,13 +2989,13 @@ async def startup_event():
                     from datetime import timezone
                     now = datetime.now(timezone.utc)
                     
-                    print(f"🔄 Starting hourly clan data update at {now.isoformat()}...")
-                    
-                    async with app.state.sync_lock:
-                        await sync_clan_members_to_database_with_queue()
-                    print("✅ Hourly clan data update completed")
-                    
                     if now.hour == 0 and now.minute < 5:
+                        print(f"🔄 Starting daily clan member refresh at {now.isoformat()}...")
+                        
+                        async with app.state.sync_lock:
+                            await daily_clan_member_refresh()
+                        print("✅ Daily clan member refresh completed")
+                        
                         print(f"[Scheduler] 🚀 Starting daily multi-cycle snapshot collection at {now.isoformat()}")
                         async with app.state.snapshot_lock:
                             await collect_daily_player_stats_multi_cycle()
