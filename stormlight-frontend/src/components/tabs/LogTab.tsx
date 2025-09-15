@@ -1,8 +1,29 @@
 import { useEffect, useState } from 'react'
 import { FileText } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { Badge } from '../ui/badge'
 import { usernameToUrl } from '../../utils/urlUtils'
 import { getGradientStyle } from '../../utils/gradientUtils'
+
+const getRankIcon = (rank: string): string => {
+  const rankImageMap: { [key: string]: string } = {
+    'Owner': 'owner.png',
+    'Deputy Owner': 'depowner.png',
+    'Overseer': 'overseer.png',
+    'Coordinator': 'coordinator.png',
+    'Organiser': 'organizer.png',
+    'Admin': 'admin.png',
+    'General': 'general.png',
+    'Captain': 'captain.png',
+    'Lieutenant': 'lieutenant.png',
+    'Sergeant': 'sergeant.png',
+    'Corporal': 'corporal.png',
+    'Recruit': 'recruit.png'
+  }
+  
+  const imageName = rankImageMap[rank]
+  return imageName ? `/assets/ranks/${imageName}` : ''
+}
 
 interface TabProps {
   username: string;
@@ -13,7 +34,7 @@ interface TabProps {
 interface UserLogEntry {
   id: number
   username: string
-  event_type: 'join' | 'leave' | 'rank_up' | 'name_change'
+  event_type: 'join' | 'leave' | 'rank_up' | 'rank_down' | 'name_change'
   old_rank?: string
   new_rank?: string
   timestamp: string
@@ -37,7 +58,7 @@ export const LogTab = ({ username, playerData, API_URL }: TabProps) => {
   const formatTimeAgo = (timestamp: number) => {
     const now = Date.now() / 1000
     const diff = now - timestamp
-    
+
     if (diff < 60) return 'just now'
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
@@ -52,7 +73,7 @@ export const LogTab = ({ username, playerData, API_URL }: TabProps) => {
         setError(null)
         const encodedUsername = encodeURIComponent(usernameToUrl(username))
         const response = await fetch(`${API_URL}/api/player/${encodedUsername}/log?page=1&limit=20`)
-        
+
         if (response.ok) {
           const data: UserLogResponse = await response.json()
           setLogEntries(data.log_entries)
@@ -76,7 +97,7 @@ export const LogTab = ({ username, playerData, API_URL }: TabProps) => {
     return (
       <div className="text-center py-12">
         <FileText className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-        <p className="text-slate-400 text-lg">Loading activity log...</p>
+        <p className="text-slate-400 text-lg">Loading clan log...</p>
       </div>
     )
   }
@@ -95,7 +116,7 @@ export const LogTab = ({ username, playerData, API_URL }: TabProps) => {
     return (
       <div className="text-center py-12">
         <FileText className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-        <p className="text-slate-400 text-lg">No activity log entries</p>
+        <p className="text-slate-400 text-lg">No clan log entries</p>
         <p className="text-slate-500 text-sm mt-2">Rank changes and name changes will appear here</p>
       </div>
     )
@@ -105,18 +126,19 @@ export const LogTab = ({ username, playerData, API_URL }: TabProps) => {
     <div className="space-y-4">
       <div className="flex items-center space-x-2 mb-6">
         <FileText className="w-5 h-5 text-slate-400" />
-        <h3 className="text-lg font-semibold text-white">Activity Log</h3>
+        <h3 className="text-lg font-semibold text-white">Clan Log</h3>
         <span className="text-sm text-slate-400">({logEntries.length} entries)</span>
       </div>
-      
+
       {logEntries.map((entry) => (
         <div key={entry.id} className="p-3 bg-slate-700/50 rounded-lg">
-          <div className="flex items-center justify-center mb-2">
-            <div className="flex-shrink-0 mr-2">
-              {entry.event_type === 'join' && <span className="text-green-400 text-lg">✅</span>}
-              {entry.event_type === 'leave' && <span className="text-red-400 text-lg">❌</span>}
-              {entry.event_type === 'rank_up' && <span className="text-blue-400 text-lg">⬆️</span>}
-              {entry.event_type === 'name_change' && <span className="text-yellow-400 text-lg">✏️</span>}
+          <div className="flex items-center justify-center space-x-2 mb-1">
+            <div className="flex-shrink-0">
+              {entry.event_type === 'join' && <Badge className="bg-green-500 text-white hover:bg-green-500">Joined</Badge>}
+              {entry.event_type === 'leave' && <Badge className="bg-red-500 text-white hover:bg-red-500">Left</Badge>}
+              {entry.event_type === 'rank_up' && <Badge className="bg-green-500 text-white hover:bg-green-500">Promoted</Badge>}
+              {entry.event_type === 'rank_down' && <Badge className="bg-red-500 text-white hover:bg-red-500">Demoted</Badge>}
+              {entry.event_type === 'name_change' && <Badge className="bg-yellow-500 text-white hover:bg-yellow-500">Name</Badge>}
             </div>
             <Link 
               to={`/clan-member/${usernameToUrl(entry.username)}`}
@@ -125,13 +147,28 @@ export const LogTab = ({ username, playerData, API_URL }: TabProps) => {
             >
               {entry.username}
             </Link>
+            <span className="text-slate-300">
+              {entry.event_type === 'join' && `joined the clan as ${entry.new_rank}`}
+              {entry.event_type === 'leave' && `left the clan`}
+              {entry.event_type === 'rank_up' && (
+                <span className="flex items-center gap-1">
+                  promoted from 
+                  <img src={getRankIcon(entry.old_rank || '')} alt={entry.old_rank} className="w-4 h-4 mx-1" />
+                  to 
+                  <img src={getRankIcon(entry.new_rank || '')} alt={entry.new_rank} className="w-4 h-4 mx-1" />
+                </span>
+              )}
+              {entry.event_type === 'rank_down' && (
+                <span className="flex items-center gap-1">
+                  demoted from 
+                  <img src={getRankIcon(entry.old_rank || '')} alt={entry.old_rank} className="w-4 h-4 mx-1" />
+                  to 
+                  <img src={getRankIcon(entry.new_rank || '')} alt={entry.new_rank} className="w-4 h-4 mx-1" />
+                </span>
+              )}
+              {entry.event_type === 'name_change' && `${entry.old_rank} changed their name to ${entry.username}`}
+            </span>
           </div>
-          <p className="text-slate-300 text-center mb-1">
-            {entry.event_type === 'join' && `joined the clan as ${entry.new_rank}`}
-            {entry.event_type === 'leave' && `left the clan`}
-            {entry.event_type === 'rank_up' && `promoted from ${entry.old_rank} to ${entry.new_rank}`}
-            {entry.event_type === 'name_change' && `${entry.old_rank} changed their name to ${entry.username}`}
-          </p>
           <p className="text-slate-400 text-xs text-center">{formatTimeAgo(new Date(entry.timestamp).getTime() / 1000)}</p>
         </div>
       ))}
