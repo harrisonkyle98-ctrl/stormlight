@@ -2996,26 +2996,67 @@ async def test_daily_refresh(response: Response):
                     "debug_messages": debug_messages
                 }
             
-            debug_messages.append("📥 Inserting all members into database...")
+            debug_messages.append("📥 Testing individual upsert operations...")
             debug_messages.append(f"🔍 Sample member data: {members_data[0] if members_data else 'None'}")
             
+            existing_sample = await prisma.clanmember.find_first()
+            if existing_sample:
+                debug_messages.append(f"🔍 Existing member structure: username={existing_sample.username}, stats={existing_sample.stats}, questData={existing_sample.questData}")
+            else:
+                debug_messages.append("🔍 No existing members found")
+            
             try:
-                result = await prisma.clanmember.create_many(data=members_data)
-                debug_messages.append(f"✅ create_many result: {result}")
-            except Exception as create_error:
-                debug_messages.append(f"❌ create_many failed: {create_error}")
-                debug_messages.append(f"❌ Error type: {type(create_error)}")
+                test_member = members_data[0]
+                username = test_member['username']
                 
-                debug_messages.append("🔍 Testing single member insert...")
+                minimal_data = {
+                    'username': username,
+                    'displayName': test_member.get('displayName'),
+                    'clanRank': test_member['clanRank'],
+                    'totalXp': test_member['totalXp'],
+                    'totalLevel': test_member['totalLevel'],
+                    'combatLevel': test_member['combatLevel'],
+                    'questPoints': test_member['questPoints'],
+                    'kills': test_member['kills'],
+                    'lastUpdated': test_member['lastUpdated'],
+                }
+                
+                debug_messages.append(f"🔍 Testing minimal upsert without JSON fields: {minimal_data}")
+                
+                result = await prisma.clanmember.upsert(
+                    where={'username': username},
+                    data={
+                        'update': {
+                            'clanRank': minimal_data['clanRank'],
+                            'totalXp': minimal_data['totalXp'],
+                            'kills': minimal_data['kills'],
+                            'lastUpdated': minimal_data['lastUpdated'],
+                        },
+                        'create': minimal_data
+                    }
+                )
+                
+                debug_messages.append(f"✅ Minimal upsert successful: {result.username}")
+                
                 try:
-                    single_result = await prisma.clanmember.create(data=members_data[0])
-                    debug_messages.append(f"✅ Single insert successful: {single_result.username}")
-                except Exception as single_error:
-                    debug_messages.append(f"❌ Single insert also failed: {single_error}")
+                    updated_result = await prisma.clanmember.update(
+                        where={'username': username},
+                        data={
+                            'stats': None,
+                            'questData': None,
+                        }
+                    )
+                    debug_messages.append(f"✅ JSON field update successful")
+                except Exception as json_e:
+                    debug_messages.append(f"❌ JSON field update failed: {json_e}")
+                
+            except Exception as e:
+                debug_messages.append(f"❌ Individual upsert failed: {e}")
+                debug_messages.append(f"❌ Error type: {type(e)}")
                 
                 return {
                     "status": "error",
-                    "message": f"create_many failed: {create_error}",
+                    "message": f"Individual upsert failed: {e}",
                     "db_count": 0,
                     "debug_messages": debug_messages
                 }
