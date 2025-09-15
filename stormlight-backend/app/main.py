@@ -2939,7 +2939,7 @@ async def trigger_clan_members_impl():
             "message": str(e),
             "members_fetched": 0,
             "members_updated": 0,
-            "expected_members": EXPECTED_ROSTER_COUNT
+            "expected_members": 245
         }
 
 @app.on_event("startup")
