@@ -95,8 +95,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.ok) {
         const data = await response.json()
-        localStorage.setItem('access_token', data.access_token)
-        setUser(data.user)
+        const token = data.access_token
+        localStorage.setItem('access_token', token)
+        
+        try {
+          const userResponse = await fetch(`${API_URL}/api/user/me?refresh=true`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+          
+          if (userResponse.ok) {
+            const userData = await userResponse.json()
+            setUser(userData)
+          } else {
+            setUser(data.user)
+          }
+        } catch (error) {
+          console.error('Failed to refresh user data:', error)
+          setUser(data.user)
+        }
       } else {
         throw new Error('Authentication failed')
       }

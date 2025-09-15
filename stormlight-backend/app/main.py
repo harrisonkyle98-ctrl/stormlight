@@ -1164,10 +1164,15 @@ async def link_discord_to_clan_member(
         raise HTTPException(status_code=500, detail=f"Linking failed: {str(e)}")
 
 @app.get("/api/user/me")
-async def get_current_user(user_id: str = Depends(verify_token)):
+async def get_current_user(
+    refresh: bool = Query(False, description="Bypass in-memory cache"),
+    user_id: str = Depends(verify_token)
+):
     """Get current user info"""
-    if user_id in users_db:
-        return users_db[user_id]
+    if not refresh and user_id in users_db:
+        cached = users_db[user_id]
+        if cached.get('isLinked') and cached.get('requiresLinking') is False:
+            return cached
     
     try:
         user = await prisma.user.find_unique(
@@ -1261,9 +1266,20 @@ async def get_current_user(user_id: str = Depends(verify_token)):
             user_data['isLinked'] = False
             user_data['requiresLinking'] = True
         user_data['discordId'] = user_id
+        users_db[user_id] = user_data
         return user_data
     
-    raise HTTPException(status_code=404, detail="User not found")
+    fallback_result = {
+        'id': user_id,
+        'username': f'User_{user_id[:8]}',
+        'displayName': f'User_{user_id[:8]}',
+        'clanRank': None,
+        'isLinked': False,
+        'requiresLinking': True,
+        'discordId': user_id
+    }
+    users_db[user_id] = fallback_result
+    return fallback_result
 
 
 @app.get("/api/player/{username}/stats")
