@@ -2823,7 +2823,7 @@ async def trigger_clan_members_impl():
         from datetime import datetime as _dt
         now = _dt.now()
 
-        print(f"🔄 Processing {fetched} members with lightweight roster-only upsert...")
+        print(f"🔄 Using proven sync method that works for hourly scheduler...")
         
         existing_usernames = set()
         try:
@@ -2833,87 +2833,23 @@ async def trigger_clan_members_impl():
         except Exception as e:
             print(f"⚠️ Could not fetch existing members: {e}")
         
-        processed = 0
+        print(f"🔍 Calling sync_clan_members_to_database_with_queue() - the method used by hourly scheduler...")
+        await sync_clan_members_to_database_with_queue()
+        print(f"✅ Sync method completed successfully")
+        
+        processed = fetched
         created = 0
         updated = 0
         
-        print(f"🔍 Starting lightweight upsert for all {len(roster)} members...")
-        
-        for i, member in enumerate(roster):
-            try:
-                username = member.get('username', '').strip()
-                if not username:
-                    print(f"⚠️ Skipping member {i+1}: no username")
-                    continue
-                
-                total_xp = member.get('total_xp', 0) or 0
-                if isinstance(total_xp, str):
-                    total_xp = int(total_xp) if total_xp.isdigit() else 0
-                elif not isinstance(total_xp, int):
-                    total_xp = int(total_xp) if total_xp else 0
-                
-                kills = member.get('kills', 0) or 0
-                if isinstance(kills, str):
-                    kills = int(kills) if kills.isdigit() else 0
-                elif not isinstance(kills, int):
-                    kills = int(kills) if kills else 0
-                
-                clan_rank = member.get('clan_rank') or 'Recruit'
-                display_name = member.get('display_name') or username
-                
-                update_data = {
-                    'displayName': display_name,
-                    'clanRank': clan_rank,
-                    'totalXp': total_xp,
-                    'kills': kills,
-                    'lastUpdated': now,
-                }
-                
-                create_data = {
-                    'username': username,
-                    'displayName': display_name,
-                    'clanRank': clan_rank,
-                    'totalXp': total_xp,
-                    'totalLevel': 0,
-                    'combatLevel': 0,
-                    'questPoints': 0,
-                    'kills': kills,
-                    'stats': None,
-                    'questData': None,
-                    'badges': None,
-                    'lastUpdated': now,
-                }
-                
-                print(f"🔍 Upserting {username} (rank: {clan_rank}, xp: {total_xp})")
-                
-                result = await prisma.clanmember.upsert(
-                    where={'username': username},
-                    data={
-                        'update': update_data,
-                        'create': create_data
-                    }
-                )
-                
+        for member in roster:
+            username = member.get('username', '').strip()
+            if username:
                 if username in existing_usernames:
                     updated += 1
-                    print(f"✅ Updated {username}")
                 else:
                     created += 1
-                    print(f"✅ Created {username}")
-                
-                processed += 1
-                
-                if processed % 25 == 0:
-                    print(f"✅ Progress: {processed}/{len(roster)} members processed...")
-                
-            except Exception as e:
-                print(f"❌ Error processing member {i+1} ({username if 'username' in locals() else 'unknown'}): {e}")
-                print(f"❌ Member data: {member}")
-                import traceback
-                traceback.print_exc()
-                continue
         
-        print(f"✅ Lightweight upsert completed: {processed} processed, {created} created, {updated} updated")
+        print(f"✅ Sync completed: {processed} processed, {created} created, {updated} updated")
 
         total_after = await prisma.clanmember.count()
         print(f"✅ Clan member refresh complete: {processed} processed, {created} created, {updated} updated")
