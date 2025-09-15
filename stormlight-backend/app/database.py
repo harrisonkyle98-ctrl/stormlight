@@ -98,7 +98,7 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
     failed = 0
     failed_users: list[str] = []
     
-    batch_size = 5
+    batch_size = 1
     batches = [usernames[i:i + batch_size] for i in range(0, len(usernames), batch_size)]
     
     async def process_member_with_retry(username: str, max_retries: int = 5) -> bool:
@@ -131,8 +131,8 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
         
         return False
 
-    per_call_delay_secs = 2.0
-    batch_delay_secs = 10.0
+    per_call_delay_secs = 8.0
+    batch_delay_secs = 15.0
     
     print(f"[Bulk Snapshots] Cycle {cycle_num} Configuration: batch_size={batch_size}, per_call_delay={per_call_delay_secs}s, batch_delay={batch_delay_secs}s")
     
@@ -195,7 +195,7 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
     
     return succeeded, len(failed_users)
 
-async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 50, cycle_delay_minutes: int = 3):
+async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 25, cycle_delay_minutes: int = 5):
     """Collect daily snapshots of all clan members using persistent multi-cycle approach."""
     import asyncio
     from datetime import datetime
@@ -283,7 +283,7 @@ async def collect_daily_player_stats(concurrency: int = 8, limit: int | None = N
     failed = 0
     failed_users: list[str] = []
     
-    batch_size = 5
+    batch_size = 1
     batches = [usernames[i:i + batch_size] for i in range(0, len(usernames), batch_size)]
     
     async def process_member_with_retry(username: str, max_retries: int = 5) -> bool:
@@ -316,8 +316,8 @@ async def collect_daily_player_stats(concurrency: int = 8, limit: int | None = N
         
         return False
 
-    per_call_delay_secs = 2.0
-    batch_delay_secs = 10.0
+    per_call_delay_secs = 8.0
+    batch_delay_secs = 15.0
     
     print(f"[Bulk Snapshots] Configuration: batch_size={batch_size}, per_call_delay={per_call_delay_secs}s, batch_delay={batch_delay_secs}s")
     
