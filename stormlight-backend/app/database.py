@@ -131,8 +131,8 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
         
         return False
 
-    per_call_delay_secs = 8.0
-    batch_delay_secs = 15.0
+    per_call_delay_secs = 5.0
+    batch_delay_secs = 10.0
     
     print(f"[Bulk Snapshots] Cycle {cycle_num} Configuration: batch_size={batch_size}, per_call_delay={per_call_delay_secs}s, batch_delay={batch_delay_secs}s")
     
@@ -316,8 +316,8 @@ async def collect_daily_player_stats(concurrency: int = 8, limit: int | None = N
         
         return False
 
-    per_call_delay_secs = 8.0
-    batch_delay_secs = 15.0
+    per_call_delay_secs = 5.0
+    batch_delay_secs = 10.0
     
     print(f"[Bulk Snapshots] Configuration: batch_size={batch_size}, per_call_delay={per_call_delay_secs}s, batch_delay={batch_delay_secs}s")
     
