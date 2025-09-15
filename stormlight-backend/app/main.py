@@ -3144,6 +3144,43 @@ async def check_clan_members(response: Response):
             "message": str(e),
             "db_count": 0,
             "expected_members": 0
+
+@app.get("/api/admin/trigger-daily-refresh")
+async def trigger_daily_refresh(response: Response):
+    """Manually trigger the daily clan member refresh for testing"""
+    response.headers["Cache-Control"] = "no-store"
+    
+    try:
+        print("🔄 [Manual Trigger] Starting daily clan member refresh...")
+        await daily_clan_member_refresh()
+        
+        if not PRISMA_AVAILABLE or not prisma:
+            return {
+                "status": "error",
+                "message": "Database client not available after refresh",
+                "db_count": 0,
+                "expected_members": 245
+            }
+        
+        final_count = await prisma.clanmember.count()
+        expected_members = 245
+        
+        return {
+            "status": "success",
+            "message": "Daily refresh completed",
+            "db_count": final_count,
+            "expected_members": expected_members,
+            "refresh_successful": final_count >= 240  # Allow some tolerance
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e),
+            "db_count": 0,
+            "expected_members": 245
+        }
+
         }
 
 
