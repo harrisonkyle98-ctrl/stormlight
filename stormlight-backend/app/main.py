@@ -2092,14 +2092,13 @@ async def get_clan_log(
         
         if not prisma:
             used_fallback = True
-        else:
             try:
                 import asyncio
                 log_entries = await asyncio.wait_for(
                     prisma.clanlog.find_many(
                         skip=offset,
                         take=limit,
-                        order={'timestamp': 'desc'}
+                        order_by={'timestamp': 'desc'}
                     ),
                     timeout=2.0
                 )
