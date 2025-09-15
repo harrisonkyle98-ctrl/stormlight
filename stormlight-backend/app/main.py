@@ -225,21 +225,36 @@ async def log_clan_event_if_new(username: str, event_type: str, old_rank: str = 
         now = datetime.now()
         cutoff = now - timedelta(minutes=window_minutes)
         
-        existing = await prisma.clanlog.find_first(
+        exact_duplicate = await prisma.clanlog.find_first(
             where={
                 'username': username,
                 'eventType': event_type,
                 'oldRank': old_rank,
                 'newRank': new_rank,
+            },
+            order={'timestamp': 'desc'}
+        )
+        
+        if exact_duplicate:
+            time_diff = (now - exact_duplicate.timestamp).total_seconds() / 60
+            if time_diff < window_minutes:
+                print(f"🔁 Skipping duplicate {event_type} for {username} ({old_rank}→{new_rank}) - last logged {time_diff:.1f}m ago")
+                return None
+            
+        recent_event = await prisma.clanlog.find_first(
+            where={
+                'username': username,
+                'eventType': event_type,
                 'timestamp': {'gte': cutoff},
             },
             order={'timestamp': 'desc'}
         )
         
-        if existing:
-            print(f"🔁 Skipping duplicate {event_type} for {username} ({old_rank}→{new_rank}) within {window_minutes}m")
+        if recent_event and recent_event.oldRank == old_rank and recent_event.newRank == new_rank:
+            print(f"🔁 Skipping duplicate {event_type} for {username} ({old_rank}→{new_rank}) within {window_minutes}m window")
             return None
             
+        print(f"📝 Logging new {event_type} for {username} ({old_rank}→{new_rank})")
         return await prisma.clanlog.create(data={
             'username': username,
             'eventType': event_type,
@@ -249,6 +264,8 @@ async def log_clan_event_if_new(username: str, event_type: str, old_rank: str = 
         })
     except Exception as e:
         print(f"⚠️ Failed to log clan event for {username}: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 

@@ -10,8 +10,8 @@ async def cleanup_clan_log_duplicates(conn):
     WITH dupes AS (
       SELECT id,
              ROW_NUMBER() OVER (
-               PARTITION BY username, event_type, old_rank, new_rank, DATE_TRUNC('minute', timestamp)
-               ORDER BY id
+               PARTITION BY username, event_type, old_rank, new_rank
+               ORDER BY timestamp DESC, id DESC
              ) AS rn
       FROM clan_log
     )
@@ -21,8 +21,9 @@ async def cleanup_clan_log_duplicates(conn):
       AND dupes.rn > 1;
     '''
     async with conn.cursor() as cur:
-        await cur.execute(sql)
-        print(f"🗑️ Removed duplicate clan log entries")
+        result = await cur.execute(sql)
+        rows_affected = cur.rowcount if hasattr(cur, 'rowcount') else 0
+        print(f"🗑️ Removed {rows_affected} duplicate clan log entries")
 
 
 DATABASE_URL = os.getenv("DATABASE_URL")
