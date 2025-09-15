@@ -3144,6 +3144,8 @@ async def check_clan_members(response: Response):
             "message": str(e),
             "db_count": 0,
             "expected_members": 0
+        }
+
 
 @app.get("/api/admin/trigger-daily-refresh")
 async def trigger_daily_refresh(response: Response):
@@ -3179,8 +3181,6 @@ async def trigger_daily_refresh(response: Response):
             "message": str(e),
             "db_count": 0,
             "expected_members": 245
-        }
-
         }
 
 
