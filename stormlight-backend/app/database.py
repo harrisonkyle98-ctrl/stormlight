@@ -155,7 +155,7 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
             await asyncio.sleep(batch_delay_secs)
 
     from datetime import datetime
-    max_minutes = 10  # Reduced per cycle since we have multiple cycles
+    max_minutes = 30  # Increased to allow cycles to complete under API throttling
     start_time = datetime.now()
     
     while failed_users:
@@ -195,66 +195,64 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
     
     return succeeded, len(failed_users)
 
-async def collect_daily_player_stats_multi_cycle():
-    """Collect daily snapshots of all clan members using multiple cycles to respect API limits."""
+async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 50, cycle_delay_minutes: int = 3):
+    """Collect daily snapshots of all clan members using persistent multi-cycle approach."""
     import asyncio
     from datetime import datetime
     
-    print(f"🚀 [Multi-Cycle] Starting multi-cycle snapshot collection at {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}")
+    print(f"🚀 [Multi-Cycle] Starting multi-cycle snapshot collection at {datetime.utcnow().isoformat()}Z")
     
     try:
-        print(f"🔍 [Multi-Cycle] Using Prisma to get clan members (bypassing hanging fetch_clan_members)")
-        
         try:
             from .main import prisma
         except ImportError:
             from main import prisma
         
         db_members = await prisma.clanmember.find_many()
-        usernames = [member.username for member in db_members if member.username]
-        print(f"🔍 [Multi-Cycle] Found {len(usernames)} clan members in database")
+        all_usernames = [m.username for m in db_members if m.username]
+        expected_members = len(all_usernames)
+        print(f"📋 [Multi-Cycle] Members to process today: {expected_members}")
         
-        if not usernames:
+        if not all_usernames:
             print(f"❌ [Multi-Cycle] No clan members found in database")
             return 0, 0
         
-        total_members = len(usernames)
-        members_per_cycle = 60  # ~60 members per cycle
-        cycles = [usernames[i:i + members_per_cycle] for i in range(0, len(usernames), members_per_cycle)]
-        total_cycles = len(cycles)
+        conn = await get_db_connection()
+        async with conn:
+            done = await get_today_snapshot_usernames(conn)
+        remaining = filter_remaining_usernames(all_usernames, done)
+        print(f"📊 [Multi-Cycle] Already done today: {len(done)}; remaining: {len(remaining)}")
         
-        print(f"📋 [Multi-Cycle] Breaking {total_members} members into {total_cycles} cycles of ~{members_per_cycle} members each")
+        cycle_num = 0
+        start = datetime.utcnow()
         
-        total_succeeded = 0
-        total_failed = 0
-        cycle_delay_minutes = 3  # 3 minutes between cycles
-        
-        for cycle_idx, cycle_usernames in enumerate(cycles):
-            cycle_num = cycle_idx + 1
-            print(f"🔄 [Multi-Cycle] Starting cycle {cycle_num}/{total_cycles} with {len(cycle_usernames)} members")
+        while remaining:
+            cycle_num += 1
+            chunk = remaining[:members_per_cycle]
+            total_cycles_est = max(1, (len(remaining) + members_per_cycle - 1) // members_per_cycle)
+            print(f"🔄 [Multi-Cycle] Cycle {cycle_num}/{total_cycles_est} starting with {len(chunk)} members (remaining={len(remaining)})")
             
             try:
-                print(f"🔍 [Multi-Cycle] About to call collect_daily_player_stats_cycle for cycle {cycle_num}")
-                succeeded, failed = await collect_daily_player_stats_cycle(cycle_usernames, cycle_num, total_cycles)
-                print(f"🔍 [Multi-Cycle] collect_daily_player_stats_cycle returned: succeeded={succeeded}, failed={failed}")
-                
-                total_succeeded += succeeded
-                total_failed += failed
-                
-                print(f"✅ [Multi-Cycle] Cycle {cycle_num} complete: {succeeded} succeeded, {failed} failed")
-                
-                if cycle_num < total_cycles:
-                    print(f"⏳ [Multi-Cycle] Waiting {cycle_delay_minutes} minutes before next cycle...")
-                    await asyncio.sleep(cycle_delay_minutes * 60)
-                    
+                succeeded, failed = await collect_daily_player_stats_cycle(chunk, cycle_num, total_cycles_est)
+                print(f"✅ [Multi-Cycle] Cycle {cycle_num} finished: {succeeded} succeeded, {failed} failed (chunk={len(chunk)})")
             except Exception as e:
-                print(f"❌ [Multi-Cycle] Error in cycle {cycle_num}: {e}")
+                print(f"❌ [Multi-Cycle] Cycle {cycle_num} crashed: {e}")
                 import traceback
                 traceback.print_exc()
-                continue
+            
+            conn = await get_db_connection()
+            async with conn:
+                done = await get_today_snapshot_usernames(conn)
+            remaining = filter_remaining_usernames(all_usernames, done)
+            print(f"📊 [Multi-Cycle] Progress: done={len(done)}/{expected_members}; remaining={len(remaining)}")
+            
+            if remaining:
+                print(f"⏳ [Multi-Cycle] Waiting {cycle_delay_minutes} minutes before next cycle...")
+                await asyncio.sleep(cycle_delay_minutes * 60)
         
-        print(f"🎉 [Multi-Cycle] All cycles complete! Total: {total_succeeded} succeeded, {total_failed} failed out of {total_members} members")
-        return total_succeeded, total_failed
+        dur = (datetime.utcnow() - start).total_seconds()
+        print(f"🎉 [Multi-Cycle] Complete: {len(done)}/{expected_members} members have a snapshot today in {dur/60:.1f} minutes")
+        return len(done), expected_members - len(done)
         
     except Exception as e:
         print(f"❌ [Multi-Cycle] Critical error in multi-cycle collection: {e}")
@@ -459,6 +457,20 @@ async def get_snapshot_json_on_or_before(conn, username: str, target_date: date)
     
     rows = await get_snapshot_rows_on_or_before(conn, username, target_date)
     return {r[0]: {'level': r[1], 'xp': r[2], 'rank': r[3]} for r in rows} if rows else None
+
+async def get_today_snapshot_usernames(conn) -> set[str]:
+    """Get set of usernames that already have snapshots for today."""
+    cur = await conn.execute("""
+        SELECT DISTINCT username
+        FROM player_daily_snapshots
+        WHERE snapshot_date = CURRENT_DATE
+    """)
+    rows = await cur.fetchall()
+    return {r[0] for r in rows if r and r[0]}
+
+def filter_remaining_usernames(all_usernames: list[str], done: set[str]) -> list[str]:
+    """Filter out usernames that already have snapshots today."""
+    return [u for u in all_usernames if u and u not in done]
 
 async def get_snapshot_json_on_date(conn, username: str, snap_date: date) -> dict | None:
     """Get consolidated JSON snapshot for exact date with legacy fallback"""

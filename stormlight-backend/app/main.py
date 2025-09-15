@@ -2685,13 +2685,28 @@ async def trigger_snapshots_get():
         print("[Trigger] TEMPORARY: GET multi-cycle snapshot collection triggered without auth")
         async def run():
             try:
-                from .database import collect_daily_player_stats_multi_cycle
-            except ImportError:
-                from database import collect_daily_player_stats_multi_cycle
-            await collect_daily_player_stats_multi_cycle()
+                lock = getattr(app.state, "snapshot_lock", None)
+                if lock and lock.locked():
+                    print("[Manual Trigger] Another snapshot run is in progress; skipping.")
+                    return
+                
+                try:
+                    from .database import collect_daily_player_stats_multi_cycle
+                except ImportError:
+                    from database import collect_daily_player_stats_multi_cycle
+                
+                if lock:
+                    async with lock:
+                        await collect_daily_player_stats_multi_cycle()
+                else:
+                    await collect_daily_player_stats_multi_cycle()
+            except Exception as e:
+                print(f"❌ [Manual Trigger] Error in snapshot collection: {e}")
+                import traceback
+                traceback.print_exc()
         asyncio.create_task(run())
         return {"status": "queued", 
-                "message": "Started multi-cycle collection (~60 members x 4–5 cycles, 3min delays). Check /api/admin/check-snapshots."}
+                "message": "Started multi-cycle collection (~50 members x 5 cycles, 3min delays). Check /api/admin/check-snapshots."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -2788,6 +2803,8 @@ async def startup_event():
         
         await init_database()
         
+        app.state.snapshot_lock = asyncio.Lock()
+        
         async def daily_scheduler():
             while True:
                 try:
@@ -2802,7 +2819,8 @@ async def startup_event():
                     await asyncio.sleep(max(0, sleep_seconds))
                     
                     print(f"[Scheduler] 🚀 Starting scheduled multi-cycle snapshot collection at {datetime.now(timezone.utc).isoformat()}")
-                    await collect_daily_player_stats_multi_cycle()
+                    async with app.state.snapshot_lock:
+                        await collect_daily_player_stats_multi_cycle()
                     
                     try:
                         await sync_clan_members_to_database()
