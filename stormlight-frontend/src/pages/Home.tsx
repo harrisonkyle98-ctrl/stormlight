@@ -9,6 +9,26 @@ import { fetchClanMembers, getGradientStyle } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
 import { usernameToUrl } from '../utils/urlUtils'
 
+const getRankIcon = (rank: string): string => {
+  const rankImageMap: { [key: string]: string } = {
+    'Owner': 'owner.png',
+    'Deputy Owner': 'depowner.png',
+    'Overseer': 'overseer.png',
+    'Coordinator': 'coordinator.png',
+    'Organiser': 'organizer.png',
+    'Admin': 'admin.png',
+    'General': 'general.png',
+    'Captain': 'captain.png',
+    'Lieutenant': 'lieutenant.png',
+    'Sergeant': 'sergeant.png',
+    'Corporal': 'corporal.png',
+    'Recruit': 'recruit.png'
+  }
+  
+  const imageName = rankImageMap[rank]
+  return imageName ? `/assets/ranks/${imageName}` : ''
+}
+
 interface ClanStats {
   members: string[]
   clan_name: string
@@ -366,11 +386,29 @@ const Home = () => {
                 <div key={entry.id} className="p-3 bg-slate-700/50 rounded-lg">
                   <div className="flex items-center justify-center space-x-2 mb-1">
                     <div className="flex-shrink-0">
-                      {entry.event_type === 'join' && <Badge className="bg-green-500 text-white">Joined</Badge>}
-                      {entry.event_type === 'leave' && <Badge className="bg-red-500 text-white">Left</Badge>}
-                      {entry.event_type === 'rank_up' && <Badge className="bg-green-500 text-white">Promoted</Badge>}
-                      {entry.event_type === 'rank_down' && <Badge className="bg-red-500 text-white">Demoted</Badge>}
-                      {entry.event_type === 'name_change' && <Badge className="bg-yellow-500 text-white">Name</Badge>}
+                      {entry.event_type === 'join' && <Badge className="bg-green-500 text-white hover:bg-green-500">Joined</Badge>}
+                      {entry.event_type === 'leave' && <Badge className="bg-red-500 text-white hover:bg-red-500">Left</Badge>}
+                      {entry.event_type === 'rank_up' && (
+                        <Badge className="bg-green-500 text-white hover:bg-green-500 flex items-center gap-1">
+                          <img 
+                            src={getRankIcon(entry.new_rank || '')} 
+                            alt={entry.new_rank} 
+                            className="w-3 h-3"
+                          />
+                          Promoted
+                        </Badge>
+                      )}
+                      {entry.event_type === 'rank_down' && (
+                        <Badge className="bg-red-500 text-white hover:bg-red-500 flex items-center gap-1">
+                          <img 
+                            src={getRankIcon(entry.old_rank || '')} 
+                            alt={entry.old_rank} 
+                            className="w-3 h-3"
+                          />
+                          Demoted
+                        </Badge>
+                      )}
+                      {entry.event_type === 'name_change' && <Badge className="bg-yellow-500 text-white hover:bg-yellow-500">Name</Badge>}
                     </div>
                     <Link 
                       to={`/clan-member/${usernameToUrl(entry.username)}`}
