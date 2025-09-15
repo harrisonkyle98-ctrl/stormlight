@@ -420,7 +420,22 @@ const Home = () => {
                     <span className="text-slate-300">
                       {entry.event_type === 'join' && `joined the clan as ${entry.new_rank}`}
                       {entry.event_type === 'leave' && `left the clan`}
-                      {entry.event_type === 'rank_up' && `promoted from ${entry.old_rank} to ${entry.new_rank}`}
+                      {entry.event_type === 'rank_up' && (
+                        <span className="flex items-center gap-1">
+                          promoted from 
+                          <img src={getRankIcon(entry.old_rank || '')} alt={entry.old_rank} className="w-4 h-4 mx-1" />
+                          to 
+                          <img src={getRankIcon(entry.new_rank || '')} alt={entry.new_rank} className="w-4 h-4 mx-1" />
+                        </span>
+                      )}
+                      {entry.event_type === 'rank_down' && (
+                        <span className="flex items-center gap-1">
+                          demoted from 
+                          <img src={getRankIcon(entry.old_rank || '')} alt={entry.old_rank} className="w-4 h-4 mx-1" />
+                          to 
+                          <img src={getRankIcon(entry.new_rank || '')} alt={entry.new_rank} className="w-4 h-4 mx-1" />
+                        </span>
+                      )}
                       {entry.event_type === 'name_change' && `${entry.old_rank} changed their name to ${entry.username}`}
                     </span>
                   </div>
