@@ -2826,27 +2826,45 @@ async def daily_clan_member_refresh():
             print("🗑️ Truncating clan_members table...")
             await prisma.clanmember.delete_many()
             
-            print("📥 Inserting all members into database...")
+            print("📥 Processing all members with individual upserts...")
             print(f"🔍 Sample member data: {members_data[0] if members_data else 'None'}")
             
-            try:
-                result = await prisma.clanmember.create_many(data=members_data)
-                print(f"✅ create_many result: {result}")
-            except Exception as create_error:
-                print(f"❌ create_many failed: {create_error}")
-                print(f"❌ Error type: {type(create_error)}")
-                import traceback
-                traceback.print_exc()
-                
-                print("🔍 Testing single member insert...")
+            processed_count = 0
+            for member_data in members_data:
                 try:
-                    single_result = await prisma.clanmember.create(data=members_data[0])
-                    print(f"✅ Single insert successful: {single_result.username}")
-                except Exception as single_error:
-                    print(f"❌ Single insert also failed: {single_error}")
-                    import traceback
-                    traceback.print_exc()
-                return
+                    username = member_data['username']
+                    
+                    minimal_data = {
+                        'username': username,
+                        'displayName': member_data.get('displayName'),
+                        'clanRank': member_data['clanRank'],
+                        'totalXp': member_data['totalXp'],
+                        'totalLevel': member_data['totalLevel'],
+                        'combatLevel': member_data['combatLevel'],
+                        'questPoints': member_data['questPoints'],
+                        'kills': member_data['kills'],
+                        'lastUpdated': member_data['lastUpdated'],
+                    }
+                    
+                    await prisma.clanmember.upsert(
+                        where={'username': username},
+                        data={
+                            'update': {
+                                'clanRank': minimal_data['clanRank'],
+                                'totalXp': minimal_data['totalXp'],
+                                'kills': minimal_data['kills'],
+                                'lastUpdated': minimal_data['lastUpdated'],
+                            },
+                            'create': minimal_data
+                        }
+                    )
+                    
+                    processed_count += 1
+                    
+                except Exception as e:
+                    print(f"❌ Failed to upsert member {member_data.get('username', 'unknown')}: {e}")
+            
+            print(f"✅ Processed {processed_count} members successfully")
             
             final_count = await prisma.clanmember.count()
             print(f"✅ Daily clan refresh completed: {final_count} members in database")
