@@ -2805,7 +2805,7 @@ async def daily_clan_member_refresh():
                         from datetime import datetime
                         members_data.append({
                             'username': username,
-                            'displayName': username,
+                            'displayName': None,
                             'clanRank': clan_rank,
                             'totalXp': total_xp,
                             'totalLevel': 0,
