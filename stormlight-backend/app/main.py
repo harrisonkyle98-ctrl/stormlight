@@ -2836,6 +2836,35 @@ async def daily_clan_member_refresh():
         import traceback
         traceback.print_exc()
 
+@app.get("/api/admin/test-daily-refresh")
+async def test_daily_refresh(response: Response):
+    """Test the daily clan member refresh logic manually"""
+    response.headers["Cache-Control"] = "no-store"
+    
+    try:
+        await daily_clan_member_refresh()
+        
+        if not PRISMA_AVAILABLE or not prisma:
+            return {
+                "status": "error",
+                "message": "Database client not available after refresh",
+                "db_count": 0
+            }
+        
+        db_count = await prisma.clanmember.count()
+        return {
+            "status": "success", 
+            "message": "Daily refresh test completed",
+            "db_count": db_count
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e),
+            "db_count": 0
+        }
+
 @app.get("/api/admin/check-clan-members")
 async def check_clan_members(response: Response):
     """Check current clan members database state"""
