@@ -2803,8 +2803,9 @@ async def trigger_clan_members_get(debug: bool = False):
         return {"status": "error", "message": str(e), "expected_members": EXPECTED_ROSTER_COUNT}
 
 async def trigger_clan_members_impl():
+    """Lightweight clan member roster sync using existing proven logic"""
     try:
-        global prisma, PRISMA_AVAILABLE, clan_members_cache
+        global prisma, PRISMA_AVAILABLE
         if not PRISMA_AVAILABLE or not prisma:
             return {
                 "status": "error",
@@ -2815,21 +2816,11 @@ async def trigger_clan_members_impl():
             }
 
         try:
-            import asyncio
-            count_task = asyncio.wait_for(prisma.clanmember.count(), timeout=5.0)
-            before_count = await count_task
-        except asyncio.TimeoutError:
-            return {
-                "status": "error", 
-                "message": "Database connection timeout",
-                "members_fetched": 0,
-                "members_updated": 0,
-                "expected_members": 245
-            }
-        except Exception as conn_error:
+            before_count = await prisma.clanmember.count()
+        except Exception as e:
             return {
                 "status": "error",
-                "message": f"Database connection failed: {str(conn_error)}",
+                "message": f"Database connection failed: {str(e)}",
                 "members_fetched": 0,
                 "members_updated": 0,
                 "expected_members": 245
@@ -2840,19 +2831,9 @@ async def trigger_clan_members_impl():
         except Exception:
             pass
 
-        try:
-            fetch_task = asyncio.wait_for(fetch_clan_members(), timeout=10.0)
-            roster = await fetch_task
-        except asyncio.TimeoutError:
-            return {
-                "status": "error",
-                "message": "RuneScape API timeout",
-                "members_fetched": 0,
-                "members_updated": 0,
-                "expected_members": 245
-            }
-
+        roster = await fetch_clan_members()
         fetched = len(roster)
+        
         if not roster:
             return {
                 "status": "error",
@@ -2862,24 +2843,41 @@ async def trigger_clan_members_impl():
                 "expected_members": 245
             }
 
-        from datetime import datetime as _dt
-        now = _dt.now()
-        processed = 0
-        errors = []
-        
-        for i in range(len(roster)):
-            try:
-                m = roster[i]
-                username = (m.get("username") or "").strip()
-                if not username:
-                    continue
+        try:
+            await sync_clan_members_to_database_with_queue()
+            
+            total_after = await prisma.clanmember.count()
+            members_updated = total_after - before_count + len(failed_member_queue)
+            
+            return {
+                "status": "success",
+                "members_fetched": fetched,
+                "members_updated": members_updated,
+                "before_count": before_count,
+                "total_after": total_after,
+                "expected_members": 245,
+                "failed_queue_size": len(failed_member_queue)
+            }
+            
+        except Exception as sync_error:
+            print(f"⚠️ Full sync failed, falling back to roster-only sync: {sync_error}")
+            
+            from datetime import datetime as _dt
+            now = _dt.now()
+            processed = 0
+            errors = []
+            
+            for member in roster:
+                try:
+                    username = (member.get("username") or "").strip()
+                    if not username:
+                        continue
 
-                total_xp = int(m.get("total_xp", 0) or 0)
-                kills = int(m.get("kills", 0) or 0)
-                clan_rank = m.get("clan_rank") or "Recruit"
+                    total_xp = int(member.get("total_xp", 0) or 0)
+                    kills = int(member.get("kills", 0) or 0)
+                    clan_rank = member.get("clan_rank") or "Recruit"
 
-                upsert_task = asyncio.wait_for(
-                    prisma.clanmember.upsert(
+                    await prisma.clanmember.upsert(
                         where={"username": username},
                         data={
                             "update": {
@@ -2897,38 +2895,33 @@ async def trigger_clan_members_impl():
                                 "combatLevel": 0,
                                 "questPoints": 0,
                                 "kills": kills,
+                                "stats": None,
+                                "questData": None,
                                 "lastUpdated": now,
                             },
                         },
-                    ),
-                    timeout=2.0
-                )
-                await upsert_task
-                processed += 1
-                
-            except asyncio.TimeoutError:
-                errors.append({"username": m.get("username"), "error": "upsert timeout"})
-                break  # Stop processing on timeout
-            except Exception as e:
-                errors.append({"username": m.get("username"), "error": str(e)})
-                if len(errors) > 10:  # Stop if too many errors
-                    break
+                    )
+                    processed += 1
+                    
+                except Exception as e:
+                    errors.append({"username": member.get("username"), "error": str(e)})
+                    if len(errors) > 10:
+                        break
 
-        try:
-            after_task = asyncio.wait_for(prisma.clanmember.count(), timeout=3.0)
-            total_after = await after_task
-        except:
-            total_after = before_count + processed
-
-        return {
-            "status": "success",
-            "members_fetched": fetched,
-            "members_updated": processed,
-            "before_count": before_count,
-            "total_after": total_after,
-            "expected_members": 245,
-            "errors": errors[:3] if errors else []
-        }
+            total_after = await prisma.clanmember.count()
+            
+            return {
+                "status": "partial_success",
+                "message": "Full sync failed, completed roster-only sync",
+                "members_fetched": fetched,
+                "members_updated": processed,
+                "before_count": before_count,
+                "total_after": total_after,
+                "expected_members": 245,
+                "errors": errors[:3] if errors else [],
+                "sync_error": str(sync_error)
+            }
+            
     except Exception as e:
         return {
             "status": "error",
