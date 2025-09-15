@@ -82,6 +82,8 @@ security = HTTPBearer()
 users_db = {}
 clan_members_db = {}
 
+EXPECTED_ROSTER_COUNT = 245
+
 RUNEMETRICS_SKILL_MAPPING = {
     0: 'attack',
     1: 'defence',
@@ -2775,48 +2777,54 @@ async def trigger_clan_members_post(user_id: str = Depends(verify_admin_access))
 @app.get("/api/admin/trigger-clan-members")
 async def trigger_clan_members_get(debug: bool = False):
     """Manual trigger to refresh clan_members table from RuneScape roster (no auth required)"""
-    if debug:
-        try:
-            roster = await fetch_clan_members()
-            existing_count = await prisma.clanmember.count() if PRISMA_AVAILABLE and prisma else 0
-            
-            return {
-                'debug_mode': True,
-                'fetched_from_api': len(roster),
-                'existing_in_db': existing_count,
-                'prisma_available': PRISMA_AVAILABLE,
-                'sample_member': roster[0] if roster else None,
-                'note': 'Debug mode - no database operations performed'
-            }
-        except Exception as e:
-            return {
-                'debug_mode': True,
-                'error': str(e),
-                'note': 'Debug mode failed'
-            }
-    
-    result = await trigger_clan_members_impl()
-    return result
+    try:
+        if debug:
+            try:
+                roster = await fetch_clan_members()
+                existing_count = await prisma.clanmember.count() if PRISMA_AVAILABLE and prisma else 0
+                
+                return {
+                    'debug_mode': True,
+                    'fetched_from_api': len(roster),
+                    'existing_in_db': existing_count,
+                    'prisma_available': PRISMA_AVAILABLE,
+                    'sample_member': roster[0] if roster else None,
+                    'note': 'Debug mode - no database operations performed'
+                }
+            except Exception as e:
+                return {
+                    'debug_mode': True,
+                    'error': str(e),
+                    'note': 'Debug mode failed'
+                }
+        
+        return await trigger_clan_members_impl()
+    except Exception as e:
+        return {"status": "error", "message": str(e), "expected_members": EXPECTED_ROSTER_COUNT}
 
 async def trigger_clan_members_impl():
     try:
-        global prisma, PRISMA_AVAILABLE
-        
-        if not PRISMA_AVAILABLE:
-            raise HTTPException(status_code=503, detail="Prisma not available")
-            
-        if not prisma:
-            raise HTTPException(status_code=503, detail="Prisma instance not initialized")
+        global prisma, PRISMA_AVAILABLE, clan_members_cache
+        if not PRISMA_AVAILABLE or not prisma:
+            return {
+                "status": "error",
+                "message": "Database client not available",
+                "members_fetched": 0,
+                "members_updated": 0,
+                "expected_members": EXPECTED_ROSTER_COUNT
+            }
 
-        # Test the connection
         try:
-            test_count = await prisma.clanmember.count()
-            print(f"🔍 Database connection test successful, current count: {test_count}")
+            _ = await prisma.clanmember.count()
         except Exception as conn_error:
-            print(f"❌ Database connection test failed: {conn_error}")
-            raise HTTPException(status_code=503, detail=f"Database connection failed: {conn_error}")
+            return {
+                "status": "error",
+                "message": f"Database connection failed: {str(conn_error)}",
+                "members_fetched": 0,
+                "members_updated": 0,
+                "expected_members": EXPECTED_ROSTER_COUNT
+            }
 
-        global clan_members_cache
         try:
             clan_members_cache['timestamp'] = 0
         except Exception:
@@ -2825,149 +2833,92 @@ async def trigger_clan_members_impl():
         roster = await fetch_clan_members()
         fetched = len(roster)
 
-        created = 0
-        updated = 0
-        processed = 0
-
-        try:
-            before_count = await prisma.clanmember.count()
-        except Exception:
-            before_count = None
+        existing_members = await prisma.clanmember.find_many(select={"username": True})
+        existing_usernames = {m.username for m in existing_members}
 
         from datetime import datetime as _dt
         now = _dt.now()
 
-        print(f"🔄 Using proven sync method that works for hourly scheduler...")
-        
-        existing_usernames = set()
-        try:
-            existing_members = await prisma.clanmember.find_many(select={'username': True})
-            existing_usernames = {m.username for m in existing_members}
-            print(f"🔍 Found {len(existing_usernames)} existing members in database")
-        except Exception as e:
-            print(f"⚠️ Could not fetch existing members: {e}")
-        
-        print(f"🔍 Using proven sync method with timeout protection...")
-        
-        try:
-            await asyncio.wait_for(
-                sync_clan_members_to_database_with_queue(),
-                timeout=60.0  # 60 second timeout for HTTP context
-            )
-            print(f"✅ Sync method completed successfully within timeout")
-            
-            processed = fetched
-            created = 0
-            updated = 0
-            
-            for member in roster:
-                username = member.get('username', '').strip()
-                if username:
-                    if username in existing_usernames:
-                        updated += 1
-                    else:
-                        created += 1
-                        
-        except asyncio.TimeoutError:
-            print(f"⚠️ Sync method timed out after 60 seconds - falling back to direct upsert")
-            # Fallback to direct upsert without individual API calls
-            processed = 0
-            created = 0
-            updated = 0
-            
-            for i, member in enumerate(roster):
-                try:
-                    username = member.get('username', '').strip()
-                    if not username:
-                        continue
-                    
-                    total_xp = member.get('total_xp', 0) or 0
-                    if isinstance(total_xp, str):
-                        total_xp = int(total_xp) if total_xp.isdigit() else 0
-                    elif not isinstance(total_xp, int):
-                        total_xp = int(total_xp) if total_xp else 0
-                    
-                    kills = member.get('kills', 0) or 0
-                    if isinstance(kills, str):
-                        kills = int(kills) if kills.isdigit() else 0
-                    elif not isinstance(kills, int):
-                        kills = int(kills) if kills else 0
-                    
-                    clan_rank = member.get('clan_rank') or 'Recruit'
-                    
-                    result = await prisma.clanmember.upsert(
-                        where={'username': username},
-                        data={
-                            'update': {
-                                'clanRank': clan_rank,
-                                'totalXp': total_xp,
-                                'kills': kills,
-                                'lastUpdated': now,
-                            },
-                            'create': {
-                                'username': username,
-                                'displayName': username,
-                                'clanRank': clan_rank,
-                                'totalXp': total_xp,
-                                'totalLevel': 0,
-                                'combatLevel': 0,
-                                'questPoints': 0,
-                                'kills': kills,
-                                'stats': None,
-                                'questData': None,
-                                'lastUpdated': now,
-                            }
-                        }
-                    )
-                    
-                    if username in existing_usernames:
-                        updated += 1
-                    else:
-                        created += 1
-                    
-                    processed += 1
-                    
-                except Exception as e:
-                    print(f"❌ Error processing member {i+1}: {e}")
+        processed = 0
+        created = 0
+        updated = 0
+        errors = []
+
+        for i, m in enumerate(roster):
+            try:
+                username = (m.get("username") or "").strip()
+                if not username:
                     continue
-        
-        print(f"✅ Sync completed: {processed} processed, {created} created, {updated} updated")
+
+                total_xp = m.get("total_xp", 0) or 0
+                if isinstance(total_xp, str):
+                    total_xp = int(total_xp) if total_xp.isdigit() else 0
+                else:
+                    total_xp = int(total_xp)
+
+                kills = m.get("kills", 0) or 0
+                if isinstance(kills, str):
+                    kills = int(kills) if kills.isdigit() else 0
+                else:
+                    kills = int(kills)
+
+                clan_rank = m.get("clan_rank") or "Recruit"
+
+                await prisma.clanmember.upsert(
+                    where={"username": username},
+                    data={
+                        "update": {
+                            "clanRank": clan_rank,
+                            "totalXp": total_xp,
+                            "kills": kills,
+                            "lastUpdated": now,
+                        },
+                        "create": {
+                            "username": username,
+                            "displayName": username,
+                            "clanRank": clan_rank,
+                            "totalXp": total_xp,
+                            "totalLevel": 0,
+                            "combatLevel": 0,
+                            "questPoints": 0,
+                            "kills": kills,
+                            "stats": None,
+                            "questData": None,
+                            "lastUpdated": now,
+                        },
+                    },
+                )
+
+                if username in existing_usernames:
+                    updated += 1
+                else:
+                    created += 1
+
+                processed += 1
+            except Exception as e:
+                errors.append({"index": i, "username": m.get("username"), "error": str(e)})
 
         total_after = await prisma.clanmember.count()
-        print(f"✅ Clan member refresh complete: {processed} processed, {created} created, {updated} updated")
-        
-        if processed == 0 and fetched > 0:
-            print("⚠️ No members processed despite fetching data - falling back to SQL sync method")
-            try:
-                await sync_clan_members_to_database_with_queue()
-                total_after = await prisma.clanmember.count()
-                return {
-                    'status': 'ok_fallback',
-                    'fetched': fetched,
-                    'processed': 'fallback_sync',
-                    'created': 'unknown',
-                    'updated': 'unknown', 
-                    'before_count': before_count,
-                    'total_after': total_after,
-                    'note': 'Used fallback SQL sync method due to Prisma upsert failures'
-                }
-            except Exception as fallback_error:
-                print(f"❌ Fallback sync also failed: {fallback_error}")
-        
+
         return {
-            'status': 'ok',
-            'fetched': fetched,
-            'processed': processed,
-            'created': created,
-            'updated': updated,
-            'before_count': before_count,
-            'total_after': total_after,
+            "status": "success",
+            "members_fetched": fetched,
+            "members_updated": processed,  # created + updated
+            "created": created,
+            "updated": updated,
+            "before_count": len(existing_usernames),
+            "total_after": total_after,
+            "expected_members": EXPECTED_ROSTER_COUNT,
+            "errors": errors[:5],  # include a sample of any failures without bloating response
         }
-    except HTTPException:
-        raise
     except Exception as e:
-        print(f"❌ Error in trigger-clan-members: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return {
+            "status": "error",
+            "message": str(e),
+            "members_fetched": 0,
+            "members_updated": 0,
+            "expected_members": EXPECTED_ROSTER_COUNT
+        }
 
 @app.on_event("startup")
 async def startup_event():
