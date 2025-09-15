@@ -2772,157 +2772,53 @@ async def trigger_snapshots_get():
 @app.get("/api/admin/refresh-clan-members")
 async def refresh_clan_members(response: Response):
     """Refresh clan_members table from RuneScape roster using existing sync logic"""
-    from datetime import datetime as dt
-    import time
-    
     response.headers["Cache-Control"] = "no-store"
-    start_time = time.time()
     
     try:
         if not PRISMA_AVAILABLE or not prisma:
             return {
                 "status": "error",
                 "message": "Database client not available",
-                "members_fetched": 0,
-                "members_upserted": 0,
                 "db_count_after": 0,
-                "failures": [],
-                "took_seconds": int(time.time() - start_time)
+                "expected_members": 245,
+                "failures": []
+            }
+
+        await sync_clan_members_to_database_with_queue()
+        
+        try:
+            db_count_after = await prisma.clanmember.count()
+        except Exception as e:
+            return {
+                "status": "error", 
+                "message": f"Failed to count database members after sync: {str(e)}",
+                "db_count_after": 0,
+                "expected_members": 245,
+                "failures": []
             }
 
         try:
             roster = await fetch_clan_members()
-            members_fetched = len(roster)
-        except Exception as e:
-            return {
-                "status": "error",
-                "message": f"Failed to fetch clan roster: {str(e)}",
-                "members_fetched": 0,
-                "members_upserted": 0,
-                "db_count_after": 0,
-                "failures": [],
-                "took_seconds": int(time.time() - start_time)
-            }
-
-        if not roster:
-            return {
-                "status": "error",
-                "message": "No clan members fetched from API",
-                "members_fetched": 0,
-                "members_upserted": 0,
-                "db_count_after": 0,
-                "failures": [],
-                "took_seconds": int(time.time() - start_time)
-            }
-
-        members_upserted = 0
-        failures = []
-        
-        for i, member_data in enumerate(roster):
-            username = member_data.get('username', '').strip()
-            if not username:
-                continue
-                
-            if i > 0:
-                await asyncio.sleep(random.uniform(8.0, 12.0))
-            
-            max_retries = 3
-            retry_delays = [5, 10, 20]
-            success = False
-            
-            for retry in range(max_retries):
-                try:
-                    stats_data = await fetch_player_stats(username, max_retries=2)
-                    
-                    quest_data = None
-                    try:
-                        async with httpx.AsyncClient() as client:
-                            profile_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={username}"
-                            profile_response = await client.get(profile_url)
-                            
-                            if profile_response.status_code == 200:
-                                profile_data = profile_response.json()
-                                quest_data = {
-                                    'quest_summary': {
-                                        'questsstarted': profile_data.get('questsstarted', 0),
-                                        'questscomplete': profile_data.get('questscomplete', 0),
-                                        'questsnotstarted': profile_data.get('questsnotstarted', 0)
-                                    }
-                                }
-                    except Exception:
-                        quest_data = None
-                    
-                    if stats_data is None:
-                        raise Exception("Failed to fetch player stats")
-                    
-                    badges = []
-                    try:
-                        from .badge_utils import compute_member_badges
-                        badges = compute_member_badges(stats_data, quest_data, member_data['clan_rank'], username)
-                    except Exception:
-                        badges = []
-                    
-                    clan_member_data = {
-                        'username': username,
-                        'displayName': member_data.get('display_name', username),
-                        'clanRank': member_data['clan_rank'],
-                        'totalXp': member_data['total_xp'],
-                        'totalLevel': stats_data.get('total_level', 0) if stats_data else 0,
-                        'combatLevel': stats_data.get('combat_level', 0) if stats_data else 0,
-                        'questPoints': stats_data.get('quest_points', 0) if stats_data else 0,
-                        'kills': member_data.get('kills', 0),
-                        'stats': json.dumps(stats_data.get('stats')) if stats_data and stats_data.get('stats') else None,
-                        'questData': json.dumps(quest_data) if quest_data else None,
-                        'badges': json.dumps(badges),
-                        'lastUpdated': dt.now()
-                    }
-                    
-                    await prisma.clanmember.upsert(
-                        where={'username': username},
-                        data={
-                            'update': clan_member_data,
-                            'create': clan_member_data
-                        }
-                    )
-                    
-                    members_upserted += 1
-                    success = True
-                    break
-                    
-                except Exception as e:
-                    if retry < max_retries - 1:
-                        print(f"⚠️ Retry {retry + 1} for {username}: {str(e)}")
-                        await asyncio.sleep(retry_delays[retry])
-                    else:
-                        failures.append(username)
-                        print(f"❌ Failed to process {username} after {max_retries} retries: {str(e)}")
-            
-            if success and (members_upserted % 10 == 0):
-                print(f"✅ Processed {members_upserted}/{len(roster)} members...")
-
-        try:
-            db_count_after = await prisma.clanmember.count()
+            expected_members = len(roster)
         except Exception:
-            db_count_after = 0
+            expected_members = 245
+
+        failures = [item['member_data']['username'] for item in failed_member_queue if 'member_data' in item and 'username' in item['member_data']]
 
         return {
             "status": "success",
-            "members_fetched": members_fetched,
-            "members_upserted": members_upserted,
             "db_count_after": db_count_after,
-            "failures": failures,
-            "took_seconds": int(time.time() - start_time)
+            "expected_members": expected_members,
+            "failures": failures
         }
         
     except Exception as e:
         return {
             "status": "error",
             "message": str(e),
-            "members_fetched": 0,
-            "members_upserted": 0,
             "db_count_after": 0,
-            "failures": [],
-            "took_seconds": int(time.time() - start_time)
+            "expected_members": 245,
+            "failures": []
         }
 
 @app.get("/api/admin/check-clan-members")
