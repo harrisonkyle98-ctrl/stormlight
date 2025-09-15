@@ -2778,7 +2778,7 @@ async def daily_clan_member_refresh():
         
         print("🔄 Fetching clan roster from RuneScape CSV API...")
         async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
-            clan_url = "https://secure.runescape.com/m=clan-hiscores/members_lite.ws?clanName=Stormlight"
+            clan_url = "https://apps.runescape.com/runemetrics/members_lite.ws?clanName=Stormlight"
             response = await client.get(clan_url)
             
             if response.status_code != 200:
@@ -2793,7 +2793,7 @@ async def daily_clan_member_refresh():
                 return
             
             members_data = []
-            for line in lines[1:]:  # Skip header
+            for line in lines[1:]:  # Skip header, process ALL lines
                 if line.strip():
                     parts = line.split(',')
                     if len(parts) >= 4:
@@ -2817,7 +2817,7 @@ async def daily_clan_member_refresh():
                             'lastUpdated': datetime.now(),
                         })
             
-            print(f"📊 Parsed {len(members_data)} members from CSV")
+            print(f"📊 Parsed {len(members_data)} members from CSV (processing ALL lines)")
             
             if not members_data:
                 print("❌ No valid member data parsed from CSV")
@@ -2826,45 +2826,22 @@ async def daily_clan_member_refresh():
             print("🗑️ Truncating clan_members table...")
             await prisma.clanmember.delete_many()
             
-            print("📥 Processing all members with individual upserts...")
-            print(f"🔍 Sample member data: {members_data[0] if members_data else 'None'}")
-            
-            processed_count = 0
-            for member_data in members_data:
-                try:
-                    username = member_data['username']
-                    
-                    minimal_data = {
-                        'username': username,
-                        'displayName': member_data.get('displayName'),
-                        'clanRank': member_data['clanRank'],
-                        'totalXp': member_data['totalXp'],
-                        'totalLevel': member_data['totalLevel'],
-                        'combatLevel': member_data['combatLevel'],
-                        'questPoints': member_data['questPoints'],
-                        'kills': member_data['kills'],
-                        'lastUpdated': member_data['lastUpdated'],
-                    }
-                    
-                    await prisma.clanmember.upsert(
-                        where={'username': username},
-                        data={
-                            'update': {
-                                'clanRank': minimal_data['clanRank'],
-                                'totalXp': minimal_data['totalXp'],
-                                'kills': minimal_data['kills'],
-                                'lastUpdated': minimal_data['lastUpdated'],
-                            },
-                            'create': minimal_data
-                        }
-                    )
-                    
-                    processed_count += 1
-                    
-                except Exception as e:
-                    print(f"❌ Failed to upsert member {member_data.get('username', 'unknown')}: {e}")
-            
-            print(f"✅ Processed {processed_count} members successfully")
+            print("📥 Inserting all members with create_many...")
+            try:
+                result = await prisma.clanmember.create_many(data=members_data)
+                print(f"✅ Inserted {result.count} members successfully")
+            except Exception as e:
+                print(f"❌ create_many failed, falling back to individual inserts: {e}")
+                
+                processed_count = 0
+                for member_data in members_data:
+                    try:
+                        await prisma.clanmember.create(data=member_data)
+                        processed_count += 1
+                    except Exception as individual_e:
+                        print(f"❌ Failed to insert member {member_data.get('username', 'unknown')}: {individual_e}")
+                
+                print(f"✅ Processed {processed_count} members with individual inserts")
             
             final_count = await prisma.clanmember.count()
             print(f"✅ Daily clan refresh completed: {final_count} members in database")
@@ -2874,52 +2851,6 @@ async def daily_clan_member_refresh():
         import traceback
         traceback.print_exc()
 
-@app.get("/api/admin/debug-csv")
-async def debug_csv(response: Response):
-    """Debug CSV parsing to see what's being filtered out"""
-    response.headers["Cache-Control"] = "no-store"
-    
-    try:
-        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
-            clan_url = "https://secure.runescape.com/m=clan-hiscores/members_lite.ws?clanName=Stormlight"
-            response_data = await client.get(clan_url)
-            
-            if response_data.status_code != 200:
-                return {"status": "error", "message": f"HTTP {response_data.status_code}", "url": str(response_data.url)}
-            
-            content = response_data.content.decode('latin-1')
-            lines = content.strip().split('\n')
-            
-            total_lines = len(lines)
-            header = lines[0] if lines else ""
-            data_lines = lines[1:] if len(lines) > 1 else []
-            
-            valid_members = 0
-            invalid_lines = []
-            
-            for i, line in enumerate(data_lines):
-                if line.strip():
-                    parts = line.split(',')
-                    if len(parts) >= 4:
-                        valid_members += 1
-                    else:
-                        invalid_lines.append({"line_num": i+2, "content": line, "parts_count": len(parts)})
-                else:
-                    invalid_lines.append({"line_num": i+2, "content": repr(line), "reason": "empty_or_whitespace"})
-            
-            return {
-                "status": "success",
-                "total_lines": total_lines,
-                "header": header,
-                "data_lines_count": len(data_lines),
-                "valid_members": valid_members,
-                "invalid_lines": invalid_lines[:10],  # Show first 10 invalid lines
-                "sample_valid_lines": [line for line in data_lines[:5] if line.strip() and len(line.split(',')) >= 4],
-                "final_url": str(response_data.url)
-            }
-            
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
 
 @app.get("/api/admin/test-daily-refresh")
 async def test_daily_refresh(response: Response):
