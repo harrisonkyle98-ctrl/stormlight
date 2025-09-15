@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, status, Query, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Depends, status, Query, BackgroundTasks, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import psycopg
@@ -2071,11 +2071,20 @@ async def test_clan_log():
 @app.get("/api/clan/log")
 async def get_clan_log(
     page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100)
+    limit: int = Query(10, ge=1, le=100),
+    response: Response = None,
+    request: Request = None,
 ):
     """Get recent clan log events with pagination"""
     offset = (page - 1) * limit
-    
+
+    if response is not None:
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+
+    print(f"🔄 [ClanLog API] page={page} limit={limit} offset={offset} url={getattr(request, 'url', None)}")
+
     try:
         entries = []
         total_count = 0
@@ -2087,7 +2096,11 @@ async def get_clan_log(
             try:
                 import asyncio
                 log_entries = await asyncio.wait_for(
-                    prisma.clanlog.find_many(skip=offset, take=limit),
+                    prisma.clanlog.find_many(
+                        skip=offset,
+                        take=limit,
+                        order={'timestamp': 'desc'}
+                    ),
                     timeout=2.0
                 )
                 prisma_total = await asyncio.wait_for(
@@ -2107,8 +2120,9 @@ async def get_clan_log(
                     for e in log_entries
                 ]
                 total_count = prisma_total
+                print(f"✅ [ClanLog API] Prisma OK: returned={len(entries)} total={total_count}")
             except Exception as pe:
-                print(f"[ClanLog] Prisma error: {type(pe)} {pe} - falling back to SQL")
+                print(f"❌ [ClanLog API] Prisma error: {type(pe)} {pe} - falling back to SQL")
                 used_fallback = True
         
         if used_fallback:
@@ -2144,8 +2158,10 @@ async def get_clan_log(
                     }
                     for r in rows
                 ]
+                print(f"✅ [ClanLog API] SQL OK: returned={len(entries)} total={total_count}")
         
-        entries.sort(key=lambda x: x['timestamp'], reverse=True)
+        first = entries[0] if entries else None
+        print(f"📊 [ClanLog API] Returning {len(entries)} entries; first={first['username'] if first else 'none'} ts={first['timestamp'] if first else 'n/a'}")
         
         return {
             "log_entries": entries,
@@ -2160,7 +2176,7 @@ async def get_clan_log(
     except Exception as e:
         import traceback
         traceback.print_exc()
-        print(f"❌ Error fetching clan log: {e}")
+        print(f"❌ [ClanLog API] Error fetching clan log: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch clan log")
 
 @app.get("/api/player/{username}/activities")

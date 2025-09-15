@@ -194,13 +194,30 @@ const Home = () => {
   const fetchClanLog = async () => {
     try {
       setClanLogLoading(true)
-      const response = await fetch(`${API_URL}/api/clan/log?page=1&limit=10`)
+      console.log('🔄 Fetching clan log...')
+      const cacheBuster = Date.now()
+      const requestUrl = `${API_URL}/api/clan/log?page=1&limit=10&_t=${cacheBuster}`
+      console.log('📡 Clan Log Request URL:', requestUrl)
+      const response = await fetch(requestUrl, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      })
       if (response.ok) {
         const data: ClanLogResponse = await response.json()
+        console.log('✅ Clan log fetched:', { 
+          entries: data.log_entries.length, 
+          first_entry: data.log_entries[0]?.username,
+          response_url: response.url
+        })
         setClanLogEntries(data.log_entries)
+      } else {
+        console.error('❌ Clan log fetch failed:', response.status, response.statusText)
       }
     } catch (error) {
-      console.error('Error fetching clan log:', error)
+      console.error('❌ Error fetching clan log:', error)
     } finally {
       setClanLogLoading(false)
     }
