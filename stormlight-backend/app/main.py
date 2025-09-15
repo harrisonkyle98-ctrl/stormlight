@@ -2770,8 +2770,9 @@ async def trigger_snapshots_get():
         raise HTTPException(status_code=500, detail=str(e))
 
 async def daily_clan_member_refresh():
-    """Daily clan member refresh: truncate table and insert all CSV data"""
+    """Daily clan member refresh: upsert all CSV data while preserving Discord IDs"""
     try:
+        global prisma, PRISMA_AVAILABLE
         if not PRISMA_AVAILABLE or not prisma:
             print("❌ Daily clan refresh: Database client not available")
             return
@@ -2792,7 +2793,9 @@ async def daily_clan_member_refresh():
                 print("❌ Invalid CSV response: insufficient data")
                 return
             
-            members_data = []
+            print(f"📊 Processing {len(lines) - 1} members from CSV (preserving Discord IDs)")
+            
+            processed_count = 0
             for line in lines[1:]:  # Skip header, process ALL lines
                 if line.strip():
                     parts = line.split(',')
@@ -2803,9 +2806,9 @@ async def daily_clan_member_refresh():
                         kills = int(parts[3]) if parts[3].isdigit() else 0
                         
                         from datetime import datetime
-                        members_data.append({
+                        clan_member_data = {
                             'username': username,
-                            'displayName': None,
+                            'displayName': username,
                             'clanRank': clan_rank,
                             'totalXp': total_xp,
                             'totalLevel': 0,
@@ -2815,36 +2818,27 @@ async def daily_clan_member_refresh():
                             'stats': None,
                             'questData': None,
                             'lastUpdated': datetime.now(),
-                        })
-            
-            print(f"📊 Parsed {len(members_data)} members from CSV (processing ALL lines)")
-            
-            if not members_data:
-                print("❌ No valid member data parsed from CSV")
-                return
-            
-            print("🗑️ Truncating clan_members table...")
-            await prisma.clanmember.delete_many()
-            
-            print("📥 Inserting all members with create_many...")
-            try:
-                result = await prisma.clanmember.create_many(data=members_data)
-                print(f"✅ Inserted {result.count} members successfully")
-            except Exception as e:
-                print(f"❌ create_many failed, falling back to individual inserts: {e}")
-                
-                processed_count = 0
-                for member_data in members_data:
-                    try:
-                        await prisma.clanmember.create(data=member_data)
-                        processed_count += 1
-                    except Exception as individual_e:
-                        print(f"❌ Failed to insert member {member_data.get('username', 'unknown')}: {individual_e}")
-                
-                print(f"✅ Processed {processed_count} members with individual inserts")
+                        }
+                        
+                        try:
+                            await prisma.clanmember.upsert(
+                                where={'username': username},
+                                data={
+                                    'update': {
+                                        'clanRank': clan_rank,
+                                        'totalXp': total_xp,
+                                        'kills': kills,
+                                        'lastUpdated': datetime.now(),
+                                    },
+                                    'create': clan_member_data
+                                }
+                            )
+                            processed_count += 1
+                        except Exception as e:
+                            print(f"❌ Failed to upsert member {username}: {e}")
             
             final_count = await prisma.clanmember.count()
-            print(f"✅ Daily clan refresh completed: {final_count} members in database")
+            print(f"✅ Daily clan refresh completed: {processed_count} members processed, {final_count} total in database")
             
     except Exception as e:
         print(f"❌ Error in daily clan member refresh: {e}")
