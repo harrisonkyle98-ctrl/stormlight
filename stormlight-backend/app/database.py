@@ -167,13 +167,17 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
         print(f"[Bulk Snapshots] Cycle {cycle_num} - Processing batch {batch_idx + 1}/{len(batches)} ({len(batch)} members)")
         
         for username in batch:
+            global_idx = start_index_base + processed + 1
+            print(f"[Bulk Snapshots] Cycle {cycle_num} ▶️ Member #{global_idx}: {username}")
             ok = await process_member_with_retry(username, max_retries=5)
             processed += 1
             if ok:
                 succeeded += 1
+                print(f"[Bulk Snapshots] Cycle {cycle_num} ✅ #{global_idx} {username} (succeeded={succeeded}, failed={failed})")
             else:
                 failed += 1
                 failed_users.append(username)
+                print(f"[Bulk Snapshots] Cycle {cycle_num} ❌ #{global_idx} {username} (succeeded={succeeded}, failed={failed})")
             await asyncio.sleep(per_call_delay_secs)
         
         print(f"[Bulk Snapshots] Cycle {cycle_num} - Batch {batch_idx + 1} complete: {succeeded}/{processed} total succeeded")
