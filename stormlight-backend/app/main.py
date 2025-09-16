@@ -335,7 +335,10 @@ async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Di
                     data = response.json()
                     
                     if 'error' in data:
-                        print(f"Runemetrics API error for {username}: {data.get('error')}")
+                        error_msg = data.get('error')
+                        print(f"Runemetrics API error for {username}: {error_msg}")
+                        if error_msg in ['PROFILE_PRIVATE', 'NOT_A_MEMBER']:
+                            raise Exception(f"Non-retryable error: {error_msg}")
                         return None
                     
                     stats = {}
@@ -434,7 +437,7 @@ async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Di
                     continue
                 elif response.status_code == 404:
                     print(f"Player {username} not found or has private profile")
-                    return None
+                    raise Exception("Non-retryable error: 404 not found or private profile")
                 else:
                     print(f"Runemetrics API error for {username}: {response.status_code}")
                     if attempt < max_retries - 1:
