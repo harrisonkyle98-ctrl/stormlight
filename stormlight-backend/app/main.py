@@ -446,6 +446,10 @@ async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Di
                     return None
                     
         except Exception as e:
+            err_str = str(e)
+            if "Non-retryable error:" in err_str:
+                print(f"Error fetching stats for {username} (attempt {attempt + 1}): {e}")
+                raise e
             print(f"Error fetching stats for {username} (attempt {attempt + 1}): {e}")
             if attempt < max_retries - 1:
                 await asyncio.sleep(1.5 ** attempt)
