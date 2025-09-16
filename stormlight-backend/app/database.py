@@ -106,7 +106,7 @@ async def init_database():
         print(f"Database initialization failed: {e}")
         print("Historical tracking will be disabled")
 
-async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int, total_cycles: int):
+async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int, total_cycles: int, start_index_base: int = 0):
     """Collect daily snapshots for a subset of clan members (one cycle)."""
     import asyncio
     
@@ -116,6 +116,7 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
         from main import fetch_player_stats
 
     print(f"[Bulk Snapshots] Cycle {cycle_num}/{total_cycles}: Starting collection for {len(usernames)} members sequentially (1 at a time)")
+    print(f"[Bulk Snapshots] Cycle {cycle_num} IndexBase={start_index_base} Members={len(usernames)}")
 
     processed = 0
     succeeded = 0
@@ -127,30 +128,32 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
     
     async def process_member_with_retry(username: str, max_retries: int = 5) -> bool:
         """Process a single member with exponential backoff retry logic."""
-        retry_delays = [30, 60, 120, 180, 300]  # 30s, 60s, 120s, 180s, 300s exponential backoff
+        retry_delays = [2, 5, 10, 20, 30]
         
         for attempt in range(max_retries + 1):
             try:
-                stats_data = await fetch_player_stats(username)
+                stats_data = await asyncio.wait_for(fetch_player_stats(username), timeout=25)
                 
                 if not stats_data or 'stats' not in stats_data:
-                    print(f"[Bulk Snapshots] ❌ No stats for {username}")
+                    print(f"[Bulk Snapshots] ❌ No stats for {username} (attempt {attempt + 1}/{max_retries + 1})")
                     return False
 
                 conn = await get_db_connection()
                 async with conn:
                     await ensure_today_snapshot(conn, username, stats_data)
                 
-                print(f"[Bulk Snapshots] ✅ Completed {username}")
+                print(f"[Bulk Snapshots] ✅ Completed {username} on attempt {attempt + 1}")
                 return True
                 
             except Exception as e:
-                if attempt < max_retries:
+                err = str(e).lower()
+                non_retryable = any(s in err for s in ["404", "not found", "invalid", "no hiscore", "private profile"])
+                if attempt < max_retries and not non_retryable:
                     delay = retry_delays[attempt]
-                    print(f"[Bulk Snapshots] ⚠️ Retry {attempt + 1}/{max_retries} for {username} after {delay}s: {e}")
+                    print(f"[Bulk Snapshots] ⚠️ Retry {attempt + 1}/{max_retries + 1} for {username} after {delay}s: {e}")
                     await asyncio.sleep(delay)
                 else:
-                    print(f"[Bulk Snapshots] ❌ Final failure for {username}: {e}")
+                    print(f"[Bulk Snapshots] ❌ Final failure for {username} (attempt {attempt + 1}): {e} (non_retryable={non_retryable})")
                     return False
         
         return False
@@ -164,13 +167,17 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
         print(f"[Bulk Snapshots] Cycle {cycle_num} - Processing batch {batch_idx + 1}/{len(batches)} ({len(batch)} members)")
         
         for username in batch:
+            global_idx = start_index_base + processed + 1
+            print(f"[Bulk Snapshots] Cycle {cycle_num} ▶️ Member #{global_idx}: {username}")
             ok = await process_member_with_retry(username, max_retries=5)
             processed += 1
             if ok:
                 succeeded += 1
+                print(f"[Bulk Snapshots] Cycle {cycle_num} ✅ #{global_idx} {username} (succeeded={succeeded}, failed={failed})")
             else:
                 failed += 1
                 failed_users.append(username)
+                print(f"[Bulk Snapshots] Cycle {cycle_num} ❌ #{global_idx} {username} (succeeded={succeeded}, failed={failed})")
             await asyncio.sleep(per_call_delay_secs)
         
         print(f"[Bulk Snapshots] Cycle {cycle_num} - Batch {batch_idx + 1} complete: {succeeded}/{processed} total succeeded")
@@ -207,6 +214,7 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 50, cy
         all_usernames = [m.username for m in db_members if m.username]
         expected_members = len(all_usernames)
         print(f"📋 [Multi-Cycle] Members to process today: {expected_members}")
+        print(f"🔍 [Multi-Cycle] DEBUG: All usernames sample (first 10): {all_usernames[:10]}")
         
         if not all_usernames:
             print(f"❌ [Multi-Cycle] No clan members found in database")
@@ -217,18 +225,26 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 50, cy
             done = await get_today_snapshot_usernames(conn)
         remaining = filter_remaining_usernames(all_usernames, done)
         print(f"📊 [Multi-Cycle] Already done today: {len(done)}; remaining: {len(remaining)}")
+        print(f"🔍 [Multi-Cycle] DEBUG: Done usernames sample (first 10): {list(done)[:10]}")
+        print(f"🔍 [Multi-Cycle] DEBUG: Remaining usernames sample (first 10): {remaining[:10]}")
         
         cycle_num = 0
         start = datetime.utcnow()
+        max_cycles = 20
+        all_failed_users = []
         
-        while remaining:
+        while remaining and cycle_num < max_cycles:
             cycle_num += 1
             chunk = remaining[:members_per_cycle]
             total_cycles_est = max(1, (len(remaining) + members_per_cycle - 1) // members_per_cycle)
             print(f"🔄 [Multi-Cycle] Cycle {cycle_num}/{total_cycles_est} starting with {len(chunk)} members (remaining={len(remaining)})")
+            print(f"🔍 [Multi-Cycle] Chunk usernames: {chunk[:10]}{'...' if len(chunk) > 10 else ''}")
             
+            done_before = len(done)
             try:
-                succeeded, failed = await collect_daily_player_stats_cycle(chunk, cycle_num, total_cycles_est)
+                succeeded, failed = await collect_daily_player_stats_cycle(
+                    chunk, cycle_num, total_cycles_est, start_index_base=done_before
+                )
                 print(f"✅ [Multi-Cycle] Cycle {cycle_num} finished: {succeeded} succeeded, {failed} failed (chunk={len(chunk)})")
             except Exception as e:
                 print(f"❌ [Multi-Cycle] Cycle {cycle_num} crashed: {e}")
@@ -238,16 +254,36 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 50, cy
             conn = await get_db_connection()
             async with conn:
                 done = await get_today_snapshot_usernames(conn)
-            remaining = filter_remaining_usernames(all_usernames, done)
-            print(f"📊 [Multi-Cycle] Progress: done={len(done)}/{expected_members}; remaining={len(remaining)}")
+            remaining_after = filter_remaining_usernames(all_usernames, done)
+            done_after = len(done)
+            print(f"📊 [Multi-Cycle] Progress: done={done_after}/{expected_members}; remaining={len(remaining_after)}; diff=+{done_after - done_before}")
+            
+            if done_after == done_before and remaining_after:
+                print(f"⚠️ [Multi-Cycle] No progress this cycle; rotating remaining to avoid head-of-line blocking")
+                rot = min(members_per_cycle, len(remaining_after))
+                remaining = remaining_after[rot:] + remaining_after[:rot]
+            else:
+                remaining = remaining_after
             
             if remaining:
                 print(f"⏳ [Multi-Cycle] Waiting {cycle_delay_minutes} minutes before next cycle...")
                 await asyncio.sleep(cycle_delay_minutes * 60)
         
+        if cycle_num >= max_cycles and remaining:
+            print(f"⚠️ [Multi-Cycle] WARNING: Hit max cycle limit ({max_cycles}) with {len(remaining)} members still remaining")
+            all_failed_users.extend(remaining)
+        
         dur = (datetime.utcnow() - start).total_seconds()
-        print(f"🎉 [Multi-Cycle] Complete: {len(done)}/{expected_members} members have a snapshot today in {dur/60:.1f} minutes")
-        return len(done), expected_members - len(done)
+        final_done_count = len(done)
+        final_remaining_count = expected_members - final_done_count
+        
+        if all_failed_users:
+            print(f"📋 [Multi-Cycle] FINAL FAILED LIST ({len(all_failed_users)} members): {all_failed_users}")
+        
+        print(f"🎉 [Multi-Cycle] Complete: {final_done_count}/{expected_members} members have a snapshot today in {dur/60:.1f} minutes")
+        print(f"🔍 [Multi-Cycle] DEBUG: Final stats - cycles: {cycle_num}, remaining: {final_remaining_count}")
+        
+        return final_done_count, final_remaining_count
         
     except Exception as e:
         print(f"❌ [Multi-Cycle] Critical error in multi-cycle collection: {e}")
@@ -283,30 +319,32 @@ async def collect_daily_player_stats(concurrency: int = 8, limit: int | None = N
     
     async def process_member_with_retry(username: str, max_retries: int = 5) -> bool:
         """Process a single member with exponential backoff retry logic."""
-        retry_delays = [30, 60, 120, 180, 300]  # 30s, 60s, 120s, 180s, 300s exponential backoff
+        retry_delays = [2, 5, 10, 20, 30]
         
         for attempt in range(max_retries + 1):
             try:
-                stats_data = await fetch_player_stats(username)
+                stats_data = await asyncio.wait_for(fetch_player_stats(username), timeout=25)
                 
                 if not stats_data or 'stats' not in stats_data:
-                    print(f"[Bulk Snapshots] ❌ No stats for {username}")
+                    print(f"[Bulk Snapshots] ❌ No stats for {username} (attempt {attempt + 1}/{max_retries + 1})")
                     return False
 
                 conn = await get_db_connection()
                 async with conn:
                     await ensure_today_snapshot(conn, username, stats_data)
                 
-                print(f"[Bulk Snapshots] ✅ Completed {username}")
+                print(f"[Bulk Snapshots] ✅ Completed {username} on attempt {attempt + 1}")
                 return True
                 
             except Exception as e:
-                if attempt < max_retries:
+                err = str(e).lower()
+                non_retryable = any(s in err for s in ["404", "not found", "invalid", "no hiscore", "private profile"])
+                if attempt < max_retries and not non_retryable:
                     delay = retry_delays[attempt]
-                    print(f"[Bulk Snapshots] ⚠️ Retry {attempt + 1}/{max_retries} for {username} after {delay}s: {e}")
+                    print(f"[Bulk Snapshots] ⚠️ Retry {attempt + 1}/{max_retries + 1} for {username} after {delay}s: {e}")
                     await asyncio.sleep(delay)
                 else:
-                    print(f"[Bulk Snapshots] ❌ Final failure for {username}: {e}")
+                    print(f"[Bulk Snapshots] ❌ Final failure for {username} (attempt {attempt + 1}): {e} (non_retryable={non_retryable})")
                     return False
         
         return False
