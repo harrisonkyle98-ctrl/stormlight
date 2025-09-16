@@ -147,7 +147,7 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
                 
             except Exception as e:
                 err = str(e).lower()
-                non_retryable = any(s in err for s in ["404", "not found", "invalid", "no hiscore", "private profile"])
+                non_retryable = any(s in err for s in ["404", "not found", "invalid", "no hiscore", "private profile", "profile_private", "not_a_member"])
                 if attempt < max_retries and not non_retryable:
                     delay = retry_delays[attempt]
                     print(f"[Bulk Snapshots] ⚠️ Retry {attempt + 1}/{max_retries + 1} for {username} after {delay}s: {e}")
@@ -338,7 +338,7 @@ async def collect_daily_player_stats(concurrency: int = 8, limit: int | None = N
                 
             except Exception as e:
                 err = str(e).lower()
-                non_retryable = any(s in err for s in ["404", "not found", "invalid", "no hiscore", "private profile"])
+                non_retryable = any(s in err for s in ["404", "not found", "invalid", "no hiscore", "private profile", "profile_private", "not_a_member"])
                 if attempt < max_retries and not non_retryable:
                     delay = retry_delays[attempt]
                     print(f"[Bulk Snapshots] ⚠️ Retry {attempt + 1}/{max_retries + 1} for {username} after {delay}s: {e}")
