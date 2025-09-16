@@ -178,37 +178,8 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
         if batch_idx < len(batches) - 1:
             await asyncio.sleep(batch_delay_secs)
 
-    from datetime import datetime
-    max_minutes = 60  # Further increased to allow cycles to complete under heavy API throttling
-    start_time = datetime.now()
-    
-    while failed_users:
-        if (datetime.now() - start_time).total_seconds() > max_minutes * 60:
-            print(f"[Bulk Snapshots] Cycle {cycle_num} ⏳ Safety stop after {max_minutes} minutes with {len(failed_users)} still failing")
-            break
-            
-        retry_usernames = failed_users.copy()
-        failed_users = []
-        retry_batches = [retry_usernames[i:i + batch_size] for i in range(0, len(retry_usernames), batch_size)]
-        
-        for batch_idx, batch in enumerate(retry_batches):
-            print(f"[Bulk Snapshots] Cycle {cycle_num} - Retry batch {batch_idx + 1}/{len(retry_batches)} ({len(batch)} members)")
-            
-            for username in batch:
-                ok = await process_member_with_retry(username, max_retries=5)
-                if ok:
-                    succeeded += 1
-                    print(f"[Bulk Snapshots] ✅ Retry success for {username}")
-                else:
-                    failed_users.append(username)
-                await asyncio.sleep(per_call_delay_secs)
-            
-            if batch_idx < len(retry_batches) - 1:
-                await asyncio.sleep(batch_delay_secs * 2)  # Extra spacing on retries
-        
-        if failed_users:
-            print(f"[Bulk Snapshots] Cycle {cycle_num} - Still {len(failed_users)} failed; cooling down 60s before next retry sweep")
-            await asyncio.sleep(60)
+    if failed_users:
+        print(f"[Bulk Snapshots] Cycle {cycle_num} - Skipping long retry sweep ({len(failed_users)} failed); multi-cycle will retry them in the next cycle")
     
     print(f"[Bulk Snapshots] Cycle {cycle_num} Finished. Processed={processed} Succeeded={succeeded} Failed={len(failed_users)}")
     if failed_users:
