@@ -2749,13 +2749,15 @@ async def trigger_snapshots_get():
     """TEMPORARY: GET endpoint to trigger multi-cycle collection without auth for testing"""
     try:
         print("[Trigger] TEMPORARY: GET multi-cycle snapshot collection triggered without auth")
+        
+        lock = getattr(app.state, "snapshot_lock", None)
+        if lock and lock.locked():
+            print("[Manual Trigger] Another snapshot run is in progress; skipping.")
+            return {"status": "skipped", 
+                    "message": "Another snapshot collection is already in progress. Check /api/admin/check-snapshots."}
+        
         async def run():
             try:
-                lock = getattr(app.state, "snapshot_lock", None)
-                if lock and lock.locked():
-                    print("[Manual Trigger] Another snapshot run is in progress; skipping.")
-                    return
-                
                 try:
                     from .database import collect_daily_player_stats_multi_cycle
                 except ImportError:
@@ -2770,6 +2772,7 @@ async def trigger_snapshots_get():
                 print(f"❌ [Manual Trigger] Error in snapshot collection: {e}")
                 import traceback
                 traceback.print_exc()
+        
         asyncio.create_task(run())
         return {"status": "queued", 
                 "message": "Started multi-cycle collection (sequential processing: 1 member at a time, 8s delays). Check /api/admin/check-snapshots."}
