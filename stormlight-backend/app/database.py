@@ -190,7 +190,7 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
     
     return succeeded, len(failed_users), failed_users
 
-async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cycle_delay_minutes: int = 3):
+async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cycle_delay_minutes: int = 0.5):
     """Collect daily snapshots of all clan members using persistent multi-cycle approach."""
     import asyncio
     from datetime import datetime
