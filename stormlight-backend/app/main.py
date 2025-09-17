@@ -3092,10 +3092,7 @@ async def startup_event():
                     today = now.date()
                     has_run_today = (getattr(app.state, "last_snapshot_date_utc", None) == today)
                     
-                    midnight_window = (now.hour == 0 and now.minute < 5)
-                    catch_up_needed = (not has_run_today and now.hour >= 1 and now.hour <= 6)
-                    
-                    if midnight_window or catch_up_needed:
+                    if (now.hour == 0 and now.minute < 5) or (not has_run_today and now.hour >= 0):
                         print(f"🔄 Starting daily clan member refresh at {now.isoformat()}...")
                         
                         async with app.state.sync_lock:
