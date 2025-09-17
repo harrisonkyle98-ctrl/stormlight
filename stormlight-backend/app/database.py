@@ -106,7 +106,7 @@ async def init_database():
         print(f"Database initialization failed: {e}")
         print("Historical tracking will be disabled")
 
-async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int, total_cycles: int, start_index_base: int = 0):
+async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int, total_cycles: int, start_index_base: int = 0, roster_usernames: set[str] | None = None):
     """Collect daily snapshots for a subset of clan members (one cycle)."""
     import asyncio
     
@@ -122,11 +122,36 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
     succeeded = 0
     failed = 0
     failed_users: list[str] = []
+    failure_reasons: dict[str, str] = {}
+    
+    def classify_failure_reason(username: str, err: Exception | None, stats_data: dict | None) -> str:
+        """Classify the failure reason for a member."""
+        if stats_data and isinstance(stats_data, dict):
+            api_name = stats_data.get('username') or stats_data.get('name')
+            if api_name and api_name != username:
+                return f"RENAMED -> '{api_name}'"
+        
+        if roster_usernames is not None and username not in roster_usernames:
+            return "LEFT_CLAN (not in roster)"
+        
+        if err:
+            msg = str(err).lower()
+            if "profile_private" in msg or "private profile" in msg:
+                return "PROFILE_PRIVATE"
+            if "not_a_member" in msg:
+                return "RUNEMETRICS_NOT_A_MEMBER"
+            if "404" in msg and "not found" in msg:
+                return "404_NOT_FOUND_OR_PRIVATE"
+            if "banned" in msg:
+                return "BANNED_OR_INACTIVE"
+            return f"API_EXCEPTION: {str(err)}"
+        
+        return "API_NO_DATA_OR_TIMEOUT"
     
     batch_size = 1
     batches = [usernames[i:i + batch_size] for i in range(0, len(usernames), batch_size)]
     
-    async def process_member_with_retry(username: str, max_retries: int = 5) -> bool:
+    async def process_member_with_retry(username: str, max_retries: int = 5) -> tuple[bool, dict | None, Exception | None]:
         """Process a single member with exponential backoff retry logic."""
         retry_delays = [2, 5, 10, 20, 30]
         
@@ -136,14 +161,18 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
                 
                 if not stats_data or 'stats' not in stats_data:
                     print(f"[Bulk Snapshots] ❌ No stats for {username} (attempt {attempt + 1}/{max_retries + 1})")
-                    return False
+                    return False, None, None
 
                 conn = await get_db_connection()
                 async with conn:
                     await ensure_today_snapshot(conn, username, stats_data)
                 
+                api_name = stats_data.get('username')
+                if api_name and api_name != username:
+                    print(f"[Bulk Snapshots] ℹ️ Detected rename: requested '{username}' -> API '{api_name}'")
+                
                 print(f"[Bulk Snapshots] ✅ Completed {username} on attempt {attempt + 1}")
-                return True
+                return True, stats_data, None
                 
             except Exception as e:
                 err = str(e).lower()
@@ -154,9 +183,9 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
                     await asyncio.sleep(delay)
                 else:
                     print(f"[Bulk Snapshots] ❌ Final failure for {username} (attempt {attempt + 1}): {e} (non_retryable={non_retryable})")
-                    return False
+                    return False, None, e
         
-        return False
+        return False, None, None
 
     per_member_delay_secs = 2.0
     
@@ -165,7 +194,7 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
     for i, username in enumerate(usernames):
         global_idx = start_index_base + processed + 1
         print(f"[Bulk Snapshots] Cycle {cycle_num} ▶️ Member #{global_idx}: {username}")
-        ok = await process_member_with_retry(username, max_retries=5)
+        ok, stats_data, err = await process_member_with_retry(username, max_retries=5)
         processed += 1
         if ok:
             succeeded += 1
@@ -173,7 +202,9 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
         else:
             failed += 1
             failed_users.append(username)
-            print(f"[Bulk Snapshots] Cycle {cycle_num} ❌ #{global_idx} {username} (succeeded={succeeded}, failed={failed})")
+            reason = classify_failure_reason(username, err, stats_data)
+            failure_reasons[username] = reason
+            print(f"[Bulk Snapshots] Cycle {cycle_num} ❌ #{global_idx} {username} (succeeded={succeeded}, failed={failed}) reason={reason}")
         
         if i < len(usernames) - 1:
             await asyncio.sleep(per_member_delay_secs)
@@ -188,7 +219,7 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
     else:
         print(f"[Bulk Snapshots] Cycle {cycle_num} 🎉 All {succeeded} members processed successfully!")
     
-    return succeeded, len(failed_users), failed_users
+    return succeeded, len(failed_users), failed_users, failure_reasons
 
 async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cycle_delay_minutes: int = 0.5):
     """Collect daily snapshots of all clan members using persistent multi-cycle approach."""
@@ -200,9 +231,17 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
     
     try:
         try:
-            from .main import prisma
+            from .main import prisma, fetch_clan_members
         except ImportError:
-            from main import prisma
+            from main import prisma, fetch_clan_members
+        
+        try:
+            roster = await fetch_clan_members()
+            roster_usernames = {m.get('username') for m in roster if m.get('username')}
+            print(f"📋 [Multi-Cycle] Fetched current clan roster: {len(roster_usernames)} members")
+        except Exception as e:
+            print(f"⚠️ [Multi-Cycle] Failed to fetch clan roster for classification; continuing without it: {e}")
+            roster_usernames = None
         
         db_members = await prisma.clanmember.find_many()
         all_usernames = [m.username for m in db_members if m.username]
@@ -225,10 +264,11 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
         cycle_num = 0
         start = datetime.utcnow()
         needed_cycles = max(1, ceil(expected_members / members_per_cycle))
-        max_cycles = needed_cycles * 3  # Allow for retries and rotation
-        all_failed_users = []
-        attempts_today = {}
-        final_failed_set = set()
+        max_cycles = needed_cycles * 3
+        all_failed_users: list[str] = []
+        attempts_today: dict[str, int] = {}
+        final_failed_set: set[str] = set()
+        final_failure_reasons: dict[str, str] = {}
         
         while remaining and cycle_num < max_cycles:
             cycle_num += 1
@@ -239,10 +279,12 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
             
             done_before = len(done)
             try:
-                succeeded, failed, failed_users = await collect_daily_player_stats_cycle(
-                    chunk, cycle_num, total_cycles_est, start_index_base=done_before
+                succeeded, failed, failed_users, failure_reasons = await collect_daily_player_stats_cycle(
+                    chunk, cycle_num, total_cycles_est, start_index_base=done_before, roster_usernames=roster_usernames
                 )
                 print(f"✅ [Multi-Cycle] Cycle {cycle_num} finished: {succeeded} succeeded, {failed} failed (chunk={len(chunk)})")
+                for u, reason in failure_reasons.items():
+                    final_failure_reasons[u] = reason
             except Exception as e:
                 print(f"❌ [Multi-Cycle] Cycle {cycle_num} crashed: {e}")
                 import traceback
@@ -252,10 +294,9 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
             newly_finalized = []
             for u in failed_users:
                 attempts_today[u] = attempts_today.get(u, 0) + 1
-                if attempts_today[u] >= 3:
-                    if u not in final_failed_set:
-                        final_failed_set.add(u)
-                        newly_finalized.append(u)
+                if attempts_today[u] >= 3 and u not in final_failed_set:
+                    final_failed_set.add(u)
+                    newly_finalized.append(u)
             if newly_finalized:
                 print(f"📌 [Multi-Cycle] Finalizing {len(newly_finalized)} permanently failed members for today: {newly_finalized[:10]}{'...' if len(newly_finalized)>10 else ''}")
             
@@ -297,7 +338,10 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
         
         if all_failed_users or final_failed_set:
             final_list = sorted(set(all_failed_users).union(final_failed_set))
-            print(f"📋 [Multi-Cycle] FINAL FAILED LIST ({len(final_list)} members): {final_list}")
+            print(f"📋 [Multi-Cycle] FINAL FAILED LIST ({len(final_list)} members):")
+            for u in final_list:
+                reason = final_failure_reasons.get(u, "UNKNOWN")
+                print(f"  - {u}: {reason}")
         
         print(f"🎉 [Multi-Cycle] Complete: {final_done_count}/{expected_members} members have a snapshot today in {dur/60:.1f} minutes")
         print(f"🔍 [Multi-Cycle] DEBUG: Final stats - cycles: {cycle_num}, remaining: {final_remaining_count}")
