@@ -158,32 +158,25 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
         
         return False
 
-    per_call_delay_secs = 5.0
-    batch_delay_secs = 10.0
+    per_member_delay_secs = 2.0
     
-    print(f"[Bulk Snapshots] Cycle {cycle_num} Configuration: batch_size={batch_size}, per_call_delay={per_call_delay_secs}s, batch_delay={batch_delay_secs}s")
+    print(f"[Bulk Snapshots] Cycle {cycle_num} Configuration: processing {len(usernames)} members sequentially, per_member_delay={per_member_delay_secs}s")
     
-    for batch_idx, batch in enumerate(batches):
-        print(f"[Bulk Snapshots] Cycle {cycle_num} - Processing batch {batch_idx + 1}/{len(batches)} ({len(batch)} members)")
+    for i, username in enumerate(usernames):
+        global_idx = start_index_base + processed + 1
+        print(f"[Bulk Snapshots] Cycle {cycle_num} ▶️ Member #{global_idx}: {username}")
+        ok = await process_member_with_retry(username, max_retries=5)
+        processed += 1
+        if ok:
+            succeeded += 1
+            print(f"[Bulk Snapshots] Cycle {cycle_num} ✅ #{global_idx} {username} (succeeded={succeeded}, failed={failed})")
+        else:
+            failed += 1
+            failed_users.append(username)
+            print(f"[Bulk Snapshots] Cycle {cycle_num} ❌ #{global_idx} {username} (succeeded={succeeded}, failed={failed})")
         
-        for username in batch:
-            global_idx = start_index_base + processed + 1
-            print(f"[Bulk Snapshots] Cycle {cycle_num} ▶️ Member #{global_idx}: {username}")
-            ok = await process_member_with_retry(username, max_retries=5)
-            processed += 1
-            if ok:
-                succeeded += 1
-                print(f"[Bulk Snapshots] Cycle {cycle_num} ✅ #{global_idx} {username} (succeeded={succeeded}, failed={failed})")
-            else:
-                failed += 1
-                failed_users.append(username)
-                print(f"[Bulk Snapshots] Cycle {cycle_num} ❌ #{global_idx} {username} (succeeded={succeeded}, failed={failed})")
-            await asyncio.sleep(per_call_delay_secs)
-        
-        print(f"[Bulk Snapshots] Cycle {cycle_num} - Batch {batch_idx + 1} complete: {succeeded}/{processed} total succeeded")
-        
-        if batch_idx < len(batches) - 1:
-            await asyncio.sleep(batch_delay_secs)
+        if i < len(usernames) - 1:
+            await asyncio.sleep(per_member_delay_secs)
 
     if failed_users:
         print(f"[Bulk Snapshots] Cycle {cycle_num} - Skipping long retry sweep ({len(failed_users)} failed); multi-cycle will retry them in the next cycle")
