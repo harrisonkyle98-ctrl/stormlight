@@ -24,7 +24,7 @@ const getRankIcon = (rank: string): string => {
     'Corporal': 'corporal.png',
     'Recruit': 'recruit.png'
   }
-  
+
   const imageName = rankImageMap[rank]
   return imageName ? `/assets/ranks/${imageName}` : ''
 }
@@ -145,8 +145,8 @@ const Home = () => {
       })
       if (response.ok) {
         const data: ActivityResponse = await response.json()
-        console.log('✅ Activities fetched:', { 
-          activities: data.activities.length, 
+        console.log('✅ Activities fetched:', {
+          activities: data.activities.length,
           loading_status: data.loading_status,
           processed: data.loading_status?.processed_members,
           total: data.loading_status?.total_members,
@@ -173,7 +173,7 @@ const Home = () => {
         setHasMoreActivities(data.pagination.has_next)
         setActivityPage(page)
         setLoadingStatus(data.loading_status || null)
-        
+
         if (data.loading_status && !data.loading_status.is_complete) {
           console.log('⏰ Scheduling next poll in 3 seconds...')
           setTimeout(() => {
@@ -199,7 +199,7 @@ const Home = () => {
   const formatTimeAgo = (timestamp: number) => {
     const now = Date.now() / 1000
     const diff = now - Math.abs(timestamp)
-    
+
     if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`
     if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`
     if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`
@@ -222,12 +222,12 @@ const Home = () => {
       })
       if (response.ok) {
         const data: ClanLogResponse = await response.json()
-        console.log('✅ Clan log fetched:', { 
-          entries: data.log_entries.length, 
+        console.log('✅ Clan log fetched:', {
+          entries: data.log_entries.length,
           first_entry: data.log_entries[0]?.username,
           response_url: response.url
         })
-        
+
         const seen = new Set<string>()
         const deduped = data.log_entries.filter((e) => {
           const d = new Date(e.timestamp)
@@ -260,7 +260,7 @@ const Home = () => {
       <div className="text-center">
         <h1 className="text-4xl font-bold text-white mb-4">
           Welcome back, {user?.username ? (
-            <Link 
+            <Link
               to={`/clan-member/${usernameToUrl(user.username)}`}
               className="text-blue-400 hover:text-blue-300 transition-colors"
             >
@@ -292,7 +292,7 @@ const Home = () => {
 
         <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Total XP</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-300">Total Clan XP</CardTitle>
             <TrendingUp className="h-4 w-4 text-purple-400" />
           </CardHeader>
           <CardContent>
@@ -376,7 +376,7 @@ const Home = () => {
         <CardHeader>
           <CardTitle className="text-white">Clan Log</CardTitle>
           <CardDescription className="text-slate-400">
-            Recent clan member activity
+            Recent clan activity
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -392,7 +392,7 @@ const Home = () => {
                       {entry.event_type === 'rank_down' && <Badge className="bg-red-500 text-white hover:bg-red-500">Demoted</Badge>}
                       {entry.event_type === 'name_change' && <Badge className="bg-yellow-500 text-white hover:bg-yellow-500">Name</Badge>}
                     </div>
-                    <Link 
+                    <Link
                       to={`/clan-member/${usernameToUrl(entry.username)}`}
                       className="text-white font-medium hover:text-blue-300 transition-colors"
                       style={getGradientStyle(entry.username, entry.new_rank || entry.old_rank)}
@@ -404,17 +404,17 @@ const Home = () => {
                       {entry.event_type === 'leave' && `left the clan`}
                       {entry.event_type === 'rank_up' && (
                         <span className="flex items-center gap-1">
-                          promoted from 
+                          promoted from
                           <img src={getRankIcon(entry.old_rank || '')} alt={entry.old_rank} className="w-4 h-4 mx-1" />
-                          to 
+                          to
                           <img src={getRankIcon(entry.new_rank || '')} alt={entry.new_rank} className="w-4 h-4 mx-1" />
                         </span>
                       )}
                       {entry.event_type === 'rank_down' && (
                         <span className="flex items-center gap-1">
-                          demoted from 
+                          demoted from
                           <img src={getRankIcon(entry.old_rank || '')} alt={entry.old_rank} className="w-4 h-4 mx-1" />
-                          to 
+                          to
                           <img src={getRankIcon(entry.new_rank || '')} alt={entry.new_rank} className="w-4 h-4 mx-1" />
                         </span>
                       )}
@@ -439,7 +439,7 @@ const Home = () => {
         <CardHeader>
           <CardTitle className="text-white">Recent Activity</CardTitle>
           <CardDescription className="text-slate-400">
-            Latest updates from clan members
+            Latest clan member activity
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -449,7 +449,7 @@ const Home = () => {
                 <div key={`${activity.username}-${activity.timestamp}-${index}`} className="p-3 bg-slate-700/50 rounded-lg">
                   <div className="flex items-center justify-center mb-2">
                     <Avatar className="h-8 w-8 flex-shrink-0 mr-2">
-                      <AvatarImage 
+                      <AvatarImage
                         src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(activity.username.replace(/\u00A0/g, ' '))}/chat.png`}
                         alt={activity.username}
                       />
@@ -457,7 +457,7 @@ const Home = () => {
                         {activity.username.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <Link 
+                    <Link
                       to={`/clan-member/${usernameToUrl(activity.username)}`}
                       className="text-white font-medium hover:text-blue-300 transition-colors"
                       style={getGradientStyle(activity.username, clanMembers.find(m => m.username === activity.username)?.clan_rank)}
@@ -473,17 +473,17 @@ const Home = () => {
               <div className="text-center py-8">
                 <p className="text-slate-400">
                   {activityLoading ? (
-                    loadingStatus && !loadingStatus.is_complete ? 
+                    loadingStatus && !loadingStatus.is_complete ?
                       `Loading activities... (${loadingStatus.processed_members}/${loadingStatus.total_members} members processed)` :
                       'Loading activities...'
                   ) : 'No recent activities found'}
                 </p>
               </div>
             )}
-            
+
             {hasMoreActivities && (
               <div className="text-center pt-4">
-                <Button 
+                <Button
                   onClick={loadMoreActivities}
                   disabled={activityLoading}
                   className="bg-blue-600 hover:bg-blue-700"
