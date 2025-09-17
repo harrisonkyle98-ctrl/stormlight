@@ -225,7 +225,7 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
         cycle_num = 0
         start = datetime.utcnow()
         needed_cycles = max(1, ceil(expected_members / members_per_cycle))
-        max_cycles = needed_cycles + 10
+        max_cycles = needed_cycles * 3  # Allow 3x cycles for retries and rotation
         all_failed_users = []
         attempts_today = {}
         final_failed_set = set()
@@ -270,8 +270,10 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
                 print(f"⚠️ [Multi-Cycle] No progress this cycle; rotating remaining to avoid head-of-line blocking")
                 rot = min(members_per_cycle, len(remaining_after))
                 remaining = remaining_after[rot:] + remaining_after[:rot]
+                print(f"🔄 [Multi-Cycle] Rotated {rot} members to end of queue; new order: {remaining[:5]}...")
             else:
                 remaining = remaining_after
+                print(f"✅ [Multi-Cycle] Progress made: +{done_after - done_before} members completed")
             
             if remaining:
                 print(f"⏳ [Multi-Cycle] Waiting {cycle_delay_minutes} minutes before next cycle...")
