@@ -225,7 +225,7 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
         cycle_num = 0
         start = datetime.utcnow()
         needed_cycles = max(1, ceil(expected_members / members_per_cycle))
-        max_cycles = needed_cycles + 10
+        max_cycles = needed_cycles * 3  # Allow for retries and rotation
         all_failed_users = []
         attempts_today = {}
         final_failed_set = set()
@@ -277,6 +277,10 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
             
             if not remaining:
                 print(f"🎉 [Multi-Cycle] All members processed! Breaking out of cycle loop.")
+                break
+            
+            if len(remaining) == 0:
+                print(f"🎉 [Multi-Cycle] Confirmed: No remaining members. Job complete.")
                 break
             
             if remaining:
