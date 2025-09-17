@@ -195,12 +195,13 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
     else:
         print(f"[Bulk Snapshots] Cycle {cycle_num} 🎉 All {succeeded} members processed successfully!")
     
-    return succeeded, len(failed_users)
+    return succeeded, len(failed_users), failed_users
 
-async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 50, cycle_delay_minutes: int = 3):
+async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cycle_delay_minutes: int = 3):
     """Collect daily snapshots of all clan members using persistent multi-cycle approach."""
     import asyncio
     from datetime import datetime
+    from math import ceil
     
     print(f"🚀 [Multi-Cycle] Starting multi-cycle snapshot collection at {datetime.utcnow().isoformat()}Z")
     
@@ -230,8 +231,11 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 50, cy
         
         cycle_num = 0
         start = datetime.utcnow()
-        max_cycles = 20
+        needed_cycles = max(1, ceil(expected_members / members_per_cycle))
+        max_cycles = needed_cycles + 10
         all_failed_users = []
+        attempts_today = {}
+        final_failed_set = set()
         
         while remaining and cycle_num < max_cycles:
             cycle_num += 1
@@ -242,7 +246,7 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 50, cy
             
             done_before = len(done)
             try:
-                succeeded, failed = await collect_daily_player_stats_cycle(
+                succeeded, failed, failed_users = await collect_daily_player_stats_cycle(
                     chunk, cycle_num, total_cycles_est, start_index_base=done_before
                 )
                 print(f"✅ [Multi-Cycle] Cycle {cycle_num} finished: {succeeded} succeeded, {failed} failed (chunk={len(chunk)})")
@@ -250,11 +254,22 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 50, cy
                 print(f"❌ [Multi-Cycle] Cycle {cycle_num} crashed: {e}")
                 import traceback
                 traceback.print_exc()
+                failed_users = []
+            
+            newly_finalized = []
+            for u in failed_users:
+                attempts_today[u] = attempts_today.get(u, 0) + 1
+                if attempts_today[u] >= 3:
+                    if u not in final_failed_set:
+                        final_failed_set.add(u)
+                        newly_finalized.append(u)
+            if newly_finalized:
+                print(f"📌 [Multi-Cycle] Finalizing {len(newly_finalized)} permanently failed members for today: {newly_finalized[:10]}{'...' if len(newly_finalized)>10 else ''}")
             
             conn = await get_db_connection()
             async with conn:
                 done = await get_today_snapshot_usernames(conn)
-            remaining_after = filter_remaining_usernames(all_usernames, done)
+            remaining_after = [u for u in filter_remaining_usernames(all_usernames, done) if u not in final_failed_set]
             done_after = len(done)
             print(f"📊 [Multi-Cycle] Progress: done={done_after}/{expected_members}; remaining={len(remaining_after)}; diff=+{done_after - done_before}")
             
@@ -271,14 +286,15 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 50, cy
         
         if cycle_num >= max_cycles and remaining:
             print(f"⚠️ [Multi-Cycle] WARNING: Hit max cycle limit ({max_cycles}) with {len(remaining)} members still remaining")
-            all_failed_users.extend(remaining)
+            all_failed_users.extend([u for u in remaining if u not in all_failed_users])
         
         dur = (datetime.utcnow() - start).total_seconds()
         final_done_count = len(done)
         final_remaining_count = expected_members - final_done_count
         
-        if all_failed_users:
-            print(f"📋 [Multi-Cycle] FINAL FAILED LIST ({len(all_failed_users)} members): {all_failed_users}")
+        if all_failed_users or final_failed_set:
+            final_list = sorted(set(all_failed_users).union(final_failed_set))
+            print(f"📋 [Multi-Cycle] FINAL FAILED LIST ({len(final_list)} members): {final_list}")
         
         print(f"🎉 [Multi-Cycle] Complete: {final_done_count}/{expected_members} members have a snapshot today in {dur/60:.1f} minutes")
         print(f"🔍 [Multi-Cycle] DEBUG: Final stats - cycles: {cycle_num}, remaining: {final_remaining_count}")

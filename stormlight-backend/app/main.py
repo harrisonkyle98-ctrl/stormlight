@@ -3079,6 +3079,7 @@ async def startup_event():
         
         app.state.snapshot_lock = asyncio.Lock()
         app.state.sync_lock = asyncio.Lock()
+        app.state.last_snapshot_date_utc = None
         
         async def hourly_scheduler():
             """Single 1-hour scheduler for all clan data updates"""
@@ -3088,8 +3089,10 @@ async def startup_event():
                 try:
                     from datetime import timezone
                     now = datetime.now(timezone.utc)
+                    today = now.date()
+                    has_run_today = (getattr(app.state, "last_snapshot_date_utc", None) == today)
                     
-                    if now.hour == 0 and now.minute < 5:
+                    if (now.hour == 0 and now.minute < 5) or (not has_run_today and now.hour >= 0):
                         print(f"🔄 Starting daily clan member refresh at {now.isoformat()}...")
                         
                         async with app.state.sync_lock:
@@ -3098,7 +3101,9 @@ async def startup_event():
                         
                         print(f"[Scheduler] 🚀 Starting daily multi-cycle snapshot collection at {now.isoformat()}")
                         async with app.state.snapshot_lock:
-                            await collect_daily_player_stats_multi_cycle()
+                            done_count, remaining_count = await collect_daily_player_stats_multi_cycle()
+                        app.state.last_snapshot_date_utc = today
+                        print(f"[Scheduler] ✅ Daily snapshot job finished for {today.isoformat()}: done={done_count}, remaining={remaining_count}")
                         
                         try:
                             conn = await get_db_connection()
