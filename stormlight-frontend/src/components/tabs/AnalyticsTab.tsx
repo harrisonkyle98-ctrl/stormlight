@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { BarChart3 } from 'lucide-react'
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 
 interface TabProps {
   username: string
@@ -10,6 +10,37 @@ interface TabProps {
 }
 
 type ViewRange = 'day' | 'month'
+
+const SKILL_ORDER = ['attack','defence','strength','constitution','ranged','prayer','magic','cooking','woodcutting','fletching','fishing','firemaking','crafting','smithing','mining','herblore','agility','thieving','slayer','farming','runecrafting','hunter','construction','summoning','dungeoneering','divination','invention','archaeology','necromancy']
+
+const SKILL_COLORS: Record<string, string> = {
+  attack: '#ef4444', defence: '#64748b', strength: '#f97316', constitution: '#dc2626',
+  ranged: '#22c55e', prayer: '#a78bfa', magic: '#60a5fa', cooking: '#f59e0b',
+  woodcutting: '#16a34a', fletching: '#84cc16', fishing: '#06b6d4', firemaking: '#fb923c',
+  crafting: '#eab308', smithing: '#9ca3af', mining: '#6b7280', herblore: '#10b981',
+  agility: '#0ea5e9', thieving: '#8b5cf6', slayer: '#000000', farming: '#22c55e',
+  runecrafting: '#7c3aed', hunter: '#65a30d', construction: '#b45309', summoning: '#60a5fa',
+  dungeoneering: '#7c2d12', divination: '#38bdf8', invention: '#f43f5e',
+  archaeology: '#06b6d4', necromancy: '#1f2937', overall: '#22c55e'
+}
+
+const OverallTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload || !payload.length) return null
+  const entries = payload
+    .filter((p: any) => p && p.dataKey && p.value > 0)
+    .sort((a: any, b: any) => SKILL_ORDER.indexOf(a.dataKey) - SKILL_ORDER.indexOf(b.dataKey))
+  return (
+    <div className="p-2 rounded border" style={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#e2e8f0' }}>
+      <div className="font-semibold mb-1">{label}</div>
+      {entries.map((e: any) => (
+        <div key={e.dataKey} className="flex justify-between gap-4">
+          <span className="capitalize">{e.dataKey}</span>
+          <span>+{Number(e.value).toLocaleString()} XP</span>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
   const [skill, setSkill] = useState<string>('overall')
@@ -54,13 +85,22 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
   const totalGain = data?.total_gain || 0
   const chartData = useMemo(() => {
     if (!data?.points) return []
-    return data.points.map((p: any) => ({
-      label: view === 'day'
-        ? new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-        : p.date,
-      gain: p.xp_gain
-    }))
-  }, [data, view])
+    if (skill === 'overall') {
+      return data.points.map((p: any) => ({
+        label: view === 'day'
+          ? new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          : p.date,
+        ...p.by_skill
+      }))
+    } else {
+      return data.points.map((p: any) => ({
+        label: view === 'day'
+          ? new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          : p.date,
+        gain: p.xp_gain
+      }))
+    }
+  }, [data, view, skill])
 
   if (loading) {
     return (
@@ -153,16 +193,28 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
 
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData}>
-            <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
-            <XAxis dataKey="label" tick={{ fill: '#94a3b8' }} />
-            <YAxis tick={{ fill: '#94a3b8' }} />
-            <Tooltip
-              contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#e2e8f0' }}
-              formatter={(v: any) => [`${Number(v).toLocaleString()} XP`, 'Gain']}
-            />
-            <Line type="monotone" dataKey="gain" stroke="#22c55e" strokeWidth={2} dot={false} />
-          </LineChart>
+          {skill === 'overall' ? (
+            <BarChart data={chartData}>
+              <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
+              <XAxis dataKey="label" tick={{ fill: '#94a3b8' }} />
+              <YAxis tick={{ fill: '#94a3b8' }} />
+              <Tooltip content={<OverallTooltip />} />
+              {SKILL_ORDER.map((sk) => (
+                <Bar key={sk} dataKey={sk} stackId="a" fill={SKILL_COLORS[sk] || '#8884d8'} />
+              ))}
+            </BarChart>
+          ) : (
+            <BarChart data={chartData}>
+              <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
+              <XAxis dataKey="label" tick={{ fill: '#94a3b8' }} />
+              <YAxis tick={{ fill: '#94a3b8' }} />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#e2e8f0' }}
+                formatter={(v: any) => [`${Number(v).toLocaleString()} XP`, 'Gain']}
+              />
+              <Bar dataKey="gain" fill={SKILL_COLORS[skill] || '#22c55e'} />
+            </BarChart>
+          )}
         </ResponsiveContainer>
       </div>
     </div>

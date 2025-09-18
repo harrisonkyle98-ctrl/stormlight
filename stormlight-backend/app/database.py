@@ -824,39 +824,88 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
             ORDER BY snapshot_date ASC
         """, (username, prev_day, end_date))
         rows = await cur.fetchall()
-        snap_map = {}
-        for d, stats_json in rows:
-            try:
-                stats_obj = stats_json if isinstance(stats_json, dict) else json.loads(stats_json)
-            except Exception:
-                stats_obj = {}
-            s = stats_obj.get(sk) or {}
-            xp = int(s.get('xp') or 0)
-            snap_map[d] = xp
+        if sk == 'overall':
+            snap_stats_by_day = {}
+            for d, stats_json in rows:
+                try:
+                    stats_obj = stats_json if isinstance(stats_json, dict) else json.loads(stats_json)
+                except Exception:
+                    stats_obj = {}
+                snap_stats_by_day[d] = stats_obj
 
-        first_day = await get_first_snapshot_date(conn, username)
-        points = []
-        last_known_xp = None
-        prev_xp = None
-        d = prev_day
-        while d <= end_date:
-            if d in snap_map:
-                last_known_xp = snap_map[d]
-            if d == prev_day:
-                prev_xp = last_known_xp or 0
-            elif d >= start_date:
-                xp_end = last_known_xp or prev_xp or 0
-                if first_day and d == first_day:
-                    gain = 0
-                else:
-                    gain = max(0, xp_end - (prev_xp or 0))
-                points.append({
-                    'date': d.isoformat(),
-                    'xp_end': xp_end,
-                    'xp_gain': gain
-                })
-                prev_xp = xp_end
-            d += timedelta(days=1)
+            skill_keys = []
+            if rows:
+                any_stats = next(iter(snap_stats_by_day.values()), {}) or {}
+                skill_keys = [k for k in any_stats.keys() if k != 'overall']
+
+            first_day = await get_first_snapshot_date(conn, username)
+            points = []
+            last_known = {k: None for k in skill_keys}
+            prev_vals = {k: None for k in skill_keys}
+            d = prev_day
+            while d <= end_date:
+                if d in snap_stats_by_day:
+                    stats = snap_stats_by_day[d] or {}
+                    for k in skill_keys:
+                        s = stats.get(k) or {}
+                        v = int(s.get('xp') or 0)
+                        last_known[k] = v
+                if d == prev_day:
+                    for k in skill_keys:
+                        prev_vals[k] = (last_known[k] or 0)
+                elif d >= start_date:
+                    end_vals = {k: (last_known[k] if last_known[k] is not None else prev_vals[k] or 0) for k in skill_keys}
+                    if first_day and d == first_day:
+                        by_skill = {k: 0 for k in skill_keys}
+                    else:
+                        by_skill = {k: max(0, (end_vals[k] or 0) - (prev_vals[k] or 0)) for k in skill_keys}
+                    xp_end_total = 0
+                    if d in snap_stats_by_day and (snap_stats_by_day[d] or {}).get('overall'):
+                        xp_end_total = int((snap_stats_by_day[d]['overall'] or {}).get('xp') or 0)
+                    else:
+                        xp_end_total = sum(end_vals.values())
+                    points.append({
+                        'date': d.isoformat(),
+                        'xp_end': xp_end_total,
+                        'xp_gain': sum(by_skill.values()),
+                        'by_skill': by_skill
+                    })
+                    prev_vals = end_vals
+                d += timedelta(days=1)
+        else:
+            snap_map = {}
+            for d, stats_json in rows:
+                try:
+                    stats_obj = stats_json if isinstance(stats_json, dict) else json.loads(stats_json)
+                except Exception:
+                    stats_obj = {}
+                s = stats_obj.get(sk) or {}
+                xp = int(s.get('xp') or 0)
+                snap_map[d] = xp
+
+            first_day = await get_first_snapshot_date(conn, username)
+            points = []
+            last_known_xp = None
+            prev_xp = None
+            d = prev_day
+            while d <= end_date:
+                if d in snap_map:
+                    last_known_xp = snap_map[d]
+                if d == prev_day:
+                    prev_xp = last_known_xp or 0
+                elif d >= start_date:
+                    xp_end = last_known_xp or prev_xp or 0
+                    if first_day and d == first_day:
+                        gain = 0
+                    else:
+                        gain = max(0, xp_end - (prev_xp or 0))
+                    points.append({
+                        'date': d.isoformat(),
+                        'xp_end': xp_end,
+                        'xp_gain': gain
+                    })
+                    prev_xp = xp_end
+                d += timedelta(days=1)
 
         start_xp = points[0]['xp_end'] - points[0]['xp_gain'] if points else 0
         end_xp = points[-1]['xp_end'] if points else 0
@@ -891,43 +940,95 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
             from calendar import monthrange
             return date(d.year, d.month, monthrange(d.year, d.month)[1])
 
-        row_idx = 0
-        last_known_xp = None
-        day_cursor = prev_year_end
-        day_end = year_end
-        xp_by_day = {}
-        while day_cursor <= day_end:
-            while row_idx < len(rows) and rows[row_idx][0] <= day_cursor:
-                try:
-                    stats_obj = rows[row_idx][1] if isinstance(rows[row_idx][1], dict) else json.loads(rows[row_idx][1])
-                except Exception:
-                    stats_obj = {}
-                s = stats_obj.get(sk) or {}
-                last_known_xp = int(s.get('xp') or 0)
-                row_idx += 1
-            xp_by_day[day_cursor] = last_known_xp or 0
-            day_cursor = day_cursor + timedelta(days=1)
+        if sk == 'overall':
+            row_idx = 0
+            day_cursor = prev_year_end
+            xp_by_day_per_skill = {}
+            last_known = {}
+            skill_keys = []
+            if rows:
+                first_stats = rows[0][1] if isinstance(rows[0][1], dict) else json.loads(rows[0][1] or '{}')
+                skill_keys = [k for k in (first_stats or {}).keys() if k != 'overall']
 
-        first_day = await get_first_snapshot_date(conn, username)
-        points = []
-        prev_end_xp = xp_by_day.get(prev_year_end, 0)
-        for m in range(1, 13):
-            m_end = date(year, m, monthrange(year, m)[1])
-            end_xp = xp_by_day.get(m_end, prev_end_xp)
-            if first_day and first_day.year == year and first_day.month == m:
-                gain = 0
-            else:
-                gain = max(0, end_xp - prev_end_xp)
-            points.append({
-                'date': f"{year}-{m:02d}",
-                'xp_end': end_xp,
-                'xp_gain': gain
-            })
-            prev_end_xp = end_xp
+            while day_cursor <= year_end:
+                while row_idx < len(rows) and rows[row_idx][0] <= day_cursor:
+                    stats_obj = rows[row_idx][1] if isinstance(rows[row_idx][1], dict) else json.loads(rows[row_idx][1] or '{}')
+                    for k in skill_keys:
+                        last_known[k] = int(((stats_obj or {}).get(k) or {}).get('xp') or 0)
+                    row_idx += 1
+                xp_by_day_per_skill[day_cursor] = {k: (last_known.get(k) or 0) for k in skill_keys}
+                day_cursor = day_cursor + timedelta(days=1)
 
-        start_xp = xp_by_day.get(prev_year_end, 0)
-        end_xp = xp_by_day.get(year_end, start_xp)
-        total_gain = max(0, end_xp - start_xp)
+            first_day = await get_first_snapshot_date(conn, username)
+            points = []
+            prev_end = xp_by_day_per_skill.get(prev_year_end, {k: 0 for k in skill_keys})
+            for m in range(1, 13):
+                m_end = date(year, m, monthrange(year, m)[1])
+                end_vals = xp_by_day_per_skill.get(m_end, prev_end)
+                if first_day and first_day.year == year and first_day.month == m:
+                    by_skill = {k: 0 for k in skill_keys}
+                else:
+                    by_skill = {k: max(0, (end_vals.get(k, 0)) - (prev_end.get(k, 0))) for k in skill_keys}
+                points.append({
+                    'date': f"{year}-{m:02d}",
+                    'xp_end': sum(end_vals.values()),
+                    'xp_gain': sum(by_skill.values()),
+                    'by_skill': by_skill
+                })
+                prev_end = end_vals
+
+            start_xp = sum(xp_by_day_per_skill.get(prev_year_end, {}).values())
+            end_xp = sum(xp_by_day_per_skill.get(year_end, {}).values())
+            total_gain = max(0, end_xp - start_xp)
+            return {
+                'username': username,
+                'skill': sk,
+                'range': 'month',
+                'year': year,
+                'month': None,
+                'points': points,
+                'start_xp': start_xp,
+                'end_xp': end_xp,
+                'total_gain': total_gain
+            }
+        else:
+            row_idx = 0
+            last_known_xp = None
+            day_cursor = prev_year_end
+            day_end = year_end
+            xp_by_day = {}
+            while day_cursor <= day_end:
+                while row_idx < len(rows) and rows[row_idx][0] <= day_cursor:
+                    try:
+                        stats_obj = rows[row_idx][1] if isinstance(rows[row_idx][1], dict) else json.loads(rows[row_idx][1])
+                    except Exception:
+                        stats_obj = {}
+                    s = stats_obj.get(sk) or {}
+                    last_known_xp = int(s.get('xp') or 0)
+                    row_idx += 1
+                xp_by_day[day_cursor] = last_known_xp or 0
+                day_cursor = day_cursor + timedelta(days=1)
+
+            first_day = await get_first_snapshot_date(conn, username)
+            points = []
+            prev_end_xp = xp_by_day.get(prev_year_end, 0)
+            for m in range(1, 13):
+                m_end = date(year, m, monthrange(year, m)[1])
+                end_xp = xp_by_day.get(m_end, prev_end_xp)
+                if first_day and first_day.year == year and first_day.month == m:
+                    gain = 0
+                else:
+                    gain = max(0, end_xp - prev_end_xp)
+                points.append({
+                    'date': f"{year}-{m:02d}",
+                    'xp_end': end_xp,
+                    'xp_gain': gain
+                })
+                prev_end_xp = end_xp
+
+            start_xp = xp_by_day.get(prev_year_end, 0)
+            end_xp = xp_by_day.get(year_end, start_xp)
+            total_gain = max(0, end_xp - start_xp)
         return {
             'username': username,
             'skill': sk,
