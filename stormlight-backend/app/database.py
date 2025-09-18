@@ -745,6 +745,163 @@ async def cleanup_old_activities(conn, days_to_keep: int = 30):
     except Exception as e:
         print(f"Error cleaning up old activities: {e}")
 
+def normalize_skill(skill: str | None) -> str:
+    if not skill:
+        return 'overall'
+    s = skill.strip().lower()
+    return 'overall' if s in ('overall', 'total', 'total xp', 'total_xp') else s
+
+async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, year: int, month: int | None):
+    """
+    Build XP gain time-series for a username.
+    - view: 'day' for daily within a (year, month); 'month' for monthly over a year
+    - skill: None or 'overall' for total XP; otherwise lowercase skill name in stats JSON
+    Returns:
+    {
+      'username': username,
+      'skill': normalized_skill,
+      'range': view,
+      'year': year,
+      'month': month or None,
+      'points': [{ 'date': 'YYYY-MM-DD' or 'YYYY-MM', 'xp_end': int, 'xp_gain': int }],
+      'start_xp': int,
+      'end_xp': int,
+      'total_gain': int
+    }
+    """
+    sk = normalize_skill(skill)
+
+    if view not in ('day', 'month'):
+        raise ValueError("view must be 'day' or 'month'")
+
+    import json
+    from datetime import date, timedelta
+    from calendar import monthrange
+
+    if view == 'day':
+        if month is None:
+            raise ValueError("month is required for daily view")
+        days_in_month = monthrange(year, month)[1]
+        start_date = date(year, month, 1)
+        end_date = date(year, month, days_in_month)
+        prev_day = start_date - timedelta(days=1)
+
+        cur = await conn.execute("""
+            SELECT snapshot_date, stats
+            FROM player_daily_snapshots
+            WHERE username = %s
+              AND snapshot_date BETWEEN %s AND %s
+            ORDER BY snapshot_date ASC
+        """, (username, prev_day, end_date))
+        rows = await cur.fetchall()
+        snap_map = {}
+        for d, stats_json in rows:
+            try:
+                stats_obj = stats_json if isinstance(stats_json, dict) else json.loads(stats_json)
+            except Exception:
+                stats_obj = {}
+            s = stats_obj.get(sk) or {}
+            xp = int(s.get('xp') or 0)
+            snap_map[d] = xp
+
+        points = []
+        last_known_xp = None
+        prev_xp = None
+        d = prev_day
+        while d <= end_date:
+            if d in snap_map:
+                last_known_xp = snap_map[d]
+            if d == prev_day:
+                prev_xp = last_known_xp or 0
+            elif d >= start_date:
+                xp_end = last_known_xp or prev_xp or 0
+                gain = max(0, xp_end - (prev_xp or 0))
+                points.append({
+                    'date': d.isoformat(),
+                    'xp_end': xp_end,
+                    'xp_gain': gain
+                })
+                prev_xp = xp_end
+            d += timedelta(days=1)
+
+        start_xp = points[0]['xp_end'] - points[0]['xp_gain'] if points else 0
+        end_xp = points[-1]['xp_end'] if points else 0
+        total_gain = max(0, end_xp - start_xp)
+        return {
+            'username': username,
+            'skill': sk,
+            'range': 'day',
+            'year': year,
+            'month': month,
+            'points': points,
+            'start_xp': start_xp,
+            'end_xp': end_xp,
+            'total_gain': total_gain
+        }
+
+    else:
+        prev_year_end = date(year - 1, 12, 31)
+        year_end = date(year, 12, 31)
+
+        cur = await conn.execute("""
+            SELECT snapshot_date, stats
+            FROM player_daily_snapshots
+            WHERE username = %s
+              AND snapshot_date BETWEEN %s AND %s
+            ORDER BY snapshot_date ASC
+        """, (username, prev_year_end, year_end))
+        rows = await cur.fetchall()
+
+        import json
+        def month_end(d: date) -> date:
+            from calendar import monthrange
+            return date(d.year, d.month, monthrange(d.year, d.month)[1])
+
+        row_idx = 0
+        last_known_xp = None
+        day_cursor = prev_year_end
+        day_end = year_end
+        xp_by_day = {}
+        while day_cursor <= day_end:
+            while row_idx < len(rows) and rows[row_idx][0] <= day_cursor:
+                try:
+                    stats_obj = rows[row_idx][1] if isinstance(rows[row_idx][1], dict) else json.loads(rows[row_idx][1])
+                except Exception:
+                    stats_obj = {}
+                s = stats_obj.get(sk) or {}
+                last_known_xp = int(s.get('xp') or 0)
+                row_idx += 1
+            xp_by_day[day_cursor] = last_known_xp or 0
+            day_cursor = day_cursor + timedelta(days=1)
+
+        points = []
+        prev_end_xp = xp_by_day.get(prev_year_end, 0)
+        for m in range(1, 13):
+            m_end = date(year, m, monthrange(year, m)[1])
+            end_xp = xp_by_day.get(m_end, prev_end_xp)
+            gain = max(0, end_xp - prev_end_xp)
+            points.append({
+                'date': f"{year}-{m:02d}",
+                'xp_end': end_xp,
+                'xp_gain': gain
+            })
+            prev_end_xp = end_xp
+
+        start_xp = xp_by_day.get(prev_year_end, 0)
+        end_xp = xp_by_day.get(year_end, start_xp)
+        total_gain = max(0, end_xp - start_xp)
+        return {
+            'username': username,
+            'skill': sk,
+            'range': 'month',
+            'year': year,
+            'month': None,
+            'points': points,
+            'start_xp': start_xp,
+            'end_xp': end_xp,
+            'total_gain': total_gain
+        }
+
 async def migrate_history_to_daily_snapshots(conn):
     """Migrate legacy player_stats_history into consolidated player_daily_snapshots"""
     await conn.execute("""

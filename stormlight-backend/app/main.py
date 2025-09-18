@@ -2460,6 +2460,44 @@ async def get_player_quests(username: str):
         print(f"Error fetching quest data for {decoded_username}: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch quest data")
 
+@app.get("/api/player/{username}/xp-analytics")
+async def get_player_xp_analytics(
+    username: str,
+    skill: str | None = Query(None, description="Skill name; default overall"),
+    range: str = Query("day", pattern="^(day|month)$", description="day or month"),
+    year: int | None = Query(None, ge=2000, le=2100),
+    month: int | None = Query(None, ge=1, le=12)
+):
+    """
+    XP analytics time-series from daily snapshots.
+    - range=day requires year and month; returns daily gains for that month.
+    - range=month requires year; returns monthly gains for that year.
+    """
+    from urllib.parse import unquote
+    decoded_username = unquote(username).replace('-', ' ')
+    from datetime import date
+    today = date.today()
+    if range == "day":
+        y = year or today.year
+        m = month or today.month
+    else:
+        y = year or today.year
+        m = None
+
+    try:
+        try:
+            from .database import get_db_connection, get_xp_timeseries
+        except ImportError:
+            from database import get_db_connection, get_xp_timeseries
+
+        conn = await get_db_connection()
+        async with conn:
+            data = await get_xp_timeseries(conn, decoded_username, skill, range, y, m)
+        return data
+    except Exception as e:
+        print(f"[XP Analytics] Error for {decoded_username}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to compute XP analytics")
+
 @app.get("/api/player/{username}/stats/history")
 async def get_player_stats_with_history(
     username: str, 
