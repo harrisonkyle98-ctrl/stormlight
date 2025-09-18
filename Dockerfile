@@ -4,9 +4,8 @@ WORKDIR /frontend
 COPY stormlight-frontend/package*.json ./
 RUN npm ci
 COPY stormlight-frontend/ ./
-# Build with same-origin API base to avoid CORS
-ARG VITE_API_URL=/
-ENV VITE_API_URL=${VITE_API_URL}
+# Ensure .env file is available for Vite build
+COPY stormlight-frontend/.env ./
 RUN npm run build
 
 # Stage 2: Build backend with Poetry and Prisma
