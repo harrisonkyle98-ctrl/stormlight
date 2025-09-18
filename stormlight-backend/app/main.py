@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, status, Query, BackgroundTasks, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.staticfiles import StaticFiles
 import psycopg
 import httpx
 import os
@@ -870,7 +871,10 @@ async def healthz():
 @app.get("/api/auth/discord")
 async def discord_login():
     """Initiate Discord OAuth login"""
-    redirect_uri = os.getenv("DISCORD_REDIRECT_URI", "https://runescape-clan-website-q4g9hn1a.devinapps.com/api/auth/callback/discord")
+    redirect_uri = os.environ.get("DISCORD_REDIRECT_URI")
+    if not redirect_uri:
+        # Fallback to production if not set, but prefer secret to avoid mismatches
+        redirect_uri = "https://stormlight.fly.dev/api/auth/callback/discord"
     return {
         "auth_url": f"https://discord.com/api/oauth2/authorize?client_id={os.getenv('DISCORD_CLIENT_ID')}&redirect_uri={redirect_uri}&response_type=code&scope=identify%20email"
     }
@@ -3168,6 +3172,8 @@ async def startup_event():
         print(f"Error during startup: {e}")
         import traceback
         traceback.print_exc()
+
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 @app.on_event("shutdown")
 async def shutdown_event():
