@@ -641,13 +641,30 @@ async def get_player_stats_for_periods(conn, username: str, period1: str, period
     end2_json = await get_snapshot_json_on_or_before(conn, username, end2) or {}
     start2_json = await get_snapshot_json_on_or_before(conn, username, start2) or {}
 
+    first_day = await get_first_snapshot_date(conn, username)
+    baseline_json = await get_snapshot_json_on_or_before(conn, username, first_day) if first_day else {}
+
     for sk in set(list(changes.keys()) + list(end1_json.keys()) + list(start1_json.keys()) + list(end2_json.keys()) + list(start2_json.keys())):
         e1, s1 = end1_json.get(sk, {}), start1_json.get(sk, {})
         e2, s2 = end2_json.get(sk, {}), start2_json.get(sk, {})
-        gain1 = (e1.get('xp') or 0) - (s1.get('xp') or 0)
-        gain2 = (e2.get('xp') or 0) - (s2.get('xp') or 0)
-        base = changes.get(sk, {'level_change': 0, 'xp_change': 0, 'rank_change': 0, 'xp_period1': e1.get('xp', 0), 'xp_period2': e2.get('xp', 0)})
-        base.update({'xp_gain_period1': max(gain1, 0), 'xp_gain_period2': max(gain2, 0)})
+
+        s1_xp = s1.get('xp') or 0
+        e1_xp = e1.get('xp') or 0
+        s2_xp = s2.get('xp') or 0
+        e2_xp = e2.get('xp') or 0
+
+        if first_day and start1 < first_day <= end1:
+            b1 = (baseline_json.get(sk, {}) or {}).get('xp') or 0
+            s1_xp = max(s1_xp, b1)
+        if first_day and start2 < first_day <= end2:
+            b2 = (baseline_json.get(sk, {}) or {}).get('xp') or 0
+            s2_xp = max(s2_xp, b2)
+
+        gain1 = max(0, e1_xp - s1_xp)
+        gain2 = max(0, e2_xp - s2_xp)
+
+        base = changes.get(sk, {'level_change': 0, 'xp_change': 0, 'rank_change': 0, 'xp_period1': e1_xp, 'xp_period2': e2_xp})
+        base.update({'xp_gain_period1': gain1, 'xp_gain_period2': gain2})
         changes[sk] = base
 
     return changes
@@ -751,6 +768,19 @@ def normalize_skill(skill: str | None) -> str:
     s = skill.strip().lower()
     return 'overall' if s in ('overall', 'total', 'total xp', 'total_xp') else s
 
+async def get_first_snapshot_date(conn, username: str):
+    """
+    Returns the earliest snapshot_date for a player from consolidated daily snapshots.
+    Falls back to None if no snapshots exist.
+    """
+    cur = await conn.execute("""
+        SELECT MIN(snapshot_date)
+        FROM player_daily_snapshots
+        WHERE username = %s
+    """, (username,))
+    row = await cur.fetchone()
+    return row[0] if row and row[0] else None
+
 async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, year: int, month: int | None):
     """
     Build XP gain time-series for a username.
@@ -804,6 +834,7 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
             xp = int(s.get('xp') or 0)
             snap_map[d] = xp
 
+        first_day = await get_first_snapshot_date(conn, username)
         points = []
         last_known_xp = None
         prev_xp = None
@@ -815,7 +846,10 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
                 prev_xp = last_known_xp or 0
             elif d >= start_date:
                 xp_end = last_known_xp or prev_xp or 0
-                gain = max(0, xp_end - (prev_xp or 0))
+                if first_day and d == first_day:
+                    gain = 0
+                else:
+                    gain = max(0, xp_end - (prev_xp or 0))
                 points.append({
                     'date': d.isoformat(),
                     'xp_end': xp_end,
@@ -874,12 +908,16 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
             xp_by_day[day_cursor] = last_known_xp or 0
             day_cursor = day_cursor + timedelta(days=1)
 
+        first_day = await get_first_snapshot_date(conn, username)
         points = []
         prev_end_xp = xp_by_day.get(prev_year_end, 0)
         for m in range(1, 13):
             m_end = date(year, m, monthrange(year, m)[1])
             end_xp = xp_by_day.get(m_end, prev_end_xp)
-            gain = max(0, end_xp - prev_end_xp)
+            if first_day and first_day.year == year and first_day.month == m:
+                gain = 0
+            else:
+                gain = max(0, end_xp - prev_end_xp)
             points.append({
                 'date': f"{year}-{m:02d}",
                 'xp_end': end_xp,
