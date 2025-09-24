@@ -3164,27 +3164,11 @@ async def startup_event():
                     
                 except Exception as e:
                     print(f"❌ Error in hourly scheduler: {e}")
-                    import traceback
-                    traceback.print_exc()
-                
-                print("⏰ Next hourly update scheduled in 1 hour")
-                await asyncio.sleep(3600)
-        
-        asyncio.create_task(hourly_scheduler())
-        
-    except Exception as e:
-        print(f"Error during startup: {e}")
-        import traceback
-        traceback.print_exc()
-
 app.include_router(api_router)
 
-@app.get("/{full_path:path}")
+@app.get("/{full_path:path}", include_in_schema=False)
 async def serve_spa(request: Request, full_path: str):
     """Serve static files and SPA fallback, but don't interfere with API routes"""
-    if full_path.startswith("api/"):
-        raise HTTPException(status_code=404, detail="Not Found")
-    
     static_file_path = os.path.join("static", full_path)
     if os.path.isfile(static_file_path):
         return FileResponse(static_file_path)
