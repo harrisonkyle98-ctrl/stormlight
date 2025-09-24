@@ -884,8 +884,11 @@ async def discord_login():
     }
 
 @api_router.get("/auth/callback/discord")
-async def discord_callback(code: str = Query(...)):
+async def discord_callback(code: str = Query(None)):
     """Handle Discord OAuth callback with performance optimizations"""
+    if not code:
+        raise HTTPException(status_code=400, detail="Missing authorization code")
+        
     start = time_module.time()
     
     client_id = os.getenv('DISCORD_CLIENT_ID')
