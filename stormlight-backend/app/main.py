@@ -3174,22 +3174,7 @@ async def startup_event():
         import traceback
         traceback.print_exc()
 
-@app.get("/{full_path:path}")
-async def serve_spa(request: Request, full_path: str):
-    """Serve static files and SPA fallback, but don't interfere with API routes"""
-    if full_path.startswith("api/"):
-        raise HTTPException(status_code=404, detail="Not Found")
-    
-    static_file_path = os.path.join("static", full_path)
-    if os.path.isfile(static_file_path):
-        return FileResponse(static_file_path)
-    
-    # Fallback to index.html for SPA routing
-    index_path = os.path.join("static", "index.html")
-    if os.path.isfile(index_path):
-        return FileResponse(index_path)
-    
-    raise HTTPException(status_code=404, detail="Not Found")
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 @app.on_event("shutdown")
 async def shutdown_event():
