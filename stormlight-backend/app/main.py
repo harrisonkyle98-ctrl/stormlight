@@ -3174,8 +3174,6 @@ async def startup_event():
         import traceback
         traceback.print_exc()
 
-app.include_router(api_router)
-
 @app.get("/{full_path:path}")
 async def serve_static_files(request: Request, full_path: str):
     """Serve static files and SPA fallback without interfering with API routes"""
@@ -3200,6 +3198,8 @@ async def serve_static_files(request: Request, full_path: str):
         return FileResponse(index_path)
     
     raise HTTPException(status_code=404, detail="Not Found")
+
+app.include_router(api_router)
 
 @app.on_event("shutdown")
 async def shutdown_event():
