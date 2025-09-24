@@ -3176,14 +3176,23 @@ async def startup_event():
 
 app.include_router(api_router)
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/", include_in_schema=False)
+async def serve_index():
+    """Serve index.html for root path"""
+    index_path = os.path.join("static", "index.html")
+    if os.path.isfile(index_path):
+        return FileResponse(index_path)
+    raise HTTPException(status_code=404, detail="Not Found")
+
 @app.get("/{full_path:path}", include_in_schema=False)
-async def serve_spa(request: Request, full_path: str):
-    """Serve static files and SPA fallback"""
-    static_file_path = os.path.join("static", full_path)
-    if os.path.isfile(static_file_path):
-        return FileResponse(static_file_path)
+async def serve_spa_fallback(full_path: str):
+    """Serve SPA fallback for frontend routing, but not for API or static paths"""
+    if full_path.startswith(("api/", "static/")):
+        raise HTTPException(status_code=404, detail="Not Found")
     
-    # Fallback to index.html for SPA routing
+    # For all other paths, serve index.html for SPA routing
     index_path = os.path.join("static", "index.html")
     if os.path.isfile(index_path):
         return FileResponse(index_path)
