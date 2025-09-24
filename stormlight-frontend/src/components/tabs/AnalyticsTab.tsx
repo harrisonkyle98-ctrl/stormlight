@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { BarChart3 } from 'lucide-react'
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
+import { ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 
 interface TabProps {
   username: string
@@ -35,7 +35,7 @@ const OverallTooltip = ({ active, payload, label }: any) => {
       {entries.map((e: any) => (
         <div key={e.dataKey} className="flex justify-between gap-4">
           <span className="capitalize">{e.dataKey}</span>
-          <span>+{Number(e.value).toLocaleString()} XP</span>
+          <span>{Number(e.value).toLocaleString()} XP gained for this period</span>
         </div>
       ))}
     </div>
@@ -45,6 +45,7 @@ const OverallTooltip = ({ active, payload, label }: any) => {
 export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
   const [skill, setSkill] = useState<string>('overall')
   const [view, setView] = useState<ViewRange>('day')
+  const [chartType, setChartType] = useState<'line' | 'bar'>('line')
   const now = new Date()
   const [year, setYear] = useState<number>(now.getFullYear())
   const [month, setMonth] = useState<number>(now.getMonth() + 1)
@@ -154,6 +155,24 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
         </div>
 
         <div>
+          <label className="text-slate-400 text-xs block mb-1">Graph</label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setChartType('line')}
+              className={`px-3 py-1 rounded text-sm ${chartType==='line'?'bg-blue-600 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+            >
+              Line
+            </button>
+            <button
+              onClick={() => setChartType('bar')}
+              className={`px-3 py-1 rounded text-sm ${chartType==='bar'?'bg-blue-600 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+            >
+              Bar
+            </button>
+          </div>
+        </div>
+
+        <div>
           <label className="text-slate-400 text-xs block mb-1">Year</label>
           <Select value={String(year)} onValueChange={(v) => setYear(parseInt(v))}>
             <SelectTrigger className="w-28 bg-slate-700 border-slate-600 text-slate-300">
@@ -194,26 +213,51 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           {skill === 'overall' ? (
-            <BarChart data={chartData}>
-              <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
-              <XAxis dataKey="label" tick={{ fill: '#94a3b8' }} />
-              <YAxis tick={{ fill: '#94a3b8' }} />
-              <Tooltip content={<OverallTooltip />} />
-              {SKILL_ORDER.map((sk) => (
-                <Bar key={sk} dataKey={sk} stackId="a" fill={SKILL_COLORS[sk] || '#8884d8'} />
-              ))}
-            </BarChart>
+            chartType === 'bar' ? (
+              <BarChart data={chartData}>
+                <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
+                <XAxis dataKey="label" tick={{ fill: '#94a3b8' }} />
+                <YAxis tick={{ fill: '#94a3b8' }} />
+                <Tooltip content={<OverallTooltip />} />
+                {SKILL_ORDER.map((sk) => (
+                  <Bar key={sk} dataKey={sk} stackId="a" fill={SKILL_COLORS[sk] || '#8884d8'} />
+                ))}
+              </BarChart>
+            ) : (
+              <LineChart data={chartData}>
+                <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
+                <XAxis dataKey="label" tick={{ fill: '#94a3b8' }} />
+                <YAxis tick={{ fill: '#94a3b8' }} />
+                <Tooltip content={<OverallTooltip />} />
+                {SKILL_ORDER.map((sk) => (
+                  <Line key={sk} type="monotone" dataKey={sk} stroke={SKILL_COLORS[sk] || '#8884d8'} dot={false} strokeWidth={2} />
+                ))}
+              </LineChart>
+            )
           ) : (
-            <BarChart data={chartData}>
-              <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
-              <XAxis dataKey="label" tick={{ fill: '#94a3b8' }} />
-              <YAxis tick={{ fill: '#94a3b8' }} />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#e2e8f0' }}
-                formatter={(v: any) => [`${Number(v).toLocaleString()} XP`, 'Gain']}
-              />
-              <Bar dataKey="gain" fill={SKILL_COLORS[skill] || '#22c55e'} />
-            </BarChart>
+            chartType === 'bar' ? (
+              <BarChart data={chartData}>
+                <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
+                <XAxis dataKey="label" tick={{ fill: '#94a3b8' }} />
+                <YAxis tick={{ fill: '#94a3b8' }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#e2e8f0' }}
+                  formatter={(v: any) => [`${Number(v).toLocaleString()} XP gained for this period`, '']}
+                />
+                <Bar dataKey="gain" fill={SKILL_COLORS[skill] || '#22c55e'} />
+              </BarChart>
+            ) : (
+              <LineChart data={chartData}>
+                <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
+                <XAxis dataKey="label" tick={{ fill: '#94a3b8' }} />
+                <YAxis tick={{ fill: '#94a3b8' }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#e2e8f0' }}
+                  formatter={(v: any) => [`${Number(v).toLocaleString()} XP gained for this period`, '']}
+                />
+                <Line type="monotone" dataKey="gain" stroke={SKILL_COLORS[skill] || '#22c55e'} dot={false} strokeWidth={2} />
+              </LineChart>
+            )
           )}
         </ResponsiveContainer>
       </div>
