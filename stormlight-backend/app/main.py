@@ -3179,7 +3179,36 @@ async def startup_event():
 
 app.include_router(api_router)
 
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+from fastapi import FastAPI
+static_app = FastAPI()
+static_app.mount("/", StaticFiles(directory="static", html=True), name="static")
+
+@app.middleware("http")
+async def route_static_files(request, call_next):
+    if request.url.path.startswith("/api/") or request.url.path == "/healthz":
+        return await call_next(request)
+    
+    try:
+        from fastapi.responses import FileResponse
+        import os
+        
+        static_path = request.url.path.lstrip("/")
+        if not static_path:
+            static_path = "index.html"
+        
+        file_path = os.path.join("static", static_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        
+        # Fallback to index.html for SPA routing
+        index_path = os.path.join("static", "index.html")
+        if os.path.isfile(index_path):
+            return FileResponse(index_path)
+        
+        return await call_next(request)
+    except Exception as e:
+        print(f"Static file middleware error: {e}")
+        return await call_next(request)
 
 @app.on_event("shutdown")
 async def shutdown_event():
