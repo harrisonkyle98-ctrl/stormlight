@@ -3179,6 +3179,9 @@ app.include_router(api_router)
 @app.get("/{full_path:path}", include_in_schema=False)
 async def serve_spa(request: Request, full_path: str):
     """Serve static files and SPA fallback, but don't interfere with API routes"""
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="Not Found")
+    
     static_file_path = os.path.join("static", full_path)
     if os.path.isfile(static_file_path):
         return FileResponse(static_file_path)
