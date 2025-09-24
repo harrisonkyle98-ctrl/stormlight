@@ -1,6 +1,10 @@
 app = "stormlight"
 primary_region = "iad"
 
+[build]
+  [build.args]
+    PYTHON_VERSION = "3.12"
+
 [env]
   PORT = "8000"
   PYTHONPATH = "/app"
