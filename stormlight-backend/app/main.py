@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, status, Query, BackgroundTasks, Response, Request
+from fastapi import FastAPI, HTTPException, Depends, status, Query, BackgroundTasks, Response, Request, APIRouter
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -41,6 +41,9 @@ app = FastAPI(title="Stormlight Clan API", version="1.0.0")
 prisma = Prisma() if PRISMA_AVAILABLE else None
 
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("JWT_SECRET_KEY", "fallback-secret"))
+
+# Create API router for all API endpoints
+api_router = APIRouter(prefix="/api")
 
 # Disable CORS. Do not remove this for full-stack development.
 app.add_middleware(
@@ -869,7 +872,7 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
 async def healthz():
     return {"status": "ok"}
 
-@app.get("/api/auth/discord")
+@api_router.get("/auth/discord")
 async def discord_login():
     """Initiate Discord OAuth login"""
     redirect_uri = os.environ.get("DISCORD_REDIRECT_URI")
@@ -880,7 +883,7 @@ async def discord_login():
         "auth_url": f"https://discord.com/api/oauth2/authorize?client_id={os.getenv('DISCORD_CLIENT_ID')}&redirect_uri={redirect_uri}&response_type=code&scope=identify%20email"
     }
 
-@app.get("/api/auth/callback/discord")
+@api_router.get("/auth/callback/discord")
 async def discord_callback(code: str = Query(...)):
     """Handle Discord OAuth callback with performance optimizations"""
     start = time_module.time()
@@ -1029,7 +1032,7 @@ async def discord_callback(code: str = Query(...)):
         raise HTTPException(status_code=500, detail=f"Authentication failed: {str(e)}")
 
 
-@app.post("/api/auth/link-account")
+@api_router.post("/auth/link-account")
 async def link_discord_to_clan_member(
     request: dict,
     user_id: str = Depends(verify_token)
@@ -1177,7 +1180,7 @@ async def link_discord_to_clan_member(
         print(f"❌ ACCOUNT LINK TRACEBACK: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Linking failed: {str(e)}")
 
-@app.get("/api/user/me")
+@api_router.get("/user/me")
 async def get_current_user(
     refresh: bool = Query(False, description="Bypass in-memory cache"),
     user_id: str = Depends(verify_token)
@@ -1296,7 +1299,7 @@ async def get_current_user(
     return fallback_result
 
 
-@app.get("/api/player/{username}/stats")
+@api_router.get("/player/{username}/stats")
 async def get_player_stats(username: str, refresh: bool = Query(False, description="Force refresh from API")):
     """Get player stats from RuneScape API with clan rank if available"""
     from urllib.parse import unquote
@@ -1360,7 +1363,7 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
     
     raise HTTPException(status_code=404, detail="Player not found or stats unavailable")
 
-@app.get("/api/hiscores")
+@api_router.get("/hiscores")
 async def get_global_hiscores(
     skill: str = 'overall',
     page: int = 1,
@@ -1395,7 +1398,7 @@ async def get_global_hiscores(
         "skill": skill
     }
 
-@app.get("/api/clan/hiscores")
+@api_router.get("/clan/hiscores")
 async def get_clan_hiscores():
     """Get clan hiscores (legacy endpoint)"""
     members = await get_clan_members()
@@ -1410,7 +1413,7 @@ async def get_clan_hiscores():
     
     return {"hiscores": hiscores, "clan_name": os.getenv("CLAN_NAME", "Stormlight")}
 
-@app.post("/api/competitions")
+@api_router.post("/competitions")
 async def create_competition(
     competition_data: dict,
     user_id: str = Depends(verify_token)
@@ -1432,12 +1435,12 @@ async def create_competition(
     competitions_db[competition_id] = competition
     return competition
 
-@app.get("/api/competitions")
+@api_router.get("/competitions")
 async def get_competitions():
     """Get all competitions"""
     return {"competitions": list(competitions_db.values())}
 
-@app.get("/api/competitions/{competition_id}")
+@api_router.get("/competitions/{competition_id}")
 async def get_competition(competition_id: int):
     """Get specific competition with leaderboard"""
     if competition_id not in competitions_db:
@@ -1579,7 +1582,7 @@ async def verify_admin_access(user_id: str = Depends(verify_token)):
     print(f"❌ ADMIN ACCESS: User {user_id} not found or not linked to clan member")
     raise HTTPException(status_code=403, detail="Admin access required. Please link your Discord account to a clan member with Owner, Deputy Owner, or Overseer rank.")
 
-@app.get("/api/clan/members")
+@api_router.get("/clan/members")
 async def get_clan_members_paginated(
     page: int = 1,
     limit: int = 15,
@@ -1663,7 +1666,7 @@ async def get_clan_members_paginated(
         "clan_name": "Stormlight"
     }
 
-@app.get("/api/clan/stats")
+@api_router.get("/clan/stats")
 async def get_clan_stats():
     """Get clan statistics including rank and total XP from RuneScape members_lite.ws API"""
     try:
@@ -1746,7 +1749,7 @@ async def get_clan_stats():
                 "last_updated": datetime.now().isoformat()
             }
 
-@app.get("/api/clan/activities")
+@api_router.get("/clan/activities")
 async def get_clan_activities(
     background_tasks: BackgroundTasks,
     page: int = 1,
@@ -2064,7 +2067,7 @@ async def get_clan_activities(
             }
         }
 
-@app.get("/api/clan/log/test")
+@api_router.get("/clan/log/test")
 async def test_clan_log():
     """Test clan log database access"""
     try:
@@ -2091,7 +2094,7 @@ async def test_clan_log():
     except Exception as e:
         return {"error": str(e), "type": str(type(e))}
 
-@app.get("/api/clan/log")
+@api_router.get("/clan/log")
 async def get_clan_log(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
@@ -2217,7 +2220,7 @@ async def get_clan_log(
         print(f"❌ [ClanLog API] Error fetching clan log: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch clan log")
 
-@app.get("/api/player/{username}/activities")
+@api_router.get("/player/{username}/activities")
 async def get_player_activities(username: str, page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50)):
     """Get recent activities for a specific player with pagination"""
     from urllib.parse import unquote
@@ -2314,7 +2317,7 @@ async def get_player_activities(username: str, page: int = Query(1, ge=1), limit
             "total_activities": 0
         }
 
-@app.get("/api/player/{username}/log")
+@api_router.get("/player/{username}/log")
 async def get_player_log(
     username: str,
     page: int = Query(1, ge=1),
@@ -2424,7 +2427,7 @@ async def get_player_log(
         raise HTTPException(status_code=500, detail="Failed to fetch player log")
 
 
-@app.get("/api/player/{username}/quests")
+@api_router.get("/player/{username}/quests")
 async def get_player_quests(username: str):
     """Get player quest data from RuneScape RuneMetrics API"""
     from urllib.parse import unquote
@@ -2465,7 +2468,7 @@ async def get_player_quests(username: str):
         print(f"Error fetching quest data for {decoded_username}: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch quest data")
 
-@app.get("/api/player/{username}/xp-analytics")
+@api_router.get("/player/{username}/xp-analytics")
 async def get_player_xp_analytics(
     username: str,
     skill: str | None = Query(None, description="Skill name; default overall"),
@@ -3173,6 +3176,8 @@ async def startup_event():
         print(f"Error during startup: {e}")
         import traceback
         traceback.print_exc()
+
+app.include_router(api_router)
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
