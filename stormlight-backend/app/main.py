@@ -879,8 +879,8 @@ async def discord_login():
         "auth_url": f"https://discord.com/api/oauth2/authorize?client_id={os.getenv('DISCORD_CLIENT_ID')}&redirect_uri={redirect_uri}&response_type=code&scope=identify%20email"
     }
 
-@app.post("/api/auth/callback/discord")
-async def discord_callback(code: str):
+@app.get("/api/auth/callback/discord")
+async def discord_callback(code: str = Query(...)):
     """Handle Discord OAuth callback with performance optimizations"""
     start = time_module.time()
     
