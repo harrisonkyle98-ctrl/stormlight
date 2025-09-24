@@ -3164,6 +3164,16 @@ async def startup_event():
                     
                 except Exception as e:
                     print(f"❌ Error in hourly scheduler: {e}")
+                    
+                await asyncio.sleep(3600)
+        
+        asyncio.create_task(hourly_scheduler())
+        
+    except Exception as e:
+        print(f"Error during startup: {e}")
+        import traceback
+        traceback.print_exc()
+
 app.include_router(api_router)
 
 @app.get("/{full_path:path}", include_in_schema=False)
