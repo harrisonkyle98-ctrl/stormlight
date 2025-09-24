@@ -3179,23 +3179,7 @@ async def startup_event():
 
 app.include_router(api_router)
 
-@app.get("/{full_path:path}")
-async def serve_static_files(full_path: str):
-    """Serve static files and SPA fallback"""
-    from fastapi.responses import FileResponse
-    import os
-    
-    if full_path:
-        file_path = os.path.join("static", full_path)
-        if os.path.isfile(file_path):
-            return FileResponse(file_path)
-    
-    # Fallback to index.html for SPA routing
-    index_path = os.path.join("static", "index.html")
-    if os.path.isfile(index_path):
-        return FileResponse(index_path)
-    
-    raise HTTPException(status_code=404, detail="Not Found")
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 @app.on_event("shutdown")
 async def shutdown_event():
