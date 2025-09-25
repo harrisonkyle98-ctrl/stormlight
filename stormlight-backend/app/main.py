@@ -968,8 +968,7 @@ async def discord_callback(code: str = Query(None)):
                             'avatar': user_data.get('avatar'),
                             'updatedAt': datetime.now()
                         }
-                    },
-                    select={'discordId': True}
+                    }
                 )
                 
                 linked_member = await prisma.clanmember.find_first(
