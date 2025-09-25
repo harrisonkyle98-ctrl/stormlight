@@ -1005,6 +1005,16 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
 
             start_xp = sum(xp_by_day_per_skill.get(prev_year_end, {}).values())
             end_xp = sum(xp_by_day_per_skill.get(year_end, {}).values())
+            
+            if start_xp == 0 and points:
+                first_nonzero_month = None
+                for point in points:
+                    if point['xp_end'] > 0:
+                        first_nonzero_month = point['xp_end']
+                        break
+                if first_nonzero_month is not None:
+                    start_xp = first_nonzero_month
+            
             total_gain = max(0, end_xp - start_xp)
             return {
                 'username': username,
@@ -1054,6 +1064,16 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
 
             start_xp = xp_by_day.get(prev_year_end, 0)
             end_xp = xp_by_day.get(year_end, start_xp)
+            
+            if start_xp == 0 and points:
+                first_nonzero_month = None
+                for point in points:
+                    if point['xp_end'] > 0:
+                        first_nonzero_month = point['xp_end']
+                        break
+                if first_nonzero_month is not None:
+                    start_xp = first_nonzero_month
+            
             total_gain = max(0, end_xp - start_xp)
         return {
             'username': username,
