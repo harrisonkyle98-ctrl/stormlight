@@ -1025,8 +1025,18 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
             prev_month_vals = baseline_skills.copy()
             
             for m in range(1, 13):
+                m_start = date(year, m, 1)
                 m_end = date(year, m, monthrange(year, m)[1])
-                end_vals = xp_by_day_per_skill.get(m_end, prev_month_vals)
+                
+                end_vals = None
+                for check_date in sorted(xp_by_day_per_skill.keys(), reverse=True):
+                    if m_start <= check_date <= m_end:
+                        end_vals = xp_by_day_per_skill[check_date]
+                        break
+                
+                if end_vals is None:
+                    end_vals = prev_month_vals.copy()
+                
                 current_total_xp = sum(end_vals.values())
                 prev_total_xp = sum(prev_month_vals.values())
                 monthly_gain = max(0, current_total_xp - prev_total_xp)
