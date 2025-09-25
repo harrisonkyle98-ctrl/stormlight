@@ -86,15 +86,25 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
   const totalGain = data?.total_gain || 0
   const chartData = useMemo(() => {
     if (!data?.points) return []
+    let points = [...data.points]
+    
+    if (view === 'month') {
+      points.sort((a: any, b: any) => {
+        const monthA = parseInt(a.date.split('-')[1])
+        const monthB = parseInt(b.date.split('-')[1])
+        return monthA - monthB
+      })
+    }
+    
     if (skill === 'overall') {
-      return data.points.map((p: any) => ({
+      return points.map((p: any) => ({
         label: view === 'day'
           ? new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
           : new Date(p.date + '-01').toLocaleDateString('en-US', { month: 'short' }),
         ...p.by_skill
       }))
     } else {
-      return data.points.map((p: any) => ({
+      return points.map((p: any) => ({
         label: view === 'day'
           ? new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
           : new Date(p.date + '-01').toLocaleDateString('en-US', { month: 'short' }),
