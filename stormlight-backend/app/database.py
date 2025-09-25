@@ -1070,10 +1070,7 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
             for m in range(1, 13):
                 m_end = date(year, m, monthrange(year, m)[1])
                 end_xp = xp_by_day.get(m_end, prev_end_xp)
-                if first_day and first_day.year == year and first_day.month == m:
-                    gain = 0
-                else:
-                    gain = max(0, end_xp - prev_end_xp)
+                gain = max(0, end_xp - prev_end_xp)
                 points.append({
                     'date': f"{year}-{m:02d}",
                     'xp_end': end_xp,
