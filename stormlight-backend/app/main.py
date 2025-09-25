@@ -3207,7 +3207,19 @@ async def startup_event():
 
 app.include_router(api_router)
 
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
+
+@app.get("/{full_path:path}")
+async def serve_react_app(full_path: str):
+    """Serve React app for all non-API routes"""
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="Not Found")
+    
+    static_file_path = f"static/{full_path}"
+    if os.path.exists(static_file_path) and os.path.isfile(static_file_path):
+        return FileResponse(static_file_path)
+    
+    return FileResponse("static/index.html")
 
 @app.on_event("shutdown")
 async def shutdown_event():
