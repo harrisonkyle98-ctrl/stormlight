@@ -994,7 +994,8 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
                 while row_idx < len(rows) and rows[row_idx][0] <= day_cursor:
                     stats_obj = rows[row_idx][1] if isinstance(rows[row_idx][1], dict) else json.loads(rows[row_idx][1] or '{}')
                     for k in skill_keys:
-                        last_known[k] = int(((stats_obj or {}).get(k) or {}).get('xp') or 0)
+                        skill_data = (stats_obj or {}).get(k) or {}
+                        last_known[k] = int(skill_data.get('xp') or 0)
                     row_idx += 1
                 xp_by_day_per_skill[day_cursor] = {k: (last_known.get(k) or 0) for k in skill_keys}
                 day_cursor = day_cursor + timedelta(days=1)
@@ -1005,10 +1006,7 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
             for m in range(1, 13):
                 m_end = date(year, m, monthrange(year, m)[1])
                 end_vals = xp_by_day_per_skill.get(m_end, prev_end)
-                if first_day and first_day.year == year and first_day.month == m:
-                    by_skill = {k: max(0, end_vals.get(k, 0)) for k in skill_keys}
-                else:
-                    by_skill = {k: max(0, (end_vals.get(k, 0)) - (prev_end.get(k, 0))) for k in skill_keys}
+                by_skill = {k: max(0, (end_vals.get(k, 0)) - (prev_end.get(k, 0))) for k in skill_keys}
                 points.append({
                     'date': f"{year}-{m:02d}",
                     'xp_end': sum(end_vals.values()),
@@ -1055,11 +1053,11 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
             while day_cursor <= day_end:
                 while row_idx < len(rows) and rows[row_idx][0] <= day_cursor:
                     try:
-                        stats_obj = rows[row_idx][1] if isinstance(rows[row_idx][1], dict) else json.loads(rows[row_idx][1])
+                        stats_obj = rows[row_idx][1] if isinstance(rows[row_idx][1], dict) else json.loads(rows[row_idx][1] or '{}')
                     except Exception:
                         stats_obj = {}
-                    s = stats_obj.get(sk) or {}
-                    last_known_xp = int(s.get('xp') or 0)
+                    skill_data = (stats_obj or {}).get(sk) or {}
+                    last_known_xp = int(skill_data.get('xp') or 0)
                     row_idx += 1
                 xp_by_day[day_cursor] = last_known_xp or 0
                 day_cursor = day_cursor + timedelta(days=1)
@@ -1093,11 +1091,7 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
                 if latest_date_in_month is None:
                     month_end_xp = prev_end_xp
                 
-                if earliest_date_in_year and earliest_date_in_year.month == m:
-                    # For the first month with data, calculate gain from baseline to month_end_xp
-                    gain = max(0, month_end_xp - baseline_xp) if baseline_xp > 0 else max(0, month_end_xp)
-                else:
-                    gain = max(0, month_end_xp - prev_end_xp)
+                gain = max(0, month_end_xp - prev_end_xp)
                 
                 points.append({
                     'date': f"{year}-{m:02d}",
