@@ -1022,22 +1022,23 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
             points = []
             
             baseline_total_xp = sum(baseline_skills.values())
-            prev_total_xp = baseline_total_xp
+            prev_month_vals = baseline_skills.copy()
             
             for m in range(1, 13):
                 m_end = date(year, m, monthrange(year, m)[1])
-                end_vals = xp_by_day_per_skill.get(m_end, baseline_skills)
+                end_vals = xp_by_day_per_skill.get(m_end, prev_month_vals)
                 current_total_xp = sum(end_vals.values())
+                prev_total_xp = sum(prev_month_vals.values())
                 monthly_gain = max(0, current_total_xp - prev_total_xp)
                 
-                by_skill = {k: max(0, (end_vals.get(k, 0)) - (baseline_skills.get(k, 0) if m == 1 else prev_total_xp)) for k in skill_keys}
+                by_skill = {k: max(0, (end_vals.get(k, 0)) - (prev_month_vals.get(k, 0))) for k in skill_keys}
                 points.append({
                     'date': f"{year}-{m:02d}",
                     'xp_end': current_total_xp,
                     'xp_gain': monthly_gain,
                     'by_skill': by_skill
                 })
-                prev_total_xp = current_total_xp
+                prev_month_vals = end_vals.copy()
 
             if year == today.year:
                 start_xp = sum(xp_by_day_per_skill.get(prev_year_end, {}).values())
