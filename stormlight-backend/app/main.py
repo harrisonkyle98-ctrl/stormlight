@@ -1031,6 +1031,8 @@ async def discord_callback(code: str = Query(None)):
                 httponly=True,
                 secure=True,
                 samesite="lax",
+                domain=".fly.dev",
+                path="/",
                 max_age=86400  # 24 hours
             )
             
