@@ -54,6 +54,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     }
     
+    if (!token) {
+      const urlParams = new URLSearchParams(window.location.search)
+      const urlToken = urlParams.get('token')
+      if (urlToken) {
+        token = urlToken
+        localStorage.setItem('access_token', token)
+        const newUrl = new URL(window.location.href)
+        newUrl.searchParams.delete('token')
+        window.history.replaceState({}, '', newUrl.toString())
+      }
+    }
+    
     if (token) {
       fetchCurrentUser(token)
     } else {
