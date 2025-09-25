@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Package, Filter, Calendar } from 'lucide-react'
+import { Package, Filter } from 'lucide-react'
 import { usernameToUrl } from '../../utils/urlUtils'
 
 interface TabProps {
@@ -78,6 +78,23 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
     return matchesBoss && matchesItem;
   });
 
+  const groupedDrops = filteredDrops.reduce((groups, drop) => {
+    const bossName = drop.boss_name;
+    if (!groups[bossName]) {
+      groups[bossName] = [];
+    }
+    groups[bossName].push(drop);
+    return groups;
+  }, {} as Record<string, DropData[]>);
+
+  const sortedBossGroups = Object.entries(groupedDrops)
+    .map(([bossName, bossDrops]) => ({
+      bossName,
+      drops: bossDrops.sort((a, b) => b.timestamp - a.timestamp),
+      mostRecentTimestamp: Math.max(...bossDrops.map(d => d.timestamp))
+    }))
+    .sort((a, b) => b.mostRecentTimestamp - a.mostRecentTimestamp);
+
   if (loading) {
     return (
       <div className="text-center py-12">
@@ -122,25 +139,39 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
         </div>
       </div>
 
-      {filteredDrops.length > 0 ? (
+      {sortedBossGroups.length > 0 ? (
         <>
-          {filteredDrops.map((drop, index) => (
-            <div key={index} className="bg-slate-700/50 p-4 rounded-lg flex items-center space-x-4">
-              <img
-                src={drop.item_image_url}
-                alt={drop.item_name}
-                className="w-12 h-12 rounded border border-slate-600"
-                onError={(e) => {
-                  e.currentTarget.src = "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png";
-                }}
-              />
-              <div className="flex-1">
-                <h3 className="text-white font-medium">{drop.item_name}</h3>
-                <p className="text-slate-300 text-sm">from {drop.boss_name}</p>
-                <div className="flex items-center space-x-2 mt-1">
-                  <Calendar className="w-3 h-3 text-slate-500" />
-                  <p className="text-slate-500 text-xs">{new Date(drop.timestamp * 1000).toLocaleDateString()}</p>
-                </div>
+          {sortedBossGroups.map((bossGroup) => (
+            <div key={bossGroup.bossName} className="space-y-2">
+              {/* Boss Header */}
+              <div className="bg-slate-600/50 px-4 py-3 rounded-lg border-l-4 border-blue-500">
+                <h3 className="text-white font-semibold text-lg">{bossGroup.bossName}</h3>
+                <p className="text-slate-300 text-sm">{bossGroup.drops.length} drop{bossGroup.drops.length !== 1 ? 's' : ''}</p>
+              </div>
+              
+              {/* Boss Drops */}
+              <div className="space-y-1 ml-4">
+                {bossGroup.drops.map((drop, index) => (
+                  <div key={index} className="bg-slate-700/30 p-3 rounded-lg flex items-center justify-between hover:bg-slate-700/50 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <img
+                        src={drop.item_image_url}
+                        alt={drop.item_name}
+                        className="w-10 h-10 rounded border border-slate-600"
+                        onError={(e) => {
+                          e.currentTarget.src = "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png";
+                        }}
+                      />
+                      <div>
+                        <h4 className="text-white font-medium">{drop.item_name}</h4>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-slate-400 text-sm">{new Date(drop.timestamp * 1000).toLocaleDateString()}</p>
+                      <p className="text-slate-500 text-xs">{new Date(drop.timestamp * 1000).toLocaleTimeString()}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ))}
