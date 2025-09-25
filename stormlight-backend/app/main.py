@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, status, Query, BackgroundTasks, Response, Request, APIRouter
+from fastapi import FastAPI, HTTPException, Depends, status, Query, BackgroundTasks, Response, Request, APIRouter, Cookie
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -843,16 +843,32 @@ def create_access_token(data: dict):
     encoded_jwt = jwt.encode(to_encode, secret_key, algorithm=algorithm)
     return encoded_jwt
 
-def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+def verify_token(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    access_token: str = Cookie(None)
+):
+    token = None
+    
+    if credentials:
+        token = credentials.credentials
+        print(f"🔍 TOKEN VERIFY: Using Authorization header token")
+    # Fallback to cookie if no Authorization header
+    elif access_token:
+        token = access_token
+        print(f"🔍 TOKEN VERIFY: Using cookie token")
+    else:
+        print("❌ TOKEN VERIFY: No token found in Authorization header or cookie")
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
     try:
         print(f"🔍 TOKEN VERIFY: Starting token verification")
-        print(f"🔍 TOKEN VERIFY: Token prefix: {credentials.credentials[:20]}...")
+        print(f"🔍 TOKEN VERIFY: Token prefix: {token[:20]}...")
         
         secret_key = os.getenv("JWT_SECRET_KEY", "fallback-secret")
         algorithm = os.getenv("JWT_ALGORITHM", "HS256")
         print(f"🔍 TOKEN VERIFY: Using secret key prefix: {secret_key[:10]}... and algorithm: {algorithm}")
         
-        payload = jwt.decode(credentials.credentials, secret_key, algorithms=[algorithm])
+        payload = jwt.decode(token, secret_key, algorithms=[algorithm])
         user_id = payload.get("sub")
         print(f"🔍 TOKEN VERIFY: Decoded payload: {payload}")
         
