@@ -1017,7 +1017,12 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
                 })
                 prev_end = end_vals
 
-            start_xp = sum(xp_by_day_per_skill.get(prev_year_end, {}).values())
+            if year == today.year:
+                year_start = date(year, 1, 1)
+                start_xp = sum(xp_by_day_per_skill.get(year_start, {}).values())
+            else:
+                start_xp = sum(xp_by_day_per_skill.get(prev_year_end, {}).values())
+            
             end_xp = sum(xp_by_day_per_skill.get(year_end, {}).values())
             
             if start_xp == 0 and points:
@@ -1076,7 +1081,12 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
                 })
                 prev_end_xp = end_xp
 
-            start_xp = xp_by_day.get(prev_year_end, 0)
+            if year == today.year:
+                year_start = date(year, 1, 1)
+                start_xp = xp_by_day.get(year_start, 0)
+            else:
+                start_xp = xp_by_day.get(prev_year_end, 0)
+            
             end_xp = xp_by_day.get(year_end, start_xp)
             
             if start_xp == 0 and points:
