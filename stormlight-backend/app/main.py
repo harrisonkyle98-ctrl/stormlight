@@ -1044,9 +1044,8 @@ async def discord_callback(code: str = Query(None)):
                 key="access_token",
                 value=jwt_token,
                 httponly=True,
-                secure=False,
-                samesite="lax",
-                domain="stormlight.fly.dev",
+                secure=True,
+                samesite="none",
                 path="/",
                 max_age=86400  # 24 hours
             )
