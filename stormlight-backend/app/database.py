@@ -907,7 +907,24 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
                     prev_xp = xp_end
                 d += timedelta(days=1)
 
-        start_xp = points[0]['xp_end'] - points[0]['xp_gain'] if points else 0
+        start_xp = 0
+        if points:
+            for d, stats_json in rows:
+                if d == prev_day:
+                    try:
+                        stats_obj = stats_json if isinstance(stats_json, dict) else json.loads(stats_json or '{}')
+                        if sk == 'overall':
+                            if stats_obj and stats_obj.get('overall'):
+                                start_xp = int(stats_obj['overall'].get('xp', 0))
+                            else:
+                                start_xp = sum(int((stats_obj.get(k, {}).get('xp', 0))) for k in stats_obj.keys() if k != 'overall')
+                        else:
+                            skill_data = stats_obj.get(sk, {})
+                            start_xp = int(skill_data.get('xp', 0))
+                    except Exception:
+                        start_xp = 0
+                    break
+        
         end_xp = points[-1]['xp_end'] if points else 0
         total_gain = max(0, end_xp - start_xp)
         return {
