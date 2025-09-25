@@ -1019,6 +1019,20 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
 
             if year == today.year:
                 start_xp = sum(xp_by_day_per_skill.get(prev_year_end, {}).values())
+                
+                if start_xp == 0:
+                    year_start = date(year, 1, 1)
+                    start_xp = sum(xp_by_day_per_skill.get(year_start, {}).values())
+                    
+                    if start_xp == 0:
+                        for month in range(1, 13):
+                            month_start = date(year, month, 1)
+                            if month_start > year_end:
+                                break
+                            month_xp = sum(xp_by_day_per_skill.get(month_start, {}).values())
+                            if month_xp > 0:
+                                start_xp = month_xp
+                                break
             else:
                 start_xp = sum(xp_by_day_per_skill.get(prev_year_end, {}).values())
             
@@ -1073,6 +1087,20 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
 
             if year == today.year:
                 start_xp = xp_by_day.get(prev_year_end, 0)
+                
+                if start_xp == 0:
+                    year_start = date(year, 1, 1)
+                    start_xp = xp_by_day.get(year_start, 0)
+                    
+                    if start_xp == 0:
+                        for month in range(1, 13):
+                            month_start = date(year, month, 1)
+                            if month_start > year_end:
+                                break
+                            month_xp = xp_by_day.get(month_start, 0)
+                            if month_xp > 0:
+                                start_xp = month_xp
+                                break
             else:
                 start_xp = xp_by_day.get(prev_year_end, 0)
             
