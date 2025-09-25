@@ -989,8 +989,22 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
             if rows:
                 first_stats = rows[0][1] if isinstance(rows[0][1], dict) else json.loads(rows[0][1] or '{}')
                 skill_keys = [k for k in (first_stats or {}).keys() if k != 'overall']
+                
+                baseline_skills = {}
+                for snapshot_date, stats in rows:
+                    stats_obj = stats if isinstance(stats, dict) else json.loads(stats or '{}')
+                    has_data = False
+                    for k in skill_keys:
+                        skill_data = (stats_obj or {}).get(k) or {}
+                        xp_value = int(skill_data.get('xp') or 0)
+                        if xp_value > 0:
+                            baseline_skills[k] = xp_value
+                            has_data = True
+                    if has_data:
+                        break
+                
                 for k in skill_keys:
-                    last_known[k] = 0
+                    last_known[k] = baseline_skills.get(k, 0)
 
             while day_cursor <= year_end:
                 while row_idx < len(rows) and rows[row_idx][0] <= day_cursor:
