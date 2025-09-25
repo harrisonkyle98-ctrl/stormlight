@@ -1020,18 +1020,24 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
 
             first_day = await get_first_snapshot_date(conn, username)
             points = []
-            prev_end = xp_by_day_per_skill.get(prev_year_end, {k: 0 for k in skill_keys})
+            
+            baseline_total_xp = sum(baseline_skills.values())
+            prev_total_xp = baseline_total_xp
+            
             for m in range(1, 13):
                 m_end = date(year, m, monthrange(year, m)[1])
-                end_vals = xp_by_day_per_skill.get(m_end, prev_end)
-                by_skill = {k: max(0, (end_vals.get(k, 0)) - (prev_end.get(k, 0))) for k in skill_keys}
+                end_vals = xp_by_day_per_skill.get(m_end, baseline_skills)
+                current_total_xp = sum(end_vals.values())
+                monthly_gain = max(0, current_total_xp - prev_total_xp)
+                
+                by_skill = {k: max(0, (end_vals.get(k, 0)) - (baseline_skills.get(k, 0) if m == 1 else prev_total_xp)) for k in skill_keys}
                 points.append({
                     'date': f"{year}-{m:02d}",
-                    'xp_end': sum(end_vals.values()),
-                    'xp_gain': sum(by_skill.values()),
+                    'xp_end': current_total_xp,
+                    'xp_gain': monthly_gain,
                     'by_skill': by_skill
                 })
-                prev_end = end_vals
+                prev_total_xp = current_total_xp
 
             if year == today.year:
                 start_xp = sum(xp_by_day_per_skill.get(prev_year_end, {}).values())
@@ -1095,28 +1101,24 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
             if prev_end_xp == 0 and baseline_xp > 0:
                 prev_end_xp = baseline_xp
             
+            prev_month_end_xp = baseline_xp
             for m in range(1, 13):
                 m_start = date(year, m, 1)
                 m_end = date(year, m, monthrange(year, m)[1])
                 
-                month_end_xp = prev_end_xp
-                latest_date_in_month = None
+                month_end_xp = prev_month_end_xp
                 for check_date in sorted(xp_by_day.keys()):
                     if m_start <= check_date <= m_end and xp_by_day[check_date] > 0:
                         month_end_xp = xp_by_day[check_date]
-                        latest_date_in_month = check_date
                 
-                if latest_date_in_month is None:
-                    month_end_xp = prev_end_xp
-                
-                gain = max(0, month_end_xp - prev_end_xp)
+                gain = max(0, month_end_xp - prev_month_end_xp)
                 
                 points.append({
                     'date': f"{year}-{m:02d}",
                     'xp_end': month_end_xp,
                     'xp_gain': gain
                 })
-                prev_end_xp = month_end_xp
+                prev_month_end_xp = month_end_xp
 
             if year == today.year:
                 start_xp = xp_by_day.get(prev_year_end, 0)
