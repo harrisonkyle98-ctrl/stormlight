@@ -1093,8 +1093,9 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
                 if latest_date_in_month is None:
                     month_end_xp = prev_end_xp
                 
-                if earliest_date_in_year and earliest_date_in_year.month == m and prev_end_xp == baseline_xp:
-                    gain = 0  # First month shows 0 gain as it's the starting point
+                if earliest_date_in_year and earliest_date_in_year.month == m:
+                    # For the first month with data, calculate gain from 0 to month_end_xp
+                    gain = max(0, month_end_xp)
                 else:
                     gain = max(0, month_end_xp - prev_end_xp)
                 
