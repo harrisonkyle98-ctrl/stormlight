@@ -90,14 +90,14 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
       return data.points.map((p: any) => ({
         label: view === 'day'
           ? new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-          : p.date,
+          : new Date(p.date + '-01').toLocaleDateString('en-US', { month: 'short' }),
         ...p.by_skill
       }))
     } else {
       return data.points.map((p: any) => ({
         label: view === 'day'
           ? new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-          : p.date,
+          : new Date(p.date + '-01').toLocaleDateString('en-US', { month: 'short' }),
         gain: p.xp_gain
       }))
     }
