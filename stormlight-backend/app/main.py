@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends, status, Query, BackgroundTasks, Response, Request, APIRouter
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
@@ -1016,15 +1016,25 @@ async def discord_callback(code: str = Query(None)):
             
             jwt_token = create_access_token({"sub": user_id})
             
-            response_data = {
-                "access_token": jwt_token,
-                "token_type": "bearer",
-                "user": user_dict
-            }
-            
             total_ms = int((time_module.time() - start) * 1000)
             print(f"🔐 OAUTH SUMMARY: token={int((t_token-start)*1000)}ms, userinfo={int((t_user-t_token)*1000)}ms, db={int((t_db-t_user)*1000)}ms, total={total_ms}ms")
-            return response_data
+            
+            redirect_url = "/"
+            if not user_dict['isLinked'] and user_dict['requiresLinking']:
+                redirect_url = "/?linking=required"
+            
+            response = RedirectResponse(url=redirect_url, status_code=302)
+            
+            response.set_cookie(
+                key="access_token",
+                value=jwt_token,
+                httponly=True,
+                secure=True,
+                samesite="lax",
+                max_age=86400  # 24 hours
+            )
+            
+            return response
             
     except HTTPException:
         raise

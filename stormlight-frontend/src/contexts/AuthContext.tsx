@@ -43,7 +43,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token')
+    let token = localStorage.getItem('access_token')
+    
+    if (!token) {
+      const cookies = document.cookie.split(';')
+      const accessTokenCookie = cookies.find(cookie => cookie.trim().startsWith('access_token='))
+      if (accessTokenCookie) {
+        token = accessTokenCookie.split('=')[1]
+        localStorage.setItem('access_token', token)
+      }
+    }
+    
     if (token) {
       fetchCurrentUser(token)
     } else {
@@ -94,26 +104,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       })
 
       if (response.ok) {
-        const data = await response.json()
-        const token = data.access_token
-        localStorage.setItem('access_token', token)
-        
-        try {
-          const userResponse = await fetch(`${API_URL}/api/user/me?refresh=true`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          })
+        const contentType = response.headers.get('content-type')
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json()
+          const token = data.access_token
+          localStorage.setItem('access_token', token)
           
-          if (userResponse.ok) {
-            const userData = await userResponse.json()
-            setUser(userData)
-          } else {
+          try {
+            const userResponse = await fetch(`${API_URL}/api/user/me?refresh=true`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            })
+            
+            if (userResponse.ok) {
+              const userData = await userResponse.json()
+              setUser(userData)
+            } else {
+              setUser(data.user)
+            }
+          } catch (error) {
+            console.error('Failed to refresh user data:', error)
             setUser(data.user)
           }
-        } catch (error) {
-          console.error('Failed to refresh user data:', error)
-          setUser(data.user)
+        } else {
+          const token = localStorage.getItem('access_token')
+          if (token) {
+            await fetchCurrentUser(token)
+          }
         }
       } else {
         throw new Error('Authentication failed')
