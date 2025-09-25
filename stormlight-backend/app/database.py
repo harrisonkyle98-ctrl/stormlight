@@ -1111,6 +1111,7 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
                 for check_date in sorted(xp_by_day.keys()):
                     if m_start <= check_date <= m_end and xp_by_day[check_date] > 0:
                         month_end_xp = xp_by_day[check_date]
+                        break  # Use the first (earliest) snapshot in the month
                 
                 gain = max(0, month_end_xp - prev_month_end_xp)
                 
