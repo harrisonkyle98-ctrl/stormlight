@@ -66,7 +66,7 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
       setError(null)
       const params = new URLSearchParams()
       if (skill && skill !== 'overall') params.set('skill', skill)
-      params.set('range', view)
+      params.set('view', view)
       params.set('year', String(year))
       if (view === 'day') params.set('month', String(month))
       const res = await fetch(`${API_URL}/api/player/${encodeURIComponent(username)}/xp-analytics?` + params.toString())
