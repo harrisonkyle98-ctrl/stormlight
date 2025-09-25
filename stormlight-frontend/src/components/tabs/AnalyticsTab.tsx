@@ -89,25 +89,59 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
     let points = [...data.points]
     
     if (view === 'month') {
-      points.sort((a: any, b: any) => {
-        const monthA = parseInt(a.date.split('-')[1])
-        const monthB = parseInt(b.date.split('-')[1])
-        return monthA - monthB
+      const MONTH_ORDER = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+      
+      const dataByMonth = new Map()
+      points.forEach((p: any) => {
+        const monthNum = parseInt(p.date.split('-')[1])
+        dataByMonth.set(monthNum, p)
       })
+      
+      const orderedData = []
+      for (let monthNum = 1; monthNum <= 12; monthNum++) {
+        const monthLabel = MONTH_ORDER[monthNum - 1]
+        const pointData = dataByMonth.get(monthNum)
+        
+        if (pointData) {
+          if (skill === 'overall') {
+            orderedData.push({
+              label: monthLabel,
+              ...pointData.by_skill
+            })
+          } else {
+            orderedData.push({
+              label: monthLabel,
+              gain: pointData.xp_gain
+            })
+          }
+        } else {
+          if (skill === 'overall') {
+            const zeroSkills: Record<string, number> = {}
+            SKILL_ORDER.forEach(sk => { zeroSkills[sk] = 0 })
+            orderedData.push({
+              label: monthLabel,
+              ...zeroSkills
+            })
+          } else {
+            orderedData.push({
+              label: monthLabel,
+              gain: 0
+            })
+          }
+        }
+      }
+      
+      return orderedData
     }
     
     if (skill === 'overall') {
       return points.map((p: any) => ({
-        label: view === 'day'
-          ? new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-          : new Date(p.date + '-01').toLocaleDateString('en-US', { month: 'short' }),
+        label: new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         ...p.by_skill
       }))
     } else {
       return points.map((p: any) => ({
-        label: view === 'day'
-          ? new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-          : new Date(p.date + '-01').toLocaleDateString('en-US', { month: 'short' }),
+        label: new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         gain: p.xp_gain
       }))
     }
