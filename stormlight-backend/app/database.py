@@ -1018,16 +1018,18 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
                 prev_end = end_vals
 
             if year == today.year:
-                start_xp = 0
                 year_start = date(year, 1, 1)
+                start_xp = sum(xp_by_day_per_skill.get(year_start, {}).values())
                 
-                for check_date in [year_start] + [date(year, m, 1) for m in range(1, 13)]:
-                    if check_date > year_end:
-                        break
-                    day_xp = xp_by_day_per_skill.get(check_date, {})
-                    if day_xp and sum(day_xp.values()) > 0:
-                        start_xp = sum(day_xp.values())
-                        break
+                if start_xp == 0:
+                    for month in range(1, 13):
+                        month_start = date(year, month, 1)
+                        if month_start > year_end:
+                            break
+                        month_xp = sum(xp_by_day_per_skill.get(month_start, {}).values())
+                        if month_xp > 0:
+                            start_xp = month_xp
+                            break
                 
                 if start_xp == 0:
                     start_xp = sum(xp_by_day_per_skill.get(prev_year_end, {}).values())
@@ -1084,16 +1086,18 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
                 prev_end_xp = end_xp
 
             if year == today.year:
-                start_xp = 0
                 year_start = date(year, 1, 1)
+                start_xp = xp_by_day.get(year_start, 0)
                 
-                for check_date in [year_start] + [date(year, m, 1) for m in range(1, 13)]:
-                    if check_date > year_end:
-                        break
-                    day_xp = xp_by_day.get(check_date, 0)
-                    if day_xp > 0:
-                        start_xp = day_xp
-                        break
+                if start_xp == 0:
+                    for month in range(1, 13):
+                        month_start = date(year, month, 1)
+                        if month_start > year_end:
+                            break
+                        month_xp = xp_by_day.get(month_start, 0)
+                        if month_xp > 0:
+                            start_xp = month_xp
+                            break
                 
                 if start_xp == 0:
                     start_xp = xp_by_day.get(prev_year_end, 0)
