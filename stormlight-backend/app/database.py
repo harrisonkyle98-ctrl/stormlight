@@ -943,7 +943,7 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
                     start_xp = first_nonzero_xp
         
         end_xp = points[-1]['xp_end'] if points else 0
-        total_gain = max(0, end_xp - start_xp)
+        total_gain = sum(point['xp_gain'] for point in points)
         return {
             'username': username,
             'skill': sk,
