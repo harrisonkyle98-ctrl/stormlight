@@ -995,11 +995,20 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
             while day_cursor <= year_end:
                 while row_idx < len(rows) and rows[row_idx][0] <= day_cursor:
                     stats_obj = rows[row_idx][1] if isinstance(rows[row_idx][1], dict) else json.loads(rows[row_idx][1] or '{}')
-                    for k in skill_keys:
-                        skill_data = (stats_obj or {}).get(k) or {}
-                        xp_value = int(skill_data.get('xp') or 0)
-                        if xp_value > 0:  # Only update if we have actual data
-                            last_known[k] = xp_value
+                    if 'overall' in stats_obj:
+                        overall_xp = int(stats_obj['overall'].get('xp', 0))
+                        if overall_xp > 0:
+                            for k in skill_keys:
+                                skill_data = (stats_obj or {}).get(k) or {}
+                                xp_value = int(skill_data.get('xp') or 0)
+                                if xp_value > 0:
+                                    last_known[k] = xp_value
+                    else:
+                        for k in skill_keys:
+                            skill_data = (stats_obj or {}).get(k) or {}
+                            xp_value = int(skill_data.get('xp') or 0)
+                            if xp_value > 0:
+                                last_known[k] = xp_value
                     row_idx += 1
                 xp_by_day_per_skill[day_cursor] = {k: (last_known.get(k) or 0) for k in skill_keys}
                 day_cursor = day_cursor + timedelta(days=1)
