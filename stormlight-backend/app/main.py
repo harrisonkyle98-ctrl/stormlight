@@ -20,6 +20,7 @@ import asyncio
 from datetime import time as datetime_time
 from collections import defaultdict
 import threading
+import re
 try:
     from prisma import Prisma
     PRISMA_AVAILABLE = True
@@ -2250,6 +2251,173 @@ async def get_clan_log(
         traceback.print_exc()
         print(f"❌ [ClanLog API] Error fetching clan log: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch clan log")
+
+async def get_item_image_from_wiki(item_name: str) -> str:
+    """Get item image URL from RuneScape Wiki API with proper User-Agent"""
+    try:
+        async with httpx.AsyncClient() as client:
+            search_url = "https://runescape.wiki/api.php"
+            search_params = {
+                "action": "query",
+                "format": "json",
+                "list": "search",
+                "srsearch": item_name,
+                "srlimit": 1
+            }
+            
+            headers = {
+                "User-Agent": "stormlight-clan-dashboard/1.0 (contact: harrisonkyle98@gmail.com)"
+            }
+            
+            search_response = await client.get(search_url, params=search_params, headers=headers)
+            if search_response.status_code == 200:
+                search_data = search_response.json()
+                if search_data.get('query', {}).get('search'):
+                    page_title = search_data['query']['search'][0]['title']
+                    
+                    image_params = {
+                        "action": "query",
+                        "format": "json",
+                        "prop": "pageimages",
+                        "titles": page_title,
+                        "pithumbsize": 64
+                    }
+                    
+                    image_response = await client.get(search_url, params=image_params, headers=headers)
+                    if image_response.status_code == 200:
+                        image_data = image_response.json()
+                        pages = image_data.get('query', {}).get('pages', {})
+                        for page_id, page_info in pages.items():
+                            if 'thumbnail' in page_info:
+                                return page_info['thumbnail']['source']
+            
+            # Fallback to generic item icon
+            return "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png"
+            
+    except Exception as e:
+        print(f"Error fetching item image for {item_name}: {e}")
+        return "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png"
+
+@api_router.get("/player/{username}/drops")
+async def get_player_drops(username: str, page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50)):
+    """Get boss drops for a specific player with item metadata"""
+    from urllib.parse import unquote
+    decoded_username = unquote(username).replace('-', ' ')
+    
+    async def fetch_single_player_activities(username: str, max_retries: int = 3):
+        """Fetch activities for a single player with exponential backoff retry"""
+        for attempt in range(max_retries):
+            try:
+                async with httpx.AsyncClient() as client:
+                    runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={username}&activities=20"
+                    response = await client.get(runemetrics_url)
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        activities = data.get('activities', [])
+                        
+                        player_activities = []
+                        
+                        for activity in activities:
+                            try:
+                                activity_date_str = activity['date']
+                                
+                                try:
+                                    activity_date = datetime.strptime(activity_date_str, '%d-%b-%Y %H:%M')
+                                except ValueError:
+                                    try:
+                                        activity_date = datetime.strptime(activity_date_str, '%d-%b-%Y')
+                                        activity_date = activity_date.replace(hour=0, minute=0)
+                                    except ValueError:
+                                        continue
+                                
+                                activity_timestamp = int(activity_date.timestamp())
+                                
+                                current_time = datetime.now().timestamp()
+                                if activity_timestamp < 0 or activity_timestamp > current_time + 86400:
+                                    continue
+                                
+                                player_activities.append({
+                                    'username': username,
+                                    'text': activity['text'],
+                                    'details': activity['details'],
+                                    'date': activity['date'],
+                                    'timestamp': activity_timestamp
+                                })
+                            except (ValueError, KeyError):
+                                continue
+                        
+                        player_activities.sort(key=lambda x: x['timestamp'], reverse=True)
+                        return player_activities
+                    
+                    elif response.status_code == 429:
+                        base_delay = 3.0
+                        max_delay = 30.0
+                        jitter = random.uniform(0.8, 1.2)
+                        delay = min(base_delay * (2 ** attempt) * jitter, max_delay)
+                        await asyncio.sleep(delay)
+                        continue
+                    
+                    else:
+                        if attempt < max_retries - 1:
+                            await asyncio.sleep(1.5 ** attempt)
+                            continue
+                        return []
+                        
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(1.5 ** attempt)
+                    continue
+                return []
+        
+        return []
+    
+    try:
+        all_activities = await fetch_single_player_activities(decoded_username)
+        
+        drops = []
+        
+        for activity in all_activities:
+            activity_text = activity['text']
+            details = activity.get('details', '')
+            
+            if 'looted' in details.lower() and 'after defeating' in details.lower():
+                item_match = re.search(r"I found a (.+?)\.", activity_text)
+                if item_match:
+                    item_name = item_match.group(1).strip()
+                    
+                    boss_match = re.search(r"After defeating (.+?), I looted", details)
+                    boss_name = boss_match.group(1).strip() if boss_match else "Unknown Boss"
+                    
+                    item_image_url = await get_item_image_from_wiki(item_name)
+                    
+                    drops.append({
+                        'item_name': item_name,
+                        'boss_name': boss_name,
+                        'timestamp': activity['timestamp'],
+                        'date': activity['date'],
+                        'item_image_url': item_image_url,
+                        'activity_text': activity['text']
+                    })
+        
+        drops.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        start_idx = (page - 1) * limit
+        end_idx = start_idx + limit
+        paginated_drops = drops[start_idx:end_idx]
+        
+        return {
+            "drops": paginated_drops,
+            "has_more": end_idx < len(drops),
+            "total": len(drops)
+        }
+    except Exception as e:
+        print(f"Error fetching player drops for {decoded_username}: {e}")
+        return {
+            "drops": [],
+            "total": 0,
+            "has_more": False
+        }
 
 @api_router.get("/player/{username}/activities")
 async def get_player_activities(username: str, page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50)):
