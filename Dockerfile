@@ -4,8 +4,6 @@ WORKDIR /frontend
 COPY stormlight-frontend/package*.json ./
 RUN npm ci
 COPY stormlight-frontend/ ./
-# Copy .env file if it exists for Vite build
-COPY stormlight-frontend/.env* ./ 2>/dev/null || true
 RUN npm run build
 
 # Stage 2: Build backend with Poetry and Prisma
