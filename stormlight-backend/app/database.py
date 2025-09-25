@@ -811,9 +811,17 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
     if view == 'day':
         if month is None:
             raise ValueError("month is required for daily view")
+        from datetime import date as date_class
+        today = date_class.today()
+        
         days_in_month = monthrange(year, month)[1]
         start_date = date(year, month, 1)
-        end_date = date(year, month, days_in_month)
+        
+        if year == today.year and month == today.month:
+            end_date = today
+        else:
+            end_date = date(year, month, days_in_month)
+        
         prev_day = start_date - timedelta(days=1)
 
         cur = await conn.execute("""
@@ -949,8 +957,14 @@ async def get_xp_timeseries(conn, username: str, skill: str | None, view: str, y
         }
 
     else:
+        from datetime import date as date_class
+        today = date_class.today()
+        
         prev_year_end = date(year - 1, 12, 31)
-        year_end = date(year, 12, 31)
+        if year == today.year:
+            year_end = today
+        else:
+            year_end = date(year, 12, 31)
 
         cur = await conn.execute("""
             SELECT snapshot_date, stats
