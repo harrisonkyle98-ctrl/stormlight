@@ -89,11 +89,13 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
     let points = [...data.points]
     
     if (view === 'month') {
+      console.log('Before sorting:', points.map(p => p.date))
       points.sort((a: any, b: any) => {
         const monthA = parseInt(a.date.split('-')[1])
         const monthB = parseInt(b.date.split('-')[1])
         return monthA - monthB
       })
+      console.log('After sorting:', points.map(p => p.date))
     }
     
     if (skill === 'overall') {
