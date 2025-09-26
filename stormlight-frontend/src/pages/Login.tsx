@@ -11,7 +11,7 @@ const Login = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const code = urlParams.get('code')
-    
+
     if (code) {
       handleCallback(code)
     }
@@ -46,10 +46,10 @@ const Login = () => {
       <Card className="w-full max-w-md bg-slate-800/50 border-slate-700">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-white mb-2">
-            ⚡ Stormlight Clan
+            ⚡ Stormlight
           </CardTitle>
           <CardDescription className="text-slate-300">
-            Welcome to the official Stormlight clan website. Sign in with Discord to access clan features.
+            Welcome to the Stormlight clan dashboard. Sign in with Discord to access clan features.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -73,10 +73,19 @@ const Login = () => {
               </div>
             )}
           </Button>
-          
+
           <div className="text-center text-sm text-slate-400">
             <p>Only Stormlight clan members can access this site.</p>
-            <p className="mt-2">Join our Discord server to get started!</p>
+            <p className="mt-2">
+              <a 
+                href="https://discord.com/invite/stormlight" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:text-blue-300 underline"
+              >
+                Join our Discord server to get started!
+              </a>
+            </p>
           </div>
         </CardContent>
       </Card>
