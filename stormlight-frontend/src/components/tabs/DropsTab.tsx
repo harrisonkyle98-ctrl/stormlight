@@ -81,18 +81,41 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
   const groupedDrops = filteredDrops.reduce((groups, drop) => {
     const bossName = drop.boss_name;
     if (!groups[bossName]) {
-      groups[bossName] = [];
+      groups[bossName] = {};
     }
-    groups[bossName].push(drop);
+    
+    const itemName = drop.item_name;
+    if (!groups[bossName][itemName]) {
+      groups[bossName][itemName] = {
+        item_name: drop.item_name,
+        item_image_url: drop.item_image_url,
+        count: 0,
+        mostRecentTimestamp: 0
+      };
+    }
+    
+    groups[bossName][itemName].count++;
+    groups[bossName][itemName].mostRecentTimestamp = Math.max(
+      groups[bossName][itemName].mostRecentTimestamp,
+      drop.timestamp
+    );
+    
     return groups;
-  }, {} as Record<string, DropData[]>);
+  }, {} as Record<string, Record<string, { item_name: string; item_image_url: string; count: number; mostRecentTimestamp: number }>>);
 
   const sortedBossGroups = Object.entries(groupedDrops)
-    .map(([bossName, bossDrops]) => ({
-      bossName,
-      drops: bossDrops.sort((a, b) => b.timestamp - a.timestamp),
-      mostRecentTimestamp: Math.max(...bossDrops.map(d => d.timestamp))
-    }))
+    .map(([bossName, items]) => {
+      const itemsArray = Object.values(items).sort((a, b) => a.item_name.localeCompare(b.item_name));
+      const totalDrops = itemsArray.reduce((sum, item) => sum + item.count, 0);
+      const mostRecentTimestamp = Math.max(...itemsArray.map(item => item.mostRecentTimestamp));
+      
+      return {
+        bossName,
+        items: itemsArray,
+        totalDrops,
+        mostRecentTimestamp
+      };
+    })
     .sort((a, b) => b.mostRecentTimestamp - a.mostRecentTimestamp);
 
   if (loading) {
@@ -146,29 +169,28 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
               {/* Boss Header */}
               <div className="bg-slate-600/50 px-4 py-3 rounded-lg border-l-4 border-blue-500">
                 <h3 className="text-white font-semibold text-lg">{bossGroup.bossName}</h3>
-                <p className="text-slate-300 text-sm">{bossGroup.drops.length} drop{bossGroup.drops.length !== 1 ? 's' : ''}</p>
+                <p className="text-slate-300 text-sm">{bossGroup.totalDrops} drop{bossGroup.totalDrops !== 1 ? 's' : ''}</p>
               </div>
               
-              {/* Boss Drops */}
+              {/* Boss Items */}
               <div className="space-y-1 ml-4">
-                {bossGroup.drops.map((drop, index) => (
+                {bossGroup.items.map((item, index) => (
                   <div key={index} className="bg-slate-700/30 p-3 rounded-lg flex items-center justify-between hover:bg-slate-700/50 transition-colors">
                     <div className="flex items-center space-x-3">
                       <img
-                        src={drop.item_image_url}
-                        alt={drop.item_name}
+                        src={item.item_image_url}
+                        alt={item.item_name}
                         className="w-10 h-10 rounded border border-slate-600"
                         onError={(e) => {
                           e.currentTarget.src = "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png";
                         }}
                       />
                       <div>
-                        <h4 className="text-white font-medium">{drop.item_name}</h4>
+                        <h4 className="text-white font-medium">{item.item_name}</h4>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-slate-400 text-sm">{new Date(drop.timestamp * 1000).toLocaleDateString()}</p>
-                      <p className="text-slate-500 text-xs">{new Date(drop.timestamp * 1000).toLocaleTimeString()}</p>
+                      <p className="text-white text-lg font-bold">{item.count}</p>
                     </div>
                   </div>
                 ))}
