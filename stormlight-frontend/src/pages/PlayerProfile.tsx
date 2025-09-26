@@ -178,7 +178,7 @@ const PlayerProfile = () => {
   if (error || !playerData) {
     return (
       <div className="space-y-6">
-        <Button asChild variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+        <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
           <Link to="/members">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Members
@@ -402,7 +402,7 @@ const PlayerProfile = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <Button asChild variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+        <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
           <Link to="/members">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Members
@@ -411,9 +411,8 @@ const PlayerProfile = () => {
         <Button
           onClick={handleRefresh}
           disabled={refreshing || (lastRefresh ? Date.now() - lastRefresh < 300000 : false)}
-          variant="outline"
           size="sm"
-          className="border-slate-600 text-slate-300 hover:bg-slate-700 disabled:opacity-50"
+          className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:bg-blue-800"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
         </Button>
