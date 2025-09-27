@@ -1401,31 +1401,40 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
     stats = await fetch_player_stats(decoded_username)
     
     is_verified = False
+    print(f"Checking Discord verification for username: '{decoded_username}'")
     try:
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            print("Using Prisma query for Discord verification")
             linked_member = await prisma.clanmember.find_first(
                 where={'username': decoded_username},
                 select={'discordId': True}
             )
+            print(f"Prisma result: {linked_member}")
             is_verified = bool(linked_member and linked_member.discordId)
+            print(f"Prisma is_verified: {is_verified}")
         else:
-            # Fallback to direct database query
-            try:
-                from .database import get_db_connection
-            except ImportError:
-                from database import get_db_connection
+            print("Falling back to direct database query for Discord verification")
+            import asyncpg
+            import os
             
-            conn = await get_db_connection()
-            async with conn:
-                cursor = await conn.execute(
-                    "SELECT discord_id FROM clan_members WHERE username = %s",
-                    (decoded_username,)
+            conn = await asyncpg.connect(os.getenv('DATABASE_URL'))
+            try:
+                result = await conn.fetchrow(
+                    "SELECT discord_id FROM clan_members WHERE username = $1",
+                    decoded_username
                 )
-                result = await cursor.fetchone()
-                is_verified = bool(result and result[0])
+                print(f"Direct query result: {result}")
+                is_verified = bool(result and result['discord_id'])
+                print(f"Direct query is_verified: {is_verified}")
+            finally:
+                await conn.close()
     except Exception as e:
         print(f"Error checking Discord verification for {decoded_username}: {e}")
+        import traceback
+        traceback.print_exc()
         is_verified = False
+    
+    print(f"Final is_verified value for {decoded_username}: {is_verified}")
     
     if stats:
         if clan_rank:
