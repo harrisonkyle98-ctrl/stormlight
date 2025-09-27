@@ -10,16 +10,22 @@ import { usernameToUrl } from '../utils/urlUtils'
 
 interface CompetitionLeaderboard {
   username: string
-  xp: number
-  level: number
-  rank: number | null
+  xp_gain?: number
+  drop_count?: number
+  skill?: string
+  boss?: string
+  xp?: number
+  level?: number
+  rank?: number | null
 }
 
 interface CompetitionDetail {
   id: number
   name: string
   description: string
-  skill: string
+  type: 'xp' | 'drops'
+  skill?: string
+  boss?: string
   start_date: string
   end_date: string
   created_by: string
@@ -121,11 +127,11 @@ const CompetitionDetail = () => {
   const { status, color } = getCompetitionStatus(competition.start_date, competition.end_date)
 
   const sampleLeaderboard = [
-    { username: 'ClanLeader', xp: 2500000, level: 85, rank: 1245 },
-    { username: 'SkillMaster', xp: 2200000, level: 82, rank: 1456 },
-    { username: 'PvPWarrior', xp: 1800000, level: 78, rank: 2134 },
-    { username: 'QuestHero', xp: 1500000, level: 75, rank: 2567 },
-    { username: 'BossSlayer', xp: 1200000, level: 72, rank: 3245 },
+    { username: 'ClanLeader', xp: 2500000, xp_gain: 2500000, drop_count: 15, level: 85, rank: 1245, boss: 'All bosses' },
+    { username: 'SkillMaster', xp: 2200000, xp_gain: 2200000, drop_count: 12, level: 82, rank: 1456, boss: 'All bosses' },
+    { username: 'PvPWarrior', xp: 1800000, xp_gain: 1800000, drop_count: 10, level: 78, rank: 2134, boss: 'All bosses' },
+    { username: 'QuestHero', xp: 1500000, xp_gain: 1500000, drop_count: 8, level: 75, rank: 2567, boss: 'All bosses' },
+    { username: 'BossSlayer', xp: 1200000, xp_gain: 1200000, drop_count: 6, level: 72, rank: 3245, boss: 'All bosses' },
   ]
 
   const leaderboardData = competition.leaderboard.length > 0 ? competition.leaderboard : sampleLeaderboard
@@ -143,21 +149,25 @@ const CompetitionDetail = () => {
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-4">
-              {getSkillIcon(competition.skill) ? (
-                <img 
-                  src={getSkillIcon(competition.skill)!} 
-                  alt={competition.skill}
-                  className="w-10 h-10"
-                />
+              {competition.type === 'xp' ? (
+                getSkillIcon(competition.skill || 'overall') ? (
+                  <img 
+                    src={getSkillIcon(competition.skill || 'overall')!} 
+                    alt={competition.skill}
+                    className="w-10 h-10"
+                  />
+                ) : (
+                  <div className="text-4xl">📊</div>
+                )
               ) : (
-                <div className="text-4xl">📊</div>
+                <div className="text-4xl">💀</div>
               )}
               <div>
                 <CardTitle className="text-2xl text-white mb-2">
-                  {competition.name || `${competition.skill.charAt(0).toUpperCase() + competition.skill.slice(1)} Competition`}
+                  {competition.name || `${competition.type === 'xp' ? (competition.skill?.charAt(0).toUpperCase() || '') + (competition.skill?.slice(1) || '') : 'Boss Drop'} Competition`}
                 </CardTitle>
                 <p className="text-slate-400">
-                  {competition.description || `Compete for the highest ${competition.skill} XP gains!`}
+                  {competition.description || `Compete for the ${competition.type === 'xp' ? 'highest XP gains' : 'most boss drops'}!`}
                 </p>
               </div>
             </div>
@@ -198,9 +208,12 @@ const CompetitionDetail = () => {
             <div className="flex items-center space-x-3">
               <TrendingUp className="w-5 h-5 text-purple-400" />
               <div>
-                <p className="text-sm text-slate-400">Skill</p>
+                <p className="text-sm text-slate-400">{competition.type === 'xp' ? 'Skill' : 'Boss'}</p>
                 <p className="text-white font-medium capitalize">
-                  {competition.skill}
+                  {competition.type === 'xp' 
+                    ? competition.skill 
+                    : competition.boss || 'All bosses'
+                  }
                 </p>
               </div>
             </div>
@@ -263,13 +276,21 @@ const CompetitionDetail = () => {
                 
                 <div className="flex items-center space-x-6">
                   <div className="text-right">
-                    <p className="text-sm text-slate-400">Level</p>
-                    <p className="text-lg font-bold text-white">{player.level}</p>
+                    <p className="text-sm text-slate-400">{competition.type === 'xp' ? 'Level' : 'Boss'}</p>
+                    <p className="text-lg font-bold text-white">
+                      {competition.type === 'xp' 
+                        ? player.level || '-'
+                        : player.boss || 'All bosses'
+                      }
+                    </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-slate-400">XP</p>
+                    <p className="text-sm text-slate-400">{competition.type === 'xp' ? 'XP Gained' : 'Drops'}</p>
                     <p className="text-lg font-bold text-green-400">
-                      {formatNumber(player.xp)}
+                      {competition.type === 'xp' 
+                        ? formatNumber(player.xp_gain || player.xp || 0)
+                        : (player.drop_count || 0).toString()
+                      }
                     </p>
                   </div>
                   {player.rank && (

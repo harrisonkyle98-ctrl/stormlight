@@ -10,7 +10,9 @@ interface Competition {
   id: number
   name: string
   description: string
-  skill: string
+  type: 'xp' | 'drops'
+  skill?: string
+  boss?: string
   start_date: string
   end_date: string
   created_by: string
@@ -25,6 +27,7 @@ interface CompetitionsData {
 const Competitions = () => {
   const [competitionsData, setCompetitionsData] = useState<CompetitionsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [typeFilter, setTypeFilter] = useState<'all' | 'xp' | 'drops'>('all')
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -65,6 +68,21 @@ const Competitions = () => {
   }
 
 
+  const filteredCompetitions = competitionsData?.competitions.filter(comp => {
+    if (typeFilter === 'all') return true
+    return comp.type === typeFilter
+  }) || []
+
+  const activeCompetitions = filteredCompetitions.filter(comp => {
+    const { status } = getCompetitionStatus(comp.start_date, comp.end_date)
+    return status === 'active' || status === 'upcoming'
+  })
+
+  const pastCompetitions = filteredCompetitions.filter(comp => {
+    const { status } = getCompetitionStatus(comp.start_date, comp.end_date)
+    return status === 'ended'
+  })
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
@@ -82,7 +100,7 @@ const Competitions = () => {
             Clan Competitions
           </h1>
           <p className="text-slate-300">
-            Compete with your clan mates in XP-based challenges
+            Compete with your clan mates in XP and Drop challenges
           </p>
         </div>
         <Button className="bg-green-600 hover:bg-green-700">
@@ -91,8 +109,233 @@ const Competitions = () => {
         </Button>
       </div>
 
-      <div className="grid gap-6">
-        {competitionsData?.competitions.length === 0 ? (
+      <div className="flex items-center space-x-4 p-4 bg-slate-700/30 rounded-lg">
+        <span className="text-slate-300 font-medium">Filter by type:</span>
+        <div className="flex space-x-2">
+          <Button
+            variant={typeFilter === 'all' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setTypeFilter('all')}
+            className={typeFilter === 'all' ? 'bg-blue-600 hover:bg-blue-700' : 'border-slate-600 text-slate-300 hover:bg-slate-700'}
+          >
+            All
+          </Button>
+          <Button
+            variant={typeFilter === 'xp' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setTypeFilter('xp')}
+            className={typeFilter === 'xp' ? 'bg-blue-600 hover:bg-blue-700' : 'border-slate-600 text-slate-300 hover:bg-slate-700'}
+          >
+            XP
+          </Button>
+          <Button
+            variant={typeFilter === 'drops' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setTypeFilter('drops')}
+            className={typeFilter === 'drops' ? 'bg-blue-600 hover:bg-blue-700' : 'border-slate-600 text-slate-300 hover:bg-slate-700'}
+          >
+            Drops
+          </Button>
+        </div>
+      </div>
+
+      {activeCompetitions.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold text-white">Active Competitions</h2>
+          <div className="grid gap-6">
+            {activeCompetitions.map((competition) => {
+              const { status, color } = getCompetitionStatus(competition.start_date, competition.end_date)
+              
+              return (
+                <Card key={competition.id} className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center space-x-3">
+                        {competition.type === 'xp' ? (
+                          getSkillIcon(competition.skill || 'overall') ? (
+                            <img 
+                              src={getSkillIcon(competition.skill || 'overall')!} 
+                              alt={competition.skill}
+                              className="w-6 h-6"
+                            />
+                          ) : (
+                            <div className="text-2xl">📊</div>
+                          )
+                        ) : (
+                          <div className="text-2xl">💀</div>
+                        )}
+                        <div>
+                          <CardTitle className="text-white text-xl">
+                            {competition.name}
+                          </CardTitle>
+                          <CardDescription className="text-slate-400 mt-1">
+                            {competition.description}
+                          </CardDescription>
+                        </div>
+                      </div>
+                      <Badge className={`${color} text-white capitalize`}>
+                        {status}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-slate-400" />
+                        <div>
+                          <p className="text-sm text-slate-400">Start Date</p>
+                          <p className="text-white font-medium">
+                            {formatDate(competition.start_date)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-slate-400" />
+                        <div>
+                          <p className="text-sm text-slate-400">End Date</p>
+                          <p className="text-white font-medium">
+                            {formatDate(competition.end_date)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Users className="w-4 h-4 text-slate-400" />
+                        <div>
+                          <p className="text-sm text-slate-400">Type</p>
+                          <p className="text-white font-medium capitalize">
+                            {competition.type}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-700">
+                      <div className="flex items-center space-x-2">
+                        <Trophy className="w-4 h-4 text-yellow-400" />
+                        <span className="text-sm text-slate-400">
+                          {competition.type === 'xp' ? 'Skill' : 'Boss'}: 
+                          <span className="text-white capitalize ml-1">
+                            {competition.type === 'xp' 
+                              ? competition.skill 
+                              : competition.boss || 'All bosses'
+                            }
+                          </span>
+                        </span>
+                      </div>
+                      <Button asChild variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+                        <Link to={`/competitions/${competition.id}`}>
+                          View Leaderboard
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {pastCompetitions.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold text-white">Past Competitions</h2>
+          <div className="grid gap-6">
+            {pastCompetitions.map((competition) => {
+              const { status, color } = getCompetitionStatus(competition.start_date, competition.end_date)
+              
+              return (
+                <Card key={competition.id} className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors opacity-75">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center space-x-3">
+                        {competition.type === 'xp' ? (
+                          getSkillIcon(competition.skill || 'overall') ? (
+                            <img 
+                              src={getSkillIcon(competition.skill || 'overall')!} 
+                              alt={competition.skill}
+                              className="w-6 h-6"
+                            />
+                          ) : (
+                            <div className="text-2xl">📊</div>
+                          )
+                        ) : (
+                          <div className="text-2xl">💀</div>
+                        )}
+                        <div>
+                          <CardTitle className="text-white text-xl">
+                            {competition.name}
+                          </CardTitle>
+                          <CardDescription className="text-slate-400 mt-1">
+                            {competition.description}
+                          </CardDescription>
+                        </div>
+                      </div>
+                      <Badge className={`${color} text-white capitalize`}>
+                        {status}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-slate-400" />
+                        <div>
+                          <p className="text-sm text-slate-400">Start Date</p>
+                          <p className="text-white font-medium">
+                            {formatDate(competition.start_date)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-slate-400" />
+                        <div>
+                          <p className="text-sm text-slate-400">End Date</p>
+                          <p className="text-white font-medium">
+                            {formatDate(competition.end_date)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Users className="w-4 h-4 text-slate-400" />
+                        <div>
+                          <p className="text-sm text-slate-400">Type</p>
+                          <p className="text-white font-medium capitalize">
+                            {competition.type}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-700">
+                      <div className="flex items-center space-x-2">
+                        <Trophy className="w-4 h-4 text-yellow-400" />
+                        <span className="text-sm text-slate-400">
+                          {competition.type === 'xp' ? 'Skill' : 'Boss'}: 
+                          <span className="text-white capitalize ml-1">
+                            {competition.type === 'xp' 
+                              ? competition.skill 
+                              : competition.boss || 'All bosses'
+                            }
+                          </span>
+                        </span>
+                      </div>
+                      <Button asChild variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+                        <Link to={`/competitions/${competition.id}`}>
+                          View Final Results
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {filteredCompetitions.length === 0 && (
+        <div className="grid gap-6">
+          {competitionsData?.competitions.length === 0 ? (
           <Card className="bg-slate-800/50 border-slate-700">
             <CardContent className="p-8 text-center">
               <Swords className="w-16 h-16 text-slate-600 mx-auto mb-4" />
@@ -106,207 +349,19 @@ const Competitions = () => {
               </Button>
             </CardContent>
           </Card>
-        ) : (
-          competitionsData?.competitions.map((competition) => {
-            const { status, color } = getCompetitionStatus(competition.start_date, competition.end_date)
-            
-            return (
-              <Card key={competition.id} className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
-                      {getSkillIcon(competition.skill) ? (
-                        <img 
-                          src={getSkillIcon(competition.skill)!} 
-                          alt={competition.skill}
-                          className="w-6 h-6"
-                        />
-                      ) : (
-                        <div className="text-2xl">📊</div>
-                      )}
-                      <div>
-                        <CardTitle className="text-white text-xl">
-                          {competition.name}
-                        </CardTitle>
-                        <CardDescription className="text-slate-400 mt-1">
-                          {competition.description}
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <Badge className={`${color} text-white capitalize`}>
-                      {status}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-slate-400" />
-                      <div>
-                        <p className="text-sm text-slate-400">Start Date</p>
-                        <p className="text-white font-medium">
-                          {formatDate(competition.start_date)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-slate-400" />
-                      <div>
-                        <p className="text-sm text-slate-400">End Date</p>
-                        <p className="text-white font-medium">
-                          {formatDate(competition.end_date)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Users className="w-4 h-4 text-slate-400" />
-                      <div>
-                        <p className="text-sm text-slate-400">Participants</p>
-                        <p className="text-white font-medium">
-                          {competition.participants.length} members
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-700">
-                    <div className="flex items-center space-x-2">
-                      <Trophy className="w-4 h-4 text-yellow-400" />
-                      <span className="text-sm text-slate-400">
-                        Skill: <span className="text-white capitalize">{competition.skill}</span>
-                      </span>
-                    </div>
-                    <Button asChild variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
-                      <Link to={`/competitions/${competition.id}`}>
-                        View Leaderboard
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })
-        )}
-      </div>
-
-      {/* Sample competitions for demonstration */}
-      <div className="grid gap-6">
-        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="text-2xl">🪓</div>
-                <div>
-                  <CardTitle className="text-white text-xl">
-                    Woodcutting XP Week
-                  </CardTitle>
-                  <CardDescription className="text-slate-400 mt-1">
-                    See who can gain the most Woodcutting XP in one week!
-                  </CardDescription>
-                </div>
-              </div>
-              <Badge className="bg-green-500 text-white">Active</Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-4 h-4 text-slate-400" />
-                <div>
-                  <p className="text-sm text-slate-400">Start Date</p>
-                  <p className="text-white font-medium">Aug 25, 2025</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-4 h-4 text-slate-400" />
-                <div>
-                  <p className="text-sm text-slate-400">End Date</p>
-                  <p className="text-white font-medium">Sep 1, 2025</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Users className="w-4 h-4 text-slate-400" />
-                <div>
-                  <p className="text-sm text-slate-400">Participants</p>
-                  <p className="text-white font-medium">8 members</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between pt-4 border-t border-slate-700">
-              <div className="flex items-center space-x-2">
-                <Trophy className="w-4 h-4 text-yellow-400" />
-                <span className="text-sm text-slate-400">
-                  Skill: <span className="text-white">Woodcutting</span>
-                </span>
-              </div>
-              <Button asChild variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
-                <Link to="/competitions/1">
-                  View Leaderboard
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="text-2xl">💀</div>
-                <div>
-                  <CardTitle className="text-white text-xl">
-                    Slayer Showdown
-                  </CardTitle>
-                  <CardDescription className="text-slate-400 mt-1">
-                    Monthly Slayer XP competition - who will be the ultimate slayer?
-                  </CardDescription>
-                </div>
-              </div>
-              <Badge className="bg-blue-500 text-white">Upcoming</Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-4 h-4 text-slate-400" />
-                <div>
-                  <p className="text-sm text-slate-400">Start Date</p>
-                  <p className="text-white font-medium">Sep 1, 2025</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-4 h-4 text-slate-400" />
-                <div>
-                  <p className="text-sm text-slate-400">End Date</p>
-                  <p className="text-white font-medium">Sep 30, 2025</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Users className="w-4 h-4 text-slate-400" />
-                <div>
-                  <p className="text-sm text-slate-400">Participants</p>
-                  <p className="text-white font-medium">12 members</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between pt-4 border-t border-slate-700">
-              <div className="flex items-center space-x-2">
-                <Trophy className="w-4 h-4 text-yellow-400" />
-                <span className="text-sm text-slate-400">
-                  Skill: <span className="text-white">Slayer</span>
-                </span>
-              </div>
-              <Button asChild variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
-                <Link to="/competitions/2">
-                  View Leaderboard
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          ) : (
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardContent className="p-8 text-center">
+                <Swords className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-white mb-2">No {typeFilter} competitions found</h3>
+                <p className="text-slate-400 mb-4">
+                  Try adjusting your filter or check back later for new competitions!
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
     </div>
   )
 }

@@ -167,7 +167,44 @@ def cleanup_oauth_codes():
             used_oauth_codes = set(list(used_oauth_codes)[-500:])  # Keep latest 500
             print(f"🔐 CLEANUP: OAuth codes cleaned up, now tracking {len(used_oauth_codes)} codes")
 
-competitions_db = {}
+competitions_db = {
+    1: {
+        "id": 1,
+        "name": "Woodcutting XP Week",
+        "description": "See who can gain the most Woodcutting XP in one week!",
+        "type": "xp",
+        "skill": "woodcutting",
+        "start_date": datetime(2024, 8, 25),
+        "end_date": datetime(2024, 9, 1),
+        "created_by": "admin",
+        "created_at": datetime.now(),
+        "participants": []
+    },
+    2: {
+        "id": 2,
+        "name": "Slayer Showdown",
+        "description": "Monthly Slayer XP competition - who will be the ultimate slayer?",
+        "type": "xp",
+        "skill": "slayer",
+        "start_date": datetime(2024, 9, 1),
+        "end_date": datetime(2024, 9, 30),
+        "created_by": "admin",
+        "created_at": datetime.now(),
+        "participants": []
+    },
+    3: {
+        "id": 3,
+        "name": "Boss Drop Challenge",
+        "description": "Who can get the most boss drops this month?",
+        "type": "drops",
+        "boss": "",
+        "start_date": datetime(2024, 8, 1),
+        "end_date": datetime(2024, 8, 31),
+        "created_by": "admin",
+        "created_at": datetime.now(),
+        "participants": []
+    }
+}
 
 activities_cache = {
     'data': [],
@@ -1456,7 +1493,9 @@ async def create_competition(
         "id": competition_id,
         "name": competition_data["name"],
         "description": competition_data.get("description", ""),
+        "type": competition_data.get("type", "xp"),
         "skill": competition_data.get("skill", "overall"),
+        "boss": competition_data.get("boss", ""),
         "start_date": datetime.fromisoformat(competition_data["start_date"]),
         "end_date": datetime.fromisoformat(competition_data["end_date"]),
         "created_by": user_id,
@@ -1472,6 +1511,55 @@ async def get_competitions():
     """Get all competitions"""
     return {"competitions": list(competitions_db.values())}
 
+async def calculate_drop_leaderboard(competition, members):
+    """Calculate leaderboard for drop competitions using activity logs"""
+    try:
+        from .database import get_db_connection
+    except ImportError:
+        from database import get_db_connection
+    
+    leaderboard = []
+    conn = await get_db_connection()
+    
+    async with conn:
+        for member in members:
+            try:
+                cur = await conn.execute("""
+                    SELECT text, details, activity_timestamp
+                    FROM clan_activities
+                    WHERE username = %s
+                      AND activity_timestamp BETWEEN %s AND %s
+                      AND (text LIKE '%received a drop%' OR text LIKE '%found%')
+                """, (
+                    member,
+                    int(competition['start_date'].timestamp()),
+                    int(competition['end_date'].timestamp())
+                ))
+                
+                activities = await cur.fetchall()
+                drop_count = 0
+                
+                for text, details, timestamp in activities:
+                    if any(keyword in text.lower() for keyword in ['received a drop', 'found']):
+                        if competition.get('boss'):
+                            if competition['boss'].lower() in text.lower():
+                                drop_count += 1
+                        else:
+                            drop_count += 1
+                
+                leaderboard.append({
+                    'username': member,
+                    'drop_count': drop_count,
+                    'boss': competition.get('boss', 'All bosses')
+                })
+            
+            except Exception as e:
+                print(f"Error calculating drops for {member}: {e}")
+                continue
+    
+    leaderboard.sort(key=lambda x: x['drop_count'], reverse=True)
+    return leaderboard
+
 @api_router.get("/competitions/{competition_id}")
 async def get_competition(competition_id: int):
     """Get specific competition with leaderboard"""
@@ -1479,27 +1567,116 @@ async def get_competition(competition_id: int):
         raise HTTPException(status_code=404, detail="Competition not found")
     
     competition = competitions_db[competition_id]
-    
     members = await get_clan_members()
     leaderboard = []
     
-    for member in members:
-        stats = await fetch_player_stats(member)
-        if stats:
-            skill_data = stats['stats'].get(competition['skill'], {})
-            leaderboard.append({
-                'username': member,
-                'xp': skill_data.get('xp', 0),
-                'level': skill_data.get('level', 1),
-                'rank': skill_data.get('rank')
-            })
+    if competition['type'] == 'xp':
+        try:
+            from .database import get_db_connection, get_snapshot_json_on_or_before
+        except ImportError:
+            from database import get_db_connection, get_snapshot_json_on_or_before
+        
+        conn = await get_db_connection()
+        async with conn:
+            for member in members:
+                try:
+                    start_snapshot = await get_snapshot_json_on_or_before(
+                        conn, member, competition['start_date'].date()
+                    )
+                    end_snapshot = await get_snapshot_json_on_or_before(
+                        conn, member, competition['end_date'].date()
+                    )
+                    
+                    if start_snapshot and end_snapshot:
+                        skill = competition['skill']
+                        if skill == 'overall':
+                            start_xp = sum(s.get('xp', 0) for s in start_snapshot.values())
+                            end_xp = sum(s.get('xp', 0) for s in end_snapshot.values())
+                        else:
+                            start_xp = start_snapshot.get(skill, {}).get('xp', 0)
+                            end_xp = end_snapshot.get(skill, {}).get('xp', 0)
+                        
+                        xp_gain = max(0, end_xp - start_xp)
+                        
+                        leaderboard.append({
+                            'username': member,
+                            'xp_gain': xp_gain,
+                            'skill': competition['skill']
+                        })
+                except Exception as e:
+                    print(f"Error calculating XP for {member}: {e}")
+                    continue
+        
+        leaderboard.sort(key=lambda x: x['xp_gain'], reverse=True)
     
-    leaderboard.sort(key=lambda x: x['xp'], reverse=True)
+    elif competition['type'] == 'drops':
+        leaderboard = await calculate_drop_leaderboard(competition, members)
     
     return {
         **competition,
-        "leaderboard": leaderboard
+        "leaderboard": leaderboard[:10]
     }
+
+@api_router.get("/player/{username}/competitions")
+async def get_player_competitions(username: str):
+    """Get competition participation history for a player"""
+    from urllib.parse import unquote
+    decoded_username = unquote(username).replace('-', ' ')
+    
+    player_competitions = []
+    
+    for comp_id, competition in competitions_db.items():
+        if competition['type'] == 'xp':
+            try:
+                from .database import get_db_connection, get_snapshot_json_on_or_before
+            except ImportError:
+                from database import get_db_connection, get_snapshot_json_on_or_before
+            
+            conn = await get_db_connection()
+            async with conn:
+                start_snapshot = await get_snapshot_json_on_or_before(
+                    conn, decoded_username, competition['start_date'].date()
+                )
+                end_snapshot = await get_snapshot_json_on_or_before(
+                    conn, decoded_username, competition['end_date'].date()
+                )
+                
+                if start_snapshot and end_snapshot:
+                    skill = competition['skill']
+                    if skill == 'overall':
+                        start_xp = sum(s.get('xp', 0) for s in start_snapshot.values())
+                        end_xp = sum(s.get('xp', 0) for s in end_snapshot.values())
+                    else:
+                        start_xp = start_snapshot.get(skill, {}).get('xp', 0)
+                        end_xp = end_snapshot.get(skill, {}).get('xp', 0)
+                    
+                    xp_gain = max(0, end_xp - start_xp)
+                    
+                    if xp_gain > 0:
+                        comp_with_leaderboard = await get_competition(comp_id)
+                        placement = next((i+1 for i, entry in enumerate(comp_with_leaderboard['leaderboard']) 
+                                        if entry['username'] == decoded_username), None)
+                        
+                        player_competitions.append({
+                            **competition,
+                            'placement': placement,
+                            'contribution': xp_gain
+                        })
+        
+        elif competition['type'] == 'drops':
+            drop_leaderboard = await calculate_drop_leaderboard(competition, [decoded_username])
+            if drop_leaderboard and drop_leaderboard[0]['drop_count'] > 0:
+                comp_with_leaderboard = await get_competition(comp_id)
+                placement = next((i+1 for i, entry in enumerate(comp_with_leaderboard['leaderboard']) 
+                                if entry['username'] == decoded_username), None)
+                
+                player_competitions.append({
+                    **competition,
+                    'placement': placement,
+                    'contribution': drop_leaderboard[0]['drop_count']
+                })
+    
+    return {"competitions": player_competitions}
 
 async def fetch_clan_members() -> List[Dict[str, Any]]:
     """Fetch clan members from RuneScape Clan API"""
