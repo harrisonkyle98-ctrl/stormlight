@@ -49,6 +49,7 @@ interface PlayerStats {
   quest_points?: number
   last_updated: string
   clan_rank?: string
+  is_verified?: boolean
 }
 
 const PlayerProfile = () => {
@@ -431,10 +432,15 @@ const PlayerProfile = () => {
           </Avatar>
           <div>
             <h1 
-              className="text-3xl font-bold"
+              className="text-3xl font-bold flex items-center gap-2"
               style={getGradientStyle(urlToUsername(username || ''), playerData.clan_rank)}
             >
-              {urlToUsername(username || '')}
+              <span>{urlToUsername(username || '')}</span>
+              {playerData.is_verified && (
+                <span className="text-green-400" title="Discord account verified">
+                  ✅
+                </span>
+              )}
             </h1>
             <p className="text-slate-400">
               Last updated: {new Date(playerData.last_updated).toLocaleDateString()}

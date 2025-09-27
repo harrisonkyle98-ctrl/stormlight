@@ -1400,9 +1400,37 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
     
     stats = await fetch_player_stats(decoded_username)
     
+    is_verified = False
+    try:
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            linked_member = await prisma.clanmember.find_first(
+                where={'username': decoded_username},
+                select={'discordId': True}
+            )
+            is_verified = bool(linked_member and linked_member.discordId)
+        else:
+            # Fallback to direct database query
+            try:
+                from .database import get_db_connection
+            except ImportError:
+                from database import get_db_connection
+            
+            conn = await get_db_connection()
+            async with conn:
+                cursor = await conn.execute(
+                    "SELECT discord_id FROM clan_members WHERE username = %s",
+                    (decoded_username,)
+                )
+                result = await cursor.fetchone()
+                is_verified = bool(result and result[0])
+    except Exception as e:
+        print(f"Error checking Discord verification for {decoded_username}: {e}")
+        is_verified = False
+    
     if stats:
         if clan_rank:
             stats['clan_rank'] = clan_rank
+        stats['is_verified'] = is_verified
         
         profile_cache['data'][decoded_username] = stats
         profile_cache['timestamps'][decoded_username] = current_time
