@@ -1449,7 +1449,8 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
                 }
             },
             "last_updated": datetime.now().isoformat(),
-            "clan_rank": clan_rank
+            "clan_rank": clan_rank,
+            "is_verified": is_verified
         }
         
         profile_cache['data'][decoded_username] = fallback_data
