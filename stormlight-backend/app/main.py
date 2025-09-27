@@ -1406,8 +1406,7 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
             print("Using Prisma query for Discord verification")
             linked_member = await prisma.clanmember.find_first(
-                where={'username': decoded_username},
-                select={'discordId': True}
+                where={'username': decoded_username}
             )
             print(f"Prisma result: {linked_member}")
             is_verified = bool(linked_member and linked_member.discordId)
