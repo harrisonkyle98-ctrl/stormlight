@@ -431,7 +431,7 @@ const PlayerProfile = () => {
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
+            <h1 className={`text-3xl font-bold ${playerData.is_verified ? 'flex items-center gap-2' : 'text-center'}`}>
               <span 
                 style={getGradientStyle(urlToUsername(username || ''), playerData.clan_rank)}
               >
