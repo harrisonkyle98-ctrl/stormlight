@@ -2574,10 +2574,38 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
 
 
 @api_router.get("/player/{username}/drops")
-async def get_player_drops(username: str, page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50)):
+async def get_player_drops(username: str, page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50), reprocess: bool = Query(False)):
     """Get boss drops for a specific player from database with fallback to live parsing"""
     from urllib.parse import unquote
     decoded_username = unquote(username).replace('-', ' ')
+    
+    if reprocess:
+        try:
+            conn = await get_db_connection()
+            async with conn:
+                cursor = await conn.execute("""
+                    SELECT username, text, details, activity_date, activity_timestamp
+                    FROM clan_activities 
+                    WHERE username = %s
+                    ORDER BY activity_timestamp DESC
+                """, (decoded_username,))
+                
+                rows = await cursor.fetchall()
+                activities = [
+                    {
+                        'username': row[0],
+                        'text': row[1],
+                        'details': row[2],
+                        'date': row[3],
+                        'timestamp': row[4]
+                    }
+                    for row in rows
+                ]
+                
+                if activities:
+                    await parse_and_store_drops_from_activities(activities, decoded_username)
+        except Exception as e:
+            print(f"Error re-processing drops for {decoded_username}: {e}")
     
     async def fetch_single_player_activities(username: str, max_retries: int = 3):
         """Fetch activities for a single player with exponential backoff retry"""
