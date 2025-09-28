@@ -2600,10 +2600,15 @@ async def get_player_drops(username: str, page: int = Query(1, ge=1), limit: int
     from urllib.parse import unquote
     decoded_username = unquote(username).replace('-', ' ')
     
-    print(f"DEBUG: get_player_drops called for {decoded_username}, reprocess={reprocess}")
+    import sys
+    print(f"🔍 DEBUG: get_player_drops called for {decoded_username}, reprocess={reprocess}", flush=True)
+    sys.stderr.write(f"🔍 STDERR: get_player_drops called for {decoded_username}, reprocess={reprocess}\n")
+    sys.stderr.flush()
     
     if reprocess:
-        print(f"DEBUG: Starting reprocess for {decoded_username}")
+        print(f"🔍 DEBUG: Starting reprocess for {decoded_username}", flush=True)
+        sys.stderr.write(f"🔍 STDERR: Starting reprocess for {decoded_username}\n")
+        sys.stderr.flush()
         try:
             conn = await get_db_connection()
             async with conn:
