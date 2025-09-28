@@ -2533,18 +2533,27 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
                 details_has_drop = any(indicator in details.lower() for indicator in drop_indicators)
                 
                 if text_has_drop or details_has_drop:
+                    print(f"DEBUG: Processing activity for {username}: '{activity_text}' | Details: '{details}'")
+                    
                     item_match = None
                     
                     item_match = re.search(r"I found (?:a |an )?(.+?)(?:\.|$)", activity_text)
+                    if item_match:
+                        print(f"DEBUG: Pattern 1 matched: '{item_match.group(1)}'")
                     
                     if not item_match:
                         item_match = re.search(r"I (?:looted|received|obtained) (?:a |an )?(.+?)(?:\.|$)", activity_text)
+                        if item_match:
+                            print(f"DEBUG: Pattern 2 matched: '{item_match.group(1)}'")
                     
                     if not item_match:
                         item_match = re.search(r"(?:found|looted|received|obtained) (?:a |an )?(.+?)(?:\.|$)", activity_text)
+                        if item_match:
+                            print(f"DEBUG: Pattern 3 matched: '{item_match.group(1)}'")
                     
                     if item_match:
                         item_name = item_match.group(1).strip()
+                        print(f"DEBUG: Final item name: '{item_name}'")
                         
                         boss_match = (
                             re.search(r"After defeating (.+?), I (?:looted|found)", details) or
@@ -2557,6 +2566,8 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
                         else:
                             boss_name = "Misc"
                         
+                        print(f"DEBUG: Boss name: '{boss_name}' | Storing drop: {item_name}")
+                        
                         item_image_url = await get_item_image_from_wiki(item_name)
                         
                         await store_clan_drop(
@@ -2568,6 +2579,9 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
                             activity_text,
                             activity['timestamp']
                         )
+                        print(f"DEBUG: Successfully stored drop: {item_name}")
+                    else:
+                        print(f"DEBUG: No item match found for: '{activity_text}'")
     except Exception as e:
         print(f"Error parsing and storing drops for {username}: {e}")
 
