@@ -2527,17 +2527,26 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
                 activity_text = activity['text']
                 details = activity.get('details', '')
                 
-                if 'looted' in details.lower():
+                drop_indicators = ['looted', 'found', 'received', 'obtained']
+                
+                if any(indicator in details.lower() for indicator in drop_indicators):
                     item_match = re.search(r"I found (?:a |an )?(.+?)(?:\.|$)", activity_text)
+                    if not item_match:
+                        item_match = re.search(r"I (?:looted|received|obtained) (?:a |an )?(.+?)(?:\.|$)", activity_text)
+                    
                     if item_match:
                         item_name = item_match.group(1).strip()
                         
                         boss_match = (
-                            re.search(r"After defeating (.+?), I looted", details) or
-                            re.search(r"While exploring (.+?), I looted", details) or
-                            re.search(r"(?:exploring|in) (?:the )?(.+?),", details)
+                            re.search(r"After defeating (.+?), I (?:looted|found)", details) or
+                            re.search(r"While exploring (.+?), I (?:looted|found)", details) or
+                            re.search(r"(?:exploring|in|at) (?:the )?(.+?),", details)
                         )
-                        boss_name = boss_match.group(1).strip() if boss_match else "Unknown Location"
+                        
+                        if boss_match:
+                            boss_name = boss_match.group(1).strip()
+                        else:
+                            boss_name = "Misc"
                         
                         item_image_url = await get_item_image_from_wiki(item_name)
                         
@@ -2658,17 +2667,26 @@ async def get_player_drops(username: str, page: int = Query(1, ge=1), limit: int
             activity_text = activity['text']
             details = activity.get('details', '')
             
-            if 'looted' in details.lower():
+            drop_indicators = ['looted', 'found', 'received', 'obtained']
+            
+            if any(indicator in details.lower() for indicator in drop_indicators):
                 item_match = re.search(r"I found (?:a |an )?(.+?)(?:\.|$)", activity_text)
+                if not item_match:
+                    item_match = re.search(r"I (?:looted|received|obtained) (?:a |an )?(.+?)(?:\.|$)", activity_text)
+                
                 if item_match:
                     item_name = item_match.group(1).strip()
                     
                     boss_match = (
-                        re.search(r"After defeating (.+?), I looted", details) or
-                        re.search(r"While exploring (.+?), I looted", details) or
-                        re.search(r"(?:exploring|in) (?:the )?(.+?),", details)
+                        re.search(r"After defeating (.+?), I (?:looted|found)", details) or
+                        re.search(r"While exploring (.+?), I (?:looted|found)", details) or
+                        re.search(r"(?:exploring|in|at) (?:the )?(.+?),", details)
                     )
-                    boss_name = boss_match.group(1).strip() if boss_match else "Unknown Location"
+                    
+                    if boss_match:
+                        boss_name = boss_match.group(1).strip()
+                    else:
+                        boss_name = "Misc"
                     
                     item_image_url = await get_item_image_from_wiki(item_name)
                     
@@ -2703,7 +2721,7 @@ async def get_player_drops(username: str, page: int = Query(1, ge=1), limit: int
 
 @api_router.get("/player/{username}/activities")
 async def get_player_activities(username: str, page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50)):
-    """Get recent activities for a specific player with pagination"""
+    """Get activities for a specific player from database with fallback to live API"""
     from urllib.parse import unquote
     decoded_username = unquote(username).replace('-', ' ')
     
@@ -2776,27 +2794,89 @@ async def get_player_activities(username: str, page: int = Query(1, ge=1), limit
         return []
     
     try:
-        all_activities = await fetch_single_player_activities(decoded_username)
-        
-        start_idx = (page - 1) * limit
-        end_idx = start_idx + limit
-        paginated_activities = all_activities[start_idx:end_idx]
-        
-        return {
-            "activities": paginated_activities,
-            "player": decoded_username,
-            "total_activities": len(all_activities),
-            "page": page,
-            "limit": limit,
-            "has_more": end_idx < len(all_activities)
-        }
-    except Exception as e:
-        print(f"Error fetching player activities for {decoded_username}: {e}")
-        return {
-            "activities": [],
-            "player": decoded_username,
-            "total_activities": 0
-        }
+        conn = await get_db_connection()
+        async with conn:
+            try:
+                from .database import get_stored_activities
+            except ImportError:
+                from database import get_stored_activities
+            
+            cursor = await conn.execute("""
+                SELECT username, text, details, activity_date, activity_timestamp
+                FROM clan_activities 
+                WHERE username = %s
+                ORDER BY activity_timestamp DESC 
+                LIMIT %s OFFSET %s
+            """, (decoded_username, limit, (page - 1) * limit))
+            
+            rows = await cursor.fetchall()
+            db_activities = [
+                {
+                    'username': row[0],
+                    'text': row[1],
+                    'details': row[2],
+                    'date': row[3],
+                    'timestamp': row[4]
+                }
+                for row in rows
+            ]
+            
+            count_cursor = await conn.execute("""
+                SELECT COUNT(*) FROM clan_activities WHERE username = %s
+            """, (decoded_username,))
+            total_count = (await count_cursor.fetchone())[0]
+            
+            if db_activities:
+                return {
+                    "activities": db_activities,
+                    "player": decoded_username,
+                    "total_activities": total_count,
+                    "page": page,
+                    "limit": limit,
+                    "has_more": (page * limit) < total_count
+                }
+    except Exception as db_error:
+        print(f"Database error for {decoded_username}: {db_error}")
+    
+    # Fallback to live API if no database activities
+    live_activities = await fetch_single_player_activities(decoded_username)
+    
+    # Store the live activities in database for future use
+    if live_activities:
+        try:
+            conn = await get_db_connection()
+            async with conn:
+                try:
+                    from .database import store_clan_activity
+                except ImportError:
+                    from database import store_clan_activity
+                
+                for activity in live_activities:
+                    await store_clan_activity(
+                        conn,
+                        activity['username'],
+                        activity['text'],
+                        activity['details'],
+                        activity['date'],
+                        activity['timestamp']
+                    )
+                
+                await parse_and_store_drops_from_activities(live_activities, decoded_username)
+        except Exception as store_error:
+            print(f"Error storing activities for {decoded_username}: {store_error}")
+    
+    start_idx = (page - 1) * limit
+    end_idx = start_idx + limit
+    paginated_activities = live_activities[start_idx:end_idx]
+    
+    return {
+        "activities": paginated_activities,
+        "player": decoded_username,
+        "total_activities": len(live_activities),
+        "page": page,
+        "limit": limit,
+        "has_more": end_idx < len(live_activities)
+    }
 
 @api_router.get("/player/{username}/log")
 async def get_player_log(
