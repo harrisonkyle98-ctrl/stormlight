@@ -2529,10 +2529,19 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
                 
                 drop_indicators = ['looted', 'found', 'received', 'obtained']
                 
-                if any(indicator in details.lower() for indicator in drop_indicators):
+                text_has_drop = any(indicator in activity_text.lower() for indicator in drop_indicators)
+                details_has_drop = any(indicator in details.lower() for indicator in drop_indicators)
+                
+                if text_has_drop or details_has_drop:
+                    item_match = None
+                    
                     item_match = re.search(r"I found (?:a |an )?(.+?)(?:\.|$)", activity_text)
+                    
                     if not item_match:
                         item_match = re.search(r"I (?:looted|received|obtained) (?:a |an )?(.+?)(?:\.|$)", activity_text)
+                    
+                    if not item_match:
+                        item_match = re.search(r"(?:found|looted|received|obtained) (?:a |an )?(.+?)(?:\.|$)", activity_text)
                     
                     if item_match:
                         item_name = item_match.group(1).strip()
