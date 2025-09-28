@@ -2600,6 +2600,8 @@ async def get_player_drops(username: str, page: int = Query(1, ge=1), limit: int
     from urllib.parse import unquote
     decoded_username = unquote(username).replace('-', ' ')
     
+    print(f"DEBUG: get_player_drops called for {decoded_username}, reprocess={reprocess}")
+    
     if reprocess:
         print(f"DEBUG: Starting reprocess for {decoded_username}")
         try:
