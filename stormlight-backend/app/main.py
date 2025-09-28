@@ -2601,6 +2601,7 @@ async def get_player_drops(username: str, page: int = Query(1, ge=1), limit: int
     decoded_username = unquote(username).replace('-', ' ')
     
     if reprocess:
+        print(f"DEBUG: Starting reprocess for {decoded_username}")
         try:
             conn = await get_db_connection()
             async with conn:
@@ -2612,6 +2613,8 @@ async def get_player_drops(username: str, page: int = Query(1, ge=1), limit: int
                 """, (decoded_username,))
                 
                 rows = await cursor.fetchall()
+                print(f"DEBUG: Found {len(rows)} activities in database for {decoded_username}")
+                
                 activities = [
                     {
                         'username': row[0],
@@ -2624,9 +2627,14 @@ async def get_player_drops(username: str, page: int = Query(1, ge=1), limit: int
                 ]
                 
                 if activities:
+                    print(f"DEBUG: Calling parse_and_store_drops_from_activities with {len(activities)} activities")
                     await parse_and_store_drops_from_activities(activities, decoded_username)
+                else:
+                    print(f"DEBUG: No activities found for {decoded_username}")
         except Exception as e:
             print(f"Error re-processing drops for {decoded_username}: {e}")
+            import traceback
+            traceback.print_exc()
     
     async def fetch_single_player_activities(username: str, max_retries: int = 3):
         """Fetch activities for a single player with exponential backoff retry"""
