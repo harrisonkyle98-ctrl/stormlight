@@ -31,9 +31,9 @@ except Exception as e:
     PRISMA_AVAILABLE = False
     Prisma = None
 try:
-    from .database import init_database, get_db_connection, collect_daily_player_stats, collect_daily_player_stats_multi_cycle
+    from .database import init_database, get_db_connection, collect_daily_player_stats, collect_daily_player_stats_multi_cycle, collect_daily_activities_and_drops
 except ImportError:
-    from database import init_database, get_db_connection, collect_daily_player_stats, collect_daily_player_stats_multi_cycle
+    from database import init_database, get_db_connection, collect_daily_player_stats, collect_daily_player_stats_multi_cycle, collect_daily_activities_and_drops
 
 load_dotenv()
 
@@ -3862,6 +3862,15 @@ async def startup_event():
                             done_count, remaining_count = await collect_daily_player_stats_multi_cycle()
                         app.state.last_snapshot_date_utc = today
                         print(f"[Scheduler] ✅ Daily snapshot job finished for {today.isoformat()}: done={done_count}, remaining={remaining_count}")
+                        
+                        print(f"[Scheduler] 🚀 Starting daily activity/drop collection at {now.isoformat()}")
+                        try:
+                            processed_count, failed_count = await collect_daily_activities_and_drops()
+                            print(f"[Scheduler] ✅ Daily activity/drop collection finished: {processed_count} processed, {failed_count} failed")
+                        except Exception as e:
+                            print(f"[Scheduler] ❌ Error in activity/drop collection: {e}")
+                            import traceback
+                            traceback.print_exc()
                         
                         try:
                             conn = await get_db_connection()

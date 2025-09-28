@@ -1241,3 +1241,150 @@ async def get_player_drops_from_db(conn, username: str, limit: int = 50, offset:
     except Exception as e:
         print(f"Error retrieving drops for {username}: {e}")
         return []
+
+async def collect_daily_activities_and_drops(members_per_cycle: int = 8, cycle_delay_minutes: float = 1.0):
+    """Collect daily activities and drops for all clan members using multi-cycle approach."""
+    import asyncio
+    import httpx
+    import random
+    from datetime import datetime
+    from math import ceil
+    
+    print(f"🚀 [Activity Collection] Starting multi-cycle activity/drop collection at {datetime.utcnow().isoformat()}Z")
+    
+    try:
+        try:
+            from .main import fetch_clan_members, parse_and_store_drops_from_activities
+        except ImportError:
+            from main import fetch_clan_members, parse_and_store_drops_from_activities
+        
+        roster = await fetch_clan_members()
+        all_usernames = [m.get('username') for m in roster if m.get('username')]
+        print(f"📋 [Activity Collection] Members to process: {len(all_usernames)}")
+        
+        if not all_usernames:
+            print(f"❌ [Activity Collection] No clan members found")
+            return 0, 0
+        
+        cycle_num = 0
+        needed_cycles = max(1, ceil(len(all_usernames) / members_per_cycle))
+        max_cycles = needed_cycles * 2
+        processed_members = 0
+        failed_members = 0
+        
+        async def fetch_member_activities_with_retry(username: str, client, max_retries: int = 3):
+            """Fetch activities for a single member with retry logic"""
+            runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={username}&activities=1"
+            
+            for attempt in range(max_retries):
+                try:
+                    response = await client.get(runemetrics_url)
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        activities = data.get('activities', [])
+                        
+                        member_activities = []
+                        two_days_ago = datetime.now().timestamp() - (2 * 24 * 60 * 60)
+                        
+                        for activity in activities:
+                            try:
+                                activity_date_str = activity['date']
+                                
+                                try:
+                                    activity_date = datetime.strptime(activity_date_str, '%d-%b-%Y %H:%M')
+                                except ValueError:
+                                    try:
+                                        activity_date = datetime.strptime(activity_date_str, '%d-%b-%Y')
+                                        activity_date = activity_date.replace(hour=0, minute=0)
+                                    except ValueError:
+                                        continue
+                                
+                                activity_timestamp = int(activity_date.timestamp())
+                                current_time = datetime.now().timestamp()
+                                if activity_timestamp < 0 or activity_timestamp > current_time + 86400:
+                                    continue
+                                
+                                if activity_timestamp >= two_days_ago:
+                                    member_activities.append({
+                                        'username': username,
+                                        'text': activity['text'],
+                                        'details': activity['details'],
+                                        'date': activity['date'],
+                                        'timestamp': activity_timestamp
+                                    })
+                            except (ValueError, KeyError):
+                                continue
+                        
+                        return member_activities
+                    
+                    elif response.status_code == 429:
+                        delay = min(3.0 * (2 ** attempt), 30.0)
+                        await asyncio.sleep(delay)
+                        continue
+                    else:
+                        if attempt < max_retries - 1:
+                            await asyncio.sleep(1.5 ** attempt)
+                            continue
+                        return []
+                        
+                except Exception as e:
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(1.5 ** attempt)
+                        continue
+                    return []
+            
+            return []
+        
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            for i in range(0, len(all_usernames), members_per_cycle):
+                cycle_num += 1
+                batch = all_usernames[i:i + members_per_cycle]
+                print(f"🔄 [Activity Collection] Cycle {cycle_num}/{needed_cycles} processing {len(batch)} members")
+                
+                for j, username in enumerate(batch):
+                    if j > 0:
+                        delay = random.uniform(2.0, 4.0)
+                        await asyncio.sleep(delay)
+                    
+                    try:
+                        activities = await fetch_member_activities_with_retry(username, client)
+                        
+                        if activities:
+                            conn = await get_db_connection()
+                            async with conn:
+                                for activity in activities:
+                                    await store_clan_activity(
+                                        conn, 
+                                        activity['username'], 
+                                        activity['text'], 
+                                        activity['details'], 
+                                        activity['date'], 
+                                        activity['timestamp']
+                                    )
+                                
+                                await parse_and_store_drops_from_activities(activities, username)
+                            
+                            print(f"✅ [Activity Collection] Processed {username}: {len(activities)} activities")
+                            processed_members += 1
+                        else:
+                            print(f"⚠️ [Activity Collection] No activities for {username}")
+                            processed_members += 1
+                    
+                    except Exception as e:
+                        print(f"❌ [Activity Collection] Failed to process {username}: {e}")
+                        failed_members += 1
+                
+                if i + members_per_cycle < len(all_usernames):
+                    cycle_delay = cycle_delay_minutes * 60
+                    print(f"[Activity Collection] Waiting {cycle_delay}s before next cycle...")
+                    await asyncio.sleep(cycle_delay)
+        
+        print(f"✅ [Activity Collection] Completed: {processed_members} processed, {failed_members} failed")
+        return processed_members, failed_members
+        
+    except Exception as e:
+        print(f"❌ [Activity Collection] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return 0, 0
