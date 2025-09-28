@@ -2230,6 +2230,8 @@ async def get_clan_activities(
                                             activity['date'], 
                                             activity['timestamp']
                                         )
+                                    
+                                    await parse_and_store_drops_from_activities(result, member['username'])
                             except Exception as db_error:
                                 print(f"Error storing activities to database: {db_error}")
                             
@@ -2511,10 +2513,47 @@ async def get_item_image_from_wiki(item_name: str) -> str:
     except Exception as e:
         print(f"Error fetching item image for {item_name}: {e}")
         return "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png"
+async def parse_and_store_drops_from_activities(activities: list, username: str):
+    """Parse drops from activities and store them in database"""
+    try:
+        conn = await get_db_connection()
+        async with conn:
+            try:
+                from .database import store_clan_drop
+            except ImportError:
+                from database import store_clan_drop
+            
+            for activity in activities:
+                activity_text = activity['text']
+                details = activity.get('details', '')
+                
+                if 'looted' in details.lower() and 'after defeating' in details.lower():
+                    item_match = re.search(r"I found a (.+?)\.", activity_text)
+                    if item_match:
+                        item_name = item_match.group(1).strip()
+                        
+                        boss_match = re.search(r"After defeating (.+?), I looted", details)
+                        boss_name = boss_match.group(1).strip() if boss_match else "Unknown Boss"
+                        
+                        item_image_url = await get_item_image_from_wiki(item_name)
+                        
+                        await store_clan_drop(
+                            conn,
+                            username,
+                            item_name,
+                            boss_name,
+                            item_image_url or "",
+                            activity_text,
+                            activity['timestamp']
+                        )
+    except Exception as e:
+        print(f"Error parsing and storing drops for {username}: {e}")
+
+
 
 @api_router.get("/player/{username}/drops")
 async def get_player_drops(username: str, page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50)):
-    """Get boss drops for a specific player with item metadata"""
+    """Get boss drops for a specific player from database with fallback to live parsing"""
     from urllib.parse import unquote
     decoded_username = unquote(username).replace('-', ' ')
     
@@ -2587,10 +2626,30 @@ async def get_player_drops(username: str, page: int = Query(1, ge=1), limit: int
         return []
     
     try:
+        conn = await get_db_connection()
+        async with conn:
+            try:
+                from .database import get_player_drops_from_db
+            except ImportError:
+                from database import get_player_drops_from_db
+            
+            offset = (page - 1) * limit
+            stored_drops = await get_player_drops_from_db(conn, decoded_username, limit * 2, offset)
+        
+        if stored_drops:
+            paginated_drops = stored_drops[:limit]
+            return {
+                "drops": paginated_drops,
+                "has_more": len(stored_drops) > limit,
+                "total": len(stored_drops)
+            }
+        
+        # Fallback: fetch live data and store it for future use
         all_activities = await fetch_single_player_activities(decoded_username)
         
-        drops = []
+        await parse_and_store_drops_from_activities(all_activities, decoded_username)
         
+        drops = []
         for activity in all_activities:
             activity_text = activity['text']
             details = activity.get('details', '')
@@ -2625,6 +2684,7 @@ async def get_player_drops(username: str, page: int = Query(1, ge=1), limit: int
             "has_more": end_idx < len(drops),
             "total": len(drops)
         }
+        
     except Exception as e:
         print(f"Error fetching player drops for {decoded_username}: {e}")
         return {

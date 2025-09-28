@@ -134,6 +134,22 @@ model ClanActivity {
   @@map("clan_activities")
 }
 
+model ClanDrop {
+  id                Int      @id @default(autoincrement())
+  username          String
+  itemName          String   @map("item_name")
+  bossName          String   @map("boss_name")
+  itemImageUrl      String?  @map("item_image_url")
+  activityText      String   @map("activity_text")
+  activityTimestamp BigInt   @map("activity_timestamp")
+  createdAt         DateTime @default(now()) @map("created_at")
+  
+  @@unique([username, itemName, bossName, activityTimestamp])
+  @@index([username])
+  @@index([activityTimestamp])
+  @@map("clan_drops")
+}
+
 model ClanLog {
   id        Int      @id @default(autoincrement())
   username  String

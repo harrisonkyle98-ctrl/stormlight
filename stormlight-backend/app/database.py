@@ -100,6 +100,21 @@ async def init_database():
                 CREATE INDEX IF NOT EXISTS idx_activities_timestamp ON clan_activities(activity_timestamp DESC);
                 CREATE INDEX IF NOT EXISTS idx_activities_username ON clan_activities(username);
                 CREATE INDEX IF NOT EXISTS idx_clan_members_discord_id ON clan_members(discord_id);
+                
+                CREATE TABLE IF NOT EXISTS clan_drops (
+                    id SERIAL PRIMARY KEY,
+                    username VARCHAR(255) NOT NULL,
+                    item_name VARCHAR(255) NOT NULL,
+                    boss_name VARCHAR(255) NOT NULL,
+                    item_image_url TEXT,
+                    activity_text TEXT NOT NULL,
+                    activity_timestamp BIGINT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(username, item_name, boss_name, activity_timestamp)
+                );
+                
+                CREATE INDEX IF NOT EXISTS idx_drops_username ON clan_drops(username);
+                CREATE INDEX IF NOT EXISTS idx_drops_timestamp ON clan_drops(activity_timestamp DESC);
             """)
             print("Database schema initialized successfully")
     except Exception as e:
@@ -1188,3 +1203,41 @@ async def migrate_history_to_daily_snapshots(conn):
         ON CONFLICT (username, snapshot_date) DO NOTHING
     """)
     print("[Migration] Backfill into player_daily_snapshots completed")
+
+async def store_clan_drop(conn, username: str, item_name: str, boss_name: str, item_image_url: str, activity_text: str, activity_timestamp: int):
+    """Store a clan drop in the database with deduplication"""
+    try:
+        await conn.execute("""
+            INSERT INTO clan_drops (username, item_name, boss_name, item_image_url, activity_text, activity_timestamp)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (username, item_name, boss_name, activity_timestamp) DO NOTHING
+        """, (username, item_name, boss_name, item_image_url, activity_text, activity_timestamp))
+    except Exception as e:
+        print(f"Error storing drop for {username}: {e}")
+
+async def get_player_drops_from_db(conn, username: str, limit: int = 50, offset: int = 0):
+    """Get stored drops for a player from database"""
+    try:
+        cursor = await conn.execute("""
+            SELECT item_name, boss_name, item_image_url, activity_text, activity_timestamp
+            FROM clan_drops 
+            WHERE username = %s
+            ORDER BY activity_timestamp DESC 
+            LIMIT %s OFFSET %s
+        """, (username, limit, offset))
+        
+        rows = await cursor.fetchall()
+        return [
+            {
+                'item_name': row[0],
+                'boss_name': row[1], 
+                'item_image_url': row[2],
+                'activity_text': row[3],
+                'timestamp': row[4],
+                'date': datetime.fromtimestamp(row[4]).strftime('%d-%b-%Y %H:%M')
+            }
+            for row in rows
+        ]
+    except Exception as e:
+        print(f"Error retrieving drops for {username}: {e}")
+        return []
