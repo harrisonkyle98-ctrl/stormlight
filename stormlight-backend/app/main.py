@@ -2728,6 +2728,47 @@ async def get_player_drops(username: str, page: int = Query(1, ge=1), limit: int
             "has_more": False
         }
 
+@api_router.post("/player/{username}/reprocess-drops")
+async def reprocess_player_drops(username: str):
+    """Re-process existing activities for drop detection"""
+    from urllib.parse import unquote
+    decoded_username = unquote(username).replace('-', ' ')
+    
+    try:
+        conn = await get_db_connection()
+        async with conn:
+            cursor = await conn.execute("""
+                SELECT username, text, details, activity_date, activity_timestamp
+                FROM clan_activities 
+                WHERE username = %s
+                ORDER BY activity_timestamp DESC
+            """, (decoded_username,))
+            
+            rows = await cursor.fetchall()
+            activities = [
+                {
+                    'username': row[0],
+                    'text': row[1],
+                    'details': row[2],
+                    'date': row[3],
+                    'timestamp': row[4]
+                }
+                for row in rows
+            ]
+            
+            if activities:
+                await parse_and_store_drops_from_activities(activities, decoded_username)
+                return {
+                    "message": f"Re-processed {len(activities)} activities for {decoded_username}",
+                    "activities_processed": len(activities)
+                }
+            else:
+                return {"message": f"No stored activities found for {decoded_username}"}
+                
+    except Exception as e:
+        print(f"Error re-processing drops for {decoded_username}: {e}")
+        return {"error": str(e)}
+
 @api_router.get("/player/{username}/activities")
 async def get_player_activities(username: str, page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50)):
     """Get activities for a specific player from database with fallback to live API"""
