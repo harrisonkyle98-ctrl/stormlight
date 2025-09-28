@@ -2961,6 +2961,41 @@ async def get_player_stats_with_history(
                 print(f"Found clan rank in history endpoint: {clan_rank}")
                 break
         
+        is_verified = False
+        print(f"Checking Discord verification for username in history endpoint: '{decoded_username}'")
+        try:
+            if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+                print("Using Prisma query for Discord verification in history endpoint")
+                linked_member = await prisma.clanmember.find_first(
+                    where={'username': decoded_username}
+                )
+                print(f"Prisma result in history endpoint: {linked_member}")
+                is_verified = bool(linked_member and linked_member.discordId)
+                print(f"Prisma is_verified in history endpoint: {is_verified}")
+            else:
+                print("Falling back to direct database query for Discord verification in history endpoint")
+                import asyncpg
+                import os
+                
+                conn = await asyncpg.connect(os.getenv('DATABASE_URL'))
+                try:
+                    result = await conn.fetchrow(
+                        "SELECT discord_id FROM clan_members WHERE username = $1",
+                        decoded_username
+                    )
+                    print(f"Direct query result in history endpoint: {result}")
+                    is_verified = bool(result and result['discord_id'])
+                    print(f"Direct query is_verified in history endpoint: {is_verified}")
+                finally:
+                    await conn.close()
+        except Exception as e:
+            print(f"Error checking Discord verification for {decoded_username} in history endpoint: {e}")
+            import traceback
+            traceback.print_exc()
+            is_verified = False
+        
+        print(f"Final is_verified value for {decoded_username} in history endpoint: {is_verified}")
+        
         changes_data = {}
         try:
             conn = await get_db_connection()
@@ -3043,6 +3078,8 @@ async def get_player_stats_with_history(
         
         if clan_rank:
             enhanced_stats['clan_rank'] = clan_rank
+        
+        enhanced_stats['is_verified'] = is_verified
         
         if 'quest_points' in current_stats:
             enhanced_stats['quest_points'] = current_stats['quest_points']
