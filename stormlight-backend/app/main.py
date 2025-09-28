@@ -2550,9 +2550,6 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
                             activity_text,
                             activity['timestamp']
                         )
-                        print(f"Successfully stored drop for {username}: {item_name} from {boss_name}")
-                    else:
-                        print(f"Drop parsing failed for {username}: text='{activity_text}', details='{details}'")
     except Exception as e:
         print(f"Error parsing and storing drops for {username}: {e}")
 
