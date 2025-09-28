@@ -431,11 +431,12 @@ const PlayerProfile = () => {
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 
-              className="text-3xl font-bold flex items-center gap-2"
-              style={getGradientStyle(urlToUsername(username || ''), playerData.clan_rank)}
-            >
-              <span>{urlToUsername(username || '')}</span>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <span 
+                style={getGradientStyle(urlToUsername(username || ''), playerData.clan_rank)}
+              >
+                {urlToUsername(username || '')}
+              </span>
               {playerData.is_verified && (
                 <span className="text-green-400" title="Discord account verified">
                   ✅
