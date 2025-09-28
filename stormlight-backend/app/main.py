@@ -2527,13 +2527,17 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
                 activity_text = activity['text']
                 details = activity.get('details', '')
                 
-                if 'looted' in details.lower() and 'after defeating' in details.lower():
-                    item_match = re.search(r"I found a (.+?)\.", activity_text)
+                if 'looted' in details.lower():
+                    item_match = re.search(r"I found (?:a |an )?(.+?)(?:\.|$)", activity_text)
                     if item_match:
                         item_name = item_match.group(1).strip()
                         
-                        boss_match = re.search(r"After defeating (.+?), I looted", details)
-                        boss_name = boss_match.group(1).strip() if boss_match else "Unknown Boss"
+                        boss_match = (
+                            re.search(r"After defeating (.+?), I looted", details) or
+                            re.search(r"While exploring (.+?), I looted", details) or
+                            re.search(r"(?:exploring|in) (?:the )?(.+?),", details)
+                        )
+                        boss_name = boss_match.group(1).strip() if boss_match else "Unknown Location"
                         
                         item_image_url = await get_item_image_from_wiki(item_name)
                         
@@ -2546,6 +2550,9 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
                             activity_text,
                             activity['timestamp']
                         )
+                        print(f"Successfully stored drop for {username}: {item_name} from {boss_name}")
+                    else:
+                        print(f"Drop parsing failed for {username}: text='{activity_text}', details='{details}'")
     except Exception as e:
         print(f"Error parsing and storing drops for {username}: {e}")
 
@@ -2654,13 +2661,17 @@ async def get_player_drops(username: str, page: int = Query(1, ge=1), limit: int
             activity_text = activity['text']
             details = activity.get('details', '')
             
-            if 'looted' in details.lower() and 'after defeating' in details.lower():
-                item_match = re.search(r"I found a (.+?)\.", activity_text)
+            if 'looted' in details.lower():
+                item_match = re.search(r"I found (?:a |an )?(.+?)(?:\.|$)", activity_text)
                 if item_match:
                     item_name = item_match.group(1).strip()
                     
-                    boss_match = re.search(r"After defeating (.+?), I looted", details)
-                    boss_name = boss_match.group(1).strip() if boss_match else "Unknown Boss"
+                    boss_match = (
+                        re.search(r"After defeating (.+?), I looted", details) or
+                        re.search(r"While exploring (.+?), I looted", details) or
+                        re.search(r"(?:exploring|in) (?:the )?(.+?),", details)
+                    )
+                    boss_name = boss_match.group(1).strip() if boss_match else "Unknown Location"
                     
                     item_image_url = await get_item_image_from_wiki(item_name)
                     
