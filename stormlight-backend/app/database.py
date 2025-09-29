@@ -1214,8 +1214,9 @@ async def store_clan_drop(conn, username: str, item_name: str, boss_name: str, i
         await conn.execute("""
             INSERT INTO clan_drops (username, item_name, boss_name, item_image_url, activity_text, activity_timestamp)
             VALUES (%s, %s, %s, %s, %s, %s)
-            ON CONFLICT (username, item_name, boss_name, activity_timestamp) 
+            ON CONFLICT (username, item_name, activity_timestamp) 
             DO UPDATE SET 
+                boss_name = EXCLUDED.boss_name,
                 item_image_url = EXCLUDED.item_image_url,
                 activity_text = EXCLUDED.activity_text
         """, (username, item_name, boss_name, item_image_url, activity_text, activity_timestamp))
