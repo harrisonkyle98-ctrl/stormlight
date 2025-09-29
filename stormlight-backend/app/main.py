@@ -2559,63 +2559,109 @@ async def get_item_drop_sources_from_wiki(item_name: str) -> list:
                 "User-Agent": "stormlight-clan-dashboard/1.0 (contact: harrisonkyle98@gmail.com)"
             }
             
-            search_params = {
-                "action": "query",
-                "format": "json",
-                "list": "search",
-                "srsearch": f'"{item_name}"',
-                "srlimit": 3
-            }
+            search_variations = [
+                f'"{item_name}"',  # Exact match
+                item_name,  # Regular search
+                item_name.replace(" ", "_"),  # Wiki format
+                f"intitle:{item_name}",  # Title search
+            ]
             
-            search_response = await client.get(search_url, params=search_params, headers=headers)
-            if search_response.status_code == 200:
-                search_data = search_response.json()
-                search_results = search_data.get('query', {}).get('search', [])
+            for search_term in search_variations:
+                search_params = {
+                    "action": "query",
+                    "format": "json",
+                    "list": "search",
+                    "srsearch": search_term,
+                    "srlimit": 5
+                }
                 
-                for result in search_results:
-                    page_title = result['title']
+                search_response = await client.get(search_url, params=search_params, headers=headers)
+                if search_response.status_code == 200:
+                    search_data = search_response.json()
+                    search_results = search_data.get('query', {}).get('search', [])
                     
-                    if (item_name.lower() in page_title.lower() or 
-                        page_title.lower() in item_name.lower()):
+                    for result in search_results:
+                        page_title = result['title']
                         
-                        content_params = {
-                            "action": "query",
-                            "format": "json",
-                            "prop": "extracts",
-                            "titles": page_title,
-                            "exintro": True,
-                            "explaintext": True,
-                            "exsectionformat": "plain"
-                        }
-                        
-                        content_response = await client.get(search_url, params=content_params, headers=headers)
-                        if content_response.status_code == 200:
-                            content_data = content_response.json()
-                            pages = content_data.get('query', {}).get('pages', {})
+                        if (item_name.lower() in page_title.lower() or 
+                            page_title.lower() in item_name.lower() or
+                            any(word in page_title.lower() for word in item_name.lower().split() if len(word) > 3)):
                             
-                            for page_id, page_info in pages.items():
-                                if 'extract' in page_info:
-                                    extract = page_info['extract'].lower()
+                            content_params = {
+                                "action": "query",
+                                "format": "json",
+                                "prop": "extracts|revisions",
+                                "titles": page_title,
+                                "explaintext": True,
+                                "exsectionformat": "plain",
+                                "rvprop": "content",
+                                "rvslots": "main"
+                            }
+                            
+                            content_response = await client.get(search_url, params=content_params, headers=headers)
+                            if content_response.status_code == 200:
+                                content_data = content_response.json()
+                                pages = content_data.get('query', {}).get('pages', {})
+                                
+                                for page_id, page_info in pages.items():
+                                    extract = ""
                                     
-                                    boss_indicators = [
-                                        'dropped by', 'obtained from', 'reward from',
-                                        'boss', 'monster', 'creature', 'enemy'
-                                    ]
+                                    if 'extract' in page_info:
+                                        extract = page_info['extract']
                                     
-                                    drop_sources = []
-                                    if any(indicator in extract for indicator in boss_indicators):
-                                        boss_patterns = [
-                                            r'dropped by ([^.]+)',
-                                            r'obtained from ([^.]+)',
-                                            r'reward from ([^.]+)',
+                                    elif 'revisions' in page_info and page_info['revisions']:
+                                        revision = page_info['revisions'][0]
+                                        if 'slots' in revision and 'main' in revision['slots']:
+                                            extract = revision['slots']['main'].get('*', '')
+                                    
+                                    if extract:
+                                        extract_lower = extract.lower()
+                                        
+                                        drop_sources = set()
+                                        
+                                        drop_table_patterns = [
+                                            r'(?:dropped by|obtained from|reward from)\s*([^.\n]+)',
+                                            r'(?:boss|monster|creature|enemy):\s*([^.\n]+)',
+                                            r'(?:source|location):\s*([^.\n]+)',
+                                            r'(?:found at|found in)\s*([^.\n]+)',
+                                            r'(?:vindicta|gorvek|helwyr|greg|twin furies|araxxor|araxxi|nex|vorago|telos|solak|ed1|ed2|ed3)',
                                         ]
                                         
-                                        for pattern in boss_patterns:
-                                            matches = re.findall(pattern, extract)
-                                            drop_sources.extend(matches)
-                                    
-                                    print(f"DEBUG: Found {len(drop_sources)} drop sources for '{item_name}': {drop_sources}")
-                                    return drop_sources
+                                        for pattern in drop_table_patterns:
+                                            matches = re.findall(pattern, extract_lower)
+                                            for match in matches:
+                                                if isinstance(match, str) and len(match.strip()) > 2:
+                                                    drop_sources.add(match.strip())
+                                        
+                                        multi_boss_indicators = [
+                                            'anima core', 'dormant anima', 'refined anima',
+                                            'gwd2', 'god wars dungeon 2', 'heart of gielinor',
+                                            'all four bosses', 'any of the bosses', 'multiple bosses'
+                                        ]
+                                        
+                                        if any(indicator in extract_lower for indicator in multi_boss_indicators):
+                                            if 'anima core' in item_name.lower():
+                                                drop_sources.update(['gorvek and vindicta', 'helwyr', 'gregorovic', 'twin furies'])
+                                        
+                                        drop_sources_list = list(drop_sources)
+                                        if drop_sources_list:
+                                            print(f"DEBUG: Found {len(drop_sources_list)} drop sources for '{item_name}': {drop_sources_list}")
+                                            return drop_sources_list
+            
+            known_multi_boss = {
+                'dormant anima core legs': ['gorvek and vindicta', 'helwyr', 'gregorovic', 'twin furies'],
+                'dormant anima core body': ['gorvek and vindicta', 'helwyr', 'gregorovic', 'twin furies'],
+                'dormant anima core helm': ['gorvek and vindicta', 'helwyr', 'gregorovic', 'twin furies'],
+                'refined anima core legs': ['gorvek and vindicta', 'helwyr', 'gregorovic', 'twin furies'],
+                'refined anima core body': ['gorvek and vindicta', 'helwyr', 'gregorovic', 'twin furies'],
+                'refined anima core helm': ['gorvek and vindicta', 'helwyr', 'gregorovic', 'twin furies'],
+            }
+            
+            item_lower = item_name.lower()
+            for known_item, sources in known_multi_boss.items():
+                if known_item in item_lower or item_lower in known_item:
+                    print(f"DEBUG: Using hardcoded multi-boss sources for '{item_name}': {sources}")
+                    return sources
             
             print(f"DEBUG: No drop sources found for '{item_name}'")
             return []
