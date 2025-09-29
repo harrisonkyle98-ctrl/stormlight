@@ -3517,15 +3517,17 @@ async def trigger_snapshots_get():
         async def run():
             try:
                 try:
-                    from .database import collect_daily_player_stats_multi_cycle
+                    from .database import collect_daily_activities_and_drops
                 except ImportError:
-                    from database import collect_daily_player_stats_multi_cycle
+                    from database import collect_daily_activities_and_drops
                 
                 if lock:
                     async with lock:
-                        await collect_daily_player_stats_multi_cycle()
+                        processed, failed = await collect_daily_activities_and_drops()
+                        print(f"[Manual Trigger] Activity/drop collection completed: {processed} processed, {failed} failed")
                 else:
-                    await collect_daily_player_stats_multi_cycle()
+                    processed, failed = await collect_daily_activities_and_drops()
+                    print(f"[Manual Trigger] Activity/drop collection completed: {processed} processed, {failed} failed")
             except Exception as e:
                 print(f"❌ [Manual Trigger] Error in snapshot collection: {e}")
                 import traceback
@@ -3533,7 +3535,7 @@ async def trigger_snapshots_get():
         
         asyncio.create_task(run())
         return {"status": "queued", 
-                "message": "Started multi-cycle collection (sequential processing: 1 member at a time, 8s delays). Check /api/admin/check-snapshots."}
+                "message": "Started activity/drop collection with 14-day window (batch processing: 8 members per cycle). Check /api/admin/check-snapshots."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 @app.get("/api/admin/trigger-clan-members")
