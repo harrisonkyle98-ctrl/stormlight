@@ -79,24 +79,25 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
   });
 
   const groupedDrops = filteredDrops.reduce((groups, drop) => {
-    const bossName = drop.boss_name;
-    if (!groups[bossName]) {
-      groups[bossName] = {};
+    const cleanBossName = drop.boss_name.replace(/^a\s+/i, '').trim();
+    const cleanItemName = drop.item_name.replace(/^some\s+/i, '').trim();
+    
+    if (!groups[cleanBossName]) {
+      groups[cleanBossName] = {};
     }
     
-    const itemName = drop.item_name;
-    if (!groups[bossName][itemName]) {
-      groups[bossName][itemName] = {
-        item_name: drop.item_name,
+    if (!groups[cleanBossName][cleanItemName]) {
+      groups[cleanBossName][cleanItemName] = {
+        item_name: cleanItemName,
         item_image_url: drop.item_image_url,
         count: 0,
         mostRecentTimestamp: 0
       };
     }
     
-    groups[bossName][itemName].count++;
-    groups[bossName][itemName].mostRecentTimestamp = Math.max(
-      groups[bossName][itemName].mostRecentTimestamp,
+    groups[cleanBossName][cleanItemName].count++;
+    groups[cleanBossName][cleanItemName].mostRecentTimestamp = Math.max(
+      groups[cleanBossName][cleanItemName].mostRecentTimestamp,
       drop.timestamp
     );
     

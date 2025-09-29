@@ -2473,41 +2473,55 @@ async def get_item_image_from_wiki(item_name: str) -> str:
     try:
         async with httpx.AsyncClient() as client:
             search_url = "https://runescape.wiki/api.php"
-            search_params = {
-                "action": "query",
-                "format": "json",
-                "list": "search",
-                "srsearch": item_name,
-                "srlimit": 1
-            }
+            
+            search_variations = [
+                item_name,  # Original name
+                item_name.replace(" ", "_"),  # Underscored version
+                f'"{item_name}"',  # Quoted exact match
+            ]
             
             headers = {
                 "User-Agent": "stormlight-clan-dashboard/1.0 (contact: harrisonkyle98@gmail.com)"
             }
             
-            search_response = await client.get(search_url, params=search_params, headers=headers)
-            if search_response.status_code == 200:
-                search_data = search_response.json()
-                if search_data.get('query', {}).get('search'):
-                    page_title = search_data['query']['search'][0]['title']
+            for search_term in search_variations:
+                search_params = {
+                    "action": "query",
+                    "format": "json",
+                    "list": "search",
+                    "srsearch": search_term,
+                    "srlimit": 3  # Get more results to find better matches
+                }
+                
+                search_response = await client.get(search_url, params=search_params, headers=headers)
+                if search_response.status_code == 200:
+                    search_data = search_response.json()
+                    search_results = search_data.get('query', {}).get('search', [])
                     
-                    image_params = {
-                        "action": "query",
-                        "format": "json",
-                        "prop": "pageimages",
-                        "titles": page_title,
-                        "pithumbsize": 64
-                    }
-                    
-                    image_response = await client.get(search_url, params=image_params, headers=headers)
-                    if image_response.status_code == 200:
-                        image_data = image_response.json()
-                        pages = image_data.get('query', {}).get('pages', {})
-                        for page_id, page_info in pages.items():
-                            if 'thumbnail' in page_info:
-                                return page_info['thumbnail']['source']
+                    for result in search_results:
+                        page_title = result['title']
+                        if (item_name.lower() in page_title.lower() or 
+                            page_title.lower() in item_name.lower()):
+                            
+                            image_params = {
+                                "action": "query",
+                                "format": "json",
+                                "prop": "pageimages",
+                                "titles": page_title,
+                                "pithumbsize": 64
+                            }
+                            
+                            image_response = await client.get(search_url, params=image_params, headers=headers)
+                            if image_response.status_code == 200:
+                                image_data = image_response.json()
+                                pages = image_data.get('query', {}).get('pages', {})
+                                for page_id, page_info in pages.items():
+                                    if 'thumbnail' in page_info:
+                                        print(f"DEBUG: Found image for '{item_name}' via '{page_title}': {page_info['thumbnail']['source']}")
+                                        return page_info['thumbnail']['source']
             
             # Fallback to generic item icon
+            print(f"DEBUG: No specific image found for '{item_name}', using fallback")
             return "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png"
             
     except Exception as e:
@@ -2561,6 +2575,9 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
                         item_name = item_match.group(1).strip()
                         
                         item_name = re.sub(r'[.,!?]+$', '', item_name).strip()
+                        
+                        item_name = re.sub(r'^some\s+', '', item_name, flags=re.IGNORECASE).strip()
+                        
                         print(f"DEBUG: Final item name: '{item_name}'")
                         
                         boss_match = (
@@ -2571,6 +2588,7 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
                         
                         if boss_match:
                             boss_name = boss_match.group(1).strip()
+                            boss_name = re.sub(r'^a\s+', '', boss_name, flags=re.IGNORECASE).strip()
                         else:
                             boss_name = "Misc"
                         
