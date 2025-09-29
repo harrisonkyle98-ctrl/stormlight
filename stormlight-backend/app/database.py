@@ -722,13 +722,17 @@ async def calculate_daily_changes(conn, username: str, today: date):
 async def store_clan_activity(conn, username: str, text: str, details: str, activity_date: str, activity_timestamp: int):
     """Store a clan activity in the database"""
     try:
+        print(f"  📝 [Store Activity] Storing for {username}: {text[:50]}...")
         await conn.execute("""
             INSERT INTO clan_activities (username, text, details, activity_date, activity_timestamp)
             VALUES (%s, %s, %s, %s, %s)
             ON CONFLICT (username, text, activity_timestamp) DO NOTHING
         """, (username, text, details, activity_date, activity_timestamp))
+        print(f"  ✅ [Store Activity] Successfully stored activity for {username}")
     except Exception as e:
-        print(f"Error storing activity for {username}: {e}")
+        print(f"  ❌ [Store Activity] Error storing activity for {username}: {e}")
+        import traceback
+        traceback.print_exc()
 
 async def get_stored_activities(conn, limit: int = 100, offset: int = 0):
     """Get stored activities from database, ordered by timestamp descending"""
@@ -1351,22 +1355,28 @@ async def collect_daily_activities_and_drops(members_per_cycle: int = 8, cycle_d
                         activities = await fetch_member_activities_with_retry(username, client)
                         
                         if activities:
+                            print(f"  📊 [Activity Collection] Processing {len(activities)} activities for {username}")
                             conn = await get_db_connection()
                             async with conn:
+                                stored_count = 0
                                 for activity in activities:
-                                    await store_clan_activity(
-                                        conn, 
-                                        activity['username'], 
-                                        activity['text'], 
-                                        activity['details'], 
-                                        activity['date'], 
-                                        activity['timestamp']
-                                    )
+                                    try:
+                                        await store_clan_activity(
+                                            conn, 
+                                            activity['username'], 
+                                            activity['text'], 
+                                            activity['details'], 
+                                            activity['date'], 
+                                            activity['timestamp']
+                                        )
+                                        stored_count += 1
+                                    except Exception as e:
+                                        print(f"  ❌ [Activity Collection] Failed to store activity for {username}: {e}")
                                 
                                 drops_found = await parse_and_store_drops_from_activities(activities, username)
                                 print(f"  🎯 [Activity Collection] Found {len(drops_found) if drops_found else 0} drops for {username}")
                             
-                            print(f"✅ [Activity Collection] Processed {username}: {len(activities)} activities")
+                            print(f"✅ [Activity Collection] Processed {username}: {stored_count}/{len(activities)} activities stored")
                             processed_members += 1
                         else:
                             print(f"⚠️ [Activity Collection] No activities for {username}")
