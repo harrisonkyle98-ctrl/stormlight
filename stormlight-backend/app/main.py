@@ -2523,8 +2523,22 @@ async def get_item_image_from_wiki(item_name: str) -> str:
                                 pages = image_data.get('query', {}).get('pages', {})
                                 for page_id, page_info in pages.items():
                                     if 'thumbnail' in page_info:
-                                        print(f"DEBUG: Found image for '{item_name}' via '{page_title}': {page_info['thumbnail']['source']}")
-                                        return page_info['thumbnail']['source']
+                                        image_url = page_info['thumbnail']['source']
+                                        
+                                        excluded_in_url = any(exclude in image_url.lower() for exclude in ['interface', 'crest_interface', 'token', 'scroll'])
+                                        
+                                        is_detail_image = 'detail' in image_url.lower()
+                                        is_interface_image = 'interface' in image_url.lower()
+                                        
+                                        if not excluded_in_url and not is_interface_image:
+                                            print(f"DEBUG: Found good image for '{item_name}' via '{page_title}': {image_url}")
+                                            return image_url
+                                        elif is_detail_image and not excluded_in_url:
+                                            print(f"DEBUG: Found detail image for '{item_name}' via '{page_title}': {image_url}")
+                                            return image_url
+                                        else:
+                                            print(f"DEBUG: Skipping excluded image for '{item_name}': {image_url}")
+                                            continue
                                         
             
             # Fallback to generic item icon
