@@ -2548,6 +2548,81 @@ async def get_item_image_from_wiki(item_name: str) -> str:
     except Exception as e:
         print(f"Error fetching item image for {item_name}: {e}")
         return "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png"
+
+async def get_item_drop_sources_from_wiki(item_name: str) -> list:
+    """Get item drop sources from RuneScape Wiki API to determine boss associations"""
+    try:
+        async with httpx.AsyncClient() as client:
+            search_url = "https://runescape.wiki/api.php"
+            
+            headers = {
+                "User-Agent": "stormlight-clan-dashboard/1.0 (contact: harrisonkyle98@gmail.com)"
+            }
+            
+            search_params = {
+                "action": "query",
+                "format": "json",
+                "list": "search",
+                "srsearch": f'"{item_name}"',
+                "srlimit": 3
+            }
+            
+            search_response = await client.get(search_url, params=search_params, headers=headers)
+            if search_response.status_code == 200:
+                search_data = search_response.json()
+                search_results = search_data.get('query', {}).get('search', [])
+                
+                for result in search_results:
+                    page_title = result['title']
+                    
+                    if (item_name.lower() in page_title.lower() or 
+                        page_title.lower() in item_name.lower()):
+                        
+                        content_params = {
+                            "action": "query",
+                            "format": "json",
+                            "prop": "extracts",
+                            "titles": page_title,
+                            "exintro": True,
+                            "explaintext": True,
+                            "exsectionformat": "plain"
+                        }
+                        
+                        content_response = await client.get(search_url, params=content_params, headers=headers)
+                        if content_response.status_code == 200:
+                            content_data = content_response.json()
+                            pages = content_data.get('query', {}).get('pages', {})
+                            
+                            for page_id, page_info in pages.items():
+                                if 'extract' in page_info:
+                                    extract = page_info['extract'].lower()
+                                    
+                                    boss_indicators = [
+                                        'dropped by', 'obtained from', 'reward from',
+                                        'boss', 'monster', 'creature', 'enemy'
+                                    ]
+                                    
+                                    drop_sources = []
+                                    if any(indicator in extract for indicator in boss_indicators):
+                                        boss_patterns = [
+                                            r'dropped by ([^.]+)',
+                                            r'obtained from ([^.]+)',
+                                            r'reward from ([^.]+)',
+                                        ]
+                                        
+                                        for pattern in boss_patterns:
+                                            matches = re.findall(pattern, extract)
+                                            drop_sources.extend(matches)
+                                    
+                                    print(f"DEBUG: Found {len(drop_sources)} drop sources for '{item_name}': {drop_sources}")
+                                    return drop_sources
+            
+            print(f"DEBUG: No drop sources found for '{item_name}'")
+            return []
+            
+    except Exception as e:
+        print(f"Error fetching drop sources for {item_name}: {e}")
+        return []
 async def parse_and_store_drops_from_activities(activities: list, username: str):
     """Parse drops from activities and store them in database"""
     drops_found = []
@@ -2601,17 +2676,23 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
                         
                         print(f"DEBUG: Final item name: '{item_name}'")
                         
-                        boss_match = (
-                            re.search(r"After (?:killing|defeating) (.+?), (?:it dropped|I (?:looted|found))", details) or
-                            re.search(r"While exploring (.+?), I (?:looted|found)", details) or
-                            re.search(r"(?:exploring|in|at) (?:the )?(.+?),", details)
-                        )
+                        drop_sources = await get_item_drop_sources_from_wiki(item_name)
                         
-                        if boss_match:
-                            boss_name = boss_match.group(1).strip()
-                            boss_name = re.sub(r'^a\s+', '', boss_name, flags=re.IGNORECASE).strip()
-                        else:
+                        if len(drop_sources) > 1:
                             boss_name = "Misc"
+                            print(f"DEBUG: Multi-boss item '{item_name}' assigned to Misc (sources: {drop_sources})")
+                        else:
+                            boss_match = (
+                                re.search(r"After (?:killing|defeating) (.+?), (?:it dropped|I (?:looted|found))", details) or
+                                re.search(r"While exploring (.+?), I (?:looted|found)", details) or
+                                re.search(r"(?:exploring|in|at) (?:the )?(.+?),", details)
+                            )
+                            
+                            if boss_match:
+                                boss_name = boss_match.group(1).strip()
+                                boss_name = re.sub(r'^a\s+', '', boss_name, flags=re.IGNORECASE).strip()
+                            else:
+                                boss_name = "Misc"
                         
                         print(f"DEBUG: Boss name: '{boss_name}' | Storing drop: {item_name}")
                         
