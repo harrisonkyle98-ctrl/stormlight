@@ -2657,11 +2657,18 @@ async def get_item_drop_sources_from_wiki(item_name: str) -> list:
                 'refined anima core helm': ['gorvek and vindicta', 'helwyr', 'gregorovic', 'twin furies'],
             }
             
-            item_lower = item_name.lower()
+            item_lower = item_name.lower().strip()
+            print(f"DEBUG: Checking hardcoded multi-boss for '{item_name}' (normalized: '{item_lower}')")
+            
             for known_item, sources in known_multi_boss.items():
-                if known_item in item_lower or item_lower in known_item:
+                if known_item == item_lower or known_item in item_lower:
                     print(f"DEBUG: Using hardcoded multi-boss sources for '{item_name}': {sources}")
                     return sources
+            
+            if 'anima core' in item_lower and any(part in item_lower for part in ['legs', 'body', 'helm']):
+                sources = ['gorvek and vindicta', 'helwyr', 'gregorovic', 'twin furies']
+                print(f"DEBUG: Using pattern-based multi-boss sources for '{item_name}': {sources}")
+                return sources
             
             print(f"DEBUG: No drop sources found for '{item_name}'")
             return []
