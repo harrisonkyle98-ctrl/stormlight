@@ -2515,6 +2515,7 @@ async def get_item_image_from_wiki(item_name: str) -> str:
         return "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png"
 async def parse_and_store_drops_from_activities(activities: list, username: str):
     """Parse drops from activities and store them in database"""
+    drops_found = []
     try:
         conn = await get_db_connection()
         async with conn:
@@ -2587,10 +2588,13 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
                             activity['timestamp']
                         )
                         print(f"DEBUG: Successfully stored drop: {item_name}")
+                        drops_found.append(item_name)
                     else:
                         print(f"DEBUG: No item match found for: '{activity_text}'")
     except Exception as e:
         print(f"Error parsing and storing drops for {username}: {e}")
+    
+    return drops_found
 
 
 
