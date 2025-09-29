@@ -1209,12 +1209,15 @@ async def migrate_history_to_daily_snapshots(conn):
     print("[Migration] Backfill into player_daily_snapshots completed")
 
 async def store_clan_drop(conn, username: str, item_name: str, boss_name: str, item_image_url: str, activity_text: str, activity_timestamp: int):
-    """Store a clan drop in the database with deduplication"""
+    """Store a clan drop in the database with deduplication and image URL updates"""
     try:
         await conn.execute("""
             INSERT INTO clan_drops (username, item_name, boss_name, item_image_url, activity_text, activity_timestamp)
             VALUES (%s, %s, %s, %s, %s, %s)
-            ON CONFLICT (username, item_name, boss_name, activity_timestamp) DO NOTHING
+            ON CONFLICT (username, item_name, boss_name, activity_timestamp) 
+            DO UPDATE SET 
+                item_image_url = EXCLUDED.item_image_url,
+                activity_text = EXCLUDED.activity_text
         """, (username, item_name, boss_name, item_image_url, activity_text, activity_timestamp))
     except Exception as e:
         print(f"Error storing drop for {username}: {e}")
