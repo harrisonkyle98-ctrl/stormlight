@@ -3867,6 +3867,12 @@ async def startup_event():
                         try:
                             processed_count, failed_count = await collect_daily_activities_and_drops()
                             print(f"[Scheduler] ✅ Daily activity/drop collection finished: {processed_count} processed, {failed_count} failed")
+                            
+                            conn = await get_db_connection()
+                            async with conn:
+                                activity_count = await conn.fetchval("SELECT COUNT(*) FROM clan_activities")
+                                drop_count = await conn.fetchval("SELECT COUNT(*) FROM clan_drops") 
+                                print(f"[Scheduler] 📊 Database totals: {activity_count} activities, {drop_count} drops")
                         except Exception as e:
                             print(f"[Scheduler] ❌ Error in activity/drop collection: {e}")
                             import traceback

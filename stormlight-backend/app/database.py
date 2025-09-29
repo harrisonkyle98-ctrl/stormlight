@@ -1285,7 +1285,7 @@ async def collect_daily_activities_and_drops(members_per_cycle: int = 8, cycle_d
                         activities = data.get('activities', [])
                         
                         member_activities = []
-                        two_days_ago = datetime.now().timestamp() - (2 * 24 * 60 * 60)
+                        fourteen_days_ago = datetime.now().timestamp() - (14 * 24 * 60 * 60)
                         
                         for activity in activities:
                             try:
@@ -1305,7 +1305,7 @@ async def collect_daily_activities_and_drops(members_per_cycle: int = 8, cycle_d
                                 if activity_timestamp < 0 or activity_timestamp > current_time + 86400:
                                     continue
                                 
-                                if activity_timestamp >= two_days_ago:
+                                if activity_timestamp >= fourteen_days_ago:
                                     member_activities.append({
                                         'username': username,
                                         'text': activity['text'],
@@ -1363,7 +1363,8 @@ async def collect_daily_activities_and_drops(members_per_cycle: int = 8, cycle_d
                                         activity['timestamp']
                                     )
                                 
-                                await parse_and_store_drops_from_activities(activities, username)
+                                drops_found = await parse_and_store_drops_from_activities(activities, username)
+                                print(f"  🎯 [Activity Collection] Found {len(drops_found) if drops_found else 0} drops for {username}")
                             
                             print(f"✅ [Activity Collection] Processed {username}: {len(activities)} activities")
                             processed_members += 1
@@ -1373,6 +1374,8 @@ async def collect_daily_activities_and_drops(members_per_cycle: int = 8, cycle_d
                     
                     except Exception as e:
                         print(f"❌ [Activity Collection] Failed to process {username}: {e}")
+                        import traceback
+                        traceback.print_exc()
                         failed_members += 1
                 
                 if i + members_per_cycle < len(all_usernames):
