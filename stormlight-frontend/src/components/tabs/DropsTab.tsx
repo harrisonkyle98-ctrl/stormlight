@@ -11,7 +11,7 @@ interface TabProps {
 interface DropData {
   item_name: string;
   boss_name: string;
-  timestamp: number;
+  activity_timestamp: number;
   date: string;
   item_image_url: string;
   activity_text: string;
@@ -98,20 +98,20 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
     groups[cleanBossName][cleanItemName].count++;
     groups[cleanBossName][cleanItemName].mostRecentTimestamp = Math.max(
       groups[cleanBossName][cleanItemName].mostRecentTimestamp,
-      drop.timestamp
+      drop.activity_timestamp
     );
     
     return groups;
   }, {} as Record<string, Record<string, { item_name: string; item_image_url: string; count: number; mostRecentTimestamp: number }>>);
 
   const sortedBossGroups = Object.entries(groupedDrops)
-    .map(([bossName, items]) => {
+    .map(([cleanBossName, items]) => {
       const itemsArray = Object.values(items).sort((a, b) => a.item_name.localeCompare(b.item_name));
       const totalDrops = itemsArray.reduce((sum, item) => sum + item.count, 0);
       const mostRecentTimestamp = Math.max(...itemsArray.map(item => item.mostRecentTimestamp));
       
       return {
-        bossName,
+        bossName: cleanBossName,
         items: itemsArray,
         totalDrops,
         mostRecentTimestamp

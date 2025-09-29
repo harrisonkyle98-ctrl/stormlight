@@ -2478,6 +2478,8 @@ async def get_item_image_from_wiki(item_name: str) -> str:
                 item_name,  # Original name
                 item_name.replace(" ", "_"),  # Underscored version
                 f'"{item_name}"',  # Quoted exact match
+                f"{item_name} detail",  # Detail page variant
+                f"{item_name} (item)",  # Item page variant
             ]
             
             headers = {
@@ -2500,9 +2502,13 @@ async def get_item_image_from_wiki(item_name: str) -> str:
                     
                     for result in search_results:
                         page_title = result['title']
-                        if (item_name.lower() in page_title.lower() or 
-                            page_title.lower() in item_name.lower()):
-                            
+                        
+                        is_exact_match = (item_name.lower() == page_title.lower() or 
+                                        item_name.lower().replace(" ", "_") == page_title.lower())
+                        is_good_match = (item_name.lower() in page_title.lower() and 
+                                       not any(exclude in page_title.lower() for exclude in ['interface', 'crest', 'token', 'scroll']))
+                        
+                        if is_exact_match or is_good_match:
                             image_params = {
                                 "action": "query",
                                 "format": "json",
@@ -2519,6 +2525,7 @@ async def get_item_image_from_wiki(item_name: str) -> str:
                                     if 'thumbnail' in page_info:
                                         print(f"DEBUG: Found image for '{item_name}' via '{page_title}': {page_info['thumbnail']['source']}")
                                         return page_info['thumbnail']['source']
+                                        
             
             # Fallback to generic item icon
             print(f"DEBUG: No specific image found for '{item_name}', using fallback")
