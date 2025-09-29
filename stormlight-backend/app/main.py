@@ -2565,7 +2565,7 @@ async def get_item_drop_sources_from_wiki(item_name: str) -> list:
         print(f"DEBUG: Checking hardcoded multi-boss for '{item_name}' (normalized: '{item_lower}')")
         
         for known_item, sources in known_multi_boss.items():
-            if known_item == item_lower or known_item in item_lower:
+            if known_item == item_lower:
                 print(f"DEBUG: Using hardcoded multi-boss sources for '{item_name}': {sources}")
                 return sources
         
