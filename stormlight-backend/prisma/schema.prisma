@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-py"
 }
@@ -11,58 +8,57 @@ datasource db {
 }
 
 model User {
-  id                String   @id @default(cuid())
-  discordId         String   @unique @map("discord_id")
-  username          String
-  discriminator     String?
-  avatar            String?
-  email             String?
-  roles             String[] @default([])
-  preferences       Json?
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
-  
+  id                 String             @id @default(cuid())
+  discordId          String             @unique @map("discord_id")
+  username           String
+  discriminator      String?
+  avatar             String?
+  email              String?
+  roles              String[]           @default([])
+  preferences        Json?
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
   competitionEntries CompetitionEntry[]
-  
+
   @@map("users")
 }
 
 model ClanMember {
-  id              String   @id @default(cuid())
-  username        String   @unique
-  displayName     String?  @map("display_name")
-  clanRank        String   @map("clan_rank")
-  totalXp         BigInt   @map("total_xp")
-  totalLevel      Int      @map("total_level")
-  combatLevel     Int      @map("combat_level")
-  questPoints     Int      @default(0) @map("quest_points")
-  kills           Int      @default(0)
-  stats           Json?
-  questData       Json?    @map("quest_data")
-  badges          Json?    @default("[]")
-  discordId       String?  @unique @map("discord_id")
-  joinDate        DateTime? @map("join_date")
-  lastUpdated     DateTime @map("last_updated")
-  createdAt       DateTime @default(now()) @map("created_at")
+  id          String   @id @default(cuid())
+  username    String   @unique
+  displayName String?  @map("display_name")
+  clanRank    String   @map("clan_rank")
+  totalXp     BigInt   @map("total_xp")
+  totalLevel  Int      @map("total_level")
+  combatLevel Int      @map("combat_level")
+  questPoints Int      @default(0) @map("quest_points")
+  kills       Int      @default(0)
+  stats       Json?
+  questData   Json?    @map("quest_data")
+  lastUpdated DateTime @map("last_updated")
+  createdAt   DateTime @default(now()) @map("created_at")
+  discordId   String?  @unique @map("discord_id")
+  badges      Json?    @default("[]")
+  joinDate    DateTime? @map("join_date")
 
+  @@index([discordId], map: "idx_clan_members_discord_id")
   @@map("clan_members")
 }
 
 model Competition {
-  id          String            @id @default(cuid())
+  id          String             @id @default(cuid())
   name        String
   description String?
   type        CompetitionType
   skill       String?
-  startDate   DateTime          @map("start_date")
-  endDate     DateTime          @map("end_date")
-  isActive    Boolean           @default(true) @map("is_active")
-  createdBy   String?           @map("created_by")
-  createdAt   DateTime          @default(now()) @map("created_at")
-  updatedAt   DateTime          @updatedAt @map("updated_at")
-  
+  startDate   DateTime           @map("start_date")
+  endDate     DateTime           @map("end_date")
+  isActive    Boolean            @default(true) @map("is_active")
+  createdBy   String?            @map("created_by")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
   entries     CompetitionEntry[]
-  
+
   @@map("competitions")
 }
 
@@ -78,10 +74,9 @@ model CompetitionEntry {
   isActive      Boolean     @default(true) @map("is_active")
   createdAt     DateTime    @default(now()) @map("created_at")
   updatedAt     DateTime    @updatedAt @map("updated_at")
-  
   competition   Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
   user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@unique([competitionId, userId])
   @@map("competition_entries")
 }
@@ -112,7 +107,6 @@ model AdminLog {
   @@map("admin_logs")
 }
 
-// Keep existing tables for historical data
 model PlayerStatsHistory {
   id           Int      @id @default(autoincrement())
   username     String
@@ -123,26 +117,28 @@ model PlayerStatsHistory {
   combatLevel  Int?     @map("combat_level")
   snapshotDate DateTime @map("snapshot_date") @db.Date
   createdAt    DateTime @default(now()) @map("created_at")
-  
+
   @@unique([username, skillName, snapshotDate])
   @@index([username, snapshotDate])
+  @@index([username, snapshotDate], map: "idx_player_stats_username_date")
   @@map("player_stats_history")
 }
 
 model PlayerStatChanges {
-  id           Int      @id @default(autoincrement())
-  username     String
-  skillName    String   @map("skill_name")
-  date         DateTime @db.Date
-  levelChange  Int      @default(0) @map("level_change")
-  xpChange     BigInt   @default(0) @map("xp_change")
-  rankChange   Int      @default(0) @map("rank_change")
-  xpToday      BigInt   @default(0) @map("xp_today")
-  xpYesterday  BigInt   @default(0) @map("xp_yesterday")
-  createdAt    DateTime @default(now()) @map("created_at")
-  
+  id          Int      @id @default(autoincrement())
+  username    String
+  skillName   String   @map("skill_name")
+  date        DateTime @db.Date
+  levelChange Int      @default(0) @map("level_change")
+  xpChange    BigInt   @default(0) @map("xp_change")
+  rankChange  Int      @default(0) @map("rank_change")
+  xpToday     BigInt   @default(0) @map("xp_today")
+  xpYesterday BigInt   @default(0) @map("xp_yesterday")
+  createdAt   DateTime @default(now()) @map("created_at")
+
   @@unique([username, skillName, date])
   @@index([username, date])
+  @@index([username, date], map: "idx_player_changes_username_date")
   @@map("player_stat_changes")
 }
 
@@ -154,26 +150,27 @@ model ClanActivity {
   activityDate      String   @map("activity_date")
   activityTimestamp BigInt   @map("activity_timestamp")
   createdAt         DateTime @default(now()) @map("created_at")
-  
+
   @@unique([username, text, activityTimestamp])
   @@index([activityTimestamp])
   @@index([username])
+  @@index([username], map: "idx_activities_username")
   @@map("clan_activities")
 }
 
 model ClanDrop {
-  id                Int      @id @default(autoincrement())
-  username          String
-  itemName          String   @map("item_name")
-  bossName          String   @map("boss_name")
-  itemImageUrl      String?  @map("item_image_url")
-  activityText      String   @map("activity_text")
-  activityTimestamp BigInt   @map("activity_timestamp")
-  createdAt         DateTime @default(now()) @map("created_at")
-  
-  @@unique([username, itemName, bossName, activityTimestamp])
-  @@index([username])
-  @@index([activityTimestamp])
+  id                Int       @id @default(autoincrement())
+  username          String    @db.VarChar(255)
+  itemName          String    @map("item_name") @db.VarChar(255)
+  bossName          String    @map("boss_name") @db.VarChar(255)
+  itemImageUrl      String?   @map("item_image_url")
+  activityText      String    @map("activity_text")
+  activityTimestamp BigInt    @map("activity_timestamp")
+  createdAt         DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@unique([username, itemName, activityTimestamp])
+  @@index([activityTimestamp(sort: Desc)], map: "idx_drops_timestamp")
+  @@index([username], map: "idx_drops_username")
   @@map("clan_drops")
 }
 
@@ -185,23 +182,24 @@ model ClanLog {
   newRank   String?  @map("new_rank")
   timestamp DateTime @default(now())
   createdAt DateTime @default(now()) @map("created_at")
-  
+
   @@index([timestamp])
   @@index([username])
   @@map("clan_log")
 }
 
 model PlayerDailySnapshot {
-  id           Int      @id @default(autoincrement())
-  username     String
-  snapshotDate DateTime @db.Date @map("snapshot_date")
+  id           Int       @id @default(autoincrement())
+  username     String    @db.VarChar(255)
+  snapshotDate DateTime  @map("snapshot_date") @db.Date
   stats        Json
-  combatLevel  Int?     @map("combat_level")
-  totalXp      BigInt?  @map("total_xp")
-  createdAt    DateTime @default(now()) @map("created_at")
+  combatLevel  Int?      @map("combat_level")
+  totalXp      BigInt?   @map("total_xp")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
 
   @@unique([username, snapshotDate])
-  @@index([username, snapshotDate])
+  @@index([snapshotDate], map: "idx_pds_date")
+  @@index([username, snapshotDate], map: "idx_pds_username_date")
   @@map("player_daily_snapshots")
 }
 

@@ -105,7 +105,7 @@ export const RankTrackingTab = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-white">Rank Tracking & Longevity</h2>
+        <h2 className="text-xl font-semibold text-white">Rank Tracking &amp; Longevity</h2>
         <div className="flex items-center space-x-2">
           <Badge className="bg-yellow-600 text-white">
             {dueForPromotionCount} Due for Promotion
