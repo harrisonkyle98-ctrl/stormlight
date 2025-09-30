@@ -804,6 +804,10 @@ async def sync_clan_members_to_database_with_queue():
         
         print(f"📊 Sync complete: {successful_syncs} successful, {failed_syncs} failed, {len(failed_member_queue)} in queue")
         
+        clan_members_cache['data'] = []
+        clan_members_cache['timestamp'] = 0
+        print("🗑️ Cleared clan members cache")
+        
     except Exception as e:
         print(f"❌ Error in sync_clan_members_to_database_with_queue: {e}")
         raise
@@ -4039,12 +4043,12 @@ async def startup_event():
                     today = now.date()
                     has_run_today = (getattr(app.state, "last_snapshot_date_utc", None) == today)
                     
-                    if (now.hour == 0 and now.minute < 5) or (not has_run_today and now.hour >= 1 and now.hour <= 6):
-                        print(f"🔄 Starting daily clan member refresh at {now.isoformat()}...")
+                    if now.minute < 5:  # Run in first 5 minutes of each hour
+                        print(f"🔄 Starting hourly clan member sync at {now.isoformat()}...")
                         
                         async with app.state.sync_lock:
-                            await daily_clan_member_refresh()
-                        print("✅ Daily clan member refresh completed")
+                            await sync_clan_members_to_database_with_queue()
+                        print("✅ Hourly clan member sync completed")
                         
                         print(f"[Scheduler] 🚀 Starting daily multi-cycle snapshot collection at {now.isoformat()}")
                         async with app.state.snapshot_lock:
