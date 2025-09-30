@@ -2704,7 +2704,9 @@ async def get_rank_tracking(admin_id: str = Depends(verify_admin_access)):
         from .admin_utils import calculate_rank_needed
         
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
-            members = await prisma.clanmember.find_many()
+            members = await prisma.clanmember.find_many(
+                order={'username': 'asc'}
+            )
             tracking = []
             
             for member in members:

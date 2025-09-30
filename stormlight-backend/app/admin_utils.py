@@ -44,3 +44,39 @@ def get_site_health_status():
         'failed_members': [],
         'total_members': 0
     }
+
+async def create_competition_snapshot(competition_id: str, snapshot_type: str):
+    """Create competition snapshot for start or end"""
+    try:
+        from prisma import Prisma
+        prisma = Prisma()
+        if not prisma.is_connected():
+            await prisma.connect()
+        
+        entries = await prisma.competitionentry.find_many(
+            where={'competitionId': competition_id}
+        )
+        
+        for entry in entries:
+            member = await prisma.clanmember.find_unique(
+                where={'username': entry.username}
+            )
+            
+            if member and member.stats:
+                stats = member.stats if isinstance(member.stats, dict) else json.loads(member.stats)
+                overall_xp = stats.get('overall', {}).get('xp', 0)
+                
+                if snapshot_type == 'start':
+                    await prisma.competitionentry.update(
+                        where={'id': entry.id},
+                        data={'xpStart': overall_xp}
+                    )
+                elif snapshot_type == 'end':
+                    await prisma.competitionentry.update(
+                        where={'id': entry.id},
+                        data={'xpEnd': overall_xp}
+                    )
+        
+        print(f"📸 Created {snapshot_type} snapshot for competition {competition_id}")
+    except Exception as e:
+        print(f"❌ Failed to create competition snapshot: {e}")
