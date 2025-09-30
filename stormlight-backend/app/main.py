@@ -2471,6 +2471,15 @@ async def get_clan_log(
 async def get_item_image_from_wiki(item_name: str) -> str:
     """Get item image URL from RuneScape Wiki API with proper User-Agent"""
     try:
+        hardcoded_images = {
+            'dormant anima core legs': 'https://runescape.wiki/images/Dormant_anima_core_legs_detail.png?56261',
+        }
+        
+        item_lower = item_name.lower().strip()
+        if item_lower in hardcoded_images:
+            print(f"DEBUG: Using hardcoded image for '{item_name}': {hardcoded_images[item_lower]}")
+            return hardcoded_images[item_lower]
+        
         async with httpx.AsyncClient() as client:
             search_url = "https://runescape.wiki/api.php"
             
