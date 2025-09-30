@@ -626,6 +626,18 @@ async def sync_clan_members_to_database_with_queue():
             db_members = await prisma.clanmember.find_many()
             current_db_members = {member.username: member.clanRank for member in db_members}
             print(f"📊 Loaded {len(current_db_members)} existing members for change detection")
+            
+            # Log members that are in API but not in DB (potential joins)
+            potential_joins = current_usernames_set - set(current_db_members.keys())
+            if potential_joins:
+                print(f"🆕 Potential new members: {list(potential_joins)}")
+            
+            # Log members that are in DB but not in API (potential leaves)
+            potential_leaves = set(current_db_members.keys()) - current_usernames_set
+            if potential_leaves:
+                print(f"👋 Potential leaving members: {list(potential_leaves)}")
+            
+            print(f"🔍 DB signature map size: {len(db_signature_map)}")
 
             for m in db_members:
                 if m.username not in current_usernames_set and m.stats:
@@ -744,16 +756,22 @@ async def sync_clan_members_to_database_with_queue():
                             old_rank=None, 
                             new_rank=member_data['clan_rank']
                         )
-                        print(f"📝 Logged join event for {member_data['username']}")
+                        print(f"📝 Logged join event for {member_data['username']} as {member_data['clan_rank']}")
+                        current_db_members[member_data['username']] = member_data['clan_rank']
                     elif current_db_members[member_data['username']] != member_data['clan_rank']:
+                        old_rank = current_db_members[member_data['username']]
+                        new_rank = member_data['clan_rank']
+                        
+                        event_type = 'rank_up'  # Default to rank_up for now
+                        
                         await log_clan_event_if_new(
                             member_data['username'], 
-                            'rank_up', 
-                            old_rank=current_db_members[member_data['username']], 
-                            new_rank=member_data['clan_rank']
+                            event_type, 
+                            old_rank=old_rank, 
+                            new_rank=new_rank
                         )
-                        print(f"📝 Logged rank change for {member_data['username']}: {current_db_members[member_data['username']]} → {member_data['clan_rank']}")
-                        current_db_members[member_data['username']] = member_data['clan_rank']
+                        print(f"📝 Logged {event_type} for {member_data['username']}: {old_rank} → {new_rank}")
+                        current_db_members[member_data['username']] = new_rank
                 except Exception as log_error:
                     print(f"⚠️ Failed to log clan event for {member_data['username']}: {log_error}")
                 
@@ -773,18 +791,25 @@ async def sync_clan_members_to_database_with_queue():
                 continue
         
         current_usernames = {member['username'] for member in clan_data}
+        members_who_left = []
         for db_username in current_db_members:
             if db_username not in current_usernames:
-                try:
-                    await log_clan_event_if_new(
-                        db_username, 
-                        'leave', 
-                        old_rank=current_db_members[db_username], 
-                        new_rank=None
-                    )
-                    print(f"📝 Logged leave event for {db_username}")
-                except Exception as log_error:
-                    print(f"⚠️ Failed to log leave event for {db_username}: {log_error}")
+                members_who_left.append((db_username, current_db_members[db_username]))
+        
+        if members_who_left:
+            print(f"👋 Processing {len(members_who_left)} members who left the clan")
+            
+        for username, rank in members_who_left:
+            try:
+                await log_clan_event_if_new(
+                    username, 
+                    'leave', 
+                    old_rank=rank, 
+                    new_rank=None
+                )
+                print(f"📝 Logged leave event for {username} (was {rank})")
+            except Exception as log_error:
+                print(f"⚠️ Failed to log leave event for {username}: {log_error}")
         
         try:
             total_entries = await prisma.clanlog.count()
