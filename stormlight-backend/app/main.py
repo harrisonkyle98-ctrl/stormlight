@@ -47,8 +47,16 @@ prisma = Prisma() if PRISMA_AVAILABLE else None
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("JWT_SECRET_KEY", "fallback-secret"))
 
 uploads_dir = "/app/uploads"
-os.makedirs(uploads_dir, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+try:
+    os.makedirs(uploads_dir, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+    print(f"✅ Successfully mounted uploads directory: {uploads_dir}")
+except Exception as e:
+    print(f"❌ Failed to create/mount uploads directory: {e}")
+    fallback_dir = "/tmp/uploads"
+    os.makedirs(fallback_dir, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=fallback_dir), name="uploads")
+    print(f"⚠️ Using fallback uploads directory: {fallback_dir}")
 
 # Create API router for all API endpoints
 api_router = APIRouter(prefix="/api")
