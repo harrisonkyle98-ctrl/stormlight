@@ -49,7 +49,10 @@ const Login = () => {
             ⚡ Stormlight
           </CardTitle>
           <CardDescription className="text-slate-300">
-            Welcome to the Stormlight clan dashboard. Sign in with Discord to access clan features.
+            Welcome to the Stormlight clan dashboard.
+          </CardDescription>
+          <CardDescription className="text-slate-300">
+            Sign in with Discord to access clan features.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -77,11 +80,11 @@ const Login = () => {
           <div className="text-center text-sm text-slate-400">
             <p>Only Stormlight clan members can access this site.</p>
             <p className="mt-2">
-              <a 
-                href="https://discord.com/invite/stormlight" 
-                target="_blank" 
+              <a
+                href="https://discord.com/invite/stormlight"
+                target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 underline"
+                className="text-blue-400 hover:text-blue-300"
               >
                 Join our Discord server to get started!
               </a>

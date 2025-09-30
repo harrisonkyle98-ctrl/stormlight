@@ -155,7 +155,7 @@ const Members = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-slate-700 border-slate-600">
                   <SelectItem value="rank" className="text-white hover:bg-slate-600">Rank</SelectItem>
-                  <SelectItem value="xp" className="text-white hover:bg-slate-600">Total XP</SelectItem>
+                  <SelectItem value="xp" className="text-white hover:bg-slate-600">Clan XP</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -258,7 +258,7 @@ const Home = () => {
   return (
     <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-4xl font-bold text-white mb-4">
+        <h1 className="text-3xl font-bold text-white mb-4">
           Welcome back, {user?.username ? (
             <Link
               to={`/clan-member/${usernameToUrl(user.username)}`}
@@ -271,8 +271,7 @@ const Home = () => {
           )}
         </h1>
         <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-          World 98 based. Track your progress, compete with fellow members,
-          and climb the clan hiscores together.
+          Track your progress, compete with fellow members, and climb the hiscores.
         </p>
       </div>
 
