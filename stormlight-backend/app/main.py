@@ -2113,7 +2113,7 @@ async def get_clan_activities(
             
             async def fetch_member_activities(member, client, max_retries=3):
                 """Fetch activities for a single member with exponential backoff retry"""
-                runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={member['username']}&activities=1"
+                runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={member['username']}&activities=20"
                 
                 for attempt in range(max_retries):
                     try:

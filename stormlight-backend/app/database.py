@@ -1282,7 +1282,7 @@ async def collect_daily_activities_and_drops(members_per_cycle: int = 8, cycle_d
         
         async def fetch_member_activities_with_retry(username: str, client, max_retries: int = 3):
             """Fetch activities for a single member with retry logic"""
-            runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={username}&activities=1"
+            runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={username}&activities=20"
             
             for attempt in range(max_retries):
                 try:
