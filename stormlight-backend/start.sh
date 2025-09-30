@@ -4,8 +4,8 @@ set -e
 echo "🔧 Generating Prisma client..."
 poetry run prisma generate
 
-echo "🗄️ Applying database schema changes..."
-poetry run prisma db push --accept-data-loss
+echo "🔧 Applying database schema changes..."
+poetry run prisma db push
 
 echo "🚀 Starting FastAPI server..."
 poetry run fastapi run app/main.py --host 0.0.0.0 --port ${PORT:-8000}
