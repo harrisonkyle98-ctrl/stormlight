@@ -86,6 +86,18 @@ model CompetitionEntry {
   @@map("competition_entries")
 }
 
+model CustomBadge {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  imagePath   String   @map("image_path")
+  imageUrl    String   @map("image_url")
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  @@map("custom_badges")
+}
+
 model AdminLog {
   id        Int      @id @default(autoincrement())
   adminId   String   @map("admin_id")

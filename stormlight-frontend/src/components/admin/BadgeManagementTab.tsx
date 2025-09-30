@@ -7,9 +7,11 @@ import { Crown, Plus, Edit, Trash2 } from 'lucide-react'
 interface CustomBadge {
   id: string
   name: string
-  backgroundColor: string
-  icon?: string
   description?: string
+  imagePath: string
+  imageUrl: string
+  createdBy: string
+  createdAt: string
 }
 
 export const BadgeManagementTab = () => {
@@ -19,10 +21,9 @@ export const BadgeManagementTab = () => {
   const [editingBadge, setEditingBadge] = useState<CustomBadge | null>(null)
   const [formData, setFormData] = useState({
     name: '',
-    backgroundColor: '#3b82f6',
-    icon: '',
     description: ''
   })
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000'
 
@@ -51,8 +52,20 @@ export const BadgeManagementTab = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    if (!selectedFile && !editingBadge) {
+      alert('Please select a badge image file')
+      return
+    }
+    
     try {
       const token = localStorage.getItem('access_token')
+      const formDataToSend = new FormData()
+      formDataToSend.append('name', formData.name)
+      formDataToSend.append('description', formData.description)
+      if (selectedFile) {
+        formDataToSend.append('badge_file', selectedFile)
+      }
+      
       const url = editingBadge 
         ? `${API_URL}/api/admin/badges/${editingBadge.id}`
         : `${API_URL}/api/admin/badges`
@@ -62,20 +75,24 @@ export const BadgeManagementTab = () => {
       const response = await fetch(url, {
         method,
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: formDataToSend
       })
 
       if (response.ok) {
         await fetchCustomBadges()
         setShowCreateForm(false)
         setEditingBadge(null)
-        setFormData({ name: '', backgroundColor: '#3b82f6', icon: '', description: '' })
+        setSelectedFile(null)
+        setFormData({ name: '', description: '' })
+      } else {
+        const errorData = await response.json()
+        alert(errorData.detail || 'Error saving badge')
       }
     } catch (error) {
       console.error('Error saving badge:', error)
+      alert('Error saving badge')
     }
   }
 
@@ -101,10 +118,9 @@ export const BadgeManagementTab = () => {
     setEditingBadge(badge)
     setFormData({
       name: badge.name,
-      backgroundColor: badge.backgroundColor,
-      icon: badge.icon || '',
       description: badge.description || ''
     })
+    setSelectedFile(null)
     setShowCreateForm(true)
   }
 
@@ -150,26 +166,18 @@ export const BadgeManagementTab = () => {
               
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Background Color
+                  Badge Image {!editingBadge && '*'}
                 </label>
                 <Input
-                  type="color"
-                  value={formData.backgroundColor}
-                  onChange={(e) => setFormData({ ...formData, backgroundColor: e.target.value })}
-                  className="bg-slate-600 border-slate-500 h-10 w-20"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Icon URL (optional)
-                </label>
-                <Input
-                  value={formData.icon}
-                  onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                  placeholder="https://example.com/icon.png"
+                  type="file"
+                  accept=".png,.jpg,.jpeg,.svg"
+                  onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
                   className="bg-slate-600 border-slate-500 text-white"
+                  required={!editingBadge}
                 />
+                <p className="text-xs text-slate-400 mt-1">
+                  Accepted formats: PNG, JPG, SVG. Max size: 2MB
+                </p>
               </div>
 
               <div>
@@ -194,7 +202,8 @@ export const BadgeManagementTab = () => {
                   onClick={() => {
                     setShowCreateForm(false)
                     setEditingBadge(null)
-                    setFormData({ name: '', backgroundColor: '#3b82f6', icon: '', description: '' })
+                    setSelectedFile(null)
+                    setFormData({ name: '', description: '' })
                   }}
                 >
                   Cancel
@@ -221,14 +230,18 @@ export const BadgeManagementTab = () => {
               {customBadges.map((badge) => (
                 <div key={badge.id} className="p-4 bg-slate-600/30 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <div
-                      className="px-3 py-1 text-sm font-semibold flex items-center space-x-2 rounded-md text-white"
-                      style={{ backgroundColor: badge.backgroundColor }}
-                    >
-                      {badge.icon && (
-                        <img src={badge.icon} alt={badge.name} className="w-4 h-4" />
-                      )}
-                      <span>{badge.name}</span>
+                    <div className="flex items-center space-x-3">
+                      <img 
+                        src={`https://stormlight.fly.dev${badge.imageUrl}`} 
+                        alt={badge.name} 
+                        className="w-8 h-8 rounded object-cover"
+                      />
+                      <div>
+                        <span className="text-white font-medium">{badge.name}</span>
+                        {badge.description && (
+                          <p className="text-sm text-slate-400">{badge.description}</p>
+                        )}
+                      </div>
                     </div>
                     <div className="flex space-x-1">
                       <Button
@@ -249,9 +262,6 @@ export const BadgeManagementTab = () => {
                       </Button>
                     </div>
                   </div>
-                  {badge.description && (
-                    <p className="text-sm text-slate-400">{badge.description}</p>
-                  )}
                 </div>
               ))}
             </div>

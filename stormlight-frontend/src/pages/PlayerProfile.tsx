@@ -10,6 +10,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { getSkillIcon } from '../utils/skillIcons'
 import { getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
 import { urlToUsername } from '../utils/urlUtils'
+import { useAuth } from '../contexts/AuthContext'
 import { DropsTab } from '../components/tabs/DropsTab'
 import { ActivityTab } from '../components/tabs/ActivityTab'
 import { QuestsTab } from '../components/tabs/QuestsTab'
@@ -18,6 +19,7 @@ import { CompetitionsTab } from '../components/tabs/CompetitionsTab'
 import { LogTab } from '../components/tabs/LogTab'
 
 interface PlayerStats {
+  badges?: Array<{ id: string; name: string; imageUrl: string; type: string }>
   username: string
   stats: {
     overall: {
@@ -54,6 +56,7 @@ interface PlayerStats {
 
 const PlayerProfile = () => {
   const { username } = useParams<{ username: string }>()
+  const { user } = useAuth()
   const [playerData, setPlayerData] = useState<PlayerStats | null>(null)
   const [questData, setQuestData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -63,6 +66,7 @@ const PlayerProfile = () => {
   const [period2, setPeriod2] = useState('yesterday')
   const [refreshing, setRefreshing] = useState(false)
   const [lastRefresh, setLastRefresh] = useState<number | null>(null)
+  const [customBadges, setCustomBadges] = useState<any[]>([])
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -70,8 +74,11 @@ const PlayerProfile = () => {
     if (username) {
       fetchPlayerStats()
       fetchQuestData()
+      if (user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank)) {
+        fetchCustomBadges()
+      }
     }
-  }, [username, period1, period2])
+  }, [username, period1, period2, user])
 
   const fetchPlayerStats = async () => {
     try {
@@ -166,7 +173,67 @@ const PlayerProfile = () => {
     }
   }
 
+  const fetchCustomBadges = async () => {
+    try {
+      const token = localStorage.getItem('access_token')
+      const response = await fetch(`${API_URL}/api/admin/badges`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
 
+      if (response.ok) {
+        const data = await response.json()
+        setCustomBadges(data.badges || [])
+      }
+    } catch (error) {
+      console.error('Error fetching custom badges:', error)
+    }
+  }
+
+  const handleAssignBadge = async (badgeId: string) => {
+    try {
+      const token = localStorage.getItem('access_token')
+      const response = await fetch(`${API_URL}/api/admin/assign-badge`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: urlToUsername(username || ''),
+          badgeId: badgeId
+        })
+      })
+
+      if (response.ok) {
+        await fetchPlayerStats()
+      }
+    } catch (error) {
+      console.error('Error assigning badge:', error)
+    }
+  }
+
+  const handleRemoveBadge = async (badgeId: string) => {
+    try {
+      const token = localStorage.getItem('access_token')
+      const response = await fetch(`${API_URL}/api/admin/remove-badge`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: urlToUsername(username || ''),
+          badgeId: badgeId
+        })
+      })
+
+      if (response.ok) {
+        await fetchPlayerStats()
+      }
+    } catch (error) {
+      console.error('Error removing badge:', error)
+    }
+  }
 
   if (loading) {
     return (
@@ -476,6 +543,49 @@ const PlayerProfile = () => {
                   <span>{badge.name}</span>
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Admin Badge Assignment Section */}
+      {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center space-x-2">
+              <Crown className="w-5 h-5 text-yellow-400" />
+              <span>Admin: Badge Management</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {playerData?.badges?.filter((badge: any) => badge.type === 'custom').map((badge: any, index: number) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <Badge className="bg-blue-600 text-white">{badge.name}</Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleRemoveBadge(badge.id)}
+                      className="text-red-400 hover:text-red-300"
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <Select onValueChange={handleAssignBadge}>
+                <SelectTrigger className="bg-slate-600 border-slate-500 text-white">
+                  <SelectValue placeholder="Assign custom badge..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {customBadges.map((badge) => (
+                    <SelectItem key={badge.id} value={badge.id}>
+                      {badge.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, status, Query, BackgroundTasks, Response, Request, APIRouter, Cookie
+from fastapi import FastAPI, HTTPException, Depends, status, Query, BackgroundTasks, Response, Request, APIRouter, Cookie, Form, UploadFile, File
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -21,6 +21,9 @@ from datetime import time as datetime_time
 from collections import defaultdict
 import threading
 import re
+import uuid
+import shutil
+from pathlib import Path
 try:
     from prisma import Prisma
     PRISMA_AVAILABLE = True
@@ -42,6 +45,8 @@ app = FastAPI(title="Stormlight Clan API", version="1.0.0")
 prisma = Prisma() if PRISMA_AVAILABLE else None
 
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("JWT_SECRET_KEY", "fallback-secret"))
+
+app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
 
 # Create API router for all API endpoints
 api_router = APIRouter(prefix="/api")
@@ -2419,6 +2424,11 @@ async def get_site_health(admin_id: str = Depends(verify_admin_access)):
 async def get_custom_badges(admin_id: str = Depends(verify_admin_access)):
     """Get custom badges"""
     try:
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            badges = await prisma.custombadge.find_many(
+                order={'createdAt': 'desc'}
+            )
+            return {"badges": badges}
         return {"badges": []}
     except Exception as e:
         print(f"Error fetching custom badges: {e}")
@@ -2426,24 +2436,157 @@ async def get_custom_badges(admin_id: str = Depends(verify_admin_access)):
 
 @api_router.post("/admin/badges")
 async def create_custom_badge(
-    badge_data: dict,
+    name: str = Form(...),
+    description: str = Form(""),
+    badge_file: UploadFile = File(...),
     admin_id: str = Depends(verify_admin_access)
 ):
-    """Create a new custom badge"""
+    """Create a new custom badge with file upload"""
     try:
         from .admin_utils import log_admin_action
         
-        await log_admin_action(
-            admin_id, 
-            "system", 
-            "create_badge", 
-            f"Created custom badge: {badge_data.get('name', 'Unknown')}"
-        )
+        if badge_file.content_type not in ["image/png", "image/jpeg", "image/svg+xml"]:
+            raise HTTPException(status_code=400, detail="Invalid file type. Only PNG, JPG, SVG allowed.")
         
-        return {"success": True, "message": "Badge created successfully"}
+        if badge_file.size and badge_file.size > 2 * 1024 * 1024:  # 2MB limit
+            raise HTTPException(status_code=400, detail="File too large. Maximum 2MB allowed.")
+        
+        upload_dir = Path("/app/uploads/badges")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        
+        file_extension = badge_file.filename.split('.')[-1] if badge_file.filename else 'png'
+        unique_filename = f"{uuid.uuid4()}.{file_extension}"
+        file_path = upload_dir / unique_filename
+        
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(badge_file.file, buffer)
+        
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            badge = await prisma.custombadge.create({
+                'name': name,
+                'description': description,
+                'imagePath': str(file_path),
+                'imageUrl': f"/uploads/badges/{unique_filename}",
+                'createdBy': admin_id
+            })
+            
+            await log_admin_action(
+                admin_id, 
+                "system", 
+                "create_badge", 
+                f"Created custom badge: {name}"
+            )
+            
+            return {"success": True, "badge": badge}
+        
+        raise HTTPException(status_code=500, detail="Database not available")
     except Exception as e:
         print(f"Error creating custom badge: {e}")
         raise HTTPException(status_code=500, detail="Error creating custom badge")
+
+@api_router.post("/admin/assign-badge")
+async def assign_badge_to_member(
+    request: dict,
+    admin_id: str = Depends(verify_admin_access)
+):
+    """Assign a custom badge to a clan member"""
+    try:
+        from .admin_utils import log_admin_action
+        
+        username = request.get('username')
+        badge_id = request.get('badgeId')
+        
+        if not username or not badge_id:
+            raise HTTPException(status_code=400, detail="Username and badge ID required")
+        
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            member = await prisma.clanmember.find_unique(where={'username': username})
+            if not member:
+                raise HTTPException(status_code=404, detail="Member not found")
+            
+            current_badges = member.badges if member.badges else []
+            if isinstance(current_badges, str):
+                import json
+                current_badges = json.loads(current_badges)
+            
+            if badge_id not in [b.get('id') if isinstance(b, dict) else b for b in current_badges]:
+                badge = await prisma.custombadge.find_unique(where={'id': badge_id})
+                if badge:
+                    current_badges.append({
+                        'id': badge.id,
+                        'name': badge.name,
+                        'imageUrl': badge.imageUrl,
+                        'type': 'custom'
+                    })
+                    
+                    await prisma.clanmember.update(
+                        where={'username': username},
+                        data={'badges': current_badges}
+                    )
+                    
+                    await log_admin_action(
+                        admin_id,
+                        "system",
+                        "assign_badge",
+                        f"Assigned badge '{badge.name}' to {username}"
+                    )
+                    
+                    return {"success": True}
+            
+            return {"success": True, "message": "Badge already assigned"}
+        
+        raise HTTPException(status_code=500, detail="Database not available")
+    except Exception as e:
+        print(f"Error assigning badge: {e}")
+        raise HTTPException(status_code=500, detail="Error assigning badge")
+
+@api_router.post("/admin/remove-badge")
+async def remove_badge_from_member(
+    request: dict,
+    admin_id: str = Depends(verify_admin_access)
+):
+    """Remove a custom badge from a clan member"""
+    try:
+        from .admin_utils import log_admin_action
+        
+        username = request.get('username')
+        badge_id = request.get('badgeId')
+        
+        if not username or not badge_id:
+            raise HTTPException(status_code=400, detail="Username and badge ID required")
+        
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            member = await prisma.clanmember.find_unique(where={'username': username})
+            if not member:
+                raise HTTPException(status_code=404, detail="Member not found")
+            
+            current_badges = member.badges if member.badges else []
+            if isinstance(current_badges, str):
+                import json
+                current_badges = json.loads(current_badges)
+            
+            original_count = len(current_badges)
+            current_badges = [b for b in current_badges if (b.get('id') if isinstance(b, dict) else b) != badge_id]
+            
+            if len(current_badges) < original_count:
+                await prisma.clanmember.update(
+                    where={'username': username},
+                    data={'badges': current_badges}
+                )
+                
+                await log_admin_action(
+                    admin_id,
+                    "system", 
+                    "remove_badge",
+                    f"Removed badge from {username}"
+                )
+            
+            return {"success": True}
+        
+        raise HTTPException(status_code=500, detail="Database not available")
+    except Exception as e:
+        print(f"Error removing badge: {e}")
+        raise HTTPException(status_code=500, detail="Error removing badge")
 
 @api_router.get("/admin/competitions")
 async def get_admin_competitions(admin_id: str = Depends(verify_admin_access)):
