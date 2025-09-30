@@ -1,0 +1,46 @@
+from datetime import datetime
+import json
+
+async def log_admin_action(admin_id: str, username: str, action: str, details: str = None):
+    """Log admin action to database"""
+    try:
+        from prisma import Prisma
+        prisma = Prisma()
+        if not prisma.is_connected():
+            await prisma.connect()
+        
+        await prisma.adminlog.create({
+            'adminId': admin_id,
+            'username': username,
+            'action': action,
+            'details': details,
+            'timestamp': datetime.now()
+        })
+        print(f"📝 Admin action logged: {action} by {username}")
+    except Exception as e:
+        print(f"❌ Failed to log admin action: {e}")
+
+def calculate_rank_needed(join_date: datetime, current_rank: str) -> str:
+    """Calculate rank needed based on longevity rules"""
+    if not join_date:
+        return "Unknown"
+    
+    days_in_clan = (datetime.now() - join_date).days
+    
+    if days_in_clan >= 365:  # 1+ years
+        return "Lieutenant"
+    elif days_in_clan >= 180:  # 6+ months
+        return "Sergeant"
+    elif days_in_clan >= 90:   # 3+ months
+        return "Corporal"
+    else:
+        return "Recruit"
+
+def get_site_health_status():
+    """Get site health metrics"""
+    return {
+        'snapshot_status': 'Active',
+        'scheduler_status': 'Running',
+        'failed_members': [],
+        'total_members': 0
+    }

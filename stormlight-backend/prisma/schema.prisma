@@ -41,9 +41,10 @@ model ClanMember {
   questData       Json?    @map("quest_data")
   badges          Json?    @default("[]")
   discordId       String?  @unique @map("discord_id")
+  joinDate        DateTime? @map("join_date")
   lastUpdated     DateTime @map("last_updated")
   createdAt       DateTime @default(now()) @map("created_at")
-  
+
   @@map("clan_members")
 }
 
@@ -83,6 +84,20 @@ model CompetitionEntry {
   
   @@unique([competitionId, userId])
   @@map("competition_entries")
+}
+
+model AdminLog {
+  id        Int      @id @default(autoincrement())
+  adminId   String   @map("admin_id")
+  username  String
+  action    String
+  details   String?
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  @@index([timestamp])
+  @@index([adminId])
+  @@map("admin_logs")
 }
 
 // Keep existing tables for historical data

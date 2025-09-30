@@ -9,6 +9,7 @@ import Competitions from './pages/Competitions'
 import CompetitionDetail from './pages/CompetitionDetail'
 import Login from './pages/Login'
 import LinkAccount from './pages/LinkAccount'
+import AdminPanel from './pages/AdminPanel'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import './App.css'
 
@@ -43,6 +44,7 @@ function AppContent() {
             <Route path="/clan-member/:username" element={<PlayerProfile />} />
             <Route path="/competitions" element={<Competitions />} />
             <Route path="/competitions/:id" element={<CompetitionDetail />} />
+            <Route path="/admin" element={<AdminPanel />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

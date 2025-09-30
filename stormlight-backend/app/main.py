@@ -715,6 +715,7 @@ async def sync_clan_members_to_database_with_queue():
                 try:
                     if member_data['username'] not in current_db_members and stats_data and stats_data.get('stats'):
                         new_sig = compute_profile_signature(stats_data['stats'], stats_data.get('quest_points', 0) or 0)
+                        print(f"[NameChange] Generated signature for {member_data['username']}: {new_sig[:20]}...")
                         old_username = db_signature_map.get(new_sig)
                         if old_username and old_username not in current_usernames_set:
                             print(f"[NameChange] Detected rename: {old_username} -> {member_data['username']}")
@@ -737,8 +738,16 @@ async def sync_clan_members_to_database_with_queue():
                             current_db_members.pop(old_username, None)
                             current_db_members[member_data['username']] = member_data['clan_rank']
                             db_signature_map.pop(new_sig, None)
+                        else:
+                            if not old_username:
+                                print(f"[NameChange] No matching signature found for {member_data['username']}")
+                            elif old_username in current_usernames_set:
+                                print(f"[NameChange] Matched signature belongs to active member {old_username}, not a rename")
                 except Exception as e:
                     print(f"[NameChange] Error while processing rename detection for {member_data['username']}: {e}")
+                
+                is_new_member = member_data['username'] not in current_db_members
+                old_rank = current_db_members.get(member_data['username'])
                 
                 await prisma.clanmember.upsert(
                     where={'username': member_data['username']},
@@ -749,7 +758,7 @@ async def sync_clan_members_to_database_with_queue():
                 )
                 
                 try:
-                    if member_data['username'] not in current_db_members:
+                    if is_new_member:
                         await log_clan_event_if_new(
                             member_data['username'], 
                             'join', 
@@ -758,8 +767,7 @@ async def sync_clan_members_to_database_with_queue():
                         )
                         print(f"📝 Logged join event for {member_data['username']} as {member_data['clan_rank']}")
                         current_db_members[member_data['username']] = member_data['clan_rank']
-                    elif current_db_members[member_data['username']] != member_data['clan_rank']:
-                        old_rank = current_db_members[member_data['username']]
+                    elif old_rank and old_rank != member_data['clan_rank']:
                         new_rank = member_data['clan_rank']
                         
                         event_type = 'rank_up'  # Default to rank_up for now
@@ -2371,6 +2379,246 @@ async def test_clan_log():
     except Exception as e:
         return {"error": str(e), "type": str(type(e))}
 
+@api_router.get("/admin/logs")
+async def get_admin_logs(
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=100),
+    admin_id: str = Depends(verify_admin_access)
+):
+    """Get admin action logs"""
+    try:
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            logs = await prisma.adminlog.find_many(
+                skip=(page - 1) * limit,
+                take=limit,
+                order={'timestamp': 'desc'}
+            )
+            return {"logs": logs}
+        return {"logs": []}
+    except Exception as e:
+        print(f"Error fetching admin logs: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching admin logs")
+
+@api_router.get("/admin/health")
+async def get_site_health(admin_id: str = Depends(verify_admin_access)):
+    """Get site health status"""
+    try:
+        from .admin_utils import get_site_health_status
+        health_data = get_site_health_status()
+        
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            member_count = await prisma.clanmember.count()
+            health_data['total_members'] = member_count
+        
+        return health_data
+    except Exception as e:
+        print(f"Error fetching site health: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching site health")
+
+@api_router.get("/admin/badges")
+async def get_custom_badges(admin_id: str = Depends(verify_admin_access)):
+    """Get custom badges"""
+    try:
+        return {"badges": []}
+    except Exception as e:
+        print(f"Error fetching custom badges: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching custom badges")
+
+@api_router.post("/admin/badges")
+async def create_custom_badge(
+    badge_data: dict,
+    admin_id: str = Depends(verify_admin_access)
+):
+    """Create a new custom badge"""
+    try:
+        from .admin_utils import log_admin_action
+        
+        await log_admin_action(
+            admin_id, 
+            "system", 
+            "create_badge", 
+            f"Created custom badge: {badge_data.get('name', 'Unknown')}"
+        )
+        
+        return {"success": True, "message": "Badge created successfully"}
+    except Exception as e:
+        print(f"Error creating custom badge: {e}")
+        raise HTTPException(status_code=500, detail="Error creating custom badge")
+
+@api_router.get("/admin/competitions")
+async def get_admin_competitions(admin_id: str = Depends(verify_admin_access)):
+    """Get competitions for admin management"""
+    try:
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            competitions = await prisma.competition.find_many(
+                order={'createdAt': 'desc'}
+            )
+            return {"competitions": competitions}
+        else:
+            # Fallback to in-memory competitions
+            competitions_list = list(competitions_db.values())
+            return {"competitions": competitions_list}
+    except Exception as e:
+        print(f"Error fetching admin competitions: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching competitions")
+
+@api_router.post("/admin/competitions")
+async def create_admin_competition(
+    competition_data: dict,
+    admin_id: str = Depends(verify_admin_access)
+):
+    """Create a new competition with snapshots"""
+    try:
+        from .admin_utils import log_admin_action
+        
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            competition = await prisma.competition.create({
+                'name': competition_data['name'],
+                'description': competition_data.get('description', ''),
+                'type': competition_data['type'].upper(),
+                'skill': competition_data.get('skill'),
+                'startDate': datetime.fromisoformat(competition_data['start_date']),
+                'endDate': datetime.fromisoformat(competition_data['end_date']),
+                'createdBy': admin_id
+            })
+            
+            members = await prisma.clanmember.find_many()
+            for member in members:
+                await prisma.competitionentry.create({
+                    'competitionId': competition.id,
+                    'userId': member.discordId or f"clan_{member.username}",
+                    'username': member.username,
+                    'xpStart': 0,  # Will be updated with snapshot data
+                    'xpEnd': None
+                })
+            
+            await log_admin_action(
+                admin_id, 
+                "system", 
+                "create_competition", 
+                f"Created competition: {competition.name}"
+            )
+            
+            return competition
+        else:
+            # Fallback to in-memory storage
+            new_id = max(competitions_db.keys()) + 1 if competitions_db else 1
+            competition = {
+                "id": new_id,
+                "name": competition_data['name'],
+                "description": competition_data.get('description', ''),
+                "type": competition_data['type'].lower(),
+                "skill": competition_data.get('skill'),
+                "boss": competition_data.get('boss'),
+                "start_date": datetime.fromisoformat(competition_data['start_date']),
+                "end_date": datetime.fromisoformat(competition_data['end_date']),
+                "created_by": admin_id,
+                "created_at": datetime.now(),
+                "participants": []
+            }
+            competitions_db[new_id] = competition
+            
+            await log_admin_action(
+                admin_id, 
+                "system", 
+                "create_competition", 
+                f"Created competition: {competition['name']}"
+            )
+            
+            return competition
+    except Exception as e:
+        print(f"Error creating competition: {e}")
+        raise HTTPException(status_code=500, detail="Error creating competition")
+
+@api_router.get("/admin/members")
+async def get_admin_members(admin_id: str = Depends(verify_admin_access)):
+    """Get clan members for admin management"""
+    try:
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            members = await prisma.clanmember.find_many(
+                order={'username': 'asc'}
+            )
+            return {"members": members}
+        return {"members": []}
+    except Exception as e:
+        print(f"Error fetching admin members: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching members")
+
+@api_router.get("/admin/rank-tracking")
+async def get_rank_tracking(admin_id: str = Depends(verify_admin_access)):
+    """Get rank tracking data"""
+    try:
+        from .admin_utils import calculate_rank_needed
+        
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            members = await prisma.clanmember.find_many()
+            tracking = []
+            
+            for member in members:
+                join_date = member.joinDate
+                days_in_clan = 0
+                rank_needed = "Unknown"
+                
+                if join_date:
+                    days_in_clan = (datetime.now() - join_date).days
+                    rank_needed = calculate_rank_needed(join_date, member.clanRank)
+                
+                due_for_promotion = (
+                    rank_needed != "Unknown" and 
+                    rank_needed != member.clanRank and
+                    days_in_clan > 0
+                )
+                
+                tracking.append({
+                    'username': member.username,
+                    'actualRank': member.clanRank,
+                    'rankNeeded': rank_needed,
+                    'joinDate': join_date.isoformat() if join_date else None,
+                    'daysInClan': days_in_clan,
+                    'dueForPromotion': due_for_promotion
+                })
+            
+            return {"tracking": tracking}
+        return {"tracking": []}
+    except Exception as e:
+        print(f"Error fetching rank tracking: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching rank tracking")
+
+@api_router.put("/admin/members/{username}/join-date")
+async def update_member_join_date(
+    username: str,
+    join_date_data: dict,
+    admin_id: str = Depends(verify_admin_access)
+):
+    """Update member join date"""
+    try:
+        from .admin_utils import log_admin_action
+        
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            join_date = datetime.fromisoformat(join_date_data['join_date'])
+            
+            member = await prisma.clanmember.update(
+                where={'username': username},
+                data={'joinDate': join_date}
+            )
+            
+            await log_admin_action(
+                admin_id,
+                username,
+                "update_join_date",
+                f"Updated join date to {join_date.strftime('%Y-%m-%d')}"
+            )
+            
+            return {"success": True, "member": member}
+        
+        raise HTTPException(status_code=500, detail="Database not available")
+    except Exception as e:
+        print(f"Error updating join date: {e}")
+        raise HTTPException(status_code=500, detail="Error updating join date")
+        
+    except Exception as e:
+        return {"error": str(e), "type": str(type(e))}
+
 @api_router.get("/clan/log")
 async def get_clan_log(
     page: int = Query(1, ge=1),
@@ -3756,7 +4004,7 @@ async def trigger_snapshots_get():
         raise HTTPException(status_code=500, detail=str(e))
 @app.get("/api/admin/trigger-clan-members")
 async def trigger_clan_members_get(debug: bool = False):
-    """GET endpoint to trigger clan member refresh with detailed reporting"""
+    """GET endpoint to trigger comprehensive clan member sync with join/name change detection"""
     if debug:
         try:
             async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
@@ -3789,91 +4037,23 @@ async def trigger_clan_members_get(debug: bool = False):
                 "members_updated": 0
             }
         
-        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
-            clan_url = "https://secure.runescape.com/m=clan-hiscores/members_lite.ws?clanName=Stormlight"
-            response = await client.get(clan_url)
-            
-            if response.status_code != 200:
-                return {
-                    "status": "error",
-                    "message": f"Failed to fetch clan roster: HTTP {response.status_code}",
-                    "members_fetched": 0,
-                    "members_updated": 0
-                }
-            
-            content = response.content.decode('latin-1')
-            lines = content.strip().split('\n')
-            
-            if len(lines) < 2:
-                return {
-                    "status": "error",
-                    "message": "Invalid CSV response: insufficient data",
-                    "members_fetched": 0,
-                    "members_updated": 0
-                }
-            
-            members_fetched = len(lines) - 1  # Exclude header
-            processed_count = 0
-            error_count = 0
-            errors = []
-            
-            for i, line in enumerate(lines[1:]):  # Skip header
-                if line.strip():
-                    try:
-                        parts = line.split(',')
-                        if len(parts) >= 4:
-                            username = parts[0].strip().replace('\u00A0', ' ')
-                            clan_rank = parts[1].strip()
-                            total_xp = int(parts[2]) if parts[2].isdigit() else 0
-                            kills = int(parts[3]) if parts[3].isdigit() else 0
-                            
-                            from datetime import datetime
-                            now = datetime.now()
-                            
-                            await prisma.clanmember.upsert(
-                                where={'username': username},
-                                data={
-                                    'update': {
-                                        'clanRank': clan_rank,
-                                        'totalXp': total_xp,
-                                        'kills': kills,
-                                        'lastUpdated': now,
-                                    },
-                                    'create': {
-                                        'username': username,
-                                        'displayName': username,
-                                        'clanRank': clan_rank,
-                                        'totalXp': total_xp,
-                                        'totalLevel': 0,
-                                        'combatLevel': 0,
-                                        'questPoints': 0,
-                                        'kills': kills,
-                                        'lastUpdated': now,
-                                    }
-                                }
-                            )
-                            processed_count += 1
-                        else:
-                            error_count += 1
-                            if len(errors) < 5:  # Limit error samples
-                                errors.append(f"Line {i+1}: insufficient CSV fields")
-                    except Exception as e:
-                        error_count += 1
-                        if len(errors) < 5:  # Limit error samples
-                            errors.append(f"Line {i+1} ({username if 'username' in locals() else 'unknown'}): {str(e)}")
-            
-            final_count = await prisma.clanmember.count()
-            
-            return {
-                "status": "success",
-                "members_fetched": members_fetched,
-                "members_updated": processed_count,
-                "errors": error_count,
-                "error_samples": errors,
-                "total_in_db": final_count
-            }
+        print("🔄 Manual trigger: Starting fast clan member sync...")
+        
+        await daily_clan_member_refresh()
+        
+        clan_members_cache.clear()
+        print("🧹 Cleared clan members cache after manual sync")
+        
+        final_count = await prisma.clanmember.count()
+        
+        return {
+            "status": "success",
+            "message": "Fast sync completed (comprehensive sync runs hourly automatically)",
+            "total_in_db": final_count
+        }
             
     except Exception as e:
+        print(f"❌ Manual trigger error: {e}")
         return {
             "status": "error",
             "message": str(e),

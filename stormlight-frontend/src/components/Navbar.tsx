@@ -8,7 +8,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from './ui/dropdown-menu'
-import { Home, Users, Swords, LogOut } from 'lucide-react'
+import { Home, Users, Swords, LogOut, Settings } from 'lucide-react'
 
 const Navbar = () => {
   const { user, logout } = useAuth()
@@ -81,6 +81,17 @@ const Navbar = () => {
                     </p>
                   </div>
                 </div>
+                {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
+                  <DropdownMenuItem asChild>
+                    <Link 
+                      to="/admin" 
+                      className="text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer"
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Admin Panel</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem 
                   onClick={logout}
                   className="text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer"
