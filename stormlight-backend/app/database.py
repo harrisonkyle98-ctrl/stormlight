@@ -197,7 +197,7 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
                     print(f"[Bulk Snapshots] ⚠️ Retry {attempt + 1}/{max_retries + 1} for {username} after {delay}s: {e}")
                     await asyncio.sleep(delay)
                 else:
-                    failure_reason = classify_failure_reason(e)
+                    failure_reason = classify_failure_reason(username, e, None)
                     print(f"[Bulk Snapshots] ❌ Final failure for {username} (attempt {attempt + 1}): {failure_reason} - {e} (non_retryable={non_retryable})")
                     return False, None, failure_reason
         
