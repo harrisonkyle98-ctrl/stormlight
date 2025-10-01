@@ -1772,8 +1772,9 @@ async def fetch_clan_members() -> List[Dict[str, Any]]:
     """Fetch clan members from RuneScape Clan API"""
     try:
         current_time = time_module.time()
+        cache_ttl = 300  # 5 minutes for fresher XP data
         if (clan_members_cache['data'] and
-            current_time - clan_members_cache['timestamp'] < clan_members_cache['ttl']):
+            current_time - clan_members_cache['timestamp'] < cache_ttl):
             return clan_members_cache['data']
 
         async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
@@ -1886,7 +1887,8 @@ async def get_clan_members_paginated(
     page: int = 1,
     limit: int = 15,
     search: Optional[str] = None,
-    sort_by: str = "rank"
+    sort_by: str = "rank",
+    fresh: bool = False
 ):
     """Get clan members with pagination and search"""
     if limit not in [15, 30, 50]:
@@ -1894,6 +1896,17 @@ async def get_clan_members_paginated(
     
     t0 = time_module.time()
     try:
+        print("🔄 Fetching fresh clan member data from RuneScape API...")
+        t_api0 = time_module.time()
+        members = await fetch_clan_members()
+        t_api = time_module.time()
+        print(f"[Perf] /api/clan/members API fetch={int((t_api - t_api0)*1000)}ms count={len(members)}")
+        
+        if not members:
+            raise Exception("No members returned from API")
+            
+    except Exception as api_error:
+        print(f"❌ API error, falling back to database: {api_error}")
         db_members = await prisma.clanmember.find_many()
         t_db = time_module.time()
         if db_members and len(db_members) > 0:
@@ -1917,16 +1930,9 @@ async def get_clan_members_paginated(
                     'badges': badges
                 })
             t_transform = time_module.time()
-            print(f"[Perf] /api/clan/members DB={int((t_db - t0)*1000)}ms transform={int((t_transform - t_db)*1000)}ms rows={len(db_members)}")
+            print(f"[Perf] /api/clan/members DB fallback={int((t_db - t0)*1000)}ms transform={int((t_transform - t_db)*1000)}ms rows={len(db_members)}")
         else:
-            raise Exception("No members found in database")
-            
-    except Exception as db_error:
-        print(f"❌ Database error, falling back to API: {db_error}")
-        t_api0 = time_module.time()
-        members = await fetch_clan_members()
-        t_api = time_module.time()
-        print(f"[Perf] /api/clan/members FALLBACK external fetch={int((t_api - t_api0)*1000)}ms count={len(members)}")
+            raise Exception("No members found in database either")
     
     if search:
         search_lower = search.lower()
