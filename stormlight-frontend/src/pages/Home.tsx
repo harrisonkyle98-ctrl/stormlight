@@ -197,8 +197,17 @@ const Home = () => {
   }
 
   const formatTimeAgo = (timestamp: number) => {
+    if (!timestamp || timestamp <= 0) {
+      return "Unknown time"
+    }
+    
     const now = Date.now() / 1000
-    const diff = now - Math.abs(timestamp)
+    const timestampInSeconds = timestamp > 1000000000000 ? timestamp / 1000 : timestamp
+    const diff = now - timestampInSeconds
+
+    if (diff < 0) {
+      return "Just now"
+    }
 
     if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`
     if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`
