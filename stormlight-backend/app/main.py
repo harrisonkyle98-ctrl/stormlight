@@ -2066,7 +2066,7 @@ async def get_clan_activities(
         if prisma:
             activities_from_db = await prisma.clanactivity.find_many(
                 order={'activityTimestamp': 'desc'},
-                take=50
+                take=limit
             )
             total_stored_count = await prisma.clanactivity.count()
             
@@ -2079,7 +2079,7 @@ async def get_clan_activities(
                     'date': activity.activityDate
                 })
             
-            print(f"Retrieved {len(stored_activities)} stored activities from Prisma database")
+            print(f"Retrieved {len(stored_activities)} stored activities from Prisma database (total: {total_stored_count})")
         else:
             # Fallback to old database connection method
             conn = await get_db_connection()
@@ -3259,7 +3259,7 @@ async def get_clan_drops(page: int = Query(1, ge=1), limit: int = Query(10, ge=1
                 'item_image_url': drop.itemImageUrl,
                 'activity_text': drop.activityText,
                 'timestamp': drop.activityTimestamp,
-                'date': datetime.fromtimestamp(drop.activityTimestamp).strftime('%Y-%m-%d %H:%M:%S')
+                'date': datetime.fromtimestamp(drop.activityTimestamp / 1000).strftime('%Y-%m-%d %H:%M:%S')
             })
         
         return {
