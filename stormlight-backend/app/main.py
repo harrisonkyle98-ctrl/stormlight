@@ -4386,6 +4386,29 @@ async def trigger_clan_members_get(debug: bool = False):
             "members_fetched": 0,
             "members_updated": 0
         }
+@app.get("/api/admin/repopulate-clan-members")
+async def repopulate_clan_members():
+    """Repopulate the clan_members table from RuneScape API"""
+    try:
+        print("🔄 Starting clan members repopulation...")
+        await sync_clan_members_to_database_with_queue()
+        
+        member_count = await prisma.clanmember.count()
+        print(f"✅ Repopulation complete! {member_count} members in database")
+        
+        return {
+            "status": "success",
+            "message": f"Successfully repopulated clan_members table with {member_count} members",
+            "member_count": member_count
+        }
+    except Exception as e:
+        print(f"❌ Error during repopulation: {e}")
+        return {
+            "status": "error", 
+            "message": f"Failed to repopulate clan_members table: {str(e)}"
+        }
+
+
 
 
 
