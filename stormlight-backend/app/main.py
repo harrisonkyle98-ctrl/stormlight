@@ -679,9 +679,9 @@ async def sync_clan_members_to_database_with_queue():
                         'combatLevel': 0,  # Will be updated later by regular sync
                         'questPoints': 0,  # Will be updated later by regular sync
                         'kills': member_data.get('kills', 0),
-                        'stats': None,  # Will be populated later by regular sync
-                        'questData': None,  # Will be populated later by regular sync
-                        'badges': json.dumps([]),  # Empty badges for now
+                        'stats': {},  # Empty JSON object instead of None
+                        'questData': {},  # Empty JSON object instead of None
+                        'badges': [],  # Empty array instead of JSON string
                         'lastUpdated': datetime.now()
                     }
                     
