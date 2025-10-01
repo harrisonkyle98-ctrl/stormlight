@@ -2063,16 +2063,35 @@ async def get_clan_activities(
     stored_activities = []
     total_stored_count = 0
     try:
-        conn = await get_db_connection()
-        async with conn:
-            try:
-                from .database import get_stored_activities, get_activity_count
-            except ImportError:
-                from database import get_stored_activities, get_activity_count
+        if prisma:
+            activities_from_db = await prisma.clanactivity.find_many(
+                order={'activityTimestamp': 'desc'},
+                take=50
+            )
+            total_stored_count = await prisma.clanactivity.count()
             
-            stored_activities = await get_stored_activities(conn, limit=50)
-            total_stored_count = await get_activity_count(conn)
-            print(f"Retrieved {len(stored_activities)} stored activities from database")
+            stored_activities = []
+            for activity in activities_from_db:
+                stored_activities.append({
+                    'username': activity.username,
+                    'text': activity.text,
+                    'timestamp': activity.activityTimestamp,
+                    'date': activity.activityDate
+                })
+            
+            print(f"Retrieved {len(stored_activities)} stored activities from Prisma database")
+        else:
+            # Fallback to old database connection method
+            conn = await get_db_connection()
+            async with conn:
+                try:
+                    from .database import get_stored_activities, get_activity_count
+                except ImportError:
+                    from database import get_stored_activities, get_activity_count
+                
+                stored_activities = await get_stored_activities(conn, limit=50)
+                total_stored_count = await get_activity_count(conn)
+                print(f"Retrieved {len(stored_activities)} stored activities from database")
     except Exception as db_error:
         print(f"Database error retrieving activities: {db_error}")
     
@@ -3213,6 +3232,49 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
     return drops_found
 
 
+
+@api_router.get("/clan/drops")
+async def get_clan_drops(page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50)):
+    """Get recent drops from all clan members"""
+    try:
+        if not prisma:
+            raise HTTPException(status_code=500, detail="Database not available")
+        
+        offset = (page - 1) * limit
+        
+        drops = await prisma.clandrop.find_many(
+            order={'activityTimestamp': 'desc'},
+            skip=offset,
+            take=limit
+        )
+        
+        total_drops = await prisma.clandrop.count()
+        
+        formatted_drops = []
+        for drop in drops:
+            formatted_drops.append({
+                'username': drop.username,
+                'item_name': drop.itemName,
+                'boss_name': drop.bossName,
+                'item_image_url': drop.itemImageUrl,
+                'activity_text': drop.activityText,
+                'timestamp': drop.activityTimestamp,
+                'date': datetime.fromtimestamp(drop.activityTimestamp).strftime('%Y-%m-%d %H:%M:%S')
+            })
+        
+        return {
+            "drops": formatted_drops,
+            "pagination": {
+                "page": page,
+                "limit": limit,
+                "total_drops": total_drops,
+                "has_next": offset + limit < total_drops
+            }
+        }
+        
+    except Exception as e:
+        print(f"Error fetching clan drops: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fetching clan drops: {str(e)}")
 
 @api_router.get("/player/{username}/drops")
 async def get_player_drops(username: str, page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50), reprocess: bool = Query(False)):
