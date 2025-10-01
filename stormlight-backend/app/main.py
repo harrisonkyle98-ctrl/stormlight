@@ -628,6 +628,21 @@ async def sync_clan_members_to_database():
 async def sync_clan_members_to_database_with_queue():
     """Simplified batch sync focused on core repopulation without complex features"""
     try:
+        global prisma, PRISMA_AVAILABLE
+        if not PRISMA_AVAILABLE or not prisma:
+            print("❌ Database client not available for repopulation")
+            return {
+                'status': 'error',
+                'error': 'Database client not available',
+                'successful_syncs': 0,
+                'failed_syncs': 0
+            }
+        
+        if not prisma.is_connected():
+            print("🔄 Connecting to database...")
+            await prisma.connect()
+            print("✅ Database connected successfully")
+        
         clan_data = await fetch_clan_members()
         print(f"📥 Fetched {len(clan_data)} clan members for repopulation")
         
@@ -651,6 +666,10 @@ async def sync_clan_members_to_database_with_queue():
                     if i > 0:
                         await asyncio.sleep(0.5)  # Reduced delay for faster processing
                     
+                    if not prisma.is_connected():
+                        print("⚠️ Database disconnected, reconnecting...")
+                        await prisma.connect()
+                    
                     clan_member_data = {
                         'username': member_data['username'],
                         'displayName': member_data.get('display_name', member_data['username']),
@@ -666,7 +685,7 @@ async def sync_clan_members_to_database_with_queue():
                         'lastUpdated': datetime.now()
                     }
                     
-                    await prisma.clanmember.upsert(
+                    result = await prisma.clanmember.upsert(
                         where={'username': member_data['username']},
                         data={
                             'update': clan_member_data,
@@ -674,22 +693,41 @@ async def sync_clan_members_to_database_with_queue():
                         }
                     )
                     
-                    batch_successful += 1
-                    successful_syncs += 1
-                    print(f"✅ Repopulated {member_data['username']} ({member_data['clan_rank']}, {member_data['total_xp']:,} XP)")
+                    if result:
+                        batch_successful += 1
+                        successful_syncs += 1
+                        print(f"✅ Repopulated {member_data['username']} ({member_data['clan_rank']}, {member_data['total_xp']:,} XP)")
+                    else:
+                        batch_failed += 1
+                        failed_syncs += 1
+                        print(f"⚠️ Upsert returned None for {member_data['username']}")
                     
                 except Exception as e:
                     batch_failed += 1
                     failed_syncs += 1
                     print(f"❌ Error repopulating {member_data['username']}: {e}")
+                    import traceback
+                    traceback.print_exc()
                     continue
             
             print(f"✅ Batch {batch_num + 1}/{total_batches} complete: {batch_successful} successful, {batch_failed} failed")
             print(f"📊 Overall progress: {successful_syncs}/{len(clan_data)} members processed")
             
+            try:
+                current_count = await prisma.clanmember.count()
+                print(f"🔍 Database verification: {current_count} members currently in database")
+            except Exception as count_error:
+                print(f"⚠️ Could not verify database count: {count_error}")
+            
             if batch_num < total_batches - 1:
                 print(f"⏳ Waiting 3 seconds before next batch...")
                 await asyncio.sleep(3)
+        
+        try:
+            final_count = await prisma.clanmember.count()
+            print(f"🔍 Final database verification: {final_count} members in database")
+        except Exception as final_count_error:
+            print(f"⚠️ Could not verify final database count: {final_count_error}")
         
         print(f"✅ Repopulation completed: {successful_syncs} successful, {failed_syncs} failed")
         print(f"📊 Total members processed: {len(clan_data)}")
@@ -703,6 +741,8 @@ async def sync_clan_members_to_database_with_queue():
         
     except Exception as e:
         print(f"❌ Error in repopulation: {e}")
+        import traceback
+        traceback.print_exc()
         return {
             'status': 'error',
             'error': str(e),
