@@ -670,149 +670,169 @@ async def sync_clan_members_to_database_with_queue():
         successful_syncs = 0
         failed_syncs = 0
         
-        for i, member_data in enumerate(clan_data):
-            try:
-                if i > 0:
-                    await asyncio.sleep(random.uniform(1.0, 2.0))
-                
-                stats_data = await fetch_player_stats(member_data['username'], max_retries=2)
-                
-                quest_data = None
+        batch_size = 10
+        total_batches = (len(clan_data) + batch_size - 1) // batch_size
+        
+        for batch_num in range(total_batches):
+            start_idx = batch_num * batch_size
+            end_idx = min(start_idx + batch_size, len(clan_data))
+            batch_members = clan_data[start_idx:end_idx]
+            
+            print(f"🔄 Processing batch {batch_num + 1}/{total_batches} ({len(batch_members)} members)")
+            batch_successful = 0
+            batch_failed = 0
+            
+            for i, member_data in enumerate(batch_members):
                 try:
-                    async with httpx.AsyncClient() as client:
-                        profile_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={member_data['username']}"
-                        profile_response = await client.get(profile_url)
-                        
-                        if profile_response.status_code == 200:
-                            profile_data = profile_response.json()
-                            quest_data = {
-                                'quest_summary': {
-                                    'questsstarted': profile_data.get('questsstarted', 0),
-                                    'questscomplete': profile_data.get('questscomplete', 0),
-                                    'questsnotstarted': profile_data.get('questsnotstarted', 0)
+                    if i > 0:
+                        await asyncio.sleep(random.uniform(1.0, 2.0))
+                    
+                    stats_data = await fetch_player_stats(member_data['username'], max_retries=2)
+                    
+                    quest_data = None
+                    try:
+                        async with httpx.AsyncClient() as client:
+                            profile_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={member_data['username']}"
+                            profile_response = await client.get(profile_url)
+                            
+                            if profile_response.status_code == 200:
+                                profile_data = profile_response.json()
+                                quest_data = {
+                                    'quest_summary': {
+                                        'questsstarted': profile_data.get('questsstarted', 0),
+                                        'questscomplete': profile_data.get('questscomplete', 0),
+                                        'questsnotstarted': profile_data.get('questsnotstarted', 0)
+                                    }
                                 }
-                            }
+                    except Exception as e:
+                        print(f"⚠️ Failed to fetch quest data for {member_data['username']}: {e}")
+                    
+                    if stats_data is None:
+                        failed_member_queue.append({
+                            'member_data': member_data,
+                            'retry_count': 0,
+                            'last_attempt': datetime.now()
+                        })
+                        batch_failed += 1
+                        failed_syncs += 1
+                        print(f"⚠️ Queued {member_data['username']} for retry (stats fetch failed)")
+                        continue
+                    
+                    badges = []
+                    try:
+                        from .badge_utils import compute_member_badges
+                        badges = compute_member_badges(stats_data, quest_data, member_data['clan_rank'], member_data['username'])
+                    except Exception as e:
+                        print(f"⚠️ Failed to compute badges for {member_data['username']}: {e}")
+                        badges = []
+                    
+                    clan_member_data = {
+                        'username': member_data['username'],
+                        'displayName': member_data.get('display_name', member_data['username']),
+                        'clanRank': member_data['clan_rank'],
+                        'totalXp': member_data['total_xp'],
+                        'totalLevel': stats_data.get('total_level', 0) if stats_data else 0,
+                        'combatLevel': stats_data.get('combat_level', 0) if stats_data else 0,
+                        'questPoints': stats_data.get('quest_points', 0) if stats_data else 0,
+                        'kills': member_data.get('kills', 0),
+                        'stats': json.dumps(stats_data.get('stats')) if stats_data and stats_data.get('stats') else None,
+                        'questData': json.dumps(quest_data) if quest_data else None,
+                        'badges': json.dumps(badges),
+                        'lastUpdated': datetime.now()
+                    }
+                    
+                    try:
+                        if member_data['username'] not in current_db_members and stats_data and stats_data.get('stats'):
+                            new_sig = compute_profile_signature(stats_data['stats'], stats_data.get('quest_points', 0) or 0)
+                            print(f"[NameChange] Generated signature for {member_data['username']}: {new_sig[:20]}...")
+                            old_username = db_signature_map.get(new_sig)
+                            if old_username and old_username not in current_usernames_set:
+                                print(f"[NameChange] Detected rename: {old_username} -> {member_data['username']}")
+                                rename_data = {**clan_member_data, 'username': member_data['username']}
+                                await prisma.clanmember.update(
+                                    where={'username': old_username},
+                                    data=rename_data
+                                )
+                                try:
+                                    await log_clan_event_if_new(
+                                        member_data['username'], 
+                                        'name_change', 
+                                        old_rank=old_username, 
+                                        new_rank=member_data['username']
+                                    )
+                                    print(f"📝 Logged name change: {old_username} → {member_data['username']}")
+                                except Exception as log_error:
+                                    print(f"⚠️ Failed to log name change for {old_username} -> {member_data['username']}: {log_error}")
+
+                                current_db_members.pop(old_username, None)
+                                current_db_members[member_data['username']] = member_data['clan_rank']
+                                db_signature_map.pop(new_sig, None)
+                            else:
+                                if not old_username:
+                                    print(f"[NameChange] No matching signature found for {member_data['username']}")
+                                elif old_username in current_usernames_set:
+                                    print(f"[NameChange] Matched signature belongs to active member {old_username}, not a rename")
+                    except Exception as e:
+                        print(f"[NameChange] Error while processing rename detection for {member_data['username']}: {e}")
+                    
+                    is_new_member = member_data['username'] not in current_db_members
+                    old_rank = current_db_members.get(member_data['username'])
+                    
+                    await prisma.clanmember.upsert(
+                        where={'username': member_data['username']},
+                        data={
+                            'update': clan_member_data,
+                            'create': clan_member_data
+                        }
+                    )
+                    
+                    try:
+                        if is_new_member:
+                            await log_clan_event_if_new(
+                                member_data['username'], 
+                                'join', 
+                                old_rank=None, 
+                                new_rank=member_data['clan_rank']
+                            )
+                            print(f"📝 Logged join event for {member_data['username']} as {member_data['clan_rank']}")
+                            current_db_members[member_data['username']] = member_data['clan_rank']
+                        elif old_rank and old_rank != member_data['clan_rank']:
+                            new_rank = member_data['clan_rank']
+                            
+                            event_type = 'rank_up'  # Default to rank_up for now
+                            
+                            await log_clan_event_if_new(
+                                member_data['username'], 
+                                event_type, 
+                                old_rank=old_rank, 
+                                new_rank=new_rank
+                            )
+                            print(f"📝 Logged {event_type} for {member_data['username']}: {old_rank} → {new_rank}")
+                            current_db_members[member_data['username']] = new_rank
+                    except Exception as log_error:
+                        print(f"⚠️ Failed to log clan event for {member_data['username']}: {log_error}")
+                    
+                    batch_successful += 1
+                    successful_syncs += 1
+                    
                 except Exception as e:
-                    print(f"⚠️ Failed to fetch quest data for {member_data['username']}: {e}")
-                
-                if stats_data is None:
                     failed_member_queue.append({
                         'member_data': member_data,
                         'retry_count': 0,
-                        'last_attempt': datetime.now()
+                        'last_attempt': datetime.now(),
+                        'error': str(e)
                     })
+                    batch_failed += 1
                     failed_syncs += 1
-                    print(f"⚠️ Queued {member_data['username']} for retry (stats fetch failed)")
+                    print(f"❌ Error syncing {member_data['username']}, queued for retry: {e}")
                     continue
-                
-                badges = []
-                try:
-                    from .badge_utils import compute_member_badges
-                    badges = compute_member_badges(stats_data, quest_data, member_data['clan_rank'], member_data['username'])
-                except Exception as e:
-                    print(f"⚠️ Failed to compute badges for {member_data['username']}: {e}")
-                    badges = []
-                
-                clan_member_data = {
-                    'username': member_data['username'],
-                    'displayName': member_data.get('display_name', member_data['username']),
-                    'clanRank': member_data['clan_rank'],
-                    'totalXp': member_data['total_xp'],
-                    'totalLevel': stats_data.get('total_level', 0) if stats_data else 0,
-                    'combatLevel': stats_data.get('combat_level', 0) if stats_data else 0,
-                    'questPoints': stats_data.get('quest_points', 0) if stats_data else 0,
-                    'kills': member_data.get('kills', 0),
-                    'stats': json.dumps(stats_data.get('stats')) if stats_data and stats_data.get('stats') else None,
-                    'questData': json.dumps(quest_data) if quest_data else None,
-                    'badges': json.dumps(badges),
-                    'lastUpdated': datetime.now()
-                }
-                
-                try:
-                    if member_data['username'] not in current_db_members and stats_data and stats_data.get('stats'):
-                        new_sig = compute_profile_signature(stats_data['stats'], stats_data.get('quest_points', 0) or 0)
-                        print(f"[NameChange] Generated signature for {member_data['username']}: {new_sig[:20]}...")
-                        old_username = db_signature_map.get(new_sig)
-                        if old_username and old_username not in current_usernames_set:
-                            print(f"[NameChange] Detected rename: {old_username} -> {member_data['username']}")
-                            rename_data = {**clan_member_data, 'username': member_data['username']}
-                            await prisma.clanmember.update(
-                                where={'username': old_username},
-                                data=rename_data
-                            )
-                            try:
-                                await log_clan_event_if_new(
-                                    member_data['username'], 
-                                    'name_change', 
-                                    old_rank=old_username, 
-                                    new_rank=member_data['username']
-                                )
-                                print(f"📝 Logged name change: {old_username} → {member_data['username']}")
-                            except Exception as log_error:
-                                print(f"⚠️ Failed to log name change for {old_username} -> {member_data['username']}: {log_error}")
-
-                            current_db_members.pop(old_username, None)
-                            current_db_members[member_data['username']] = member_data['clan_rank']
-                            db_signature_map.pop(new_sig, None)
-                        else:
-                            if not old_username:
-                                print(f"[NameChange] No matching signature found for {member_data['username']}")
-                            elif old_username in current_usernames_set:
-                                print(f"[NameChange] Matched signature belongs to active member {old_username}, not a rename")
-                except Exception as e:
-                    print(f"[NameChange] Error while processing rename detection for {member_data['username']}: {e}")
-                
-                is_new_member = member_data['username'] not in current_db_members
-                old_rank = current_db_members.get(member_data['username'])
-                
-                await prisma.clanmember.upsert(
-                    where={'username': member_data['username']},
-                    data={
-                        'update': clan_member_data,
-                        'create': clan_member_data
-                    }
-                )
-                
-                try:
-                    if is_new_member:
-                        await log_clan_event_if_new(
-                            member_data['username'], 
-                            'join', 
-                            old_rank=None, 
-                            new_rank=member_data['clan_rank']
-                        )
-                        print(f"📝 Logged join event for {member_data['username']} as {member_data['clan_rank']}")
-                        current_db_members[member_data['username']] = member_data['clan_rank']
-                    elif old_rank and old_rank != member_data['clan_rank']:
-                        new_rank = member_data['clan_rank']
-                        
-                        event_type = 'rank_up'  # Default to rank_up for now
-                        
-                        await log_clan_event_if_new(
-                            member_data['username'], 
-                            event_type, 
-                            old_rank=old_rank, 
-                            new_rank=new_rank
-                        )
-                        print(f"📝 Logged {event_type} for {member_data['username']}: {old_rank} → {new_rank}")
-                        current_db_members[member_data['username']] = new_rank
-                except Exception as log_error:
-                    print(f"⚠️ Failed to log clan event for {member_data['username']}: {log_error}")
-                
-                successful_syncs += 1
-                if successful_syncs % 10 == 0:
-                    print(f"✅ Synced {successful_syncs}/{len(clan_data)} members with badges...")
-                
-            except Exception as e:
-                failed_member_queue.append({
-                    'member_data': member_data,
-                    'retry_count': 0,
-                    'last_attempt': datetime.now(),
-                    'error': str(e)
-                })
-                failed_syncs += 1
-                print(f"❌ Error syncing {member_data['username']}, queued for retry: {e}")
-                continue
+            
+            print(f"✅ Batch {batch_num + 1}/{total_batches} complete: {batch_successful} successful, {batch_failed} failed")
+            print(f"📊 Overall progress: {successful_syncs}/{len(clan_data)} members processed")
+            
+            if batch_num < total_batches - 1:  # Don't delay after the last batch
+                print(f"⏳ Waiting 8 seconds before next batch...")
+                await asyncio.sleep(8)
         
         current_usernames = {member['username'] for member in clan_data}
         members_who_left = []
