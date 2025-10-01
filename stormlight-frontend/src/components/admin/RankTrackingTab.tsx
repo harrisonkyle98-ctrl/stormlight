@@ -91,6 +91,8 @@ export const RankTrackingTab = () => {
         if (trackingResponse.ok) {
           const trackingData = await trackingResponse.json()
           setRankTracking(trackingData.tracking || [])
+        } else {
+          console.error('Failed to refresh rank tracking after join date update:', trackingResponse.status)
         }
         
         setEditingMember(null)
