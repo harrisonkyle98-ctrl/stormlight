@@ -626,46 +626,10 @@ async def sync_clan_members_to_database():
         raise
 
 async def sync_clan_members_to_database_with_queue():
-    """Enhanced sync with queue for failed requests and retry logic"""
+    """Simplified batch sync focused on core repopulation without complex features"""
     try:
-        if failed_member_queue:
-            print(f"🔄 Processing {len(failed_member_queue)} queued failed members...")
-            await process_failed_member_queue()
-        
         clan_data = await fetch_clan_members()
-        print(f"📥 Fetched {len(clan_data)} clan members for sync")
-        current_usernames_set = {m['username'] for m in clan_data}
-
-        db_signature_map: Dict[str, str] = {}
-        current_db_members = {}
-        try:
-            db_members = await prisma.clanmember.find_many()
-            current_db_members = {member.username: member.clanRank for member in db_members}
-            print(f"📊 Loaded {len(current_db_members)} existing members for change detection")
-            
-            # Log members that are in API but not in DB (potential joins)
-            potential_joins = current_usernames_set - set(current_db_members.keys())
-            if potential_joins:
-                print(f"🆕 Potential new members: {list(potential_joins)}")
-            
-            # Log members that are in DB but not in API (potential leaves)
-            potential_leaves = set(current_db_members.keys()) - current_usernames_set
-            if potential_leaves:
-                print(f"👋 Potential leaving members: {list(potential_leaves)}")
-            
-            print(f"🔍 DB signature map size: {len(db_signature_map)}")
-
-            for m in db_members:
-                if m.username not in current_usernames_set and m.stats:
-                    try:
-                        m_stats = json.loads(m.stats)
-                        sig = compute_profile_signature(m_stats, m.questPoints or 0)
-                        if sig:
-                            db_signature_map[sig] = m.username
-                    except Exception as e:
-                        print(f"[NameChange] failed to prep DB signature for {m.username}: {e}")
-        except Exception as e:
-            print(f"⚠️ Could not fetch current members for change detection: {e}")
+        print(f"📥 Fetched {len(clan_data)} clan members for repopulation")
         
         successful_syncs = 0
         failed_syncs = 0
@@ -685,98 +649,22 @@ async def sync_clan_members_to_database_with_queue():
             for i, member_data in enumerate(batch_members):
                 try:
                     if i > 0:
-                        await asyncio.sleep(random.uniform(1.0, 2.0))
-                    
-                    stats_data = await fetch_player_stats(member_data['username'], max_retries=2)
-                    
-                    quest_data = None
-                    try:
-                        async with httpx.AsyncClient() as client:
-                            profile_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={member_data['username']}"
-                            profile_response = await client.get(profile_url)
-                            
-                            if profile_response.status_code == 200:
-                                profile_data = profile_response.json()
-                                quest_data = {
-                                    'quest_summary': {
-                                        'questsstarted': profile_data.get('questsstarted', 0),
-                                        'questscomplete': profile_data.get('questscomplete', 0),
-                                        'questsnotstarted': profile_data.get('questsnotstarted', 0)
-                                    }
-                                }
-                    except Exception as e:
-                        print(f"⚠️ Failed to fetch quest data for {member_data['username']}: {e}")
-                    
-                    if stats_data is None:
-                        failed_member_queue.append({
-                            'member_data': member_data,
-                            'retry_count': 0,
-                            'last_attempt': datetime.now()
-                        })
-                        batch_failed += 1
-                        failed_syncs += 1
-                        print(f"⚠️ Queued {member_data['username']} for retry (stats fetch failed)")
-                        continue
-                    
-                    badges = []
-                    try:
-                        from .badge_utils import compute_member_badges
-                        badges = compute_member_badges(stats_data, quest_data, member_data['clan_rank'], member_data['username'])
-                    except Exception as e:
-                        print(f"⚠️ Failed to compute badges for {member_data['username']}: {e}")
-                        badges = []
+                        await asyncio.sleep(0.5)  # Reduced delay for faster processing
                     
                     clan_member_data = {
                         'username': member_data['username'],
                         'displayName': member_data.get('display_name', member_data['username']),
                         'clanRank': member_data['clan_rank'],
                         'totalXp': member_data['total_xp'],
-                        'totalLevel': stats_data.get('total_level', 0) if stats_data else 0,
-                        'combatLevel': stats_data.get('combat_level', 0) if stats_data else 0,
-                        'questPoints': stats_data.get('quest_points', 0) if stats_data else 0,
+                        'totalLevel': 0,  # Will be updated later by regular sync
+                        'combatLevel': 0,  # Will be updated later by regular sync
+                        'questPoints': 0,  # Will be updated later by regular sync
                         'kills': member_data.get('kills', 0),
-                        'stats': json.dumps(stats_data.get('stats')) if stats_data and stats_data.get('stats') else None,
-                        'questData': json.dumps(quest_data) if quest_data else None,
-                        'badges': json.dumps(badges),
+                        'stats': None,  # Will be populated later by regular sync
+                        'questData': None,  # Will be populated later by regular sync
+                        'badges': json.dumps([]),  # Empty badges for now
                         'lastUpdated': datetime.now()
                     }
-                    
-                    try:
-                        if member_data['username'] not in current_db_members and stats_data and stats_data.get('stats'):
-                            new_sig = compute_profile_signature(stats_data['stats'], stats_data.get('quest_points', 0) or 0)
-                            print(f"[NameChange] Generated signature for {member_data['username']}: {new_sig[:20]}...")
-                            old_username = db_signature_map.get(new_sig)
-                            if old_username and old_username not in current_usernames_set:
-                                print(f"[NameChange] Detected rename: {old_username} -> {member_data['username']}")
-                                rename_data = {**clan_member_data, 'username': member_data['username']}
-                                await prisma.clanmember.update(
-                                    where={'username': old_username},
-                                    data=rename_data
-                                )
-                                try:
-                                    await log_clan_event_if_new(
-                                        member_data['username'], 
-                                        'name_change', 
-                                        old_rank=old_username, 
-                                        new_rank=member_data['username']
-                                    )
-                                    print(f"📝 Logged name change: {old_username} → {member_data['username']}")
-                                except Exception as log_error:
-                                    print(f"⚠️ Failed to log name change for {old_username} -> {member_data['username']}: {log_error}")
-
-                                current_db_members.pop(old_username, None)
-                                current_db_members[member_data['username']] = member_data['clan_rank']
-                                db_signature_map.pop(new_sig, None)
-                            else:
-                                if not old_username:
-                                    print(f"[NameChange] No matching signature found for {member_data['username']}")
-                                elif old_username in current_usernames_set:
-                                    print(f"[NameChange] Matched signature belongs to active member {old_username}, not a rename")
-                    except Exception as e:
-                        print(f"[NameChange] Error while processing rename detection for {member_data['username']}: {e}")
-                    
-                    is_new_member = member_data['username'] not in current_db_members
-                    old_rank = current_db_members.get(member_data['username'])
                     
                     await prisma.clanmember.upsert(
                         where={'username': member_data['username']},
@@ -786,100 +674,41 @@ async def sync_clan_members_to_database_with_queue():
                         }
                     )
                     
-                    try:
-                        if is_new_member:
-                            await log_clan_event_if_new(
-                                member_data['username'], 
-                                'join', 
-                                old_rank=None, 
-                                new_rank=member_data['clan_rank']
-                            )
-                            print(f"📝 Logged join event for {member_data['username']} as {member_data['clan_rank']}")
-                            current_db_members[member_data['username']] = member_data['clan_rank']
-                        elif old_rank and old_rank != member_data['clan_rank']:
-                            new_rank = member_data['clan_rank']
-                            
-                            event_type = 'rank_up'  # Default to rank_up for now
-                            
-                            await log_clan_event_if_new(
-                                member_data['username'], 
-                                event_type, 
-                                old_rank=old_rank, 
-                                new_rank=new_rank
-                            )
-                            print(f"📝 Logged {event_type} for {member_data['username']}: {old_rank} → {new_rank}")
-                            current_db_members[member_data['username']] = new_rank
-                    except Exception as log_error:
-                        print(f"⚠️ Failed to log clan event for {member_data['username']}: {log_error}")
-                    
                     batch_successful += 1
                     successful_syncs += 1
+                    print(f"✅ Repopulated {member_data['username']} ({member_data['clan_rank']}, {member_data['total_xp']:,} XP)")
                     
                 except Exception as e:
-                    failed_member_queue.append({
-                        'member_data': member_data,
-                        'retry_count': 0,
-                        'last_attempt': datetime.now(),
-                        'error': str(e)
-                    })
                     batch_failed += 1
                     failed_syncs += 1
-                    print(f"❌ Error syncing {member_data['username']}, queued for retry: {e}")
+                    print(f"❌ Error repopulating {member_data['username']}: {e}")
                     continue
             
             print(f"✅ Batch {batch_num + 1}/{total_batches} complete: {batch_successful} successful, {batch_failed} failed")
             print(f"📊 Overall progress: {successful_syncs}/{len(clan_data)} members processed")
             
-            if batch_num < total_batches - 1:  # Don't delay after the last batch
-                print(f"⏳ Waiting 8 seconds before next batch...")
-                await asyncio.sleep(8)
+            if batch_num < total_batches - 1:
+                print(f"⏳ Waiting 3 seconds before next batch...")
+                await asyncio.sleep(3)
         
-        current_usernames = {member['username'] for member in clan_data}
-        members_who_left = []
-        for db_username in current_db_members:
-            if db_username not in current_usernames:
-                members_who_left.append((db_username, current_db_members[db_username]))
+        print(f"✅ Repopulation completed: {successful_syncs} successful, {failed_syncs} failed")
+        print(f"📊 Total members processed: {len(clan_data)}")
         
-        if members_who_left:
-            print(f"👋 Processing {len(members_who_left)} members who left the clan")
-            
-        for username, rank in members_who_left:
-            try:
-                await log_clan_event_if_new(
-                    username, 
-                    'leave', 
-                    old_rank=rank, 
-                    new_rank=None
-                )
-                print(f"📝 Logged leave event for {username} (was {rank})")
-            except Exception as log_error:
-                print(f"⚠️ Failed to log leave event for {username}: {log_error}")
-        
-        try:
-            total_entries = await prisma.clanlog.count()
-            if total_entries > 1000:
-                entries_to_keep = await prisma.clanlog.find_many(
-                    take=1,
-                    skip=999
-                )
-                if entries_to_keep:
-                    cutoff_timestamp = entries_to_keep[0].timestamp
-                    deleted_result = await prisma.clanlog.delete_many(
-                        where={'timestamp': {'lt': cutoff_timestamp}}
-                    )
-                    print(f"🗑️ Pruned {deleted_result.count if hasattr(deleted_result, 'count') else 'some'} old clan log entries")
-        except Exception as prune_error:
-            print(f"⚠️ Failed to prune old clan log entries: {prune_error}")
-        
-        print(f"📊 Sync complete: {successful_syncs} successful, {failed_syncs} failed, {len(failed_member_queue)} in queue")
-        
-        clan_members_cache['data'] = []
-        clan_members_cache['timestamp'] = 0
-        print("🗑️ Cleared clan members cache")
+        return {
+            'status': 'completed',
+            'successful_syncs': successful_syncs,
+            'failed_syncs': failed_syncs,
+            'total_members': len(clan_data)
+        }
         
     except Exception as e:
-        print(f"❌ Error in sync_clan_members_to_database_with_queue: {e}")
-        raise
+        print(f"❌ Error in repopulation: {e}")
+        return {
+            'status': 'error',
+            'error': str(e),
+            'successful_syncs': successful_syncs if 'successful_syncs' in locals() else 0,
+            'failed_syncs': failed_syncs if 'failed_syncs' in locals() else 0
+        }
 
 async def process_failed_member_queue():
     """Process members in the failed queue with exponential backoff"""
