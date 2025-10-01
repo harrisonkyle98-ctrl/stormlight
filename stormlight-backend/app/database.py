@@ -239,7 +239,7 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
     
     return succeeded, len(failed_users), failed_users, failure_reasons
 
-async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 15, cycle_delay_minutes: int = 0.3):
+async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cycle_delay_minutes: int = 0.3):
     """Collect daily snapshots of all clan members using persistent multi-cycle approach."""
     import asyncio
     from datetime import datetime
@@ -282,13 +282,13 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 15, cy
         cycle_num = 0
         start = datetime.utcnow()
         needed_cycles = max(1, ceil(expected_members / members_per_cycle))
-        max_cycles = needed_cycles * 10  # Increased from 3 to 10 to allow more retry cycles
+        max_cycles = needed_cycles * 15  # Increased to 15 to allow more retry cycles for all members
         all_failed_users: list[str] = []
         attempts_today: dict[str, int] = {}
         final_failed_set: set[str] = set()
         final_failure_reasons: dict[str, str] = {}
         consecutive_no_progress_cycles = 0
-        max_no_progress_cycles = 5  # Stop only after 5 consecutive cycles with no progress
+        max_no_progress_cycles = 10  # Stop only after 10 consecutive cycles with no progress
         
         while remaining and cycle_num < max_cycles:
             cycle_num += 1
