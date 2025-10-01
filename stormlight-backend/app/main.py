@@ -2798,7 +2798,8 @@ async def get_rank_tracking(admin_id: str = Depends(verify_admin_access)):
                 rank_needed = "Unknown"
                 
                 if join_date:
-                    days_in_clan = (datetime.now() - join_date).days
+                    join_date_naive = join_date.replace(tzinfo=None) if join_date.tzinfo else join_date
+                    days_in_clan = (datetime.now() - join_date_naive).days
                     rank_needed = calculate_rank_needed(join_date, member.clanRank)
                 
                 due_for_promotion = (
