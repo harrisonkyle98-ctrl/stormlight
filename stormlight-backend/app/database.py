@@ -197,12 +197,13 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
                     print(f"[Bulk Snapshots] ⚠️ Retry {attempt + 1}/{max_retries + 1} for {username} after {delay}s: {e}")
                     await asyncio.sleep(delay)
                 else:
-                    print(f"[Bulk Snapshots] ❌ Final failure for {username} (attempt {attempt + 1}): {e} (non_retryable={non_retryable})")
-                    return False, None, e
+                    failure_reason = classify_failure_reason(e)
+                    print(f"[Bulk Snapshots] ❌ Final failure for {username} (attempt {attempt + 1}): {failure_reason} - {e} (non_retryable={non_retryable})")
+                    return False, None, failure_reason
         
         return False, None, None
 
-    per_member_delay_secs = 2.0
+    per_member_delay_secs = 1.5  # Reduced from 2.0 to 1.5 seconds for faster processing
     
     print(f"[Bulk Snapshots] Cycle {cycle_num} Configuration: processing {len(usernames)} members sequentially, per_member_delay={per_member_delay_secs}s")
     
@@ -220,6 +221,8 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
             reason = classify_failure_reason(username, err, stats_data)
             failure_reasons[username] = reason
             print(f"[Bulk Snapshots] Cycle {cycle_num} ❌ #{global_idx} {username} (succeeded={succeeded}, failed={failed}) reason={reason}")
+            if reason and "RATE_LIMIT" not in reason:
+                print(f"[Bulk Snapshots] 🔍 Detailed failure for {username}: {reason}")
         
         if i < len(usernames) - 1:
             await asyncio.sleep(per_member_delay_secs)
@@ -236,7 +239,7 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
     
     return succeeded, len(failed_users), failed_users, failure_reasons
 
-async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cycle_delay_minutes: int = 0.5):
+async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 15, cycle_delay_minutes: int = 0.3):
     """Collect daily snapshots of all clan members using persistent multi-cycle approach."""
     import asyncio
     from datetime import datetime
@@ -279,11 +282,13 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
         cycle_num = 0
         start = datetime.utcnow()
         needed_cycles = max(1, ceil(expected_members / members_per_cycle))
-        max_cycles = needed_cycles * 3
+        max_cycles = needed_cycles * 10  # Increased from 3 to 10 to allow more retry cycles
         all_failed_users: list[str] = []
         attempts_today: dict[str, int] = {}
         final_failed_set: set[str] = set()
         final_failure_reasons: dict[str, str] = {}
+        consecutive_no_progress_cycles = 0
+        max_no_progress_cycles = 5  # Stop only after 5 consecutive cycles with no progress
         
         while remaining and cycle_num < max_cycles:
             cycle_num += 1
@@ -323,11 +328,19 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
             print(f"📊 [Multi-Cycle] Progress: done={done_after}/{expected_members}; remaining={len(remaining_after)}; diff=+{done_after - done_before}")
             
             if done_after == done_before and remaining_after:
-                print(f"⚠️ [Multi-Cycle] No progress this cycle; rotating remaining to avoid head-of-line blocking")
+                consecutive_no_progress_cycles += 1
+                print(f"⚠️ [Multi-Cycle] No progress this cycle ({consecutive_no_progress_cycles}/{max_no_progress_cycles}); rotating remaining to avoid head-of-line blocking")
+                
+                if consecutive_no_progress_cycles >= max_no_progress_cycles:
+                    print(f"🛑 [Multi-Cycle] Stopping after {max_no_progress_cycles} consecutive cycles with no progress")
+                    all_failed_users.extend([u for u in remaining_after if u not in all_failed_users])
+                    break
+                
                 rot = min(members_per_cycle, len(remaining_after))
                 remaining = remaining_after[rot:] + remaining_after[:rot]
                 print(f"🔄 [Multi-Cycle] Rotated {rot} members to end of queue; new order: {remaining[:5]}...")
             else:
+                consecutive_no_progress_cycles = 0  # Reset counter on progress
                 remaining = remaining_after
                 print(f"✅ [Multi-Cycle] Progress made: +{done_after - done_before} members completed")
             
@@ -340,12 +353,17 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
                 break
             
             if remaining:
-                print(f"⏳ [Multi-Cycle] Waiting {cycle_delay_minutes} minutes before next cycle...")
-                await asyncio.sleep(cycle_delay_minutes * 60)
+                actual_delay = cycle_delay_minutes if consecutive_no_progress_cycles == 0 else cycle_delay_minutes * 2
+                print(f"⏳ [Multi-Cycle] Waiting {actual_delay} minutes before next cycle...")
+                await asyncio.sleep(actual_delay * 60)
         
         if cycle_num >= max_cycles and remaining:
             print(f"⚠️ [Multi-Cycle] WARNING: Hit max cycle limit ({max_cycles}) with {len(remaining)} members still remaining")
+            print(f"🔍 [Multi-Cycle] Remaining members: {remaining[:20]}{'...' if len(remaining) > 20 else ''}")
             all_failed_users.extend([u for u in remaining if u not in all_failed_users])
+            for username in remaining:
+                if username not in final_failure_reasons:
+                    final_failure_reasons[username] = "MAX_CYCLES_REACHED"
         
         dur = (datetime.utcnow() - start).total_seconds()
         final_done_count = len(done)
@@ -360,6 +378,12 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
         
         print(f"🎉 [Multi-Cycle] Complete: {final_done_count}/{expected_members} members have a snapshot today in {dur/60:.1f} minutes")
         print(f"🔍 [Multi-Cycle] DEBUG: Final stats - cycles: {cycle_num}, remaining: {final_remaining_count}")
+        
+        success_rate = (final_done_count / expected_members * 100) if expected_members > 0 else 0
+        print(f"📊 [Multi-Cycle] Success rate: {success_rate:.1f}% ({final_done_count}/{expected_members})")
+        
+        if final_remaining_count > 0:
+            print(f"⚠️ [Multi-Cycle] {final_remaining_count} members still need snapshots - will retry in next scheduled run")
         
         return final_done_count, final_remaining_count
         
