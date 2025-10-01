@@ -30,6 +30,8 @@ export const RankTrackingTab = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [editingMember, setEditingMember] = useState<string | null>(null)
   const [editJoinDate, setEditJoinDate] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(15)
 
   const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000'
 
@@ -92,9 +94,23 @@ export const RankTrackingTab = () => {
     setEditJoinDate(member.joinDate ? member.joinDate.split('T')[0] : '')
   }
 
-  const filteredTracking = rankTracking.filter(tracking =>
-    tracking.username.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const getRankPriority = (rank: string): number => {
+    const rankPriority: { [key: string]: number } = {
+      'Owner': 1, 'Deputy Owner': 2, 'Overseer': 3, 'Coordinator': 4,
+      'Organiser': 5, 'Admin': 6, 'General': 7, 'Captain': 8,
+      'Lieutenant': 9, 'Sergeant': 10, 'Corporal': 11, 'Recruit': 12
+    }
+    return rankPriority[rank] || 999
+  }
+
+  const filteredAndSortedTracking = rankTracking
+    .filter(tracking => tracking.username.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => getRankPriority(a.actualRank) - getRankPriority(b.actualRank))
+
+  const totalItems = filteredAndSortedTracking.length
+  const startIndex = (currentPage - 1) * pageSize
+  const paginatedTracking = filteredAndSortedTracking.slice(startIndex, startIndex + pageSize)
+  const totalPages = Math.ceil(totalItems / pageSize)
 
   const dueForPromotionCount = rankTracking.filter(t => t.dueForPromotion).length
 
@@ -137,11 +153,33 @@ export const RankTrackingTab = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {filteredTracking.length === 0 ? (
+          {paginatedTracking.length === 0 ? (
             <p className="text-slate-400 text-center py-8">No members found</p>
           ) : (
-            <div className="space-y-3">
-              {filteredTracking.map((tracking) => (
+            <>
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-slate-400 text-sm">
+                  Showing {startIndex + 1}-{Math.min(startIndex + pageSize, totalItems)} of {totalItems} members
+                </span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-slate-400 text-sm">Per page:</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(parseInt(e.target.value))
+                      setCurrentPage(1)
+                    }}
+                    className="bg-slate-600 border-slate-500 text-white rounded px-2 py-1 text-sm"
+                  >
+                    <option value={15}>15</option>
+                    <option value={30}>30</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                {paginatedTracking.map((tracking) => (
                 <div key={tracking.username} className="p-4 bg-slate-600/30 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-3">
@@ -221,8 +259,53 @@ export const RankTrackingTab = () => {
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+                ))}
+              </div>
+              
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center space-x-2 mt-6">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                  >
+                    First
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-white text-sm px-3">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                  >
+                    Next
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                  >
+                    Last
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -235,19 +318,39 @@ export const RankTrackingTab = () => {
         <CardContent>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-slate-400">1+ years:</span>
-              <span className="text-white">Lieutenant</span>
+              <span className="text-slate-400">2+ years:</span>
+              <span className="text-white">Coordinator</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">1.5+ years:</span>
+              <span className="text-white">Organiser</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">1+ year:</span>
+              <span className="text-white">Admin</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">9+ months:</span>
+              <span className="text-white">General</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">6+ months:</span>
-              <span className="text-white">Sergeant</span>
+              <span className="text-white">Captain</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">3+ months:</span>
+              <span className="text-white">Lieutenant</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">2+ months:</span>
+              <span className="text-white">Sergeant</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">1+ month:</span>
               <span className="text-white">Corporal</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">New members:</span>
+              <span className="text-slate-400">Entry:</span>
               <span className="text-white">Recruit</span>
             </div>
           </div>

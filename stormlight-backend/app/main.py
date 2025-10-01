@@ -2488,10 +2488,13 @@ async def get_custom_badges(admin_id: str = Depends(verify_admin_access)):
 async def create_custom_badge(
     name: str = Form(...),
     description: str = Form(""),
+    background_color: str = Form(None),
+    gradient_color1: str = Form(None),
+    gradient_color2: str = Form(None),
     badge_file: UploadFile = File(...),
     admin_id: str = Depends(verify_admin_access)
 ):
-    """Create a new custom badge with file upload"""
+    """Create a new custom badge with file upload and color options"""
     try:
         from .admin_utils import log_admin_action
         
@@ -2511,12 +2514,18 @@ async def create_custom_badge(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(badge_file.file, buffer)
         
+        gradient_colors = None
+        if gradient_color1 and gradient_color2:
+            gradient_colors = [gradient_color1, gradient_color2]
+        
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
             badge = await prisma.custombadge.create({
                 'name': name,
                 'description': description,
                 'imagePath': str(file_path),
                 'imageUrl': f"/uploads/badges/{unique_filename}",
+                'backgroundColor': background_color,
+                'gradientColors': gradient_colors,
                 'createdBy': admin_id
             })
             
@@ -2637,6 +2646,40 @@ async def remove_badge_from_member(
     except Exception as e:
         print(f"Error removing badge: {e}")
         raise HTTPException(status_code=500, detail="Error removing badge")
+
+@api_router.delete("/admin/badges/{badge_id}")
+async def delete_custom_badge(
+    badge_id: str,
+    admin_id: str = Depends(verify_admin_access)
+):
+    """Delete a custom badge"""
+    try:
+        from .admin_utils import log_admin_action
+        
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            badge = await prisma.custombadge.find_unique(where={'id': badge_id})
+            if not badge:
+                raise HTTPException(status_code=404, detail="Badge not found")
+            
+            import os
+            if os.path.exists(badge.imagePath):
+                os.remove(badge.imagePath)
+            
+            await prisma.custombadge.delete(where={'id': badge_id})
+            
+            await log_admin_action(
+                admin_id,
+                "system",
+                "delete_badge",
+                f"Deleted custom badge: {badge.name}"
+            )
+            
+            return {"success": True}
+        
+        raise HTTPException(status_code=500, detail="Database not available")
+    except Exception as e:
+        print(f"Error deleting badge: {e}")
+        raise HTTPException(status_code=500, detail="Error deleting badge")
 
 @api_router.get("/admin/competitions")
 async def get_admin_competitions(admin_id: str = Depends(verify_admin_access)):

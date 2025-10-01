@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { ArrowLeft, User, Trophy, TrendingUp, Crown, Package, Activity, MapPin, BarChart3, Swords, FileText, RefreshCw } from 'lucide-react'
+import { ArrowLeft, User, Trophy, TrendingUp, Crown, Package, Activity, MapPin, BarChart3, Swords, FileText, RefreshCw, Plus, X } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { getSkillIcon } from '../utils/skillIcons'
 import { getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
@@ -520,9 +520,27 @@ const PlayerProfile = () => {
       {playerData.stats && checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || '')).length > 0 && (
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader>
-            <CardTitle className="text-white flex items-center space-x-2">
-              <Crown className="w-5 h-5 text-yellow-400" />
-              <span>Badges</span>
+            <CardTitle className="text-white flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Crown className="w-5 h-5 text-yellow-400" />
+                <span>Badges</span>
+              </div>
+              {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
+                <div className="flex items-center space-x-2">
+                  <Select onValueChange={handleAssignBadge}>
+                    <SelectTrigger className="w-8 h-8 p-0 bg-blue-600 hover:bg-blue-700 border-blue-600">
+                      <Plus className="w-4 h-4 text-white" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customBadges.map((badge) => (
+                        <SelectItem key={badge.id} value={badge.id}>
+                          {badge.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -530,7 +548,7 @@ const PlayerProfile = () => {
               {playerData.stats && checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || '')).map((badge) => (
                 <div
                   key={badge.id}
-                  className="px-3 py-1 text-base font-semibold flex items-center space-x-2 rounded-md text-white"
+                  className="px-3 py-1 text-base font-semibold flex items-center space-x-2 rounded-md text-white relative group"
                   style={{
                     background: badge.gradientBackground || badge.backgroundColor
                   }}
@@ -541,6 +559,16 @@ const PlayerProfile = () => {
                     className="w-5 h-5"
                   />
                   <span>{badge.name}</span>
+                  {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && badge.id.includes('custom') && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleRemoveBadge(badge.id)}
+                      className="ml-2 p-1 h-6 w-6 text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
@@ -548,48 +576,6 @@ const PlayerProfile = () => {
         </Card>
       )}
 
-      {/* Admin Badge Assignment Section */}
-      {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center space-x-2">
-              <Crown className="w-5 h-5 text-yellow-400" />
-              <span>Admin: Badge Management</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                {playerData?.badges?.filter((badge: any) => badge.type === 'custom').map((badge: any, index: number) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <Badge className="bg-blue-600 text-white">{badge.name}</Badge>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleRemoveBadge(badge.id)}
-                      className="text-red-400 hover:text-red-300"
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              <Select onValueChange={handleAssignBadge}>
-                <SelectTrigger className="bg-slate-600 border-slate-500 text-white">
-                  <SelectValue placeholder="Assign custom badge..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {customBadges.map((badge) => (
-                    <SelectItem key={badge.id} value={badge.id}>
-                      {badge.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {overallStats && (
         <Card className="bg-slate-800/50 border-slate-700">

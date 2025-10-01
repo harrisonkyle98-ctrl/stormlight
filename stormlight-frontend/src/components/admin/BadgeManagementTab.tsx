@@ -21,9 +21,13 @@ export const BadgeManagementTab = () => {
   const [editingBadge, setEditingBadge] = useState<CustomBadge | null>(null)
   const [formData, setFormData] = useState({
     name: '',
-    description: ''
+    description: '',
+    backgroundColor: '#3b82f6',
+    gradientColor1: '#3b82f6',
+    gradientColor2: '#1d4ed8'
   })
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [colorMode, setColorMode] = useState<'solid' | 'gradient'>('solid')
 
   const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000'
 
@@ -62,6 +66,14 @@ export const BadgeManagementTab = () => {
       const formDataToSend = new FormData()
       formDataToSend.append('name', formData.name)
       formDataToSend.append('description', formData.description)
+      
+      if (colorMode === 'solid') {
+        formDataToSend.append('background_color', formData.backgroundColor)
+      } else {
+        formDataToSend.append('gradient_color1', formData.gradientColor1)
+        formDataToSend.append('gradient_color2', formData.gradientColor2)
+      }
+      
       if (selectedFile) {
         formDataToSend.append('badge_file', selectedFile)
       }
@@ -85,7 +97,14 @@ export const BadgeManagementTab = () => {
         setShowCreateForm(false)
         setEditingBadge(null)
         setSelectedFile(null)
-        setFormData({ name: '', description: '' })
+        setFormData({ 
+          name: '', 
+          description: '',
+          backgroundColor: '#3b82f6',
+          gradientColor1: '#3b82f6',
+          gradientColor2: '#1d4ed8'
+        })
+        setColorMode('solid')
       } else {
         const errorData = await response.json()
         alert(errorData.detail || 'Error saving badge')
@@ -118,7 +137,10 @@ export const BadgeManagementTab = () => {
     setEditingBadge(badge)
     setFormData({
       name: badge.name,
-      description: badge.description || ''
+      description: badge.description || '',
+      backgroundColor: '#3b82f6',
+      gradientColor1: '#3b82f6',
+      gradientColor2: '#1d4ed8'
     })
     setSelectedFile(null)
     setShowCreateForm(true)
@@ -192,6 +214,73 @@ export const BadgeManagementTab = () => {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Background Style
+                </label>
+                <div className="flex space-x-4 mb-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      value="solid"
+                      checked={colorMode === 'solid'}
+                      onChange={(e) => setColorMode(e.target.value as 'solid' | 'gradient')}
+                      className="mr-2"
+                    />
+                    <span className="text-white">Solid Color</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      value="gradient"
+                      checked={colorMode === 'gradient'}
+                      onChange={(e) => setColorMode(e.target.value as 'solid' | 'gradient')}
+                      className="mr-2"
+                    />
+                    <span className="text-white">Gradient</span>
+                  </label>
+                </div>
+                
+                {colorMode === 'solid' ? (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Background Color
+                    </label>
+                    <input
+                      type="color"
+                      value={formData.backgroundColor}
+                      onChange={(e) => setFormData({ ...formData, backgroundColor: e.target.value })}
+                      className="w-full h-10 rounded border border-slate-500"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        Gradient Color 1
+                      </label>
+                      <input
+                        type="color"
+                        value={formData.gradientColor1}
+                        onChange={(e) => setFormData({ ...formData, gradientColor1: e.target.value })}
+                        className="w-full h-10 rounded border border-slate-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        Gradient Color 2
+                      </label>
+                      <input
+                        type="color"
+                        value={formData.gradientColor2}
+                        onChange={(e) => setFormData({ ...formData, gradientColor2: e.target.value })}
+                        className="w-full h-10 rounded border border-slate-500"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="flex space-x-2">
                 <Button type="submit" className="bg-green-600 hover:bg-green-700">
                   {editingBadge ? 'Update' : 'Create'} Badge
@@ -203,7 +292,14 @@ export const BadgeManagementTab = () => {
                     setShowCreateForm(false)
                     setEditingBadge(null)
                     setSelectedFile(null)
-                    setFormData({ name: '', description: '' })
+                    setFormData({ 
+                      name: '', 
+                      description: '',
+                      backgroundColor: '#3b82f6',
+                      gradientColor1: '#3b82f6',
+                      gradientColor2: '#1d4ed8'
+                    })
+                    setColorMode('solid')
                   }}
                 >
                   Cancel

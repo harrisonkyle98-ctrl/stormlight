@@ -27,11 +27,21 @@ def calculate_rank_needed(join_date: datetime, current_rank: str) -> str:
     
     days_in_clan = (datetime.now() - join_date).days
     
-    if days_in_clan >= 365:  # 1+ years
-        return "Lieutenant"
+    if days_in_clan >= 730:  # 2+ years
+        return "Coordinator"
+    elif days_in_clan >= 548:  # 1.5+ years  
+        return "Organiser"
+    elif days_in_clan >= 365:  # 1+ year
+        return "Admin"
+    elif days_in_clan >= 270:  # 9+ months
+        return "General"
     elif days_in_clan >= 180:  # 6+ months
-        return "Sergeant"
+        return "Captain"
     elif days_in_clan >= 90:   # 3+ months
+        return "Lieutenant"
+    elif days_in_clan >= 60:   # 2+ months
+        return "Sergeant"
+    elif days_in_clan >= 30:   # 1+ month
         return "Corporal"
     else:
         return "Recruit"
