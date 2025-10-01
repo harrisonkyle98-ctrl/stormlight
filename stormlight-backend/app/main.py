@@ -2064,8 +2064,11 @@ async def get_clan_activities(
     total_stored_count = 0
     try:
         if prisma:
+            # Calculate pagination for stored activities
+            skip = (page - 1) * limit
             activities_from_db = await prisma.clanactivity.find_many(
                 order={'activityTimestamp': 'desc'},
+                skip=skip,
                 take=limit
             )
             total_stored_count = await prisma.clanactivity.count()
@@ -2080,6 +2083,22 @@ async def get_clan_activities(
                 })
             
             print(f"Retrieved {len(stored_activities)} stored activities from Prisma database (total: {total_stored_count})")
+            
+            if total_stored_count > 0:
+                return {
+                    "activities": stored_activities,
+                    "pagination": {
+                        "page": page,
+                        "limit": limit,
+                        "total_activities": total_stored_count,
+                        "has_next": (skip + limit) < total_stored_count
+                    },
+                    "loading_status": {
+                        "is_complete": True,
+                        "processed_members": total_stored_count,
+                        "total_members": total_stored_count
+                    }
+                }
         else:
             # Fallback to old database connection method
             conn = await get_db_connection()
@@ -2095,6 +2114,7 @@ async def get_clan_activities(
     except Exception as db_error:
         print(f"Database error retrieving activities: {db_error}")
     
+    # Fallback to cache logic only if no stored activities found
     if (activities_cache['data'] and 
         current_time - activities_cache['timestamp'] < activities_cache['ttl']):
         print("Returning cached activities data")
@@ -2119,7 +2139,7 @@ async def get_clan_activities(
             "activities": paginated_activities,
             "pagination": {
                 "page": page,
-                "limit": 10,
+                "limit": limit,
                 "total_activities": len(unique_activities),
                 "has_next": end_idx < len(unique_activities)
             },
