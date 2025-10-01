@@ -4250,15 +4250,52 @@ async def cleanup_clan_log_duplicates_endpoint():
 
 @app.get("/api/admin/trigger-snapshots")
 async def trigger_snapshots_get():
-    """TEMPORARY: GET endpoint to trigger multi-cycle collection without auth for testing"""
+    """GET endpoint to trigger XP snapshot collection without auth for testing"""
     try:
-        print("[Trigger] TEMPORARY: GET multi-cycle snapshot collection triggered without auth")
+        print("[Trigger] XP snapshot collection triggered without auth")
         
         lock = getattr(app.state, "snapshot_lock", None)
         if lock and lock.locked():
             print("[Manual Trigger] Another snapshot run is in progress; skipping.")
             return {"status": "skipped", 
                     "message": "Another snapshot collection is already in progress. Check /api/admin/check-snapshots."}
+        
+        async def run():
+            try:
+                try:
+                    from .database import collect_daily_player_stats_multi_cycle
+                except ImportError:
+                    from database import collect_daily_player_stats_multi_cycle
+                
+                if lock:
+                    async with lock:
+                        done_count, remaining_count = await collect_daily_player_stats_multi_cycle()
+                        print(f"[Manual Trigger] XP snapshot collection completed: {done_count} processed, {remaining_count} remaining")
+                else:
+                    done_count, remaining_count = await collect_daily_player_stats_multi_cycle()
+                    print(f"[Manual Trigger] XP snapshot collection completed: {done_count} processed, {remaining_count} remaining")
+            except Exception as e:
+                print(f"❌ [Manual Trigger] Error in XP snapshot collection: {e}")
+                import traceback
+                traceback.print_exc()
+        
+        asyncio.create_task(run())
+        return {"status": "queued", 
+                "message": "Started XP snapshot collection (multi-cycle processing for all clan members). Check /api/admin/check-snapshots."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/admin/trigger-activities")
+async def trigger_activities_get():
+    """GET endpoint to trigger activity/drop collection without auth for testing"""
+    try:
+        print("[Trigger] Activity/drop collection triggered without auth")
+        
+        lock = getattr(app.state, "snapshot_lock", None)
+        if lock and lock.locked():
+            print("[Manual Trigger] Another collection run is in progress; skipping.")
+            return {"status": "skipped", 
+                    "message": "Another collection is already in progress. Check /api/admin/check-snapshots."}
         
         async def run():
             try:
@@ -4275,7 +4312,7 @@ async def trigger_snapshots_get():
                     processed, failed = await collect_daily_activities_and_drops()
                     print(f"[Manual Trigger] Activity/drop collection completed: {processed} processed, {failed} failed")
             except Exception as e:
-                print(f"❌ [Manual Trigger] Error in snapshot collection: {e}")
+                print(f"❌ [Manual Trigger] Error in activity/drop collection: {e}")
                 import traceback
                 traceback.print_exc()
         
@@ -4284,6 +4321,7 @@ async def trigger_snapshots_get():
                 "message": "Started activity/drop collection with 14-day window (batch processing: 8 members per cycle). Check /api/admin/check-snapshots."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/admin/trigger-clan-members")
 async def trigger_clan_members_get(debug: bool = False):
     """GET endpoint to trigger comprehensive clan member sync with join/name change detection"""
