@@ -1784,44 +1784,93 @@ async def get_clan_members_paginated(
         limit = 15
     
     t0 = time_module.time()
-    try:
-        print("🔄 Fetching fresh clan member data from RuneScape API...")
-        t_api0 = time_module.time()
-        members = await fetch_clan_members()
-        t_api = time_module.time()
-        print(f"[Perf] /api/clan/members API fetch={int((t_api - t_api0)*1000)}ms count={len(members)}")
-        
-        if not members:
-            raise Exception("No members returned from API")
+    
+    if not fresh:
+        try:
+            print("🔄 Fetching clan member data from database...")
+            t_db0 = time_module.time()
+            db_members = await prisma.clanmember.find_many()
+            t_db = time_module.time()
             
-    except Exception as api_error:
-        print(f"❌ API error, falling back to database: {api_error}")
-        db_members = await prisma.clanmember.find_many()
-        t_db = time_module.time()
-        if db_members and len(db_members) > 0:
-            members = []
-            for member in db_members:
-                badges = []
-                if member.badges:
-                    try:
-                        badges = json.loads(member.badges)
-                    except:
-                        badges = []
+            if db_members and len(db_members) > 0:
+                members = []
+                for member in db_members:
+                    badges = []
+                    if member.badges:
+                        try:
+                            badges = json.loads(member.badges)
+                        except:
+                            badges = []
+                    
+                    members.append({
+                        'username': member.username,
+                        'clan_rank': member.clanRank,
+                        'total_xp': int(member.totalXp),
+                        'total_level': member.totalLevel,
+                        'combat_level': member.combatLevel,
+                        'kills': member.kills,
+                        'last_updated': member.lastUpdated.isoformat(),
+                        'badges': badges
+                    })
+                t_transform = time_module.time()
+                print(f"[Perf] /api/clan/members DB fetch={int((t_db - t_db0)*1000)}ms transform={int((t_transform - t_db)*1000)}ms rows={len(db_members)}")
+            else:
+                print("⚠️ Database empty, falling back to API...")
+                raise Exception("Database is empty")
                 
-                members.append({
-                    'username': member.username,
-                    'clan_rank': member.clanRank,
-                    'total_xp': int(member.totalXp),
-                    'total_level': member.totalLevel,
-                    'combat_level': member.combatLevel,
-                    'kills': member.kills,
-                    'last_updated': member.lastUpdated.isoformat(),
-                    'badges': badges
-                })
-            t_transform = time_module.time()
-            print(f"[Perf] /api/clan/members DB fallback={int((t_db - t0)*1000)}ms transform={int((t_transform - t_db)*1000)}ms rows={len(db_members)}")
-        else:
-            raise Exception("No members found in database either")
+        except Exception as db_error:
+            print(f"❌ Database error, falling back to API: {db_error}")
+            try:
+                print("🔄 Fetching fresh clan member data from RuneScape API...")
+                t_api0 = time_module.time()
+                members = await fetch_clan_members()
+                t_api = time_module.time()
+                print(f"[Perf] /api/clan/members API fetch={int((t_api - t_api0)*1000)}ms count={len(members)}")
+                
+                if not members:
+                    raise Exception("No members returned from API")
+                    
+            except Exception as api_error:
+                raise Exception(f"Both database and API failed: DB={db_error}, API={api_error}")
+    else:
+        try:
+            print("🔄 Fetching fresh clan member data from RuneScape API (fresh=True)...")
+            t_api0 = time_module.time()
+            members = await fetch_clan_members()
+            t_api = time_module.time()
+            print(f"[Perf] /api/clan/members API fetch={int((t_api - t_api0)*1000)}ms count={len(members)}")
+            
+            if not members:
+                raise Exception("No members returned from API")
+                
+        except Exception as api_error:
+            print(f"❌ API error, falling back to database: {api_error}")
+            db_members = await prisma.clanmember.find_many()
+            t_db = time_module.time()
+            if db_members and len(db_members) > 0:
+                members = []
+                for member in db_members:
+                    badges = []
+                    if member.badges:
+                        try:
+                            badges = json.loads(member.badges)
+                        except:
+                            badges = []
+                    
+                    members.append({
+                        'username': member.username,
+                        'clan_rank': member.clanRank,
+                        'total_xp': int(member.totalXp),
+                        'total_level': member.totalLevel,
+                        'combat_level': member.combatLevel,
+                        'kills': member.kills,
+                        'last_updated': member.lastUpdated.isoformat(),
+                        'badges': badges
+                    })
+                t_transform = time_module.time()
+                print(f"[Perf] /api/clan/members DB fallback={int((t_db - t0)*1000)}ms transform={int((t_transform - t_db)*1000)}ms rows={len(db_members)}")
+            else:
+                raise Exception("No members found in database either")
     
     if search:
         search_lower = search.lower()
