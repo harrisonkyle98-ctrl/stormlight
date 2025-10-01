@@ -25,7 +25,8 @@ def calculate_rank_needed(join_date: datetime, current_rank: str) -> str:
     if not join_date:
         return "Unknown"
     
-    days_in_clan = (datetime.now() - join_date).days
+    join_date_naive = join_date.replace(tzinfo=None) if join_date.tzinfo else join_date
+    days_in_clan = (datetime.now() - join_date_naive).days
     
     if days_in_clan >= 730:  # 2+ years
         return "Coordinator"
