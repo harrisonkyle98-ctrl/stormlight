@@ -54,11 +54,15 @@ export const RankTrackingTab = () => {
       if (membersResponse.ok) {
         const membersData = await membersResponse.json()
         setMembers(membersData.members || [])
+      } else {
+        console.error('Failed to fetch members:', membersResponse.status)
       }
 
       if (trackingResponse.ok) {
         const trackingData = await trackingResponse.json()
         setRankTracking(trackingData.tracking || [])
+      } else {
+        console.error('Failed to fetch rank tracking:', trackingResponse.status)
       }
     } catch (error) {
       console.error('Error fetching rank tracking data:', error)
@@ -80,9 +84,19 @@ export const RankTrackingTab = () => {
       })
 
       if (response.ok) {
-        await fetchMembersAndTracking()
+        const trackingResponse = await fetch(`${API_URL}/api/admin/rank-tracking`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        
+        if (trackingResponse.ok) {
+          const trackingData = await trackingResponse.json()
+          setRankTracking(trackingData.tracking || [])
+        }
+        
         setEditingMember(null)
         setEditJoinDate('')
+      } else {
+        console.error('Failed to update join date:', response.status)
       }
     } catch (error) {
       console.error('Error updating join date:', error)
