@@ -616,9 +616,7 @@ const PlayerProfile = () => {
                     {nonRankBadges.map((badge, index) => (
                       <div
                         key={badge.id}
-                        style={{
-                          marginBottom: index < nonRankBadges.length - 1 ? '8rem' : '0'
-                        }}
+                        className={index < nonRankBadges.length - 1 ? 'mb-32' : ''}
                       >
                         <RunePixelsTooltip
                           content={
