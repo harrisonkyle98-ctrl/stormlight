@@ -643,6 +643,10 @@ async def sync_clan_members_to_database_with_queue():
             await prisma.connect()
             print("✅ Database connected successfully")
         
+        print("🗑️ Clearing existing clan_members table to avoid duplicates...")
+        deleted_count = await prisma.clanmember.delete_many()
+        print(f"✅ Cleared {deleted_count} existing clan members")
+        
         clan_data = await fetch_clan_members()
         print(f"📥 Fetched {len(clan_data)} clan members for repopulation")
         
