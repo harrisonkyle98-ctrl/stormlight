@@ -1671,7 +1671,7 @@ async def fetch_clan_members() -> List[Dict[str, Any]]:
             response = await client.get(clan_url)
             
             if response.status_code == 200:
-                content = response.content.decode('utf-8', errors='replace')
+                content = response.content.decode('latin-1')
                 lines = content.strip().split('\n')
                 members = []
                 
