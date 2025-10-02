@@ -3065,7 +3065,16 @@ async def get_boss_rare_drop_table(boss_name: str) -> list:
             'helwyr': ['Wand of the cywir elders', 'Orb of the cywir elders', 'Cywir orb', 'Dormant anima core helm', 'Dormant anima core body', 'Dormant anima core legs'],
             'vindicta': ['Dragon rider lance', 'Dormant anima core helm', 'Dormant anima core body', 'Dormant anima core legs'],
             'gregorovic': ['Shadow glaive', 'Dormant anima core helm', 'Dormant anima core body', 'Dormant anima core legs'],
-            'twin furies': ['Blade of Nymora', 'Blade of Avaryss', 'Dormant anima core helm', 'Dormant anima core body', 'Dormant anima core legs']
+            'twin furies': ['Blade of Nymora', 'Blade of Avaryss', 'Dormant anima core helm', 'Dormant anima core body', 'Dormant anima core legs'],
+            'vorago': ['Seismic wand', 'Seismic singularity', 'Tectonic mask', 'Tectonic robe top', 'Tectonic robe bottom'],
+            'araxxor': ['Araxxi\'s fang', 'Araxxi\'s web', 'Araxxi\'s eye', 'Noxious scythe', 'Noxious longbow', 'Noxious staff'],
+            'telos': ['Orb of the Cywir elders', 'Wand of the Cywir elders', 'Dormant Seren godbow'],
+            'solak': ['Blightbound crossbow', 'Grimoire', 'Merethiel'],
+            'raksha': ['Ripper claw', 'Fleeting boots', 'Blast diffusion boots', 'Laceration boots'],
+            'arch-glacor': ['Leng artefact', 'Scripture of Wen', 'Frozen core of Leng'],
+            'kerapac': ['Scripture of Jas', 'Gconc', 'Time\'s arrow'],
+            'zuk': ['Magma tempest codex', 'Scripture of Ful', 'Obsidian blade'],
+            'misc': ['Dormant anima core helm', 'Dormant anima core body', 'Dormant anima core legs', 'Crest of Zaros', 'Crest of Sliske', 'Crest of Zamorak', 'Crest of Seren']
         }
         
         boss_key = boss_name.lower()
@@ -3086,7 +3095,7 @@ async def get_boss_rare_drop_table(boss_name: str) -> list:
             'srlimit': 1
         }
         
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             search_response = await client.get(search_url, params=search_params)
             if search_response.status_code == 200:
                 search_data = search_response.json()
