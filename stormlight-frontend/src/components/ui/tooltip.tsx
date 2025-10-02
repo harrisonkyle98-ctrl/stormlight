@@ -164,7 +164,7 @@ export const RunePixelsTooltip = ({ content, children, disabled = false }: RuneP
 
   return (
     <>
-      <div ref={triggerRef} className="block">
+      <div ref={triggerRef} className="contents">
         {children}
       </div>
       {isVisible && (
