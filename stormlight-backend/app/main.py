@@ -1780,7 +1780,7 @@ async def get_clan_members_paginated(
     fresh: bool = False
 ):
     """Get clan members with pagination and search"""
-    if limit not in [15, 30, 50]:
+    if limit not in [15, 30, 50, 100, 250]:
         limit = 15
     
     t0 = time_module.time()
