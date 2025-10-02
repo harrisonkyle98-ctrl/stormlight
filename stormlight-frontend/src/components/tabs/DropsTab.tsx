@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Package, Filter } from 'lucide-react'
+import { Package, Filter, ChevronDown, ChevronUp } from 'lucide-react'
 import { usernameToUrl } from '../../utils/urlUtils'
 
 interface TabProps {
@@ -17,113 +17,174 @@ interface DropData {
   activity_text: string;
 }
 
+interface RareDropItem {
+  name: string;
+  image_url: string;
+  count: number;
+  has_drop: boolean;
+}
+
+interface BossDropTable {
+  boss_name: string;
+  items: RareDropItem[];
+}
+
 export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProps) => {
-  const [drops, setDrops] = useState<DropData[]>([]);
+  const [bossDropTables, setBossDropTables] = useState<BossDropTable[]>([]);
+  const [userDrops, setUserDrops] = useState<DropData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [dropPage, setDropPage] = useState(1);
-  const [hasMoreDrops, setHasMoreDrops] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [bossFilter, setBossFilter] = useState<string>('');
   const [itemFilter, setItemFilter] = useState<string>('');
+  const [expandedBosses, setExpandedBosses] = useState<Set<string>>(new Set());
 
-  const fetchDrops = async (append: boolean = false) => {
+  const fetchBossDropTables = async () => {
     try {
-      if (append) {
-        setLoadingMore(true);
-      } else {
-        setLoading(true);
-      }
-      
-      const urlUsername = usernameToUrl(username);
-      const page = append ? dropPage + 1 : 1;
-      const response = await fetch(`${API_URL}/api/player/${urlUsername}/drops?page=${page}&limit=10`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        const newDrops = data.drops || [];
-        
-        if (append) {
-          setDrops(prev => [...prev, ...newDrops]);
-          setDropPage(page);
-        } else {
-          setDrops(newDrops);
-          setDropPage(1);
+      const bosses = [
+        "Amascut, the Devourer",
+        "Commander Zilyana", 
+        "Kree'arra",
+        "General Graardor",
+        "K'ril Tsutsaroth",
+        "Helwyr",
+        "Vindicta",
+        "Gregorovic", 
+        "Twin Furies",
+        "Nex",
+        "Vorago",
+        "Araxxor",
+        "Telos",
+        "Solak",
+        "Raksha"
+      ];
+
+      const fetchBossWithTimeout = async (boss: string): Promise<BossDropTable | null> => {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout per boss
+          
+          const response = await fetch(
+            `${API_URL}/api/boss/${encodeURIComponent(boss)}/rare-drops`,
+            { signal: controller.signal }
+          );
+          
+          clearTimeout(timeoutId);
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.items && data.items.length > 0) {
+              return {
+                boss_name: boss,
+                items: data.items.map((item: any) => ({
+                  name: item.name,
+                  image_url: item.image_url || '/api/placeholder/32/32',
+                  count: 0,
+                  has_drop: false
+                }))
+              };
+            }
+          }
+          return null;
+        } catch (err) {
+          console.error(`Failed to fetch drops for ${boss}:`, err);
+          return null;
         }
-        
-        setHasMoreDrops(data.has_more || false);
-        setError(null);
-      } else {
-        setError('Failed to load drops');
-      }
+      };
+
+      const results = await Promise.allSettled(
+        bosses.map(boss => fetchBossWithTimeout(boss))
+      );
+
+      const dropTables: BossDropTable[] = results
+        .filter((result): result is PromiseFulfilledResult<BossDropTable | null> => 
+          result.status === 'fulfilled' && result.value !== null
+        )
+        .map(result => result.value!);
+
+      setBossDropTables(dropTables);
+      console.log(`Successfully loaded ${dropTables.length}/${bosses.length} boss drop tables`);
     } catch (err) {
-      setError('Failed to load drops');
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      console.error('Error fetching boss drop tables:', err);
     }
   };
 
-  const loadMoreDrops = () => {
-    fetchDrops(true);
+  const fetchUserDrops = async () => {
+    try {
+      const urlUsername = usernameToUrl(username);
+      const response = await fetch(`${API_URL}/api/player/${urlUsername}/drops?limit=50`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch user drops');
+      }
+
+      const data = await response.json();
+      setUserDrops(data.drops || []);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load drops');
+      console.error('Error fetching user drops:', err);
+    }
+  };
+
+  const mergeDropData = () => {
+    const userDropCounts = userDrops.reduce((acc, drop) => {
+      const key = `${drop.boss_name}:${drop.item_name}`;
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return bossDropTables.map(table => ({
+      ...table,
+      items: table.items.map(item => {
+        const key = `${table.boss_name}:${item.name}`;
+        const count = userDropCounts[key] || 0;
+        return {
+          ...item,
+          count,
+          has_drop: count > 0
+        };
+      })
+    }));
   };
 
   useEffect(() => {
-    fetchDrops();
-  }, [API_URL, username]);
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([fetchBossDropTables(), fetchUserDrops()]);
+      setLoading(false);
+    };
 
-  const filteredDrops = drops.filter(drop => {
-    const matchesBoss = !bossFilter || drop.boss_name.toLowerCase().includes(bossFilter.toLowerCase());
-    const matchesItem = !itemFilter || drop.item_name.toLowerCase().includes(itemFilter.toLowerCase());
-    return matchesBoss && matchesItem;
+    loadData();
+  }, [username, API_URL]);
+
+  const toggleBoss = (bossName: string) => {
+    const newExpanded = new Set(expandedBosses);
+    if (newExpanded.has(bossName)) {
+      newExpanded.delete(bossName);
+    } else {
+      newExpanded.add(bossName);
+    }
+    setExpandedBosses(newExpanded);
+  };
+
+  const mergedData = mergeDropData();
+  
+  const filteredData = mergedData.filter(table => {
+    if (bossFilter && !table.boss_name.toLowerCase().includes(bossFilter.toLowerCase())) {
+      return false;
+    }
+    if (itemFilter) {
+      return table.items.some(item => 
+        item.name.toLowerCase().includes(itemFilter.toLowerCase())
+      );
+    }
+    return true;
   });
-
-  const groupedDrops = filteredDrops.reduce((groups, drop) => {
-    const cleanBossName = drop.boss_name.replace(/^a\s+/i, '').trim();
-    const cleanItemName = drop.item_name.replace(/^some\s+/i, '').trim();
-    
-    if (!groups[cleanBossName]) {
-      groups[cleanBossName] = {};
-    }
-    
-    if (!groups[cleanBossName][cleanItemName]) {
-      groups[cleanBossName][cleanItemName] = {
-        item_name: cleanItemName,
-        item_image_url: drop.item_image_url,
-        count: 0,
-        mostRecentTimestamp: 0
-      };
-    }
-    
-    groups[cleanBossName][cleanItemName].count++;
-    groups[cleanBossName][cleanItemName].mostRecentTimestamp = Math.max(
-      groups[cleanBossName][cleanItemName].mostRecentTimestamp,
-      drop.activity_timestamp
-    );
-    
-    return groups;
-  }, {} as Record<string, Record<string, { item_name: string; item_image_url: string; count: number; mostRecentTimestamp: number }>>);
-
-  const sortedBossGroups = Object.entries(groupedDrops)
-    .map(([cleanBossName, items]) => {
-      const itemsArray = Object.values(items).sort((a, b) => a.item_name.localeCompare(b.item_name));
-      const totalDrops = itemsArray.reduce((sum, item) => sum + item.count, 0);
-      const mostRecentTimestamp = Math.max(...itemsArray.map(item => item.mostRecentTimestamp));
-      
-      return {
-        bossName: cleanBossName,
-        items: itemsArray,
-        totalDrops,
-        mostRecentTimestamp
-      };
-    })
-    .sort((a, b) => b.mostRecentTimestamp - a.mostRecentTimestamp);
 
   if (loading) {
     return (
       <div className="text-center py-12">
         <Package className="w-16 h-16 text-slate-400 mx-auto mb-4 animate-spin" />
-        <p className="text-slate-400 text-lg">Loading drops...</p>
+        <p className="text-slate-400 text-lg">Loading rare drop tables...</p>
       </div>
     );
   }
@@ -132,7 +193,14 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
     return (
       <div className="text-center py-12">
         <Package className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-        <p className="text-red-400 text-lg">{error}</p>
+        <p className="text-red-400 text-lg">Error loading drops</p>
+        <p className="text-slate-500 text-sm mt-2">{error}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -163,61 +231,80 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
         </div>
       </div>
 
-      {sortedBossGroups.length > 0 ? (
-        <>
-          {sortedBossGroups.map((bossGroup) => (
-            <div key={bossGroup.bossName} className="space-y-2">
-              {/* Boss Header */}
-              <div className="bg-slate-600/50 px-4 py-3 rounded-lg border-l-4 border-blue-500">
-                <h3 className="text-white font-semibold text-lg">{bossGroup.bossName}</h3>
-                <p className="text-slate-300 text-sm">{bossGroup.totalDrops} drop{bossGroup.totalDrops !== 1 ? 's' : ''}</p>
-              </div>
-              
-              {/* Boss Items */}
-              <div className="space-y-1 ml-4">
-                {bossGroup.items.map((item, index) => (
-                  <div key={index} className="bg-slate-700/30 p-3 rounded-lg flex items-center justify-between hover:bg-slate-700/50 transition-colors">
-                    <div className="flex items-center space-x-3">
-                      <img
-                        src={item.item_image_url}
-                        alt={item.item_name}
-                        className="w-10 h-10 rounded border border-slate-600"
-                        onError={(e) => {
-                          e.currentTarget.src = "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png";
-                        }}
-                      />
-                      <div>
-                        <h4 className="text-white font-medium">{item.item_name}</h4>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-white text-lg font-bold">{item.count}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-          
-          {hasMoreDrops && (
-            <div className="text-center pt-4">
-              <button
-                onClick={loadMoreDrops}
-                disabled={loadingMore}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white rounded-lg transition-colors"
-              >
-                {loadingMore ? 'Loading...' : 'See More'}
-              </button>
-            </div>
-          )}
-        </>
-      ) : (
+      {/* Boss drop tables */}
+      {filteredData.length === 0 ? (
         <div className="text-center py-12">
           <Package className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-          <p className="text-slate-400 text-lg">No drops found</p>
+          <p className="text-slate-400 text-lg">No boss drop tables found</p>
           <p className="text-slate-500 text-sm mt-2">
-            {bossFilter || itemFilter ? 'Try adjusting your filters' : 'This player has no recorded boss drops'}
+            {bossFilter || itemFilter ? 'Try adjusting your filters' : 'Unable to load rare drop tables'}
           </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredData.map((table) => {
+            const isExpanded = expandedBosses.has(table.boss_name);
+            const ownedItems = table.items.filter(item => item.has_drop).length;
+            const totalItems = table.items.length;
+            
+            return (
+              <div key={table.boss_name} className="space-y-2">
+                <button
+                  onClick={() => toggleBoss(table.boss_name)}
+                  className="w-full bg-slate-600/50 px-4 py-3 rounded-lg border-l-4 border-blue-500 flex items-center justify-between hover:bg-slate-600/70 transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <Package className="w-5 h-5 text-blue-400" />
+                    <h3 className="text-white font-semibold text-lg">{table.boss_name}</h3>
+                    <p className="text-slate-300 text-sm">
+                      ({ownedItems}/{totalItems} items)
+                    </p>
+                  </div>
+                  {isExpanded ? (
+                    <ChevronUp className="w-5 h-5 text-slate-400" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-slate-400" />
+                  )}
+                </button>
+                
+                {isExpanded && (
+                  <div className="space-y-1 ml-4">
+                    {table.items
+                      .filter(item => !itemFilter || item.name.toLowerCase().includes(itemFilter.toLowerCase()))
+                      .map((item) => (
+                      <div 
+                        key={item.name} 
+                        className={`bg-slate-700/30 p-3 rounded-lg flex items-center justify-between hover:bg-slate-700/50 transition-colors ${
+                          item.has_drop ? '' : 'opacity-50'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <img
+                            src={item.image_url}
+                            alt={item.name}
+                            className={`w-10 h-10 rounded border border-slate-600 ${item.has_drop ? '' : 'grayscale'}`}
+                            onError={(e) => {
+                              e.currentTarget.src = "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png";
+                            }}
+                          />
+                          <div>
+                            <h4 className={`font-medium ${
+                              item.has_drop ? 'text-white' : 'text-slate-500'
+                            }`}>{item.name}</h4>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-lg font-bold ${
+                            item.has_drop ? 'text-green-400' : 'text-slate-600'
+                          }`}>{item.count}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
