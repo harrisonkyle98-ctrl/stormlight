@@ -612,7 +612,7 @@ const PlayerProfile = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     {nonRankBadges.map((badge) => (
                       <RunePixelsTooltip
                         key={badge.id}
