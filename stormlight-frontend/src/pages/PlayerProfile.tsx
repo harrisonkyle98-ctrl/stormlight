@@ -644,12 +644,12 @@ const PlayerProfile = () => {
             ) : null
           })()}
 
-          {/* Skills at 120 Card */}
+          {/* Skills at 120+ Card */}
           {playerData.stats && (() => {
-            const skillsAt120 = skillOrder
+            const skillsAt120Plus = skillOrder
               .filter(skill => {
                 if (skill === 'overall') return false
-                return playerData.stats[skill] && playerData.stats[skill].level === 120
+                return playerData.stats[skill] && playerData.stats[skill].level >= 120
               })
               .map(skill => ({
                 name: skill,
@@ -657,17 +657,17 @@ const PlayerProfile = () => {
               }))
               .filter(skill => skill.icon)
 
-            return skillsAt120.length > 0 ? (
+            return skillsAt120Plus.length > 0 ? (
               <Card className="bg-slate-800/50 border-slate-700">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center space-x-2">
                     <Trophy className="w-5 h-5 text-yellow-400" />
-                    <span>Skills at 120 [{skillsAt120.length}]</span>
+                    <span>Skills at 120 [{skillsAt120Plus.length}]</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                    {skillsAt120.map((skill) => (
+                    {skillsAt120Plus.map((skill) => (
                       <div
                         key={skill.name}
                         className="flex items-center justify-center p-2 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors"
@@ -676,7 +676,7 @@ const PlayerProfile = () => {
                         <img
                           src={skill.icon!}
                           alt={skill.name}
-                          className="w-8 h-8"
+                          className="w-6 h-6"
                         />
                       </div>
                     ))}
