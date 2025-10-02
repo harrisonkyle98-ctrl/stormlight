@@ -3022,6 +3022,109 @@ async def get_item_image_from_wiki(item_name: str) -> str:
         print(f"Error fetching item image for {item_name}: {e}")
         return "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png"
 
+async def is_rare_drop_item(item_name: str) -> bool:
+    """Check if an item is a rare drop using Wiki API and known patterns"""
+    try:
+        common_items = [
+            'coins', 'gp', 'gold pieces', 'bones', 'ashes', 'food', 'potions',
+            'runes', 'arrows', 'bolts', 'logs', 'ore', 'bars', 'herbs',
+            'seeds', 'gems', 'charms', 'essence', 'shards', 'large amount of coins'
+        ]
+        
+        item_lower = item_name.lower().strip()
+        
+        # Exclude common items
+        if any(common in item_lower for common in common_items):
+            return False
+        
+        # Exclude kill events that might have slipped through
+        kill_indicators = ['killed', 'defeating', 'defeated', 'slain', 'kill count']
+        if any(indicator in item_lower for indicator in kill_indicators):
+            return False
+        
+        drop_sources = await get_item_drop_sources_from_wiki(item_name)
+        
+        if drop_sources and len(drop_sources) <= 3:
+            return True
+            
+        return False
+    except Exception as e:
+        print(f"Error checking rarity for {item_name}: {e}")
+        return True  # Default to including if unsure
+
+async def get_boss_rare_drop_table(boss_name: str) -> list:
+    """Get the complete rare drop table for a specific boss from RuneScape Wiki"""
+    try:
+        search_url = "https://runescape.wiki/api.php"
+        
+        search_params = {
+            'action': 'query',
+            'format': 'json',
+            'list': 'search',
+            'srsearch': f"{boss_name} drops",
+            'srlimit': 1
+        }
+        
+        async with httpx.AsyncClient() as client:
+            search_response = await client.get(search_url, params=search_params)
+            if search_response.status_code == 200:
+                search_data = search_response.json()
+                
+                if search_data.get('query', {}).get('search'):
+                    page_title = search_data['query']['search'][0]['title']
+                    
+                    content_params = {
+                        'action': 'query',
+                        'format': 'json',
+                        'titles': page_title,
+                        'prop': 'extracts|revisions',
+                        'exintro': False,
+                        'explaintext': True,
+                        'rvprop': 'content',
+                        'rvslots': 'main'
+                    }
+                    
+                    content_response = await client.get(search_url, params=content_params)
+                    if content_response.status_code == 200:
+                        content_data = content_response.json()
+                        pages = content_data.get('query', {}).get('pages', {})
+                        
+                        rare_drops = []
+                        
+                        for page_id, page_data in pages.items():
+                            extract = page_data.get('extract', '').lower()
+                            revisions = page_data.get('revisions', [])
+                            
+                            if revisions:
+                                raw_content = revisions[0].get('slots', {}).get('main', {}).get('*', '').lower()
+                                content_to_search = extract + " " + raw_content
+                            else:
+                                content_to_search = extract
+                            
+                            item_patterns = [
+                                r'\[\[([^|\]]+)\]\].*(?:rare|1/\d+|unique)',
+                                r'(?:rare|unique|very rare).*\[\[([^|\]]+)\]\]',
+                                r'\*\s*\[\[([^|\]]+)\]\].*(?:rare|1/\d+)',
+                                r'(?:drops?|loots?).*\[\[([^|\]]+)\]\]'
+                            ]
+                            
+                            for pattern in item_patterns:
+                                matches = re.findall(pattern, content_to_search, re.IGNORECASE)
+                                for match in matches:
+                                    item_name = match.strip()
+                                    if len(item_name) > 2 and item_name not in rare_drops:
+                                        common_items = ['coins', 'bones', 'ashes', 'runes', 'arrows', 'food']
+                                        if not any(common in item_name.lower() for common in common_items):
+                                            rare_drops.append(item_name)
+                        
+                        return rare_drops[:20]
+        
+        return []
+        
+    except Exception as e:
+        print(f"Error fetching rare drops for {boss_name}: {e}")
+        return []
+
 async def get_item_drop_sources_from_wiki(item_name: str) -> list:
     """Get item drop sources from RuneScape Wiki API to determine boss associations"""
     try:
@@ -3165,6 +3268,11 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
                 activity_text = activity['text']
                 details = activity.get('details', '')
                 
+                # Exclude kill events and non-drop activities
+                kill_indicators = ['killed', 'defeating', 'defeated', 'slain', 'kill count']
+                if any(indicator in activity_text.lower() for indicator in kill_indicators):
+                    continue
+                
                 drop_indicators = ['looted', 'found', 'received', 'obtained']
                 
                 text_has_drop = any(indicator in activity_text.lower() for indicator in drop_indicators)
@@ -3203,12 +3311,20 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
                         
                         print(f"DEBUG: Final item name: '{item_name}'")
                         
+                        if not await is_rare_drop_item(item_name):
+                            print(f"DEBUG: Skipping common item: '{item_name}'")
+                            continue
+                        
                         drop_sources = await get_item_drop_sources_from_wiki(item_name)
                         
                         if len(drop_sources) > 1:
                             boss_name = "Misc"
                             print(f"DEBUG: Multi-boss item '{item_name}' assigned to Misc (sources: {drop_sources})")
+                        elif len(drop_sources) == 1:
+                            boss_name = drop_sources[0]
+                            print(f"DEBUG: Single-boss item '{item_name}' assigned to '{boss_name}'")
                         else:
+                            # Fallback to activity details parsing
                             boss_match = (
                                 re.search(r"After (?:killing|defeating) (.+?), (?:it dropped|I (?:looted|found))", details) or
                                 re.search(r"While exploring (.+?), I (?:looted|found)", details) or
@@ -3244,6 +3360,28 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
     return drops_found
 
 
+
+@api_router.get("/boss/{boss_name}/rare-drops")
+async def get_boss_rare_drops(boss_name: str):
+    """Get the rare drop table for a specific boss"""
+    try:
+        rare_drops = await get_boss_rare_drop_table(boss_name)
+        
+        items = []
+        for item_name in rare_drops:
+            image_url = await get_item_image_from_wiki(item_name)
+            items.append({
+                "name": item_name,
+                "image_url": image_url
+            })
+        
+        return {
+            "boss_name": boss_name,
+            "items": items
+        }
+    except Exception as e:
+        print(f"Error getting rare drops for {boss_name}: {e}")
+        return {"boss_name": boss_name, "items": []}
 
 @api_router.get("/clan/drops")
 async def get_clan_drops(page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50)):
