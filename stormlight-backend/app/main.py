@@ -3102,19 +3102,46 @@ async def get_boss_rare_drop_table(boss_name: str) -> list:
                                 content_to_search = extract
                             
                             item_patterns = [
-                                r'\[\[([^|\]]+)\]\].*(?:rare|1/\d+|unique)',
-                                r'(?:rare|unique|very rare).*\[\[([^|\]]+)\]\]',
-                                r'\*\s*\[\[([^|\]]+)\]\].*(?:rare|1/\d+)',
-                                r'(?:drops?|loots?).*\[\[([^|\]]+)\]\]'
+                                r'\[\[([^|\]]+(?:\s+(?:helm|helmet|chestplate|platebody|legs|boots|gloves|gauntlets|sword|bow|staff|wand|shield|ring|amulet|necklace|cape|cloak))?)\]\]',
+                                r'\*\s*\[\[([^|\]]+)\]\](?:\s*-\s*(?:rare|1/\d+|very rare))?',
+                                r'(?:rare drop|unique drop|boss drop).*?\[\[([^|\]]+)\]\]',
+                                r'\[\[([^|\]]+)\]\].*?(?:1/\d+|rare|unique|very rare)',
                             ]
+                            
+                            known_boss_drops = {
+                                'nex': ['Torva full helm', 'Torva platebody', 'Torva platelegs', 'Pernix cowl', 'Pernix body', 'Pernix chaps', 'Virtus mask', 'Virtus robe top', 'Virtus robe legs', 'Zaryte bow'],
+                                'amascut': ['Boots of Tumeken\'s resplendence', 'Gloves of Tumeken\'s resplendence', 'Tumeken\'s shadow', 'Elidinis\' ward', 'Masori mask', 'Masori body', 'Masori chaps'],
+                                'commander zilyana': ['Saradomin sword', 'Saradomin\'s light', 'Armadyl crossbow', 'Saradomin hilt'],
+                                'general graardor': ['Bandos chestplate', 'Bandos tassets', 'Bandos boots', 'Bandos gloves', 'Bandos hilt'],
+                                'kree\'arra': ['Armadyl helmet', 'Armadyl chestplate', 'Armadyl chainskirt', 'Armadyl gloves', 'Armadyl hilt'],
+                                'k\'ril tsutsaroth': ['Subjugation hood', 'Subjugation gown', 'Subjugation trousers', 'Subjugation gloves', 'Zamorak hilt'],
+                                'helwyr': ['Wand of the cywir elders', 'Orb of the cywir elders', 'Cywir orb', 'Dormant anima core helm', 'Dormant anima core body', 'Dormant anima core legs'],
+                                'vindicta': ['Dragon rider lance', 'Dormant anima core helm', 'Dormant anima core body', 'Dormant anima core legs'],
+                                'gregorovic': ['Shadow glaive', 'Dormant anima core helm', 'Dormant anima core body', 'Dormant anima core legs'],
+                                'twin furies': ['Blade of Nymora', 'Blade of Avaryss', 'Dormant anima core helm', 'Dormant anima core body', 'Dormant anima core legs']
+                            }
+                            
+                            boss_key = boss_name.lower()
+                            if boss_key in known_boss_drops:
+                                rare_drops.extend(known_boss_drops[boss_key])
                             
                             for pattern in item_patterns:
                                 matches = re.findall(pattern, content_to_search, re.IGNORECASE)
                                 for match in matches:
                                     item_name = match.strip()
-                                    if len(item_name) > 2 and item_name not in rare_drops:
-                                        common_items = ['coins', 'bones', 'ashes', 'runes', 'arrows', 'food']
-                                        if not any(common in item_name.lower() for common in common_items):
+                                    if len(item_name) > 3 and item_name not in rare_drops:
+                                        # Exclude generic terms and common items
+                                        excluded_terms = [
+                                            'coins', 'bones', 'ashes', 'runes', 'arrows', 'food', 'potions',
+                                            'smithing', 'necromancy', 'combat', 'magic', 'ranged', 'melee',
+                                            'attack', 'strength', 'defence', 'prayer', 'slayer', 'fishing',
+                                            'cooking', 'firemaking', 'woodcutting', 'mining', 'herblore',
+                                            'agility', 'thieving', 'crafting', 'fletching', 'runecrafting',
+                                            'construction', 'hunter', 'summoning', 'dungeoneering', 'divination',
+                                            'invention', 'archaeology', 'farming', 'category', 'file', 'image',
+                                            'template', 'redirect', 'disambiguation', 'infobox'
+                                        ]
+                                        if not any(term in item_name.lower() for term in excluded_terms):
                                             rare_drops.append(item_name)
                         
                         return rare_drops[:20]
