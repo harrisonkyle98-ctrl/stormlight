@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { ArrowLeft, User, TrendingUp, Crown, Package, Activity, MapPin, BarChart3, Swords, FileText, RefreshCw, Plus, X } from 'lucide-react'
+import { ArrowLeft, User, TrendingUp, Crown, Package, Activity, MapPin, BarChart3, Swords, FileText, RefreshCw, Plus, X, Trophy } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { getSkillIcon } from '../utils/skillIcons'
 import { getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
@@ -636,6 +636,48 @@ const PlayerProfile = () => {
                             <X className="w-3 h-3" />
                           </Button>
                         )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null
+          })()}
+
+          {/* Skills at 120 Card */}
+          {playerData.stats && (() => {
+            const skillsAt120 = skillOrder
+              .filter(skill => {
+                if (skill === 'overall') return false
+                return playerData.stats[skill] && playerData.stats[skill].level === 120
+              })
+              .map(skill => ({
+                name: skill,
+                icon: getSkillIcon(skill)
+              }))
+              .filter(skill => skill.icon)
+
+            return skillsAt120.length > 0 ? (
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center space-x-2">
+                    <Trophy className="w-5 h-5 text-yellow-400" />
+                    <span>Skills at 120 [{skillsAt120.length}]</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                    {skillsAt120.map((skill) => (
+                      <div
+                        key={skill.name}
+                        className="flex items-center justify-center p-2 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors"
+                        title={skill.name.charAt(0).toUpperCase() + skill.name.slice(1)}
+                      >
+                        <img
+                          src={skill.icon!}
+                          alt={skill.name}
+                          className="w-8 h-8"
+                        />
                       </div>
                     ))}
                   </div>
