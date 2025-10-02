@@ -614,21 +614,25 @@ const PlayerProfile = () => {
                 <CardContent>
                   <div>
                     {nonRankBadges.map((badge, index) => (
-                      <RunePixelsTooltip
+                      <div
                         key={badge.id}
-                        content={
-                          <div>
-                            <div className="font-semibold text-white">{badge.name}</div>
-                          </div>
-                        }
+                        style={{
+                          marginBottom: index < nonRankBadges.length - 1 ? '8rem' : '0'
+                        }}
                       >
-                        <div
-                          className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white relative group cursor-help"
-                          style={{
-                            background: badge.gradientBackground || badge.backgroundColor,
-                            marginBottom: index < nonRankBadges.length - 1 ? '8rem' : '0'
-                          }}
+                        <RunePixelsTooltip
+                          content={
+                            <div>
+                              <div className="font-semibold text-white">{badge.name}</div>
+                            </div>
+                          }
                         >
+                          <div
+                            className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white relative group cursor-help"
+                            style={{
+                              background: badge.gradientBackground || badge.backgroundColor
+                            }}
+                          >
                           <img
                             src={badge.icon}
                             alt={badge.name}
@@ -645,8 +649,9 @@ const PlayerProfile = () => {
                               <X className="w-3 h-3" />
                             </Button>
                           )}
-                        </div>
-                      </RunePixelsTooltip>
+                          </div>
+                        </RunePixelsTooltip>
+                      </div>
                     ))}
                   </div>
                 </CardContent>
