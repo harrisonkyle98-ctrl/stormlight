@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Package, Filter, ChevronDown, ChevronUp } from 'lucide-react'
 import { usernameToUrl } from '../../utils/urlUtils'
+import { RunePixelsTooltip } from '../ui/runepixels-tooltip'
 
 interface TabProps {
   username: string;
@@ -279,14 +280,27 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
                         }`}
                       >
                         <div className="flex items-center space-x-3">
-                          <img
-                            src={item.image_url}
-                            alt={item.name}
-                            className={`w-10 h-10 rounded border border-slate-600 ${item.has_drop ? '' : 'grayscale'}`}
-                            onError={(e) => {
-                              e.currentTarget.src = "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png";
-                            }}
-                          />
+                          <RunePixelsTooltip
+                            content={
+                              <div>
+                                <div className="font-semibold text-white">{item.name}</div>
+                                {item.has_drop && (
+                                  <div className="text-green-400 mt-1">
+                                    Owned: {item.count} {item.count === 1 ? 'drop' : 'drops'}
+                                  </div>
+                                )}
+                              </div>
+                            }
+                          >
+                            <img
+                              src={item.image_url}
+                              alt={item.name}
+                              className={`w-10 h-10 rounded border border-slate-600 cursor-help ${item.has_drop ? '' : 'grayscale'}`}
+                              onError={(e) => {
+                                e.currentTarget.src = "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png";
+                              }}
+                            />
+                          </RunePixelsTooltip>
                           <div>
                             <h4 className={`font-medium ${
                               item.has_drop ? 'text-white' : 'text-slate-500'

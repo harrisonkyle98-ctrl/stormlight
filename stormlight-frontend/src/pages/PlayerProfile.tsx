@@ -11,6 +11,7 @@ import { getSkillIcon } from '../utils/skillIcons'
 import { getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
 import { urlToUsername } from '../utils/urlUtils'
 import { useAuth } from '../contexts/AuthContext'
+import { RunePixelsTooltip } from '../components/ui/runepixels-tooltip'
 import { DropsTab } from '../components/tabs/DropsTab'
 import { ActivityTab } from '../components/tabs/ActivityTab'
 import { QuestsTab } from '../components/tabs/QuestsTab'
@@ -613,30 +614,38 @@ const PlayerProfile = () => {
                 <CardContent>
                   <div className="space-y-3">
                     {nonRankBadges.map((badge) => (
-                      <div
+                      <RunePixelsTooltip
                         key={badge.id}
-                        className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white relative group"
-                        style={{
-                          background: badge.gradientBackground || badge.backgroundColor
-                        }}
+                        content={
+                          <div>
+                            <div className="font-semibold text-white">{badge.name}</div>
+                          </div>
+                        }
                       >
-                        <img
-                          src={badge.icon}
-                          alt={badge.name}
-                          className="w-4 h-4"
-                        />
-                        <span>{badge.name}</span>
-                        {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && badge.id.includes('custom') && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleRemoveBadge(badge.id)}
-                            className="ml-2 p-1 h-6 w-6 text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                        )}
-                      </div>
+                        <div
+                          className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white relative group cursor-help"
+                          style={{
+                            background: badge.gradientBackground || badge.backgroundColor
+                          }}
+                        >
+                          <img
+                            src={badge.icon}
+                            alt={badge.name}
+                            className="w-4 h-4"
+                          />
+                          <span>{badge.name}</span>
+                          {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && badge.id.includes('custom') && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleRemoveBadge(badge.id)}
+                              className="ml-2 p-1 h-6 w-6 text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </RunePixelsTooltip>
                     ))}
                   </div>
                 </CardContent>
@@ -668,17 +677,32 @@ const PlayerProfile = () => {
                 <CardContent>
                   <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                     {skillsAt120Plus.map((skill) => (
-                      <div
+                      <RunePixelsTooltip
                         key={skill.name}
-                        className="flex items-center justify-center p-2 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors"
-                        title={skill.name.charAt(0).toUpperCase() + skill.name.slice(1)}
+                        content={
+                          <div>
+                            <div className="font-semibold text-white">
+                              {skill.name.charAt(0).toUpperCase() + skill.name.slice(1)}
+                            </div>
+                            <div className="text-green-400">
+                              Level {playerData.stats[skill.name]?.level || 0}
+                            </div>
+                            <div className="text-blue-400">
+                              {(playerData.stats[skill.name]?.xp || 0).toLocaleString()} XP
+                            </div>
+                          </div>
+                        }
                       >
-                        <img
-                          src={skill.icon!}
-                          alt={skill.name}
-                          className="w-6 h-6"
-                        />
-                      </div>
+                        <div
+                          className="flex items-center justify-center p-2 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors cursor-help"
+                        >
+                          <img
+                            src={skill.icon!}
+                            alt={skill.name}
+                            className="w-6 h-6"
+                          />
+                        </div>
+                      </RunePixelsTooltip>
                     ))}
                   </div>
                 </CardContent>
