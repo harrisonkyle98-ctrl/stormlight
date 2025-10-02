@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { ArrowLeft, User, Trophy, TrendingUp, Crown, Package, Activity, MapPin, BarChart3, Swords, FileText, RefreshCw, Plus, X } from 'lucide-react'
+import { ArrowLeft, User, TrendingUp, Crown, Package, Activity, MapPin, BarChart3, Swords, FileText, RefreshCw, Plus, X } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { getSkillIcon } from '../utils/skillIcons'
 import { getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
@@ -523,11 +523,7 @@ const PlayerProfile = () => {
 
               {overallStats && (
                 <div>
-                  <div className="flex items-center space-x-2 mb-4">
-                    <Trophy className="w-4 h-4 text-yellow-400" />
-                    <span className="text-white font-medium">Overall Stats</span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-3 gap-4 mb-4">
                     <div className="text-center">
                       <p className="text-xs text-slate-400 mb-1">Combat Level</p>
                       <p className="text-xl font-bold text-white">{overallStats.combatlevel}</p>
@@ -540,6 +536,8 @@ const PlayerProfile = () => {
                       <p className="text-xs text-slate-400 mb-1">Total Level</p>
                       <p className="text-xl font-bold text-white">{overallStats.level}</p>
                     </div>
+                  </div>
+                  <div className="space-y-4">
                     <div className="text-center">
                       <p className="text-xs text-slate-400 mb-1">Total XP</p>
                       <p className="text-xl font-bold text-green-400">
@@ -587,7 +585,7 @@ const PlayerProfile = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex justify-center flex-wrap gap-3">
+                <div className="space-y-3">
                   {playerData.stats && checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || '')).map((badge) => (
                     <div
                       key={badge.id}
