@@ -612,15 +612,10 @@ const PlayerProfile = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div>
-                    {nonRankBadges.map((badge, index) => (
-                      <div
-                        key={badge.id}
-                        style={{
-                          marginBottom: index < nonRankBadges.length - 1 ? '2rem' : '0'
-                        }}
-                      >
+                  <div className="flex flex-col gap-8">
+                    {nonRankBadges.map((badge) => (
                         <RunePixelsTooltip
+                          key={badge.id}
                           content={
                             <div>
                               <div className="font-semibold text-white">{badge.name}</div>
@@ -651,7 +646,6 @@ const PlayerProfile = () => {
                           )}
                           </div>
                         </RunePixelsTooltip>
-                      </div>
                     ))}
                   </div>
                 </CardContent>
