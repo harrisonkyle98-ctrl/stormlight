@@ -626,7 +626,7 @@ const PlayerProfile = () => {
                           className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white relative group cursor-help"
                           style={{
                             background: badge.gradientBackground || badge.backgroundColor,
-                            marginBottom: index < nonRankBadges.length - 1 ? '6rem' : '0'
+                            marginBottom: index < nonRankBadges.length - 1 ? '8rem' : '0'
                           }}
                         >
                           <img
