@@ -518,6 +518,29 @@ const PlayerProfile = () => {
                   <p className="text-slate-400 text-sm">
                     Last updated: {new Date(playerData.last_updated).toLocaleDateString()}
                   </p>
+                  
+                  {/* Rank Badge */}
+                  {playerData.stats && (() => {
+                    const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''))
+                    const rankBadge = allBadges.find(badge => badge.id.startsWith('rank-'))
+                    return rankBadge ? (
+                      <div className="mt-3">
+                        <div
+                          className="inline-flex items-center space-x-2 px-3 py-1 text-sm font-semibold rounded-md text-white"
+                          style={{
+                            background: rankBadge.gradientBackground || rankBadge.backgroundColor
+                          }}
+                        >
+                          <img
+                            src={rankBadge.icon}
+                            alt={rankBadge.name}
+                            className="w-4 h-4"
+                          />
+                          <span>{rankBadge.name}</span>
+                        </div>
+                      </div>
+                    ) : null
+                  })()}
                 </div>
               </div>
 
@@ -558,64 +581,68 @@ const PlayerProfile = () => {
             </CardContent>
           </Card>
 
-          {playerData.stats && checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || '')).length > 0 && (
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Crown className="w-5 h-5 text-yellow-400" />
-                    <span>Badges</span>
-                  </div>
-                  {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
+          {playerData.stats && (() => {
+            const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''))
+            const nonRankBadges = allBadges.filter(badge => !badge.id.startsWith('rank-'))
+            return nonRankBadges.length > 0 ? (
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <Select onValueChange={handleAssignBadge}>
-                        <SelectTrigger className="w-8 h-8 p-0 bg-blue-600 hover:bg-blue-700 border-blue-600">
-                          <Plus className="w-4 h-4 text-white" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {customBadges.map((badge) => (
-                            <SelectItem key={badge.id} value={badge.id}>
-                              {badge.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Crown className="w-5 h-5 text-yellow-400" />
+                      <span>Badges</span>
                     </div>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {playerData.stats && checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || '')).map((badge) => (
-                    <div
-                      key={badge.id}
-                      className="px-3 py-1 text-sm font-semibold flex items-center space-x-2 rounded-md text-white relative group"
-                      style={{
-                        background: badge.gradientBackground || badge.backgroundColor
-                      }}
-                    >
-                      <img
-                        src={badge.icon}
-                        alt={badge.name}
-                        className="w-4 h-4"
-                      />
-                      <span>{badge.name}</span>
-                      {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && badge.id.includes('custom') && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleRemoveBadge(badge.id)}
-                          className="ml-2 p-1 h-6 w-6 text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                    {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
+                      <div className="flex items-center space-x-2">
+                        <Select onValueChange={handleAssignBadge}>
+                          <SelectTrigger className="w-8 h-8 p-0 bg-blue-600 hover:bg-blue-700 border-blue-600">
+                            <Plus className="w-4 h-4 text-white" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {customBadges.map((badge) => (
+                              <SelectItem key={badge.id} value={badge.id}>
+                                {badge.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {nonRankBadges.map((badge) => (
+                      <div
+                        key={badge.id}
+                        className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white relative group"
+                        style={{
+                          background: badge.gradientBackground || badge.backgroundColor
+                        }}
+                      >
+                        <img
+                          src={badge.icon}
+                          alt={badge.name}
+                          className="w-4 h-4"
+                        />
+                        <span>{badge.name}</span>
+                        {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && badge.id.includes('custom') && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleRemoveBadge(badge.id)}
+                            className="ml-2 p-1 h-6 w-6 text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null
+          })()}
         </div>
 
         <div>
