@@ -612,8 +612,8 @@ const PlayerProfile = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-8">
-                    {nonRankBadges.map((badge) => (
+                  <div>
+                    {nonRankBadges.map((badge, index) => (
                       <RunePixelsTooltip
                         key={badge.id}
                           content={
@@ -625,7 +625,8 @@ const PlayerProfile = () => {
                           <div
                             className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white relative group cursor-help"
                             style={{
-                              background: badge.gradientBackground || badge.backgroundColor
+                              background: badge.gradientBackground || badge.backgroundColor,
+                              marginBottom: index < nonRankBadges.length - 1 ? '2rem' : '0'
                             }}
                           >
                           <img
