@@ -50,22 +50,22 @@ export const RunePixelsTooltip = ({ content, children, disabled = false }: RuneP
       const tooltip = tooltipRef.current;
       const tooltipRect = tooltip.getBoundingClientRect();
       
-      let x = event.clientX + 10;
-      let y = event.clientY - tooltipRect.height - 10;
+      let x = event.clientX;
+      let y = event.clientY - tooltipRect.height - 5;
       let caret: CaretPosition = 'bottom';
       
       if (x + tooltipRect.width > window.innerWidth) {
-        x = event.clientX - tooltipRect.width - 10;
+        x = event.clientX - tooltipRect.width;
         caret = 'right';
       }
       
       if (y < 0) {
-        y = event.clientY + 10;
+        y = event.clientY + 5;
         caret = 'top';
       }
       
       if (x < 0) {
-        x = event.clientX + 10;
+        x = event.clientX;
         caret = 'left';
       }
       
