@@ -3124,25 +3124,30 @@ async def get_boss_rare_drop_table(boss_name: str) -> list:
                             boss_key = boss_name.lower()
                             if boss_key in known_boss_drops:
                                 rare_drops.extend(known_boss_drops[boss_key])
+                                print(f"DEBUG: Added {len(known_boss_drops[boss_key])} hardcoded drops for {boss_name}")
+                            else:
+                                print(f"DEBUG: No hardcoded drops found for boss key '{boss_key}'")
+                                print(f"DEBUG: Available boss keys: {list(known_boss_drops.keys())}")
                             
-                            for pattern in item_patterns:
-                                matches = re.findall(pattern, content_to_search, re.IGNORECASE)
-                                for match in matches:
-                                    item_name = match.strip()
-                                    if len(item_name) > 3 and item_name not in rare_drops:
-                                        # Exclude generic terms and common items
-                                        excluded_terms = [
-                                            'coins', 'bones', 'ashes', 'runes', 'arrows', 'food', 'potions',
-                                            'smithing', 'necromancy', 'combat', 'magic', 'ranged', 'melee',
-                                            'attack', 'strength', 'defence', 'prayer', 'slayer', 'fishing',
-                                            'cooking', 'firemaking', 'woodcutting', 'mining', 'herblore',
-                                            'agility', 'thieving', 'crafting', 'fletching', 'runecrafting',
-                                            'construction', 'hunter', 'summoning', 'dungeoneering', 'divination',
-                                            'invention', 'archaeology', 'farming', 'category', 'file', 'image',
-                                            'template', 'redirect', 'disambiguation', 'infobox'
-                                        ]
-                                        if not any(term in item_name.lower() for term in excluded_terms):
-                                            rare_drops.append(item_name)
+                            if not rare_drops:
+                                for pattern in item_patterns:
+                                    matches = re.findall(pattern, content_to_search, re.IGNORECASE)
+                                    for match in matches:
+                                        item_name = match.strip()
+                                        if len(item_name) > 3 and item_name not in rare_drops:
+                                            # Exclude generic terms and common items
+                                            excluded_terms = [
+                                                'coins', 'bones', 'ashes', 'runes', 'arrows', 'food', 'potions',
+                                                'smithing', 'necromancy', 'combat', 'magic', 'ranged', 'melee',
+                                                'attack', 'strength', 'defence', 'prayer', 'slayer', 'fishing',
+                                                'cooking', 'firemaking', 'woodcutting', 'mining', 'herblore',
+                                                'agility', 'thieving', 'crafting', 'fletching', 'runecrafting',
+                                                'construction', 'hunter', 'summoning', 'dungeoneering', 'divination',
+                                                'invention', 'archaeology', 'farming', 'category', 'file', 'image',
+                                                'template', 'redirect', 'disambiguation', 'infobox'
+                                            ]
+                                            if not any(term in item_name.lower() for term in excluded_terms):
+                                                rare_drops.append(item_name)
                         
                         return rare_drops[:20]
         
