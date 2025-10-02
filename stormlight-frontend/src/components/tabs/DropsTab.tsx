@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Package, Filter, ChevronDown, ChevronUp } from 'lucide-react'
 import { usernameToUrl } from '../../utils/urlUtils'
-import { RunePixelsTooltip } from '../ui/runepixels-tooltip'
+import { RunePixelsTooltip } from '../ui/tooltip'
 
 interface TabProps {
   username: string;
