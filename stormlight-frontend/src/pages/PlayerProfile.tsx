@@ -486,164 +486,169 @@ const PlayerProfile = () => {
         </Button>
       </div>
 
-      <div className="text-center">
-        <div className="flex flex-col items-center space-y-4 mb-4">
-          <Avatar className="w-20 h-20">
-            <AvatarImage
-              src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(urlToUsername(username || ''))}/chat.png`}
-              alt={urlToUsername(username || '')}
-            />
-            <AvatarFallback className="bg-blue-600 text-white">
-              <User className="w-10 h-10" />
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <h1 className={`text-3xl font-bold ${playerData.is_verified ? 'flex items-center gap-2' : 'text-center'}`}>
-              <span 
-                style={getGradientStyle(urlToUsername(username || ''), playerData.clan_rank)}
-              >
-                {urlToUsername(username || '')}
-              </span>
-              {playerData.is_verified && (
-                <span className="text-green-400" title="Discord account verified">
-                  ✅
-                </span>
-              )}
-            </h1>
-            <p className="text-slate-400">
-              Last updated: {new Date(playerData.last_updated).toLocaleDateString()}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {playerData.stats && checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || '')).length > 0 && (
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Crown className="w-5 h-5 text-yellow-400" />
-                <span>Badges</span>
-              </div>
-              {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
-                <div className="flex items-center space-x-2">
-                  <Select onValueChange={handleAssignBadge}>
-                    <SelectTrigger className="w-8 h-8 p-0 bg-blue-600 hover:bg-blue-700 border-blue-600">
-                      <Plus className="w-4 h-4 text-white" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {customBadges.map((badge) => (
-                        <SelectItem key={badge.id} value={badge.id}>
-                          {badge.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-center flex-wrap gap-3">
-              {playerData.stats && checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || '')).map((badge) => (
-                <div
-                  key={badge.id}
-                  className="px-3 py-1 text-base font-semibold flex items-center space-x-2 rounded-md text-white relative group"
-                  style={{
-                    background: badge.gradientBackground || badge.backgroundColor
-                  }}
-                >
-                  <img
-                    src={badge.icon}
-                    alt={badge.name}
-                    className="w-5 h-5"
+      <div className="grid grid-cols-1 lg:grid-cols-[30%_70%] gap-6">
+        
+        <div className="space-y-6">
+          
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardContent className="p-6">
+              <div className="flex flex-col items-center space-y-4 mb-6">
+                <Avatar className="w-20 h-20">
+                  <AvatarImage
+                    src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(urlToUsername(username || ''))}/chat.png`}
+                    alt={urlToUsername(username || '')}
                   />
-                  <span>{badge.name}</span>
-                  {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && badge.id.includes('custom') && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleRemoveBadge(badge.id)}
-                      className="ml-2 p-1 h-6 w-6 text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-
-      {overallStats && (
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center space-x-2">
-              <Trophy className="w-5 h-5 text-yellow-400" />
-              <span>Overall Stats</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-              <div className="text-center">
-                <p className="text-sm text-slate-400 mb-1">Combat Level</p>
-                <p className="text-3xl font-bold text-white">{overallStats.combatlevel}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-sm text-slate-400 mb-1">Quest Points</p>
-                <p className="text-3xl font-bold text-white">{playerData.quest_points || 0}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-sm text-slate-400 mb-1">Total Level</p>
-                <p className="text-3xl font-bold text-white">{overallStats.level}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-sm text-slate-400 mb-1">Total XP</p>
-                <p className="text-3xl font-bold text-green-400">
-                  {overallStats.xp.toLocaleString()}
-                </p>
-              </div>
-              {overallStats.rank && (
+                  <AvatarFallback className="bg-blue-600 text-white">
+                    <User className="w-10 h-10" />
+                  </AvatarFallback>
+                </Avatar>
                 <div className="text-center">
-                  <p className="text-sm text-slate-400 mb-1">Overall Rank</p>
-                  <p className="text-3xl font-bold text-blue-400">
-                    #{overallStats.rank.toLocaleString()}
+                  <h1 className={`text-2xl font-bold ${playerData.is_verified ? 'flex items-center gap-2 justify-center' : 'text-center'}`}>
+                    <span 
+                      style={getGradientStyle(urlToUsername(username || ''), playerData.clan_rank)}
+                    >
+                      {urlToUsername(username || '')}
+                    </span>
+                    {playerData.is_verified && (
+                      <span className="text-green-400" title="Discord account verified">
+                        ✅
+                      </span>
+                    )}
+                  </h1>
+                  <p className="text-slate-400 text-sm">
+                    Last updated: {new Date(playerData.last_updated).toLocaleDateString()}
                   </p>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              </div>
 
-      <Card className="bg-slate-800/50 border-slate-700">
-        <CardHeader className="pb-4">
-          <div className="flex flex-wrap gap-2 border-b border-slate-600 pb-4">
-            {tabs.map((tab) => {
-              const IconComponent = tab.icon
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                    activeTab === tab.id
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700 hover:text-white'
-                  }`}
-                >
-                  <IconComponent className="w-4 h-4" />
-                  <span className="text-sm font-medium">{tab.label}</span>
-                </button>
-              )
-            })}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {renderTabContent()}
-        </CardContent>
-      </Card>
+              {overallStats && (
+                <div>
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Trophy className="w-4 h-4 text-yellow-400" />
+                    <span className="text-white font-medium">Overall Stats</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="text-center">
+                      <p className="text-xs text-slate-400 mb-1">Combat Level</p>
+                      <p className="text-xl font-bold text-white">{overallStats.combatlevel}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-slate-400 mb-1">Quest Points</p>
+                      <p className="text-xl font-bold text-white">{playerData.quest_points || 0}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-slate-400 mb-1">Total Level</p>
+                      <p className="text-xl font-bold text-white">{overallStats.level}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-slate-400 mb-1">Total XP</p>
+                      <p className="text-xl font-bold text-green-400">
+                        {overallStats.xp.toLocaleString()}
+                      </p>
+                    </div>
+                    {overallStats.rank && (
+                      <div className="text-center">
+                        <p className="text-xs text-slate-400 mb-1">Overall Rank</p>
+                        <p className="text-xl font-bold text-blue-400">
+                          #{overallStats.rank.toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {playerData.stats && checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || '')).length > 0 && (
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Crown className="w-5 h-5 text-yellow-400" />
+                    <span>Badges</span>
+                  </div>
+                  {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
+                    <div className="flex items-center space-x-2">
+                      <Select onValueChange={handleAssignBadge}>
+                        <SelectTrigger className="w-8 h-8 p-0 bg-blue-600 hover:bg-blue-700 border-blue-600">
+                          <Plus className="w-4 h-4 text-white" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {customBadges.map((badge) => (
+                            <SelectItem key={badge.id} value={badge.id}>
+                              {badge.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-center flex-wrap gap-3">
+                  {playerData.stats && checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || '')).map((badge) => (
+                    <div
+                      key={badge.id}
+                      className="px-3 py-1 text-sm font-semibold flex items-center space-x-2 rounded-md text-white relative group"
+                      style={{
+                        background: badge.gradientBackground || badge.backgroundColor
+                      }}
+                    >
+                      <img
+                        src={badge.icon}
+                        alt={badge.name}
+                        className="w-4 h-4"
+                      />
+                      <span>{badge.name}</span>
+                      {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && badge.id.includes('custom') && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleRemoveBadge(badge.id)}
+                          className="ml-2 p-1 h-6 w-6 text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        <div>
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardHeader className="pb-4">
+              <div className="flex flex-wrap gap-2 border-b border-slate-600 pb-4">
+                {tabs.map((tab) => {
+                  const IconComponent = tab.icon
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                        activeTab === tab.id
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700 hover:text-white'
+                      }`}
+                    >
+                      <IconComponent className="w-4 h-4" />
+                      <span className="text-sm font-medium">{tab.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {renderTabContent()}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }
