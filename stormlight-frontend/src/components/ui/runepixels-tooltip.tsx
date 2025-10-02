@@ -9,28 +9,41 @@ interface RunePixelsTooltipProps {
   disabled?: boolean;
 }
 
+type CaretPosition = 'top' | 'bottom' | 'left' | 'right';
+
 export const RunePixelsTooltip = ({ content, children, disabled = false }: RunePixelsTooltipProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [caretPosition, setCaretPosition] = useState<CaretPosition>('bottom');
   const triggerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   const updatePosition = (event: MouseEvent) => {
-    if (tooltipRef.current) {
+    if (tooltipRef.current && triggerRef.current) {
       const tooltip = tooltipRef.current;
-      const rect = tooltip.getBoundingClientRect();
+      const tooltipRect = tooltip.getBoundingClientRect();
       
       let x = event.clientX + 10;
-      let y = event.clientY - rect.height - 10;
+      let y = event.clientY - tooltipRect.height - 10;
+      let caret: CaretPosition = 'bottom';
       
-      if (x + rect.width > window.innerWidth) {
-        x = event.clientX - rect.width - 10;
+      if (x + tooltipRect.width > window.innerWidth) {
+        x = event.clientX - tooltipRect.width - 10;
+        caret = 'right';
       }
+      
       if (y < 0) {
         y = event.clientY + 10;
+        caret = 'top';
+      }
+      
+      if (x < 0) {
+        x = event.clientX + 10;
+        caret = 'left';
       }
       
       setPosition({ x, y });
+      setCaretPosition(caret);
     }
   };
 
@@ -64,9 +77,67 @@ export const RunePixelsTooltip = ({ content, children, disabled = false }: RuneP
     };
   }, [disabled, isVisible]);
 
+  const getCaretStyles = (): React.CSSProperties => {
+    const caretSize = 6;
+    const borderColor = 'rgb(54, 57, 73)';
+    
+    switch (caretPosition) {
+      case 'top':
+        return {
+          position: 'absolute',
+          top: '-6px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 0,
+          height: 0,
+          borderLeft: `${caretSize}px solid transparent`,
+          borderRight: `${caretSize}px solid transparent`,
+          borderBottom: `${caretSize}px solid ${borderColor}`,
+        };
+      case 'bottom':
+        return {
+          position: 'absolute',
+          bottom: '-6px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 0,
+          height: 0,
+          borderLeft: `${caretSize}px solid transparent`,
+          borderRight: `${caretSize}px solid transparent`,
+          borderTop: `${caretSize}px solid ${borderColor}`,
+        };
+      case 'left':
+        return {
+          position: 'absolute',
+          left: '-6px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          width: 0,
+          height: 0,
+          borderTop: `${caretSize}px solid transparent`,
+          borderBottom: `${caretSize}px solid transparent`,
+          borderRight: `${caretSize}px solid ${borderColor}`,
+        };
+      case 'right':
+        return {
+          position: 'absolute',
+          right: '-6px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          width: 0,
+          height: 0,
+          borderTop: `${caretSize}px solid transparent`,
+          borderBottom: `${caretSize}px solid transparent`,
+          borderLeft: `${caretSize}px solid ${borderColor}`,
+        };
+      default:
+        return {};
+    }
+  };
+
   return (
     <>
-      <div ref={triggerRef} className="inline-block">
+      <div ref={triggerRef} className="contents">
         {children}
       </div>
       {isVisible && (
@@ -88,6 +159,7 @@ export const RunePixelsTooltip = ({ content, children, disabled = false }: RuneP
           }}
         >
           {content}
+          <div style={getCaretStyles()} />
         </div>
       )}
     </>
