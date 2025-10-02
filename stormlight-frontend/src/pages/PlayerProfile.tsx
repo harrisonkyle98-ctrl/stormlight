@@ -612,13 +612,10 @@ const PlayerProfile = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div>
-                    {nonRankBadges.map((badge, index) => (
-                      <div
+                  <div className="space-y-8">
+                    {nonRankBadges.map((badge) => (
+                      <RunePixelsTooltip
                         key={badge.id}
-                        className={index < nonRankBadges.length - 1 ? 'mb-32' : ''}
-                      >
-                        <RunePixelsTooltip
                           content={
                             <div>
                               <div className="font-semibold text-white">{badge.name}</div>
@@ -649,7 +646,6 @@ const PlayerProfile = () => {
                           )}
                           </div>
                         </RunePixelsTooltip>
-                      </div>
                     ))}
                   </div>
                 </CardContent>
