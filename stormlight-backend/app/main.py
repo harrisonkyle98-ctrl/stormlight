@@ -2504,36 +2504,25 @@ async def assign_badge_to_member(
 ):
     """Assign a custom badge to a clan member"""
     try:
-        print(f"🔍 Badge assignment request: {request}")
-        
         username = request.get('username')
         badge_id = request.get('badgeId')
-        
-        print(f"🔍 Username: {username}, Badge ID: {badge_id}")
         
         if not username or not badge_id:
             raise HTTPException(status_code=400, detail="Username and badge ID required")
         
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
-            print(f"🔍 Database connected, finding member: {username}")
             member = await prisma.clanmember.find_unique(where={'username': username})
             if not member:
-                print(f"❌ Member not found: {username}")
                 raise HTTPException(status_code=404, detail="Member not found")
             
-            print(f"🔍 Member found, current badges: {member.badges}")
             current_badges = member.badges if member.badges else []
             if isinstance(current_badges, str):
                 import json
                 current_badges = json.loads(current_badges)
             
-            print(f"🔍 Parsed current badges: {current_badges}")
-            
             if badge_id not in [b.get('id') if isinstance(b, dict) else b for b in current_badges]:
-                print(f"🔍 Badge not already assigned, finding badge: {badge_id}")
                 badge = await prisma.custombadge.find_unique(where={'id': badge_id})
                 if badge:
-                    print(f"🔍 Badge found: {badge.name}")
                     current_badges.append({
                         'id': badge.id,
                         'name': badge.name,
@@ -2541,13 +2530,11 @@ async def assign_badge_to_member(
                         'type': 'custom'
                     })
                     
-                    print(f"🔍 Updating member with badges: {current_badges}")
                     await prisma.clanmember.update(
                         where={'username': username},
                         data={'badges': current_badges}
                     )
                     
-                    print(f"🔍 Logging admin action")
                     await log_admin_action(
                         admin_id,
                         "system",
@@ -2557,22 +2544,15 @@ async def assign_badge_to_member(
                         prisma_available=PRISMA_AVAILABLE
                     )
                     
-                    print(f"✅ Badge assignment successful")
                     return {"success": True}
                 else:
-                    print(f"❌ Badge not found: {badge_id}")
                     raise HTTPException(status_code=404, detail="Badge not found")
             
-            print(f"ℹ️ Badge already assigned")
             return {"success": True, "message": "Badge already assigned"}
         
-        print(f"❌ Database not available")
         raise HTTPException(status_code=500, detail="Database not available")
     except Exception as e:
-        print(f"❌ Error assigning badge: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error assigning badge: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error assigning badge")
 
 @api_router.post("/admin/remove-badge")
 async def remove_badge_from_member(
