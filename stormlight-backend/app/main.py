@@ -1728,13 +1728,34 @@ def get_rank_priority(rank: str) -> int:
 async def verify_admin_access(user_id: str = Depends(verify_token)):
     """Verify user has admin access (Owner, Deputy Owner, or Overseer rank only)"""
     print(f"🔐 ADMIN ACCESS: Verifying admin access for user: {user_id}")
+    print(f"🔐 ADMIN ACCESS: User ID type: {type(user_id)}")
     
     try:
         if prisma and prisma.is_connected():
             print(f"🔐 ADMIN ACCESS: Checking Prisma for user: {user_id}")
+            
+            all_members = await prisma.clanmember.find_many(
+                where={'discordId': {'not': None}},
+                select={'username': True, 'discordId': True, 'clanRank': True}
+            )
+            print(f"🔐 ADMIN ACCESS: Found {len(all_members)} members with Discord IDs")
+            for member in all_members[:5]:  # Show first 5 for debugging
+                print(f"🔐 ADMIN ACCESS: Member {member.username}: {member.discordId} ({member.clanRank})")
+            
             linked_member = await prisma.clanmember.find_first(
                 where={'discordId': user_id}
             )
+            print(f"🔐 ADMIN ACCESS: String query result for {user_id}: {linked_member}")
+            
+            if not linked_member and user_id.isdigit():
+                try:
+                    linked_member = await prisma.clanmember.find_first(
+                        where={'discordId': int(user_id)}
+                    )
+                    print(f"🔐 ADMIN ACCESS: Integer query result for {user_id}: {linked_member}")
+                except Exception as int_error:
+                    print(f"🔐 ADMIN ACCESS: Integer conversion error: {int_error}")
+            
             if linked_member and linked_member.clanRank:
                 clan_rank = linked_member.clanRank
                 print(f"🔐 ADMIN ACCESS: Found clan rank from Prisma: {clan_rank}")
@@ -1745,6 +1766,8 @@ async def verify_admin_access(user_id: str = Depends(verify_token)):
                 else:
                     print(f"❌ ADMIN ACCESS: User {user_id} has insufficient rank: {clan_rank} (priority {rank_priority})")
                     raise HTTPException(status_code=403, detail=f"Admin access required. Your rank: {clan_rank}. Required: Owner, Deputy Owner, or Overseer.")
+            else:
+                print(f"❌ ADMIN ACCESS: No linked member found for Discord ID: {user_id}")
     except HTTPException:
         raise
     except Exception as e:
@@ -2504,25 +2527,38 @@ async def assign_badge_to_member(
 ):
     """Assign a custom badge to a clan member"""
     try:
+        print(f"🎯 BADGE ASSIGN: Starting badge assignment for admin {admin_id}")
+        print(f"🎯 BADGE ASSIGN: Request data: {request}")
+        
         username = request.get('username')
         badge_id = request.get('badgeId')
         
+        print(f"🎯 BADGE ASSIGN: Parsed username={username}, badge_id={badge_id}")
+        
         if not username or not badge_id:
+            print(f"❌ BADGE ASSIGN: Missing required fields - username: {username}, badge_id: {badge_id}")
             raise HTTPException(status_code=400, detail="Username and badge ID required")
         
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            print(f"🎯 BADGE ASSIGN: Prisma available, finding member: {username}")
             member = await prisma.clanmember.find_unique(where={'username': username})
             if not member:
+                print(f"❌ BADGE ASSIGN: Member not found: {username}")
                 raise HTTPException(status_code=404, detail="Member not found")
             
+            print(f"🎯 BADGE ASSIGN: Found member, current badges: {member.badges}")
             current_badges = member.badges if member.badges else []
             if isinstance(current_badges, str):
                 import json
                 current_badges = json.loads(current_badges)
             
+            print(f"🎯 BADGE ASSIGN: Processed current badges: {current_badges}")
+            
             if badge_id not in [b.get('id') if isinstance(b, dict) else b for b in current_badges]:
+                print(f"🎯 BADGE ASSIGN: Badge not already assigned, finding badge: {badge_id}")
                 badge = await prisma.custombadge.find_unique(where={'id': badge_id})
                 if badge:
+                    print(f"🎯 BADGE ASSIGN: Found badge: {badge.name}")
                     current_badges.append({
                         'id': badge.id,
                         'name': badge.name,
@@ -2530,11 +2566,13 @@ async def assign_badge_to_member(
                         'type': 'custom'
                     })
                     
+                    print(f"🎯 BADGE ASSIGN: Updating member with new badges: {current_badges}")
                     await prisma.clanmember.update(
                         where={'username': username},
                         data={'badges': current_badges}
                     )
                     
+                    print(f"🎯 BADGE ASSIGN: Logging admin action")
                     await log_admin_action(
                         admin_id,
                         "system",
@@ -2544,15 +2582,24 @@ async def assign_badge_to_member(
                         prisma_available=PRISMA_AVAILABLE
                     )
                     
+                    print(f"✅ BADGE ASSIGN: Successfully assigned badge '{badge.name}' to {username}")
                     return {"success": True}
                 else:
+                    print(f"❌ BADGE ASSIGN: Badge not found: {badge_id}")
                     raise HTTPException(status_code=404, detail="Badge not found")
             
+            print(f"🎯 BADGE ASSIGN: Badge already assigned to {username}")
             return {"success": True, "message": "Badge already assigned"}
         
+        print(f"❌ BADGE ASSIGN: Database not available")
         raise HTTPException(status_code=500, detail="Database not available")
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Error assigning badge")
+        print(f"❌ BADGE ASSIGN: Unexpected error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error assigning badge: {str(e)}")
 
 @api_router.post("/admin/remove-badge")
 async def remove_badge_from_member(
