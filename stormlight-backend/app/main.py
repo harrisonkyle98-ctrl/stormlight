@@ -2622,7 +2622,9 @@ async def delete_custom_badge(
                 admin_id,
                 "system",
                 "delete_badge",
-                f"Deleted custom badge: {badge.name}"
+                f"Deleted custom badge: {badge.name}",
+                prisma_client=prisma,
+                prisma_available=PRISMA_AVAILABLE
             )
             
             return {"success": True}
@@ -2682,7 +2684,9 @@ async def create_admin_competition(
                 admin_id, 
                 "system", 
                 "create_competition", 
-                f"Created competition: {competition.name}"
+                f"Created competition: {competition.name}",
+                prisma_client=prisma,
+                prisma_available=PRISMA_AVAILABLE
             )
             
             return competition
@@ -2708,7 +2712,9 @@ async def create_admin_competition(
                 admin_id, 
                 "system", 
                 "create_competition", 
-                f"Created competition: {competition['name']}"
+                f"Created competition: {competition['name']}",
+                prisma_client=prisma,
+                prisma_available=PRISMA_AVAILABLE
             )
             
             return competition
