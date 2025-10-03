@@ -1,13 +1,11 @@
 from datetime import datetime
 import json
 
-async def log_admin_action(admin_id: str, username: str, action: str, details: str = None):
+async def log_admin_action(admin_id: str, username: str, action: str, details: str = None, prisma_client=None, prisma_available=False):
     """Log admin action to database"""
     try:
-        from app.main import prisma, PRISMA_AVAILABLE
-        
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
-            await prisma.adminlog.create({
+        if prisma_available and prisma_client and prisma_client.is_connected():
+            await prisma_client.adminlog.create({
                 'adminId': admin_id,
                 'username': username,
                 'action': action,
@@ -56,21 +54,19 @@ def get_site_health_status():
         'total_members': 0
     }
 
-async def create_competition_snapshot(competition_id: str, snapshot_type: str):
+async def create_competition_snapshot(competition_id: str, snapshot_type: str, prisma_client=None, prisma_available=False):
     """Create competition snapshot for start or end"""
     try:
-        from app.main import prisma, PRISMA_AVAILABLE
-        
-        if not (PRISMA_AVAILABLE and prisma and prisma.is_connected()):
+        if not (prisma_available and prisma_client and prisma_client.is_connected()):
             print(f"⚠️ Prisma not available, skipping competition snapshot: {snapshot_type} for {competition_id}")
             return
         
-        entries = await prisma.competitionentry.find_many(
+        entries = await prisma_client.competitionentry.find_many(
             where={'competitionId': competition_id}
         )
         
         for entry in entries:
-            member = await prisma.clanmember.find_unique(
+            member = await prisma_client.clanmember.find_unique(
                 where={'username': entry.username}
             )
             
@@ -79,12 +75,12 @@ async def create_competition_snapshot(competition_id: str, snapshot_type: str):
                 overall_xp = stats.get('overall', {}).get('xp', 0)
                 
                 if snapshot_type == 'start':
-                    await prisma.competitionentry.update(
+                    await prisma_client.competitionentry.update(
                         where={'id': entry.id},
                         data={'xpStart': overall_xp}
                     )
                 elif snapshot_type == 'end':
-                    await prisma.competitionentry.update(
+                    await prisma_client.competitionentry.update(
                         where={'id': entry.id},
                         data={'xpEnd': overall_xp}
                     )

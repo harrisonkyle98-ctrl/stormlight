@@ -36,8 +36,10 @@ except Exception as e:
     Prisma = None
 try:
     from .database import init_database, get_db_connection, collect_daily_player_stats, collect_daily_player_stats_multi_cycle, collect_daily_activities_and_drops
+    from .admin_utils import log_admin_action, calculate_rank_needed, get_site_health_status, create_competition_snapshot
 except ImportError:
     from database import init_database, get_db_connection, collect_daily_player_stats, collect_daily_player_stats_multi_cycle, collect_daily_activities_and_drops
+    from admin_utils import log_admin_action, calculate_rank_needed, get_site_health_status, create_competition_snapshot
 
 load_dotenv()
 
@@ -2446,8 +2448,6 @@ async def create_custom_badge(
 ):
     """Create a new custom badge with file upload and color options"""
     try:
-        from .admin_utils import log_admin_action
-        
         if badge_file.content_type not in ["image/png", "image/jpeg", "image/svg+xml"]:
             raise HTTPException(status_code=400, detail="Invalid file type. Only PNG, JPG, SVG allowed.")
         
@@ -2483,7 +2483,9 @@ async def create_custom_badge(
                 admin_id, 
                 "system", 
                 "create_badge", 
-                f"Created custom badge: {name}"
+                f"Created custom badge: {name}",
+                prisma_client=prisma,
+                prisma_available=PRISMA_AVAILABLE
             )
             
             return {"success": True, "badge": badge}
@@ -2502,7 +2504,6 @@ async def assign_badge_to_member(
 ):
     """Assign a custom badge to a clan member"""
     try:
-        from .admin_utils import log_admin_action
         
         username = request.get('username')
         badge_id = request.get('badgeId')
@@ -2558,7 +2559,6 @@ async def remove_badge_from_member(
 ):
     """Remove a custom badge from a clan member"""
     try:
-        from .admin_utils import log_admin_action
         
         username = request.get('username')
         badge_id = request.get('badgeId')
@@ -2606,7 +2606,6 @@ async def delete_custom_badge(
 ):
     """Delete a custom badge"""
     try:
-        from .admin_utils import log_admin_action
         
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
             badge = await prisma.custombadge.find_unique(where={'id': badge_id})
@@ -2657,7 +2656,6 @@ async def create_admin_competition(
 ):
     """Create a new competition with snapshots"""
     try:
-        from .admin_utils import log_admin_action
         
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
             competition = await prisma.competition.create({
@@ -2783,7 +2781,6 @@ async def update_member_join_date(
 ):
     """Update member join date"""
     try:
-        from .admin_utils import log_admin_action
         
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
             join_date = datetime.fromisoformat(join_date_data['join_date'])
