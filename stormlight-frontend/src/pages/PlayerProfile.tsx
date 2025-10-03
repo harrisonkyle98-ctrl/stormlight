@@ -12,6 +12,7 @@ import { getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
 import { urlToUsername } from '../utils/urlUtils'
 import { useAuth } from '../contexts/AuthContext'
 import { RunePixelsTooltip } from '../components/ui/tooltip'
+import { BadgeAssignmentModal } from '../components/ui/badge-assignment-modal'
 import { DropsTab } from '../components/tabs/DropsTab'
 import { ActivityTab } from '../components/tabs/ActivityTab'
 import { QuestsTab } from '../components/tabs/QuestsTab'
@@ -68,6 +69,7 @@ const PlayerProfile = () => {
   const [refreshing, setRefreshing] = useState(false)
   const [lastRefresh, setLastRefresh] = useState<number | null>(null)
   const [customBadges, setCustomBadges] = useState<any[]>([])
+  const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -190,28 +192,6 @@ const PlayerProfile = () => {
     }
   }
 
-  const handleAssignBadge = async (badgeId: string) => {
-    try {
-      const token = localStorage.getItem('access_token')
-      const response = await fetch(`${API_URL}/api/admin/assign-badge`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          username: urlToUsername(username || ''),
-          badgeId: badgeId
-        })
-      })
-
-      if (response.ok) {
-        await fetchPlayerStats()
-      }
-    } catch (error) {
-      console.error('Error assigning badge:', error)
-    }
-  }
 
   const handleRemoveBadge = async (badgeId: string) => {
     try {
@@ -233,6 +213,60 @@ const PlayerProfile = () => {
       }
     } catch (error) {
       console.error('Error removing badge:', error)
+    }
+  }
+
+  const handleOpenBadgeModal = () => {
+    setIsBadgeModalOpen(true)
+  }
+
+  const handleCloseBadgeModal = () => {
+    setIsBadgeModalOpen(false)
+  }
+
+  const handleSaveBadgeAssignments = async (selectedBadgeIds: string[]) => {
+    try {
+      const token = localStorage.getItem('access_token')
+      const allBadges = checkPlayerMilestones(playerData?.stats, questData, playerData?.clan_rank, urlToUsername(username || ''))
+      const nonRankBadges = allBadges.filter(badge => !badge.id.startsWith('rank-'))
+      const currentlyAssigned = nonRankBadges
+        .filter(badge => badge.id.includes('custom'))
+        .map(badge => badge.id)
+      
+      const toAssign = selectedBadgeIds.filter(id => !currentlyAssigned.includes(id))
+      const toRemove = currentlyAssigned.filter(id => !selectedBadgeIds.includes(id))
+      
+      for (const badgeId of toAssign) {
+        await fetch(`${API_URL}/api/admin/assign-badge`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            username: urlToUsername(username || ''),
+            badgeId: badgeId
+          })
+        })
+      }
+      
+      for (const badgeId of toRemove) {
+        await fetch(`${API_URL}/api/admin/remove-badge`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            username: urlToUsername(username || ''),
+            badgeId: badgeId
+          })
+        })
+      }
+      
+      await fetchPlayerStats()
+    } catch (error) {
+      console.error('Error updating badge assignments:', error)
     }
   }
 
@@ -595,18 +629,13 @@ const PlayerProfile = () => {
                     </div>
                     {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
                       <div className="flex items-center space-x-2">
-                        <Select onValueChange={handleAssignBadge}>
-                          <SelectTrigger className="w-8 h-8 p-0 bg-blue-600 hover:bg-blue-700 border-blue-600">
-                            <Plus className="w-4 h-4 text-white" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {customBadges.map((badge) => (
-                              <SelectItem key={badge.id} value={badge.id}>
-                                {badge.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Button
+                          onClick={handleOpenBadgeModal}
+                          size="sm"
+                          className="w-8 h-8 p-0 bg-blue-600 hover:bg-blue-700 border-blue-600"
+                        >
+                          <Plus className="w-4 h-4 text-white" />
+                        </Button>
                       </div>
                     )}
                   </CardTitle>
@@ -740,6 +769,24 @@ const PlayerProfile = () => {
           </Card>
         </div>
       </div>
+      
+      {/* Badge Assignment Modal */}
+      {playerData?.stats && (() => {
+        const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''))
+        const nonRankBadges = allBadges.filter(badge => !badge.id.startsWith('rank-'))
+        const assignedCustomBadgeIds = nonRankBadges.filter(badge => badge.id.includes('custom')).map(badge => badge.id)
+        
+        return (
+          <BadgeAssignmentModal
+            isOpen={isBadgeModalOpen}
+            onClose={handleCloseBadgeModal}
+            customBadges={customBadges}
+            assignedBadgeIds={assignedCustomBadgeIds}
+            onSave={handleSaveBadgeAssignments}
+            memberUsername={urlToUsername(username || '')}
+          />
+        )
+      })()}
     </div>
   )
 }
