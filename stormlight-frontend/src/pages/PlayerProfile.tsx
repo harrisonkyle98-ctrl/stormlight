@@ -183,18 +183,28 @@ const PlayerProfile = () => {
       setBadgeModalLoading(true)
       setBadgeModalError(null)
       const token = localStorage.getItem('access_token')
+      console.log('🔐 FRONTEND: Fetching custom badges with token:', token ? 'Token exists' : 'No token')
+      console.log('🔐 FRONTEND: Token length:', token ? token.length : 0)
+      console.log('🔐 FRONTEND: API URL:', `${API_URL}/api/admin/badges`)
+      
       const response = await fetch(`${API_URL}/api/admin/badges`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
 
+      console.log('🔐 FRONTEND: Response status:', response.status)
+      console.log('🔐 FRONTEND: Response ok:', response.ok)
+      
       if (response.ok) {
         const data = await response.json()
+        console.log('🔐 FRONTEND: Badges loaded successfully:', data.badges?.length || 0)
         setCustomBadges(data.badges || [])
       } else {
-        setBadgeModalError('Failed to load custom badges')
+        const errorText = await response.text()
+        console.log('🔐 FRONTEND: Error response:', errorText)
+        setBadgeModalError(`Failed to load custom badges: ${response.status}`)
       }
     } catch (error) {
-      console.error('Error fetching custom badges:', error)
+      console.error('🔐 FRONTEND: Error fetching custom badges:', error)
       setBadgeModalError('Error loading custom badges')
     } finally {
       setBadgeModalLoading(false)
@@ -241,16 +251,26 @@ const PlayerProfile = () => {
       setBadgeModalLoading(true)
       setBadgeModalError(null)
       const token = localStorage.getItem('access_token')
+      console.log('🔐 FRONTEND: Saving badge assignments...')
+      console.log('🔐 FRONTEND: Selected badge IDs:', selectedBadgeIds)
+      console.log('🔐 FRONTEND: Using token for badge assignment:', token ? 'Token exists' : 'No token')
+      
       const allBadges = checkPlayerMilestones(playerData?.stats, questData, playerData?.clan_rank, urlToUsername(username || ''))
       const nonRankBadges = allBadges.filter(badge => !badge.id.startsWith('rank-'))
       const currentlyAssigned = nonRankBadges
         .filter(badge => badge.id.includes('custom'))
         .map(badge => badge.id)
       
+      console.log('🔐 FRONTEND: Currently assigned custom badges:', currentlyAssigned)
+      
       const toAssign = selectedBadgeIds.filter(id => !currentlyAssigned.includes(id))
       const toRemove = currentlyAssigned.filter(id => !selectedBadgeIds.includes(id))
       
+      console.log('🔐 FRONTEND: To assign:', toAssign)
+      console.log('🔐 FRONTEND: To remove:', toRemove)
+      
       for (const badgeId of toAssign) {
+        console.log('🔐 FRONTEND: Assigning badge:', badgeId)
         const response = await fetch(`${API_URL}/api/admin/assign-badge`, {
           method: 'POST',
           headers: {
@@ -263,12 +283,16 @@ const PlayerProfile = () => {
           })
         })
         
+        console.log('🔐 FRONTEND: Assign response status:', response.status)
         if (!response.ok) {
-          throw new Error(`Failed to assign badge ${badgeId}`)
+          const errorText = await response.text()
+          console.log('🔐 FRONTEND: Assign error response:', errorText)
+          throw new Error(`Failed to assign badge ${badgeId}: ${response.status} - ${errorText}`)
         }
       }
       
       for (const badgeId of toRemove) {
+        console.log('🔐 FRONTEND: Removing badge:', badgeId)
         const response = await fetch(`${API_URL}/api/admin/remove-badge`, {
           method: 'POST',
           headers: {
@@ -281,14 +305,18 @@ const PlayerProfile = () => {
           })
         })
         
+        console.log('🔐 FRONTEND: Remove response status:', response.status)
         if (!response.ok) {
-          throw new Error(`Failed to remove badge ${badgeId}`)
+          const errorText = await response.text()
+          console.log('🔐 FRONTEND: Remove error response:', errorText)
+          throw new Error(`Failed to remove badge ${badgeId}: ${response.status} - ${errorText}`)
         }
       }
       
+      console.log('🔐 FRONTEND: Badge assignments saved successfully')
       await fetchPlayerStats()
     } catch (error) {
-      console.error('Error updating badge assignments:', error)
+      console.error('🔐 FRONTEND: Error updating badge assignments:', error)
       setBadgeModalError('Failed to save badge assignments')
       throw error
     } finally {
