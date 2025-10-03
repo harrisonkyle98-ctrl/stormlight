@@ -4,19 +4,19 @@ import json
 async def log_admin_action(admin_id: str, username: str, action: str, details: str = None):
     """Log admin action to database"""
     try:
-        from prisma import Prisma
-        prisma = Prisma()
-        if not prisma.is_connected():
-            await prisma.connect()
+        from app.main import prisma, PRISMA_AVAILABLE
         
-        await prisma.adminlog.create({
-            'adminId': admin_id,
-            'username': username,
-            'action': action,
-            'details': details,
-            'timestamp': datetime.now()
-        })
-        print(f"📝 Admin action logged: {action} by {username}")
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            await prisma.adminlog.create({
+                'adminId': admin_id,
+                'username': username,
+                'action': action,
+                'details': details,
+                'timestamp': datetime.now()
+            })
+            print(f"📝 Admin action logged: {action} by {username}")
+        else:
+            print(f"⚠️ Prisma not available, skipping admin action log: {action} by {username}")
     except Exception as e:
         print(f"❌ Failed to log admin action: {e}")
 
@@ -59,10 +59,11 @@ def get_site_health_status():
 async def create_competition_snapshot(competition_id: str, snapshot_type: str):
     """Create competition snapshot for start or end"""
     try:
-        from prisma import Prisma
-        prisma = Prisma()
-        if not prisma.is_connected():
-            await prisma.connect()
+        from app.main import prisma, PRISMA_AVAILABLE
+        
+        if not (PRISMA_AVAILABLE and prisma and prisma.is_connected()):
+            print(f"⚠️ Prisma not available, skipping competition snapshot: {snapshot_type} for {competition_id}")
+            return
         
         entries = await prisma.competitionentry.find_many(
             where={'competitionId': competition_id}
