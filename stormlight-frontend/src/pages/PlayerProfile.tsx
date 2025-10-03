@@ -70,6 +70,8 @@ const PlayerProfile = () => {
   const [lastRefresh, setLastRefresh] = useState<number | null>(null)
   const [customBadges, setCustomBadges] = useState<any[]>([])
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false)
+  const [badgeModalLoading, setBadgeModalLoading] = useState(false)
+  const [badgeModalError, setBadgeModalError] = useState<string | null>(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -178,6 +180,8 @@ const PlayerProfile = () => {
 
   const fetchCustomBadges = async () => {
     try {
+      setBadgeModalLoading(true)
+      setBadgeModalError(null)
       const token = localStorage.getItem('access_token')
       const response = await fetch(`${API_URL}/api/admin/badges`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -186,9 +190,14 @@ const PlayerProfile = () => {
       if (response.ok) {
         const data = await response.json()
         setCustomBadges(data.badges || [])
+      } else {
+        setBadgeModalError('Failed to load custom badges')
       }
     } catch (error) {
       console.error('Error fetching custom badges:', error)
+      setBadgeModalError('Error loading custom badges')
+    } finally {
+      setBadgeModalLoading(false)
     }
   }
 
@@ -216,7 +225,10 @@ const PlayerProfile = () => {
     }
   }
 
-  const handleOpenBadgeModal = () => {
+  const handleOpenBadgeModal = async () => {
+    if (user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank)) {
+      await fetchCustomBadges()
+    }
     setIsBadgeModalOpen(true)
   }
 
@@ -226,6 +238,8 @@ const PlayerProfile = () => {
 
   const handleSaveBadgeAssignments = async (selectedBadgeIds: string[]) => {
     try {
+      setBadgeModalLoading(true)
+      setBadgeModalError(null)
       const token = localStorage.getItem('access_token')
       const allBadges = checkPlayerMilestones(playerData?.stats, questData, playerData?.clan_rank, urlToUsername(username || ''))
       const nonRankBadges = allBadges.filter(badge => !badge.id.startsWith('rank-'))
@@ -237,7 +251,7 @@ const PlayerProfile = () => {
       const toRemove = currentlyAssigned.filter(id => !selectedBadgeIds.includes(id))
       
       for (const badgeId of toAssign) {
-        await fetch(`${API_URL}/api/admin/assign-badge`, {
+        const response = await fetch(`${API_URL}/api/admin/assign-badge`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -248,10 +262,14 @@ const PlayerProfile = () => {
             badgeId: badgeId
           })
         })
+        
+        if (!response.ok) {
+          throw new Error(`Failed to assign badge ${badgeId}`)
+        }
       }
       
       for (const badgeId of toRemove) {
-        await fetch(`${API_URL}/api/admin/remove-badge`, {
+        const response = await fetch(`${API_URL}/api/admin/remove-badge`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -262,11 +280,19 @@ const PlayerProfile = () => {
             badgeId: badgeId
           })
         })
+        
+        if (!response.ok) {
+          throw new Error(`Failed to remove badge ${badgeId}`)
+        }
       }
       
       await fetchPlayerStats()
     } catch (error) {
       console.error('Error updating badge assignments:', error)
+      setBadgeModalError('Failed to save badge assignments')
+      throw error
+    } finally {
+      setBadgeModalLoading(false)
     }
   }
 
@@ -784,6 +810,8 @@ const PlayerProfile = () => {
             assignedBadgeIds={assignedCustomBadgeIds}
             onSave={handleSaveBadgeAssignments}
             memberUsername={urlToUsername(username || '')}
+            loading={badgeModalLoading}
+            error={badgeModalError}
           />
         )
       })()}

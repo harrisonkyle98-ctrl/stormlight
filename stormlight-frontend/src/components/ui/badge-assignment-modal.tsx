@@ -19,6 +19,8 @@ interface BadgeAssignmentModalProps {
   assignedBadgeIds: string[]
   onSave: (selectedBadgeIds: string[]) => void
   memberUsername: string
+  loading?: boolean
+  error?: string | null
 }
 
 export const BadgeAssignmentModal: React.FC<BadgeAssignmentModalProps> = ({
@@ -27,7 +29,9 @@ export const BadgeAssignmentModal: React.FC<BadgeAssignmentModalProps> = ({
   customBadges,
   assignedBadgeIds,
   onSave,
-  memberUsername
+  memberUsername,
+  loading = false,
+  error = null
 }) => {
   const [selectedBadgeIds, setSelectedBadgeIds] = useState<string[]>([])
 
@@ -45,9 +49,12 @@ export const BadgeAssignmentModal: React.FC<BadgeAssignmentModalProps> = ({
     )
   }
 
-  const handleSave = () => {
-    onSave(selectedBadgeIds)
-    onClose()
+  const handleSave = async () => {
+    try {
+      await onSave(selectedBadgeIds)
+      onClose()
+    } catch (error) {
+    }
   }
 
   const handleCancel = () => {
@@ -65,7 +72,15 @@ export const BadgeAssignmentModal: React.FC<BadgeAssignmentModalProps> = ({
         </DialogHeader>
         
         <div className="py-4">
-          {customBadges.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-slate-400">Loading badges...</div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-red-400">{error}</div>
+            </div>
+          ) : customBadges.length === 0 ? (
             <p className="text-slate-400 text-center py-8">
               No custom badges available
             </p>
@@ -138,9 +153,10 @@ export const BadgeAssignmentModal: React.FC<BadgeAssignmentModalProps> = ({
           </Button>
           <Button
             onClick={handleSave}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            disabled={loading}
+            className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
           >
-            Save Changes
+            {loading ? 'Saving...' : 'Save Changes'}
           </Button>
         </DialogFooter>
       </DialogContent>
