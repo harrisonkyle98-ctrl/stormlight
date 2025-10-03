@@ -2567,9 +2567,10 @@ async def assign_badge_to_member(
                     })
                     
                     print(f"🎯 BADGE ASSIGN: Updating member with new badges: {current_badges}")
+                    import json
                     await prisma.clanmember.update(
                         where={'username': username},
-                        data={'badges': current_badges}
+                        data={'badges': json.dumps(current_badges)}
                     )
                     
                     print(f"🎯 BADGE ASSIGN: Logging admin action")
