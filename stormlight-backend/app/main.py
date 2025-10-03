@@ -2464,20 +2464,20 @@ async def create_custom_badge(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(badge_file.file, buffer)
         
-        gradient_colors = None
-        if gradient_color1 and gradient_color2:
-            gradient_colors = [gradient_color1, gradient_color2]
-        
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
-            badge = await prisma.custombadge.create({
+            badge_data = {
                 'name': name,
                 'description': description,
                 'imagePath': str(file_path),
                 'imageUrl': f"/uploads/badges/{unique_filename}",
                 'backgroundColor': background_color,
-                'gradientColors': gradient_colors,
                 'createdBy': admin_id
-            })
+            }
+            
+            if gradient_color1 and gradient_color2:
+                badge_data['gradientColors'] = [gradient_color1, gradient_color2]
+            
+            badge = await prisma.custombadge.create(badge_data)
             
             await log_admin_action(
                 admin_id, 
