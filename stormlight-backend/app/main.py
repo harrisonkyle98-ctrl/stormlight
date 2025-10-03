@@ -2540,7 +2540,9 @@ async def assign_badge_to_member(
                         admin_id,
                         "system",
                         "assign_badge",
-                        f"Assigned badge '{badge.name}' to {username}"
+                        f"Assigned badge '{badge.name}' to {username}",
+                        prisma_client=prisma,
+                        prisma_available=PRISMA_AVAILABLE
                     )
                     
                     return {"success": True}
@@ -2589,7 +2591,9 @@ async def remove_badge_from_member(
                     admin_id,
                     "system", 
                     "remove_badge",
-                    f"Removed badge from {username}"
+                    f"Removed badge from {username}",
+                    prisma_client=prisma,
+                    prisma_available=PRISMA_AVAILABLE
                 )
             
             return {"success": True}
