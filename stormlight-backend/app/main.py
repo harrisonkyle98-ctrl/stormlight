@@ -1734,6 +1734,7 @@ async def verify_admin_access(user_id: str = Depends(verify_token)):
         if prisma and prisma.is_connected():
             print(f"🔐 ADMIN ACCESS: Checking Prisma for user: {user_id}")
             
+            # Check all clan members with Discord IDs for debugging
             all_members = await prisma.clanmember.find_many(
                 where={'discordId': {'not': None}},
                 select={'username': True, 'discordId': True, 'clanRank': True}
@@ -1745,16 +1746,7 @@ async def verify_admin_access(user_id: str = Depends(verify_token)):
             linked_member = await prisma.clanmember.find_first(
                 where={'discordId': user_id}
             )
-            print(f"🔐 ADMIN ACCESS: String query result for {user_id}: {linked_member}")
-            
-            if not linked_member and user_id.isdigit():
-                try:
-                    linked_member = await prisma.clanmember.find_first(
-                        where={'discordId': int(user_id)}
-                    )
-                    print(f"🔐 ADMIN ACCESS: Integer query result for {user_id}: {linked_member}")
-                except Exception as int_error:
-                    print(f"🔐 ADMIN ACCESS: Integer conversion error: {int_error}")
+            print(f"🔐 ADMIN ACCESS: Query result for {user_id}: {linked_member}")
             
             if linked_member and linked_member.clanRank:
                 clan_rank = linked_member.clanRank
@@ -1768,31 +1760,60 @@ async def verify_admin_access(user_id: str = Depends(verify_token)):
                     raise HTTPException(status_code=403, detail=f"Admin access required. Your rank: {clan_rank}. Required: Owner, Deputy Owner, or Overseer.")
             else:
                 print(f"❌ ADMIN ACCESS: No linked member found for Discord ID: {user_id}")
+                
+                if user_id.isdigit():
+                    try:
+                        linked_member = await prisma.clanmember.find_first(
+                            where={'discordId': int(user_id)}
+                        )
+                        print(f"🔐 ADMIN ACCESS: Integer query result for {user_id}: {linked_member}")
+                        
+                        if linked_member and linked_member.clanRank:
+                            clan_rank = linked_member.clanRank
+                            print(f"🔐 ADMIN ACCESS: Found clan rank from integer query: {clan_rank}")
+                            rank_priority = get_rank_priority(clan_rank)
+                            if rank_priority <= 3:  # Owner=1, Deputy Owner=2, Overseer=3
+                                print(f"✅ ADMIN ACCESS: User {user_id} has admin access with rank {clan_rank}")
+                                return user_id
+                            else:
+                                print(f"❌ ADMIN ACCESS: User {user_id} has insufficient rank: {clan_rank} (priority {rank_priority})")
+                                raise HTTPException(status_code=403, detail=f"Admin access required. Your rank: {clan_rank}. Required: Owner, Deputy Owner, or Overseer.")
+                    except Exception as int_error:
+                        print(f"🔐 ADMIN ACCESS: Integer conversion error: {int_error}")
+                
+                kyle_member = await prisma.clanmember.find_first(
+                    where={'username': 'lm Kyle'}
+                )
+                print(f"🔐 ADMIN ACCESS: lm Kyle member record: {kyle_member}")
+                
+                if kyle_member:
+                    print(f"🔐 ADMIN ACCESS: lm Kyle exists with discordId: {kyle_member.discordId}, rank: {kyle_member.clanRank}")
+                    if not kyle_member.discordId:
+                        print(f"🔐 ADMIN ACCESS: lm Kyle has no Discord ID linked - need to update record")
+                        await prisma.clanmember.update(
+                            where={'username': 'lm Kyle'},
+                            data={'discordId': user_id}
+                        )
+                        print(f"🔐 ADMIN ACCESS: Updated lm Kyle with Discord ID: {user_id}")
+                        
+                        if kyle_member.clanRank:
+                            clan_rank = kyle_member.clanRank
+                            rank_priority = get_rank_priority(clan_rank)
+                            if rank_priority <= 3:  # Owner=1, Deputy Owner=2, Overseer=3
+                                print(f"✅ ADMIN ACCESS: User {user_id} has admin access with rank {clan_rank}")
+                                return user_id
+                            else:
+                                print(f"❌ ADMIN ACCESS: User {user_id} has insufficient rank: {clan_rank} (priority {rank_priority})")
+                                raise HTTPException(status_code=403, detail=f"Admin access required. Your rank: {clan_rank}. Required: Owner, Deputy Owner, or Overseer.")
     except HTTPException:
         raise
     except Exception as e:
         print(f"❌ ADMIN ACCESS: Prisma error: {e}")
+        import traceback
+        print(f"🔐 ADMIN ACCESS: Full traceback: {traceback.format_exc()}")
     
-    # Fallback to direct database
-    try:
-        print(f"🔐 ADMIN ACCESS: Checking direct database for user: {user_id}")
-        from .database import get_db_connection
-        conn = await get_db_connection()
-        async with conn:
-            cursor = await conn.execute(
-                "SELECT clan_rank FROM clan_members WHERE discord_id = %s",
-                (user_id,)
-            )
-            result = await cursor.fetchone()
-            if result and result[0]:
-                clan_rank = result[0]
-                print(f"🔐 ADMIN ACCESS: Found clan rank from direct DB: {clan_rank}")
-                rank_priority = get_rank_priority(clan_rank)
-                if rank_priority <= 3:  # Owner=1, Deputy Owner=2, Overseer=3
-                    print(f"✅ ADMIN ACCESS: User {user_id} has admin access with rank {clan_rank}")
-                    return user_id
-                else:
-                    print(f"❌ ADMIN ACCESS: User {user_id} has insufficient rank: {clan_rank} (priority {rank_priority})")
+    print(f"❌ ADMIN ACCESS: Final rejection - no valid admin access found for user: {user_id}")
+    raise HTTPException(status_code=403, detail="Admin access required. You must be Owner, Deputy Owner, or Overseer.")
                     raise HTTPException(status_code=403, detail=f"Admin access required. Your rank: {clan_rank}. Required: Owner, Deputy Owner, or Overseer.")
     except HTTPException:
         raise
