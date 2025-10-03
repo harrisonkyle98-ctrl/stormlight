@@ -22,6 +22,8 @@ RUN poetry run prisma generate
 COPY stormlight-backend/ ./
 # Copy built frontend
 COPY --from=frontend /frontend/dist ./static
+# Create uploads directory
+RUN mkdir -p /app/uploads/badges
 ENV PORT=8000
 EXPOSE 8000
 CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

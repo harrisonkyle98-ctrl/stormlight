@@ -47,15 +47,17 @@ prisma = Prisma() if PRISMA_AVAILABLE else None
 
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("JWT_SECRET_KEY", "fallback-secret"))
 
-uploads_dir = "/app/uploads"
+uploads_dir = "./uploads"
 try:
     os.makedirs(uploads_dir, exist_ok=True)
+    os.makedirs(f"{uploads_dir}/badges", exist_ok=True)
     app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
     print(f"✅ Successfully mounted uploads directory: {uploads_dir}")
 except Exception as e:
     print(f"❌ Failed to create/mount uploads directory: {e}")
     fallback_dir = "/tmp/uploads"
     os.makedirs(fallback_dir, exist_ok=True)
+    os.makedirs(f"{fallback_dir}/badges", exist_ok=True)
     app.mount("/uploads", StaticFiles(directory=fallback_dir), name="uploads")
     print(f"⚠️ Using fallback uploads directory: {fallback_dir}")
 
@@ -2452,7 +2454,7 @@ async def create_custom_badge(
         if badge_file.size and badge_file.size > 2 * 1024 * 1024:  # 2MB limit
             raise HTTPException(status_code=400, detail="File too large. Maximum 2MB allowed.")
         
-        upload_dir = Path("/app/uploads/badges")
+        upload_dir = Path("./uploads/badges")
         upload_dir.mkdir(parents=True, exist_ok=True)
         
         file_extension = badge_file.filename.split('.')[-1] if badge_file.filename else 'png'
@@ -2489,7 +2491,9 @@ async def create_custom_badge(
         raise HTTPException(status_code=500, detail="Database not available")
     except Exception as e:
         print(f"Error creating custom badge: {e}")
-        raise HTTPException(status_code=500, detail="Error creating custom badge")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error creating custom badge: {str(e)}")
 
 @api_router.post("/admin/assign-badge")
 async def assign_badge_to_member(

@@ -32,6 +32,9 @@ RUN poetry run prisma generate
 # Copy the rest of the application code
 COPY . .
 
+# Create uploads directory
+RUN mkdir -p /app/uploads/badges
+
 # Expose port
 EXPOSE 8000
 
