@@ -1814,14 +1814,6 @@ async def verify_admin_access(user_id: str = Depends(verify_token)):
     
     print(f"❌ ADMIN ACCESS: Final rejection - no valid admin access found for user: {user_id}")
     raise HTTPException(status_code=403, detail="Admin access required. You must be Owner, Deputy Owner, or Overseer.")
-                    raise HTTPException(status_code=403, detail=f"Admin access required. Your rank: {clan_rank}. Required: Owner, Deputy Owner, or Overseer.")
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"❌ ADMIN ACCESS: Direct DB error: {e}")
-    
-    print(f"❌ ADMIN ACCESS: User {user_id} not found or not linked to clan member")
-    raise HTTPException(status_code=403, detail="Admin access required. Please link your Discord account to a clan member with Owner, Deputy Owner, or Overseer rank.")
 
 @api_router.get("/clan/members")
 async def get_clan_members_paginated(
