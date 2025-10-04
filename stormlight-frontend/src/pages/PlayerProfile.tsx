@@ -204,7 +204,6 @@ const PlayerProfile = () => {
       if (response.ok) {
         const data = await response.json()
         console.log('🔐 FRONTEND: Badges loaded successfully:', data.badges?.length || 0)
-        setModalCustomBadges(data.badges || [])
       } else {
         const errorText = await response.text()
         console.log('🔐 FRONTEND: Error response:', errorText)
@@ -262,7 +261,6 @@ const PlayerProfile = () => {
       console.log('🔐 FRONTEND: Selected badge IDs:', selectedBadgeIds)
       console.log('🔐 FRONTEND: Using token for badge assignment:', token ? 'Token exists' : 'No token')
       
-      const milestoneBadges = checkPlayerMilestones(playerData?.stats, questData, playerData?.clan_rank, urlToUsername(username || ''))
       const customBadges = ((playerData as any)?.custom_badges || []).map((badge: CustomBadge) => ({
         id: `custom-${badge.id}`,
         name: badge.name,
@@ -272,7 +270,6 @@ const PlayerProfile = () => {
           undefined,
         icon: badge.imageUrl
       }))
-      const allBadges = [...milestoneBadges.filter(badge => !badge.id.startsWith('rank-')), ...customBadges]
       const currentlyAssigned = customBadges.map((badge: any) => badge.id.replace('custom-', ''))
       
       console.log('🔐 FRONTEND: Currently assigned custom badges:', currentlyAssigned)

@@ -1405,6 +1405,21 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
             print(f"Error fetching custom badges for {decoded_username}: {e}")
             stats['custom_badges'] = []
         
+        try:
+            if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+                member = await prisma.clanmember.find_unique(where={'username': decoded_username})
+                if member and member.badges:
+                    import json
+                    custom_badges = json.loads(member.badges) if isinstance(member.badges, str) else member.badges
+                    stats['custom_badges'] = custom_badges
+                else:
+                    stats['custom_badges'] = []
+            else:
+                stats['custom_badges'] = []
+        except Exception as e:
+            print(f"Error fetching custom badges for {decoded_username}: {e}")
+            stats['custom_badges'] = []
+        
         profile_cache['data'][decoded_username] = stats
         profile_cache['timestamps'][decoded_username] = current_time
         print(f"Cached profile data for {decoded_username} for {profile_cache['ttl']} seconds")
