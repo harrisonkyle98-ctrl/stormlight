@@ -191,29 +191,19 @@ const PlayerProfile = () => {
       setBadgeModalLoading(true)
       setBadgeModalError(null)
       const token = localStorage.getItem('access_token')
-      console.log('🔐 FRONTEND: Fetching custom badges with token:', token ? 'Token exists' : 'No token')
-      console.log('🔐 FRONTEND: Token length:', token ? token.length : 0)
-      console.log('🔐 FRONTEND: API URL:', `${API_URL}/api/admin/badges`)
       
       const response = await fetch(`${API_URL}/api/admin/badges`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
-
-      console.log('🔐 FRONTEND: Response status:', response.status)
-      console.log('🔐 FRONTEND: Response ok:', response.ok)
       
       if (response.ok) {
         const data = await response.json()
-        console.log('🔐 FRONTEND: Badges loaded successfully:', data.badges?.length || 0)
-        console.log('🔐 FRONTEND: Custom badges data:', data.badges)
         setModalCustomBadges(data.badges || [])
       } else {
-        const errorText = await response.text()
-        console.log('🔐 FRONTEND: Error response:', errorText)
         setBadgeModalError(`Failed to load custom badges: ${response.status}`)
       }
     } catch (error) {
-      console.error('🔐 FRONTEND: Error fetching custom badges:', error)
+      console.error('Error fetching custom badges:', error)
       setBadgeModalError('Error loading custom badges')
     } finally {
       setBadgeModalLoading(false)
@@ -223,21 +213,11 @@ const PlayerProfile = () => {
 
 
   const handleOpenBadgeModal = async () => {
-    console.log('🔐 FRONTEND: handleOpenBadgeModal called')
-    console.log('🔐 FRONTEND: User clan rank:', user?.clanRank)
-    console.log('🔐 FRONTEND: modalCustomBadges before fetch:', modalCustomBadges)
-    
     if (user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank)) {
       await fetchCustomBadges()
-      console.log('🔐 FRONTEND: modalCustomBadges after fetch (immediate):', modalCustomBadges)
-      
-      setTimeout(() => {
-        console.log('🔐 FRONTEND: modalCustomBadges after timeout:', modalCustomBadges)
-      }, 100)
     }
     
     setIsBadgeModalOpen(true)
-    console.log('🔐 FRONTEND: Modal opened with modalCustomBadges:', modalCustomBadges)
   }
 
   const handleCloseBadgeModal = () => {

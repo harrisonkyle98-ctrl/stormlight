@@ -117,17 +117,15 @@ export const BadgeAssignmentModal: React.FC<BadgeAssignmentModalProps> = ({
                       `}
                     >
                       <div
-                        className="flex flex-col items-center space-y-2 p-2 rounded-md text-white text-xs font-semibold"
+                        className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white"
                         style={{ background: backgroundColor }}
                       >
                         <img
                           src={badge.imageUrl}
                           alt={badge.name}
-                          className="w-8 h-8"
+                          className="w-4 h-4"
                         />
-                        <span className="text-center leading-tight">
-                          {badge.name}
-                        </span>
+                        <span>{badge.name}</span>
                       </div>
                       
                       {isSelected && (
