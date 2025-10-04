@@ -2458,6 +2458,62 @@ async def get_site_health(admin_id: str = Depends(verify_admin_access)):
         print(f"Error fetching site health: {e}")
         raise HTTPException(status_code=500, detail="Error fetching site health")
 
+@api_router.get("/debug/auth")
+async def debug_auth_flow(token: str = Depends(verify_token)):
+    """Debug authentication flow - TEMPORARY"""
+    try:
+        print(f"🔍 DEBUG AUTH: Token received: {token}")
+        print(f"🔍 DEBUG AUTH: Token type: {type(token)}")
+        
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            kyle = await prisma.clanmember.find_first(
+                where={'username': 'lm Kyle'}
+            )
+            
+            # Check all members with Discord IDs
+            members_with_discord = await prisma.clanmember.find_many(
+                where={'discordId': {'not': None}},
+                select={'username': True, 'discordId': True, 'clanRank': True}
+            )
+            
+            jwt_discord_id = token
+            member_by_string = await prisma.clanmember.find_first(
+                where={'discordId': jwt_discord_id}
+            )
+            
+            member_by_int = None
+            if jwt_discord_id.isdigit():
+                member_by_int = await prisma.clanmember.find_first(
+                    where={'discordId': int(jwt_discord_id)}
+                )
+            
+            return {
+                "token": token,
+                "kyle_record": {
+                    "username": kyle.username if kyle else None,
+                    "discordId": kyle.discordId if kyle else None,
+                    "discordId_type": str(type(kyle.discordId)) if kyle else None,
+                    "clanRank": kyle.clanRank if kyle else None
+                } if kyle else None,
+                "members_with_discord_count": len(members_with_discord),
+                "first_5_members": [
+                    {
+                        "username": m.username,
+                        "discordId": m.discordId,
+                        "discordId_type": str(type(m.discordId)),
+                        "clanRank": m.clanRank
+                    } for m in members_with_discord[:5]
+                ],
+                "jwt_discord_id": jwt_discord_id,
+                "found_by_string": member_by_string.username if member_by_string else None,
+                "found_by_int": member_by_int.username if member_by_int else None
+            }
+        
+        return {"error": "Prisma not available"}
+    except Exception as e:
+        print(f"🔍 DEBUG AUTH ERROR: {e}")
+        return {"error": str(e)}
+
 @api_router.get("/admin/badges")
 async def get_custom_badges(admin_id: str = Depends(verify_admin_access)):
     """Get custom badges"""
