@@ -76,7 +76,6 @@ const PlayerProfile = () => {
   const [period2, setPeriod2] = useState('yesterday')
   const [refreshing, setRefreshing] = useState(false)
   const [lastRefresh, setLastRefresh] = useState<number | null>(null)
-  const [modalCustomBadges, setModalCustomBadges] = useState<CustomBadge[]>([])
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false)
   const [badgeModalLoading, setBadgeModalLoading] = useState(false)
   const [badgeModalError, setBadgeModalError] = useState<string | null>(null)
@@ -273,6 +272,7 @@ const PlayerProfile = () => {
           undefined,
         icon: badge.imageUrl
       }))
+      const allBadges = [...milestoneBadges.filter(badge => !badge.id.startsWith('rank-')), ...customBadges]
       const currentlyAssigned = customBadges.map((badge: any) => badge.id.replace('custom-', ''))
       
       console.log('🔐 FRONTEND: Currently assigned custom badges:', currentlyAssigned)
@@ -862,6 +862,7 @@ const PlayerProfile = () => {
             undefined,
           icon: badge.imageUrl
         }))
+        const allBadges = [...milestoneBadges.filter(badge => !badge.id.startsWith('rank-')), ...customBadges]
         const assignedCustomBadgeIds = customBadges.map((badge: any) => badge.id.replace('custom-', ''))
         
         return (
