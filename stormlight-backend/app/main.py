@@ -2728,9 +2728,10 @@ async def remove_badge_from_member(
             current_badges = [b for b in current_badges if (b.get('id') if isinstance(b, dict) else b) != badge_id]
             
             if len(current_badges) < original_count:
+                import json
                 await prisma.clanmember.update(
                     where={'username': username},
-                    data={'badges': current_badges}
+                    data={'badges': json.dumps(current_badges)}
                 )
                 
                 await log_admin_action(
@@ -4373,6 +4374,21 @@ async def get_player_stats_with_history(
             enhanced_stats['clan_rank'] = clan_rank
         
         enhanced_stats['is_verified'] = is_verified
+        
+        try:
+            if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+                member = await prisma.clanmember.find_unique(where={'username': decoded_username})
+                if member and member.badges:
+                    import json
+                    custom_badges = json.loads(member.badges) if isinstance(member.badges, str) else member.badges
+                    enhanced_stats['custom_badges'] = custom_badges
+                else:
+                    enhanced_stats['custom_badges'] = []
+            else:
+                enhanced_stats['custom_badges'] = []
+        except Exception as e:
+            print(f"Error fetching custom badges for {decoded_username} in history endpoint: {e}")
+            enhanced_stats['custom_badges'] = []
         
         if 'quest_points' in current_stats:
             enhanced_stats['quest_points'] = current_stats['quest_points']
