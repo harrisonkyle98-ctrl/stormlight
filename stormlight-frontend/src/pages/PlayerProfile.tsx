@@ -264,7 +264,6 @@ const PlayerProfile = () => {
       console.log('🔐 FRONTEND: Using token for badge assignment:', token ? 'Token exists' : 'No token')
       
       const milestoneBadges = checkPlayerMilestones(playerData?.stats, questData, playerData?.clan_rank, urlToUsername(username || ''))
-      const nonRankBadges = milestoneBadges.filter(badge => !badge.id.startsWith('rank-'))
       const customBadges = ((playerData as any)?.custom_badges || []).map((badge: CustomBadge) => ({
         id: `custom-${badge.id}`,
         name: badge.name,
@@ -274,7 +273,6 @@ const PlayerProfile = () => {
           undefined,
         icon: badge.imageUrl
       }))
-      const allBadges = [...nonRankBadges, ...customBadges]
       const currentlyAssigned = customBadges.map((badge: any) => badge.id.replace('custom-', ''))
       
       console.log('🔐 FRONTEND: Currently assigned custom badges:', currentlyAssigned)
@@ -854,6 +852,7 @@ const PlayerProfile = () => {
       
       {/* Badge Assignment Modal */}
       {playerData?.stats && (() => {
+        const milestoneBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''))
         const customBadges = ((playerData as any).custom_badges || []).map((badge: CustomBadge) => ({
           id: `custom-${badge.id}`,
           name: badge.name,
@@ -863,14 +862,13 @@ const PlayerProfile = () => {
             undefined,
           icon: badge.imageUrl
         }))
-        const allBadges = [...milestoneBadges.filter(badge => !badge.id.startsWith('rank-')), ...customBadges]
         const assignedCustomBadgeIds = customBadges.map((badge: any) => badge.id.replace('custom-', ''))
         
         return (
           <BadgeAssignmentModal
             isOpen={isBadgeModalOpen}
             onClose={handleCloseBadgeModal}
-            customBadges={modalCustomBadges}
+            customBadges={allBadges}
             assignedBadgeIds={assignedCustomBadgeIds}
             onSave={handleSaveBadgeAssignments}
             memberUsername={urlToUsername(username || '')}
