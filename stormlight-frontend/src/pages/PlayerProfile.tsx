@@ -274,6 +274,7 @@ const PlayerProfile = () => {
           undefined,
         icon: badge.imageUrl
       }))
+      const allBadges = [...nonRankBadges, ...customBadges]
       const currentlyAssigned = customBadges.map((badge: any) => badge.id.replace('custom-', ''))
       
       console.log('🔐 FRONTEND: Currently assigned custom badges:', currentlyAssigned)
@@ -854,7 +855,6 @@ const PlayerProfile = () => {
       {/* Badge Assignment Modal */}
       {playerData?.stats && (() => {
         const milestoneBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''))
-        const nonRankBadges = milestoneBadges.filter(badge => !badge.id.startsWith('rank-'))
         const customBadges = ((playerData as any).custom_badges || []).map((badge: CustomBadge) => ({
           id: `custom-${badge.id}`,
           name: badge.name,
