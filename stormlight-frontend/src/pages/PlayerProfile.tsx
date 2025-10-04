@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { ArrowLeft, User, TrendingUp, Crown, Package, Activity, MapPin, BarChart3, Swords, FileText, RefreshCw, Plus, X, Trophy } from 'lucide-react'
+import { ArrowLeft, User, TrendingUp, Crown, Package, Activity, MapPin, BarChart3, Swords, FileText, RefreshCw, Plus, Trophy } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { getSkillIcon } from '../utils/skillIcons'
 import { getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
@@ -79,6 +79,7 @@ const PlayerProfile = () => {
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false)
   const [badgeModalLoading, setBadgeModalLoading] = useState(false)
   const [badgeModalError, setBadgeModalError] = useState<string | null>(null)
+  const [modalCustomBadges, setModalCustomBadges] = useState<CustomBadge[]>([])
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -204,6 +205,8 @@ const PlayerProfile = () => {
       if (response.ok) {
         const data = await response.json()
         console.log('🔐 FRONTEND: Badges loaded successfully:', data.badges?.length || 0)
+        console.log('🔐 FRONTEND: Custom badges data:', data.badges)
+        setModalCustomBadges(data.badges || [])
       } else {
         const errorText = await response.text()
         console.log('🔐 FRONTEND: Error response:', errorText)
@@ -218,34 +221,23 @@ const PlayerProfile = () => {
   }
 
 
-  const handleRemoveBadge = async (badgeId: string) => {
-    try {
-      const token = localStorage.getItem('access_token')
-      const response = await fetch(`${API_URL}/api/admin/remove-badge`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          username: urlToUsername(username || ''),
-          badgeId: badgeId
-        })
-      })
-
-      if (response.ok) {
-        await fetchPlayerStats()
-      }
-    } catch (error) {
-      console.error('Error removing badge:', error)
-    }
-  }
 
   const handleOpenBadgeModal = async () => {
+    console.log('🔐 FRONTEND: handleOpenBadgeModal called')
+    console.log('🔐 FRONTEND: User clan rank:', user?.clanRank)
+    console.log('🔐 FRONTEND: modalCustomBadges before fetch:', modalCustomBadges)
+    
     if (user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank)) {
       await fetchCustomBadges()
+      console.log('🔐 FRONTEND: modalCustomBadges after fetch (immediate):', modalCustomBadges)
+      
+      setTimeout(() => {
+        console.log('🔐 FRONTEND: modalCustomBadges after timeout:', modalCustomBadges)
+      }, 100)
     }
+    
     setIsBadgeModalOpen(true)
+    console.log('🔐 FRONTEND: Modal opened with modalCustomBadges:', modalCustomBadges)
   }
 
   const handleCloseBadgeModal = () => {
@@ -740,16 +732,6 @@ const PlayerProfile = () => {
                             className="w-4 h-4"
                           />
                           <span>{badge.name}</span>
-                          {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && badge.id.includes('custom') && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleRemoveBadge(badge.id)}
-                              className="ml-2 p-1 h-6 w-6 text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          )}
                           </div>
                         </RunePixelsTooltip>
                     ))}
@@ -848,32 +830,29 @@ const PlayerProfile = () => {
       </div>
       
       {/* Badge Assignment Modal */}
-      {playerData?.stats && (() => {
-        const milestoneBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''))
-        const customBadges = ((playerData as any).custom_badges || []).map((badge: CustomBadge) => ({
-          id: `custom-${badge.id}`,
-          name: badge.name,
-          backgroundColor: badge.backgroundColor || '#6b7280',
-          gradientBackground: badge.gradientColors ? 
-            `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})` : 
-            undefined,
-          icon: badge.imageUrl
-        }))
-        const allBadges = [...milestoneBadges.filter(badge => !badge.id.startsWith('rank-')), ...customBadges]
-        const assignedCustomBadgeIds = customBadges.map((badge: any) => badge.id.replace('custom-', ''))
-        
-        return (
-          <BadgeAssignmentModal
-            isOpen={isBadgeModalOpen}
-            onClose={handleCloseBadgeModal}
-            customBadges={allBadges}
-            assignedBadgeIds={assignedCustomBadgeIds}
-            onSave={handleSaveBadgeAssignments}
-            memberUsername={urlToUsername(username || '')}
-            loading={badgeModalLoading}
-            error={badgeModalError}
-          />
-        )
+      <BadgeAssignmentModal
+        isOpen={isBadgeModalOpen}
+        onClose={handleCloseBadgeModal}
+        customBadges={modalCustomBadges}
+        assignedBadgeIds={((playerData as any)?.custom_badges || []).map((badge: CustomBadge) => badge.id)}
+        onSave={handleSaveBadgeAssignments}
+        memberUsername={urlToUsername(username || '')}
+        loading={badgeModalLoading}
+        error={badgeModalError}
+      />
+      
+      {/* Debug Modal Props */}
+      {isBadgeModalOpen && (() => {
+        console.log('🔐 DEBUG: Modal props being passed:', {
+          isOpen: isBadgeModalOpen,
+          customBadges: modalCustomBadges,
+          customBadgesLength: modalCustomBadges?.length || 0,
+          modalCustomBadgesData: modalCustomBadges,
+          loading: badgeModalLoading,
+          error: badgeModalError
+        })
+        console.log('🔐 DEBUG: modalCustomBadges actual data:', JSON.stringify(modalCustomBadges, null, 2))
+        return null
       })()}
     </div>
   )
