@@ -2472,8 +2472,7 @@ async def debug_auth_flow(token: str = Depends(verify_token)):
             
             # Check all members with Discord IDs
             members_with_discord = await prisma.clanmember.find_many(
-                where={'discordId': {'not': None}},
-                select={'username': True, 'discordId': True, 'clanRank': True}
+                where={'discordId': {'not': None}}
             )
             
             jwt_discord_id = token
