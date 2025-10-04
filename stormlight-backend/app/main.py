@@ -1736,8 +1736,7 @@ async def verify_admin_access(user_id: str = Depends(verify_token)):
             
             # Check all clan members with Discord IDs for debugging
             all_members = await prisma.clanmember.find_many(
-                where={'discordId': {'not': None}},
-                select={'username': True, 'discordId': True, 'clanRank': True}
+                where={'discordId': {'not': None}}
             )
             print(f"🔐 ADMIN ACCESS: Found {len(all_members)} members with Discord IDs")
             for member in all_members[:5]:  # Show first 5 for debugging
