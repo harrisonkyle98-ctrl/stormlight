@@ -20,6 +20,14 @@ import { AnalyticsTab } from '../components/tabs/AnalyticsTab'
 import { CompetitionsTab } from '../components/tabs/CompetitionsTab'
 import { LogTab } from '../components/tabs/LogTab'
 
+interface CustomBadge {
+  id: string
+  name: string
+  imageUrl: string
+  backgroundColor?: string
+  gradientColors?: string[]
+}
+
 interface PlayerStats {
   badges?: Array<{ id: string; name: string; imageUrl: string; type: string }>
   username: string
@@ -68,7 +76,7 @@ const PlayerProfile = () => {
   const [period2, setPeriod2] = useState('yesterday')
   const [refreshing, setRefreshing] = useState(false)
   const [lastRefresh, setLastRefresh] = useState<number | null>(null)
-  const [customBadges, setCustomBadges] = useState<any[]>([])
+  const [modalCustomBadges, setModalCustomBadges] = useState<CustomBadge[]>([])
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false)
   const [badgeModalLoading, setBadgeModalLoading] = useState(false)
   const [badgeModalError, setBadgeModalError] = useState<string | null>(null)
@@ -197,7 +205,7 @@ const PlayerProfile = () => {
       if (response.ok) {
         const data = await response.json()
         console.log('🔐 FRONTEND: Badges loaded successfully:', data.badges?.length || 0)
-        setCustomBadges(data.badges || [])
+        setModalCustomBadges(data.badges || [])
       } else {
         const errorText = await response.text()
         console.log('🔐 FRONTEND: Error response:', errorText)
@@ -255,16 +263,23 @@ const PlayerProfile = () => {
       console.log('🔐 FRONTEND: Selected badge IDs:', selectedBadgeIds)
       console.log('🔐 FRONTEND: Using token for badge assignment:', token ? 'Token exists' : 'No token')
       
-      const allBadges = checkPlayerMilestones(playerData?.stats, questData, playerData?.clan_rank, urlToUsername(username || ''))
-      const nonRankBadges = allBadges.filter(badge => !badge.id.startsWith('rank-'))
-      const currentlyAssigned = nonRankBadges
-        .filter(badge => badge.id.includes('custom'))
-        .map(badge => badge.id)
+      const milestoneBadges = checkPlayerMilestones(playerData?.stats, questData, playerData?.clan_rank, urlToUsername(username || ''))
+      const nonRankBadges = milestoneBadges.filter(badge => !badge.id.startsWith('rank-'))
+      const customBadges = ((playerData as any)?.custom_badges || []).map((badge: CustomBadge) => ({
+        id: `custom-${badge.id}`,
+        name: badge.name,
+        backgroundColor: badge.backgroundColor || '#6b7280',
+        gradientBackground: badge.gradientColors ? 
+          `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})` : 
+          undefined,
+        icon: badge.imageUrl
+      }))
+      const currentlyAssigned = customBadges.map((badge: any) => badge.id.replace('custom-', ''))
       
       console.log('🔐 FRONTEND: Currently assigned custom badges:', currentlyAssigned)
       
       const toAssign = selectedBadgeIds.filter(id => !currentlyAssigned.includes(id))
-      const toRemove = currentlyAssigned.filter(id => !selectedBadgeIds.includes(id))
+      const toRemove = currentlyAssigned.filter((id: string) => !selectedBadgeIds.includes(id))
       
       console.log('🔐 FRONTEND: To assign:', toAssign)
       console.log('🔐 FRONTEND: To remove:', toRemove)
@@ -671,9 +686,21 @@ const PlayerProfile = () => {
           </Card>
 
           {playerData.stats && (() => {
-            const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''))
-            const nonRankBadges = allBadges.filter(badge => !badge.id.startsWith('rank-'))
-            return nonRankBadges.length > 0 ? (
+            const milestoneBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''))
+            const nonRankBadges = milestoneBadges.filter(badge => !badge.id.startsWith('rank-'))
+            
+            const customBadges = ((playerData as any).custom_badges || []).map((badge: CustomBadge) => ({
+              id: `custom-${badge.id}`,
+              name: badge.name,
+              backgroundColor: badge.backgroundColor || '#6b7280',
+              gradientBackground: badge.gradientColors ? 
+                `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})` : 
+                undefined,
+              icon: badge.imageUrl
+            }))
+            
+            const allBadges = [...nonRankBadges, ...customBadges]
+            return allBadges.length > 0 ? (
               <Card className="bg-slate-800/50 border-slate-700">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center justify-between">
@@ -696,7 +723,7 @@ const PlayerProfile = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-col gap-2">
-                    {nonRankBadges.map((badge) => (
+                    {allBadges.map((badge) => (
                         <RunePixelsTooltip
                           key={badge.id}
                           content={
@@ -826,15 +853,24 @@ const PlayerProfile = () => {
       
       {/* Badge Assignment Modal */}
       {playerData?.stats && (() => {
-        const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''))
-        const nonRankBadges = allBadges.filter(badge => !badge.id.startsWith('rank-'))
-        const assignedCustomBadgeIds = nonRankBadges.filter(badge => badge.id.includes('custom')).map(badge => badge.id)
+        const milestoneBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''))
+        const nonRankBadges = milestoneBadges.filter(badge => !badge.id.startsWith('rank-'))
+        const customBadges = ((playerData as any).custom_badges || []).map((badge: CustomBadge) => ({
+          id: `custom-${badge.id}`,
+          name: badge.name,
+          backgroundColor: badge.backgroundColor || '#6b7280',
+          gradientBackground: badge.gradientColors ? 
+            `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})` : 
+            undefined,
+          icon: badge.imageUrl
+        }))
+        const assignedCustomBadgeIds = customBadges.map((badge: any) => badge.id.replace('custom-', ''))
         
         return (
           <BadgeAssignmentModal
             isOpen={isBadgeModalOpen}
             onClose={handleCloseBadgeModal}
-            customBadges={customBadges}
+            customBadges={modalCustomBadges}
             assignedBadgeIds={assignedCustomBadgeIds}
             onSave={handleSaveBadgeAssignments}
             memberUsername={urlToUsername(username || '')}
