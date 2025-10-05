@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends, status, Query, BackgroundTasks, Response, Request, APIRouter, Cookie, Form, UploadFile, File
 from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
+from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
@@ -1422,7 +1423,7 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
         print(f"Cached profile data for {decoded_username} for {profile_cache['ttl']} seconds")
         
         return JSONResponse(
-            content=stats,
+            content=jsonable_encoder(stats),
             headers={
                 "Cache-Control": "no-cache, no-store, must-revalidate",
                 "Pragma": "no-cache",
@@ -1451,7 +1452,7 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
         print(f"Cached fallback profile data for {decoded_username} for {profile_cache['ttl']} seconds")
         
         return JSONResponse(
-            content=fallback_data,
+            content=jsonable_encoder(fallback_data),
             headers={
                 "Cache-Control": "no-cache, no-store, must-revalidate",
                 "Pragma": "no-cache",
@@ -4339,7 +4340,7 @@ async def get_player_stats_with_history(
             current_time - profile_history_cache['timestamps'][cache_key] < profile_history_cache['ttl']):
             print(f"Returning cached history data for {decoded_username} ({period1} vs {period2})")
             return JSONResponse(
-                content=profile_history_cache['data'][cache_key],
+                content=jsonable_encoder(profile_history_cache['data'][cache_key]),
                 headers={
                     "Cache-Control": "no-cache, no-store, must-revalidate",
                     "Pragma": "no-cache",
@@ -4527,7 +4528,7 @@ async def get_player_stats_with_history(
         print(f"Cached history data for {decoded_username} ({period1} vs {period2}) for {profile_history_cache['ttl']} seconds")
         
         return JSONResponse(
-            content=enhanced_stats,
+            content=jsonable_encoder(enhanced_stats),
             headers={
                 "Cache-Control": "no-cache, no-store, must-revalidate",
                 "Pragma": "no-cache",
