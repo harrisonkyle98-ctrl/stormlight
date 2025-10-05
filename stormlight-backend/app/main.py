@@ -4339,8 +4339,28 @@ async def get_player_stats_with_history(
             cache_key in profile_history_cache['timestamps'] and
             current_time - profile_history_cache['timestamps'][cache_key] < profile_history_cache['ttl']):
             print(f"Returning cached history data for {decoded_username} ({period1} vs {period2})")
+            cached_data = profile_history_cache['data'][cache_key].copy()
+            
+            try:
+                if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+                    member = await prisma.clanmember.find_unique(where={'username': decoded_username})
+                    if member and member.badges:
+                        import json
+                        custom_badges = json.loads(member.badges) if isinstance(member.badges, str) else member.badges
+                        cached_data['custom_badges'] = custom_badges
+                        print(f"✅ Fetched fresh custom badges for cached response: {len(custom_badges)} badges")
+                    else:
+                        cached_data['custom_badges'] = []
+                        print(f"⚠️ No custom badges found for {decoded_username} in database")
+                else:
+                    cached_data['custom_badges'] = []
+                    print(f"⚠️ Prisma not available, defaulting to empty custom badges")
+            except Exception as e:
+                print(f"❌ Error fetching custom badges for {decoded_username} in cached path: {e}")
+                cached_data['custom_badges'] = []
+            
             return JSONResponse(
-                content=jsonable_encoder(profile_history_cache['data'][cache_key]),
+                content=jsonable_encoder(cached_data),
                 headers={
                     "Cache-Control": "no-cache, no-store, must-revalidate",
                     "Pragma": "no-cache",
@@ -4491,12 +4511,15 @@ async def get_player_stats_with_history(
                     import json
                     custom_badges = json.loads(member.badges) if isinstance(member.badges, str) else member.badges
                     enhanced_stats['custom_badges'] = custom_badges
+                    print(f"✅ Fetched fresh custom badges for new response: {len(custom_badges)} badges")
                 else:
                     enhanced_stats['custom_badges'] = []
+                    print(f"⚠️ No custom badges found for {decoded_username} in database")
             else:
                 enhanced_stats['custom_badges'] = []
+                print(f"⚠️ Prisma not available, defaulting to empty custom badges")
         except Exception as e:
-            print(f"Error fetching custom badges for {decoded_username} in history endpoint: {e}")
+            print(f"❌ Error fetching custom badges for {decoded_username} in history endpoint: {e}")
             enhanced_stats['custom_badges'] = []
         
         if 'quest_points' in current_stats:
