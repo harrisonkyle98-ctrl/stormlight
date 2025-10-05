@@ -5073,7 +5073,11 @@ async def serve_react_app(full_path: str):
     if os.path.exists(static_file_path) and os.path.isfile(static_file_path):
         return FileResponse(static_file_path)
     
-    return FileResponse("static/index.html")
+    response = FileResponse("static/index.html")
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.on_event("shutdown")
 async def shutdown_event():
