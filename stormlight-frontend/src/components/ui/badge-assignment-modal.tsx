@@ -64,7 +64,7 @@ export const BadgeAssignmentModal: React.FC<BadgeAssignmentModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-slate-800 border-slate-700">
+      <DialogContent className="max-w-md bg-slate-800 border-slate-700">
         <DialogHeader>
           <DialogTitle className="text-white">
             Assign Custom Badges - {memberUsername}
@@ -143,9 +143,8 @@ export const BadgeAssignmentModal: React.FC<BadgeAssignmentModalProps> = ({
 
         <DialogFooter>
           <Button
-            variant="outline"
             onClick={handleCancel}
-            className="text-slate-300 border-slate-600 hover:bg-slate-700"
+            className="bg-red-600 hover:bg-red-700 text-white"
           >
             Cancel
           </Button>
