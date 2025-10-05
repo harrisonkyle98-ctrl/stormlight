@@ -374,6 +374,18 @@ def get_history_cache_key(username: str, period1: str, period2: str) -> str:
     """Generate cache key for history endpoint"""
     return f"{username}:{period1}:{period2}"
 
+def invalidate_player_cache(username: str):
+    """Invalidate all cached entries for a specific player"""
+    keys_to_remove = []
+    for key in list(profile_history_cache['data'].keys()):
+        if key.startswith(f"{username}:"):
+            keys_to_remove.append(key)
+    
+    for key in keys_to_remove:
+        profile_history_cache['data'].pop(key, None)
+        profile_history_cache['timestamps'].pop(key, None)
+        print(f"🗑️ Cache invalidated for key: {key}")
+
 SKILL_TABLE_MAPPING = {
     'overall': 0, 'attack': 1, 'defence': 2, 'strength': 3, 'constitution': 4,
     'ranged': 5, 'prayer': 6, 'magic': 7, 'cooking': 8, 'woodcutting': 9,
@@ -2768,6 +2780,7 @@ async def assign_badge_to_member(
                         prisma_available=PRISMA_AVAILABLE
                     )
                     
+                    invalidate_player_cache(username)
                     print(f"✅ BADGE ASSIGN: Successfully assigned badge '{badge.name}' to {username}")
                     return {"success": True}
                 else:
@@ -2829,6 +2842,8 @@ async def remove_badge_from_member(
                     prisma_client=prisma,
                     prisma_available=PRISMA_AVAILABLE
                 )
+                
+                invalidate_player_cache(username)
             
             return {"success": True}
         
