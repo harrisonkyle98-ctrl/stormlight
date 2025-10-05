@@ -9,6 +9,11 @@ primary_region = "iad"
   PORT = "8000"
   PYTHONPATH = "/app"
 
+[mounts]
+  source = "badge_uploads"
+  destination = "/app/uploads"
+  processes = ["app"]
+
 [http_service]
   internal_port = 8000
   force_https = true

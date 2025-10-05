@@ -50,19 +50,26 @@ prisma = Prisma() if PRISMA_AVAILABLE else None
 
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("JWT_SECRET_KEY", "fallback-secret"))
 
-uploads_dir = "./uploads"
+uploads_dir = "/app/uploads"
+badges_dir = f"{uploads_dir}/badges"
+
 try:
-    os.makedirs(uploads_dir, exist_ok=True)
-    os.makedirs(f"{uploads_dir}/badges", exist_ok=True)
+    os.makedirs(badges_dir, exist_ok=True)
+    print(f"✅ Successfully created uploads directory: {uploads_dir}")
+    print(f"✅ Badge uploads directory: {badges_dir}")
+    
+    test_file = f"{badges_dir}/.write_test"
+    with open(test_file, 'w') as f:
+        f.write('test')
+    os.remove(test_file)
+    print(f"✅ Uploads directory is writable")
+    
     app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
-    print(f"✅ Successfully mounted uploads directory: {uploads_dir}")
+    print(f"✅ Successfully mounted uploads directory for static file serving")
 except Exception as e:
-    print(f"❌ Failed to create/mount uploads directory: {e}")
-    fallback_dir = "/tmp/uploads"
-    os.makedirs(fallback_dir, exist_ok=True)
-    os.makedirs(f"{fallback_dir}/badges", exist_ok=True)
-    app.mount("/uploads", StaticFiles(directory=fallback_dir), name="uploads")
-    print(f"⚠️ Using fallback uploads directory: {fallback_dir}")
+    print(f"❌ CRITICAL: Failed to set up uploads directory: {e}")
+    print(f"❌ Badge uploads will not work until this is resolved")
+    raise
 
 # Create API router for all API endpoints
 api_router = APIRouter(prefix="/api")
@@ -2587,7 +2594,7 @@ async def create_custom_badge(
         if badge_file.size and badge_file.size > 2 * 1024 * 1024:  # 2MB limit
             raise HTTPException(status_code=400, detail="File too large. Maximum 2MB allowed.")
         
-        upload_dir = Path("./uploads/badges")
+        upload_dir = Path("/app/uploads/badges")
         upload_dir.mkdir(parents=True, exist_ok=True)
         
         file_extension = badge_file.filename.split('.')[-1] if badge_file.filename else 'png'
@@ -2664,7 +2671,7 @@ async def update_custom_badge(
                 if badge_file.size and badge_file.size > 2 * 1024 * 1024:
                     raise HTTPException(status_code=400, detail="File too large. Maximum 2MB allowed.")
                 
-                upload_dir = Path("./uploads/badges")
+                upload_dir = Path("/app/uploads/badges")
                 upload_dir.mkdir(parents=True, exist_ok=True)
                 
                 file_extension = badge_file.filename.split('.')[-1] if badge_file.filename else 'png'
