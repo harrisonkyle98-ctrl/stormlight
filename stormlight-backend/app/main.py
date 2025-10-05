@@ -2614,7 +2614,7 @@ async def create_custom_badge(
             }
             
             if gradient_color1 and gradient_color2:
-                badge_data['gradientColors'] = [gradient_color1, gradient_color2]
+                badge_data['gradientColors'] = json.dumps([gradient_color1, gradient_color2])
             elif background_color:
                 badge_data['backgroundColor'] = background_color
             
@@ -2661,7 +2661,7 @@ async def update_custom_badge(
             }
             
             if gradient_color1 and gradient_color2:
-                update_data['gradientColors'] = [gradient_color1, gradient_color2]
+                update_data['gradientColors'] = json.dumps([gradient_color1, gradient_color2])
             elif background_color:
                 update_data['backgroundColor'] = background_color
             
