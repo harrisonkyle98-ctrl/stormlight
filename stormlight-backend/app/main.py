@@ -2617,6 +2617,87 @@ async def create_custom_badge(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error creating custom badge: {str(e)}")
+@api_router.put("/admin/badges/{badge_id}")
+async def update_custom_badge(
+    badge_id: str,
+    name: str = Form(...),
+    description: str = Form(""),
+    background_color: str = Form(None),
+    gradient_color1: str = Form(None),
+    gradient_color2: str = Form(None),
+    badge_file: UploadFile = File(None),
+    admin_id: str = Depends(verify_admin_access)
+):
+    """Update an existing custom badge"""
+    try:
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            existing_badge = await prisma.custombadge.find_unique(where={'id': badge_id})
+            if not existing_badge:
+                raise HTTPException(status_code=404, detail="Badge not found")
+            
+            update_data = {
+                'name': name,
+                'description': description,
+                'backgroundColor': background_color
+            }
+            
+            if gradient_color1 and gradient_color2:
+                update_data['gradientColors'] = [gradient_color1, gradient_color2]
+            else:
+                update_data['gradientColors'] = None
+            
+            if badge_file and badge_file.filename:
+                if badge_file.content_type not in ["image/png", "image/jpeg", "image/svg+xml"]:
+                    raise HTTPException(status_code=400, detail="Invalid file type. Only PNG, JPG, SVG allowed.")
+                
+                if badge_file.size and badge_file.size > 2 * 1024 * 1024:
+                    raise HTTPException(status_code=400, detail="File too large. Maximum 2MB allowed.")
+                
+                upload_dir = Path("./uploads/badges")
+                upload_dir.mkdir(parents=True, exist_ok=True)
+                
+                file_extension = badge_file.filename.split('.')[-1] if badge_file.filename else 'png'
+                unique_filename = f"{uuid.uuid4()}.{file_extension}"
+                file_path = upload_dir / unique_filename
+                
+                with open(file_path, "wb") as buffer:
+                    shutil.copyfileobj(badge_file.file, buffer)
+                
+                if existing_badge.imagePath and Path(existing_badge.imagePath).exists():
+                    try:
+                        Path(existing_badge.imagePath).unlink()
+                    except Exception as e:
+                        print(f"Warning: Could not delete old badge image: {e}")
+                
+                update_data['imagePath'] = str(file_path)
+                update_data['imageUrl'] = f"/uploads/badges/{unique_filename}"
+            
+            badge = await prisma.custombadge.update(
+                where={'id': badge_id},
+                data=update_data
+            )
+            
+            await log_admin_action(
+                admin_id,
+                "system",
+                "update_badge",
+                f"Updated custom badge: {name}",
+                prisma_client=prisma,
+                prisma_available=PRISMA_AVAILABLE
+            )
+            
+            return {"success": True, "badge": badge}
+        
+        raise HTTPException(status_code=500, detail="Database not available")
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating custom badge: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error updating custom badge: {str(e)}")
+
+
 
 @api_router.post("/admin/assign-badge")
 async def assign_badge_to_member(
@@ -2657,12 +2738,19 @@ async def assign_badge_to_member(
                 badge = await prisma.custombadge.find_unique(where={'id': badge_id})
                 if badge:
                     print(f"🎯 BADGE ASSIGN: Found badge: {badge.name}")
-                    current_badges.append({
+                    badge_data = {
                         'id': badge.id,
                         'name': badge.name,
                         'imageUrl': badge.imageUrl,
                         'type': 'custom'
-                    })
+                    }
+                    
+                    if badge.backgroundColor:
+                        badge_data['backgroundColor'] = badge.backgroundColor
+                    if badge.gradientColors:
+                        badge_data['gradientColors'] = badge.gradientColors
+                    
+                    current_badges.append(badge_data)
                     
                     print(f"🎯 BADGE ASSIGN: Updating member with new badges: {current_badges}")
                     import json

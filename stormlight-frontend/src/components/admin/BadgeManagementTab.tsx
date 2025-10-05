@@ -10,6 +10,8 @@ interface CustomBadge {
   description?: string
   imagePath: string
   imageUrl: string
+  backgroundColor?: string
+  gradientColors?: string[]
   createdBy: string
   createdAt: string
 }
@@ -135,13 +137,20 @@ export const BadgeManagementTab = () => {
 
   const startEdit = (badge: CustomBadge) => {
     setEditingBadge(badge)
+    
+    const hasGradient = badge.gradientColors && Array.isArray(badge.gradientColors) && badge.gradientColors.length === 2
+    const gradColors = badge.gradientColors || []
+    
     setFormData({
       name: badge.name,
       description: badge.description || '',
-      backgroundColor: '#3b82f6',
-      gradientColor1: '#3b82f6',
-      gradientColor2: '#1d4ed8'
+      backgroundColor: badge.backgroundColor || '#3b82f6',
+      gradientColor1: hasGradient ? gradColors[0] : '#3b82f6',
+      gradientColor2: hasGradient ? gradColors[1] : '#1d4ed8'
     })
+    
+    setColorMode(hasGradient ? 'gradient' : 'solid')
+    
     setSelectedFile(null)
     setShowCreateForm(true)
   }

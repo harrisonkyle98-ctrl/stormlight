@@ -198,7 +198,13 @@ const PlayerProfile = () => {
       
       if (response.ok) {
         const data = await response.json()
-        setModalCustomBadges(data.badges || [])
+        const badges = (data.badges || []).map((badge: any) => ({
+          ...badge,
+          imageUrl: badge.imageUrl.startsWith('http') 
+            ? badge.imageUrl 
+            : `https://stormlight.fly.dev${badge.imageUrl}`
+        }))
+        setModalCustomBadges(badges)
       } else {
         setBadgeModalError(`Failed to load custom badges: ${response.status}`)
       }
