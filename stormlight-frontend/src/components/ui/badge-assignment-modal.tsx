@@ -85,7 +85,7 @@ export const BadgeAssignmentModal: React.FC<BadgeAssignmentModalProps> = ({
               No custom badges available
             </p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <div className="flex flex-col gap-2">
               {customBadges.map((badge) => {
                 const isSelected = selectedBadgeIds.includes(badge.id)
                 const backgroundColor = badge.gradientColors 
@@ -109,10 +109,10 @@ export const BadgeAssignmentModal: React.FC<BadgeAssignmentModalProps> = ({
                     <div
                       onClick={() => handleBadgeToggle(badge.id)}
                       className={`
-                        relative cursor-pointer rounded-lg p-3 transition-all duration-200
+                        relative cursor-pointer transition-all duration-200
                         ${isSelected 
-                          ? 'ring-2 ring-blue-400 bg-blue-900/30' 
-                          : 'hover:bg-slate-700/50'
+                          ? 'ring-2 ring-blue-400' 
+                          : ''
                         }
                       `}
                     >
