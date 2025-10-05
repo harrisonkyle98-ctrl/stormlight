@@ -2642,10 +2642,8 @@ async def update_custom_badge(
             
             if gradient_color1 and gradient_color2:
                 update_data['gradientColors'] = [gradient_color1, gradient_color2]
-                update_data['backgroundColor'] = None
             elif background_color:
                 update_data['backgroundColor'] = background_color
-                update_data['gradientColors'] = None
             
             if badge_file and badge_file.filename:
                 if badge_file.content_type not in ["image/png", "image/jpeg", "image/svg+xml"]:
