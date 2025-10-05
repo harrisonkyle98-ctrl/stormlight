@@ -2610,12 +2610,13 @@ async def create_custom_badge(
                 'description': description,
                 'imagePath': str(file_path),
                 'imageUrl': f"/uploads/badges/{unique_filename}",
-                'backgroundColor': background_color,
                 'createdBy': admin_id
             }
             
             if gradient_color1 and gradient_color2:
                 badge_data['gradientColors'] = [gradient_color1, gradient_color2]
+            elif background_color:
+                badge_data['backgroundColor'] = background_color
             
             badge = await prisma.custombadge.create(badge_data)
             
