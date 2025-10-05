@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends, status, Query, BackgroundTasks, Response, Request, APIRouter, Cookie, Form, UploadFile, File
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
@@ -1417,26 +1417,18 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
             print(f"Error fetching custom badges for {decoded_username}: {e}")
             stats['custom_badges'] = []
         
-        try:
-            if PRISMA_AVAILABLE and prisma and prisma.is_connected():
-                member = await prisma.clanmember.find_unique(where={'username': decoded_username})
-                if member and member.badges:
-                    import json
-                    custom_badges = json.loads(member.badges) if isinstance(member.badges, str) else member.badges
-                    stats['custom_badges'] = custom_badges
-                else:
-                    stats['custom_badges'] = []
-            else:
-                stats['custom_badges'] = []
-        except Exception as e:
-            print(f"Error fetching custom badges for {decoded_username}: {e}")
-            stats['custom_badges'] = []
-        
         profile_cache['data'][decoded_username] = stats
         profile_cache['timestamps'][decoded_username] = current_time
         print(f"Cached profile data for {decoded_username} for {profile_cache['ttl']} seconds")
         
-        return stats
+        return JSONResponse(
+            content=stats,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
     
     if clan_rank:
         fallback_data = {
@@ -1458,7 +1450,14 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
         profile_cache['timestamps'][decoded_username] = current_time
         print(f"Cached fallback profile data for {decoded_username} for {profile_cache['ttl']} seconds")
         
-        return fallback_data
+        return JSONResponse(
+            content=fallback_data,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
     
     raise HTTPException(status_code=404, detail="Player not found or stats unavailable")
 
@@ -4339,7 +4338,14 @@ async def get_player_stats_with_history(
             cache_key in profile_history_cache['timestamps'] and
             current_time - profile_history_cache['timestamps'][cache_key] < profile_history_cache['ttl']):
             print(f"Returning cached history data for {decoded_username} ({period1} vs {period2})")
-            return profile_history_cache['data'][cache_key]
+            return JSONResponse(
+                content=profile_history_cache['data'][cache_key],
+                headers={
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                    "Expires": "0"
+                }
+            )
         
         current_stats = await fetch_player_stats(decoded_username)
         if not current_stats:
@@ -4520,7 +4526,14 @@ async def get_player_stats_with_history(
         profile_history_cache['timestamps'][cache_key] = current_time
         print(f"Cached history data for {decoded_username} ({period1} vs {period2}) for {profile_history_cache['ttl']} seconds")
         
-        return enhanced_stats
+        return JSONResponse(
+            content=enhanced_stats,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
         
     except HTTPException:
         raise
