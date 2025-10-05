@@ -331,29 +331,34 @@ export const BadgeManagementTab = () => {
           {customBadges.length === 0 ? (
             <p className="text-slate-400 text-center py-8">No custom badges created yet</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {customBadges.map((badge) => (
-                <div key={badge.id} className="p-4 bg-slate-600/30 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-3">
+            <div className="flex flex-col gap-2">
+              {customBadges.map((badge) => {
+                const backgroundColor = badge.gradientColors 
+                  ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
+                  : badge.backgroundColor || '#6b7280'
+                
+                return (
+                  <div key={badge.id} className="flex items-center justify-between">
+                    <div
+                      className="flex-1 px-3 py-1 text-sm font-semibold flex items-center space-x-2 rounded-md text-white"
+                      style={{
+                        background: backgroundColor
+                      }}
+                    >
                       <img 
                         src={`https://stormlight.fly.dev${badge.imageUrl}`} 
                         alt={badge.name} 
-                        className="w-8 h-8 rounded object-cover"
+                        className="w-4 h-4"
                       />
-                      <div>
-                        <span className="text-white font-medium">{badge.name}</span>
-                        {badge.description && (
-                          <p className="text-sm text-slate-400">{badge.description}</p>
-                        )}
-                      </div>
+                      <span>{badge.name}</span>
                     </div>
-                    <div className="flex space-x-1">
+                    <div className="flex space-x-1 ml-2">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => startEdit(badge)}
                         className="p-1 h-8 w-8"
+                        title="Edit badge"
                       >
                         <Edit className="w-3 h-3" />
                       </Button>
@@ -362,13 +367,14 @@ export const BadgeManagementTab = () => {
                         variant="outline"
                         onClick={() => handleDelete(badge.id)}
                         className="p-1 h-8 w-8 text-red-400 hover:text-red-300"
+                        title="Delete badge"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </CardContent>
