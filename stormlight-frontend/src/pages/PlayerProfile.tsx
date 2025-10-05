@@ -30,6 +30,7 @@ interface CustomBadge {
 
 interface PlayerStats {
   badges?: Array<{ id: string; name: string; imageUrl: string; type: string }>
+  custom_badges?: CustomBadge[]
   username: string
   stats: {
     overall: {
@@ -112,9 +113,13 @@ const PlayerProfile = () => {
           username: data.username, 
           combatlevel: data.stats?.overall?.combatlevel,
           rank_changes: Object.keys(data.stats).filter(skill => data.stats[skill].rank_change !== 0).length,
-          last_updated: data.last_updated 
+          last_updated: data.last_updated,
+          custom_badges_count: data.custom_badges?.length || 0,
+          has_custom_badges_field: 'custom_badges' in data
         })
+        console.log('🎯 BADGE DEBUG: custom_badges from API:', data.custom_badges)
         setPlayerData(data)
+        console.log('🎯 BADGE DEBUG: State updated, badges should now be available for rendering')
       } else {
         setError('Clan member not found or stats unavailable')
       }
@@ -239,7 +244,7 @@ const PlayerProfile = () => {
       console.log('🔐 FRONTEND: Selected badge IDs:', selectedBadgeIds)
       console.log('🔐 FRONTEND: Using token for badge assignment:', token ? 'Token exists' : 'No token')
       
-      const customBadges = ((playerData as any)?.custom_badges || []).map((badge: CustomBadge) => ({
+      const customBadges = (playerData.custom_badges || []).map((badge: CustomBadge) => ({
         id: `custom-${badge.id}`,
         name: badge.name,
         backgroundColor: badge.backgroundColor || '#6b7280',
@@ -659,11 +664,12 @@ const PlayerProfile = () => {
             </CardContent>
           </Card>
 
-          {playerData.stats && (() => {
+          {playerData.stats && playerData.custom_badges !== undefined && (() => {
+            console.log('🎯 BADGE RENDER: Rendering badges, custom_badges =', playerData.custom_badges)
             const milestoneBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''))
             const nonRankBadges = milestoneBadges.filter(badge => !badge.id.startsWith('rank-'))
             
-            const customBadges = ((playerData as any).custom_badges || []).map((badge: CustomBadge) => ({
+            const customBadges = (playerData.custom_badges || []).map((badge: CustomBadge) => ({
               id: `custom-${badge.id}`,
               name: badge.name,
               backgroundColor: badge.backgroundColor || '#6b7280',
@@ -673,7 +679,9 @@ const PlayerProfile = () => {
               icon: badge.imageUrl
             }))
             
+            console.log('🎯 BADGE RENDER: Custom badges mapped:', customBadges)
             const allBadges = [...nonRankBadges, ...customBadges]
+            console.log('🎯 BADGE RENDER: Total badges to display:', allBadges.length)
             return allBadges.length > 0 ? (
               <Card className="bg-slate-800/50 border-slate-700">
                 <CardHeader>
@@ -820,7 +828,7 @@ const PlayerProfile = () => {
         isOpen={isBadgeModalOpen}
         onClose={handleCloseBadgeModal}
         customBadges={modalCustomBadges}
-        assignedBadgeIds={((playerData as any)?.custom_badges || []).map((badge: CustomBadge) => badge.id)}
+        assignedBadgeIds={(playerData.custom_badges || []).map((badge: CustomBadge) => badge.id)}
         onSave={handleSaveBadgeAssignments}
         memberUsername={urlToUsername(username || '')}
         loading={badgeModalLoading}
