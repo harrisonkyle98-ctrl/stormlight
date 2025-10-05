@@ -244,7 +244,7 @@ const PlayerProfile = () => {
       console.log('🔐 FRONTEND: Selected badge IDs:', selectedBadgeIds)
       console.log('🔐 FRONTEND: Using token for badge assignment:', token ? 'Token exists' : 'No token')
       
-      const customBadges = (playerData.custom_badges || []).map((badge: CustomBadge) => ({
+      const customBadges = (playerData?.custom_badges || []).map((badge: CustomBadge) => ({
         id: `custom-${badge.id}`,
         name: badge.name,
         backgroundColor: badge.backgroundColor || '#6b7280',
@@ -828,7 +828,7 @@ const PlayerProfile = () => {
         isOpen={isBadgeModalOpen}
         onClose={handleCloseBadgeModal}
         customBadges={modalCustomBadges}
-        assignedBadgeIds={(playerData.custom_badges || []).map((badge: CustomBadge) => badge.id)}
+        assignedBadgeIds={(playerData?.custom_badges || []).map((badge: CustomBadge) => badge.id)}
         onSave={handleSaveBadgeAssignments}
         memberUsername={urlToUsername(username || '')}
         loading={badgeModalLoading}
