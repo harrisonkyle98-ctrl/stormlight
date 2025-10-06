@@ -85,6 +85,15 @@ export const ActivityTab = ({ username, playerData: _playerData, API_URL }: TabP
     );
   }
 
+  const toMMDDYYYY = (ts: number): string => {
+    const ms = ts > 1000000000000 ? ts : ts * 1000
+    const d = new Date(ms)
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    const yyyy = d.getFullYear()
+    return `${mm}-${dd}-${yyyy}`
+  }
+
   return (
     <div className="space-y-4">
       {activities.length > 0 ? (
@@ -93,7 +102,7 @@ export const ActivityTab = ({ username, playerData: _playerData, API_URL }: TabP
             <div key={index} className="bg-slate-700/50 p-4 rounded-lg">
               <p className="text-white font-medium">{activity.username}</p>
               <p className="text-slate-300">{activity.text}</p>
-              <p className="text-slate-500 text-sm">{new Date(activity.timestamp * 1000).toLocaleDateString()}</p>
+              <p className="text-slate-500 text-sm">{toMMDDYYYY(activity.timestamp)}</p>
             </div>
           ))}
           

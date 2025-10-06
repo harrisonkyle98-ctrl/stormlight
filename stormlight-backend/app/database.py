@@ -1342,7 +1342,7 @@ async def collect_daily_activities_and_drops(members_per_cycle: int = 8, cycle_d
                                         'username': username,
                                         'text': activity['text'],
                                         'details': activity['details'],
-                                        'date': activity['date'],
+                                        'date': datetime.fromtimestamp(activity_timestamp).strftime('%m-%d-%Y'),
                                         'timestamp': activity_timestamp
                                     })
                             except (ValueError, KeyError):

@@ -2132,11 +2132,15 @@ async def get_clan_activities(
             
             stored_activities = []
             for activity in activities_from_db:
+                ts = int(activity.activityTimestamp) if activity.activityTimestamp is not None else 0
+                if ts > 1000000000000:
+                    ts = ts // 1000
+                date_str = datetime.fromtimestamp(ts).strftime('%m-%d-%Y') if ts > 0 else activity.activityDate
                 stored_activities.append({
                     'username': activity.username,
                     'text': activity.text,
-                    'timestamp': activity.activityTimestamp,
-                    'date': activity.activityDate
+                    'timestamp': ts,
+                    'date': date_str
                 })
             
             print(f"Retrieved {len(stored_activities)} stored activities from Prisma database (total: {total_stored_count})")
@@ -2181,6 +2185,9 @@ async def get_clan_activities(
         seen_activities = set()
         unique_activities = []
         for activity in combined_activities:
+            ts = activity['timestamp']
+            if ts > 1000000000000:
+                activity['timestamp'] = ts // 1000
             activity_key = (activity['username'], activity['text'], activity['timestamp'])
             if activity_key not in seen_activities:
                 seen_activities.add(activity_key)
@@ -2215,6 +2222,9 @@ async def get_clan_activities(
         seen_activities = set()
         unique_activities = []
         for activity in combined_activities:
+            ts = activity['timestamp']
+            if ts > 1000000000000:
+                activity['timestamp'] = ts // 1000
             activity_key = (activity['username'], activity['text'], activity['timestamp'])
             if activity_key not in seen_activities:
                 seen_activities.add(activity_key)
@@ -2303,7 +2313,7 @@ async def get_clan_activities(
                                             'username': member['username'],
                                             'text': activity['text'],
                                             'details': activity['details'],
-                                            'date': activity['date'],
+                                            'date': datetime.fromtimestamp(activity_timestamp).strftime('%m-%d-%Y'),
                                             'timestamp': activity_timestamp
                                         })
                                 except (ValueError, KeyError) as e:
@@ -2388,6 +2398,9 @@ async def get_clan_activities(
                             seen_activities = set()
                             unique_activities = []
                             for activity in combined_activities:
+                                ts = activity['timestamp']
+                                if ts > 1000000000000:
+                                    activity['timestamp'] = ts // 1000
                                 activity_key = (activity['username'], activity['text'], activity['timestamp'])
                                 if activity_key not in seen_activities:
                                     seen_activities.add(activity_key)
@@ -3059,6 +3072,40 @@ async def get_rank_tracking(admin_id: str = Depends(verify_admin_access)):
     except Exception as e:
         print(f"Error fetching rank tracking: {e}")
         raise HTTPException(status_code=500, detail="Error fetching rank tracking")
+
+@api_router.post("/admin/normalize-activities")
+async def normalize_activities(request: Request):
+    """Normalize all activity timestamps from milliseconds to seconds and dates to MM-DD-YYYY format"""
+    await verify_admin_access(request)
+    fixed_ts = 0
+    fixed_date = 0
+    try:
+        if not prisma:
+            raise HTTPException(status_code=500, detail="Prisma not initialized")
+        
+        rows = await prisma.clanactivity.find_many()
+        for r in rows:
+            ts = int(r.activityTimestamp) if r.activityTimestamp is not None else 0
+            ts_norm = ts // 1000 if ts > 1000000000000 else ts
+            desired_date = datetime.fromtimestamp(ts_norm).strftime('%m-%d-%Y') if ts_norm > 0 else r.activityDate
+            needs_ts_fix = ts != ts_norm
+            needs_date_fix = (r.activityDate or "") != desired_date
+            if needs_ts_fix or needs_date_fix:
+                await prisma.clanactivity.update(
+                    where={"id": r.id},
+                    data={
+                        "activityTimestamp": ts_norm,
+                        "activityDate": desired_date
+                    }
+                )
+                if needs_ts_fix: 
+                    fixed_ts += 1
+                if needs_date_fix: 
+                    fixed_date += 1
+        return {"fixed_timestamps": fixed_ts, "fixed_dates": fixed_date, "status": "ok"}
+    except Exception as e:
+        print(f"Normalize error: {e}")
+        raise HTTPException(status_code=500, detail=f"Normalization failed: {str(e)}")
 
 @api_router.put("/admin/members/{username}/join-date")
 async def update_member_join_date(
@@ -3842,7 +3889,7 @@ async def get_player_drops(username: str, page: int = Query(1, ge=1), limit: int
                                     'username': username,
                                     'text': activity['text'],
                                     'details': activity['details'],
-                                    'date': activity['date'],
+                                    'date': datetime.fromtimestamp(activity_timestamp).strftime('%m-%d-%Y'),
                                     'timestamp': activity_timestamp
                                 })
                             except (ValueError, KeyError):
@@ -4038,7 +4085,7 @@ async def get_player_activities(username: str, page: int = Query(1, ge=1), limit
                                     'username': username,
                                     'text': activity['text'],
                                     'details': activity['details'],
-                                    'date': activity['date'],
+                                    'date': datetime.fromtimestamp(activity_timestamp).strftime('%m-%d-%Y'),
                                     'timestamp': activity_timestamp
                                 })
                             except (ValueError, KeyError):
