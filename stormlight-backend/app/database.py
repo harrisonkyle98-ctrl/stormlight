@@ -1317,7 +1317,6 @@ async def collect_daily_activities_and_drops(members_per_cycle: int = 8, cycle_d
                         activities = data.get('activities', [])
                         
                         member_activities = []
-                        fourteen_days_ago = datetime.now().timestamp() - (14 * 24 * 60 * 60)
                         
                         for activity in activities:
                             try:
@@ -1337,14 +1336,13 @@ async def collect_daily_activities_and_drops(members_per_cycle: int = 8, cycle_d
                                 if activity_timestamp < 0 or activity_timestamp > current_time + 86400:
                                     continue
                                 
-                                if activity_timestamp >= fourteen_days_ago:
-                                    member_activities.append({
-                                        'username': username,
-                                        'text': activity['text'],
-                                        'details': activity['details'],
-                                        'date': datetime.fromtimestamp(activity_timestamp).strftime('%m-%d-%Y'),
-                                        'timestamp': activity_timestamp
-                                    })
+                                member_activities.append({
+                                    'username': username,
+                                    'text': activity['text'],
+                                    'details': activity['details'],
+                                    'date': datetime.fromtimestamp(activity_timestamp).strftime('%m-%d-%Y'),
+                                    'timestamp': activity_timestamp
+                                })
                             except (ValueError, KeyError):
                                 continue
                         
