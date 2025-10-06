@@ -1489,6 +1489,64 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
     
     raise HTTPException(status_code=404, detail="Player not found or stats unavailable")
 
+@api_router.get("/player/{username}/activities")
+async def get_player_activities(
+    username: str,
+    page: int = Query(1, description="Page number for pagination"),
+    limit: int = Query(10, description="Number of activities per page")
+):
+    """Get activities for a specific player with pagination"""
+    from urllib.parse import unquote
+    decoded_username = unquote(username).replace('-', ' ')
+    
+    print(f"=== API REQUEST: get_player_activities for {decoded_username} with page={page}, limit={limit} ===")
+    
+    try:
+        if not prisma or not prisma.is_connected():
+            print(f"❌ Prisma not available for player activities")
+            raise HTTPException(status_code=503, detail="Database connection unavailable")
+        
+        skip = (page - 1) * limit
+        
+        activities_from_db = await prisma.clanactivity.find_many(
+            where={'username': decoded_username},
+            order={'activityTimestamp': 'desc'},
+            skip=skip,
+            take=limit
+        )
+        
+        total_count = await prisma.clanactivity.count(
+            where={'username': decoded_username}
+        )
+        
+        print(f"Retrieved {len(activities_from_db)} activities for {decoded_username} (total: {total_count}, page: {page})")
+        
+        activities = []
+        for activity in activities_from_db:
+            ts = int(activity.activityTimestamp) if activity.activityTimestamp is not None else 0
+            if ts > 1000000000000:
+                ts = ts // 1000
+            
+            activities.append({
+                'username': activity.username,
+                'text': activity.text,
+                'timestamp': ts
+            })
+        
+        has_more = (skip + limit) < total_count
+        
+        return {
+            "activities": activities,
+            "has_more": has_more
+        }
+        
+    except Exception as e:
+        print(f"❌ Error fetching activities for {decoded_username}: {e}")
+        import traceback
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Failed to fetch activities: {str(e)}")
+
+
 @api_router.get("/hiscores")
 async def get_global_hiscores(
     skill: str = 'overall',
