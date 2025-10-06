@@ -1383,12 +1383,22 @@ async def collect_daily_activities_and_drops(members_per_cycle: int = 8, cycle_d
                         activities = await fetch_member_activities_with_retry(username, client)
                         
                         if activities:
-                            print(f"  📊 [Activity Collection] Processing {len(activities)} activities for {username}")
+                            print(f"  📊 [Activity Collection] Fetched {len(activities)} activities for {username} (within 14-day window)")
                             conn = await get_db_connection()
                             async with conn:
                                 stored_count = 0
+                                duplicate_count = 0
                                 for activity in activities:
                                     try:
+                                        existing = await conn.fetchval("""
+                                            SELECT COUNT(*) FROM clan_activities 
+                                            WHERE username = $1 AND text = $2 AND activity_timestamp = $3
+                                        """, activity['username'], activity['text'], activity['timestamp'])
+                                        
+                                        if existing > 0:
+                                            duplicate_count += 1
+                                            continue
+                                        
                                         await store_clan_activity(
                                             conn, 
                                             activity['username'], 
@@ -1404,10 +1414,10 @@ async def collect_daily_activities_and_drops(members_per_cycle: int = 8, cycle_d
                                 drops_found = await parse_and_store_drops_from_activities(activities, username)
                                 print(f"  🎯 [Activity Collection] Found {len(drops_found) if drops_found else 0} drops for {username}")
                             
-                            print(f"✅ [Activity Collection] Processed {username}: {stored_count}/{len(activities)} activities stored")
+                            print(f"✅ [Activity Collection] {username}: {stored_count} new, {duplicate_count} duplicates (total fetched: {len(activities)})")
                             processed_members += 1
                         else:
-                            print(f"⚠️ [Activity Collection] No activities for {username}")
+                            print(f"⚠️ [Activity Collection] No activities for {username} (none in 14-day window or API error)")
                             processed_members += 1
                     
                     except Exception as e:
