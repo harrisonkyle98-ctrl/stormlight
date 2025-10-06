@@ -4133,16 +4133,19 @@ async def get_player_activities(username: str, page: int = Query(1, ge=1), limit
             """, (decoded_username, limit, (page - 1) * limit))
             
             rows = await cursor.fetchall()
-            db_activities = [
-                {
+            db_activities = []
+            for row in rows:
+                ts = int(row[4]) if row[4] is not None else 0
+                if ts > 1000000000000:
+                    ts = ts // 1000
+                date_str = datetime.fromtimestamp(ts).strftime('%m-%d-%Y') if ts > 0 else row[3]
+                db_activities.append({
                     'username': row[0],
                     'text': row[1],
                     'details': row[2],
-                    'date': row[3],
-                    'timestamp': row[4]
-                }
-                for row in rows
-            ]
+                    'date': date_str,
+                    'timestamp': ts
+                })
             
             count_cursor = await conn.execute("""
                 SELECT COUNT(*) FROM clan_activities WHERE username = %s
