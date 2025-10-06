@@ -117,10 +117,16 @@ const PlayerProfile = () => {
           rank_changes: Object.keys(data.stats).filter(skill => data.stats[skill].rank_change !== 0).length,
           last_updated: data.last_updated,
           custom_badges_count: data.custom_badges?.length || 0,
-          has_custom_badges_field: 'custom_badges' in data
+          has_custom_badges_field: 'custom_badges' in data,
+          has_clan_xp_field: 'clan_xp' in data,
+          clan_xp_value: data.clan_xp,
+          has_clan_rank_number_field: 'clan_rank_number' in data,
+          clan_rank_number_value: data.clan_rank_number
         })
+        console.log('🎯 CLAN DEBUG: API returned clan_xp =', data.clan_xp, 'clan_rank_number =', data.clan_rank_number)
         console.log('🎯 BADGE DEBUG: custom_badges from API:', data.custom_badges)
         setPlayerData(data)
+        console.log('🎯 CLAN DEBUG: setPlayerData called, React should re-render with new data')
         console.log('🎯 BADGE DEBUG: State updated, badges should now be available for rendering')
       } else {
         setError('Clan member not found or stats unavailable')
@@ -687,6 +693,7 @@ const PlayerProfile = () => {
           </Card>
 
           {playerData.stats && playerData.custom_badges !== undefined && (() => {
+            console.log('🎯 RENDER START: playerData.clan_xp =', playerData.clan_xp, 'playerData.clan_rank_number =', playerData.clan_rank_number)
             console.log('🎯 BADGE RENDER: Rendering badges, custom_badges =', playerData.custom_badges)
             const milestoneBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''))
             const nonRankBadges = milestoneBadges.filter(badge => !badge.id.startsWith('rank-'))
