@@ -4910,7 +4910,7 @@ async def trigger_activities_get():
         
         asyncio.create_task(run())
         return {"status": "queued", 
-                "message": "Started activity/drop collection with 14-day window (batch processing: 8 members per cycle). Check /api/admin/check-snapshots."}
+                "message": "Started activity/drop collection for all members (batch processing: 8 members per cycle). Check logs for progress."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
