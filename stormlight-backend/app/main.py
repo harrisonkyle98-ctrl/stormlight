@@ -4404,13 +4404,25 @@ async def get_player_stats_with_history(
         
         clan_members = await fetch_clan_members()
         clan_rank = None
+        clan_xp = None
+        clan_rank_number = None
         print(f"Looking for player in history endpoint: '{decoded_username}'")
         
         for member in clan_members:
             if member['username'].lower().replace('\xa0', ' ') == decoded_username.lower().replace('\xa0', ' '):
                 clan_rank = member['clan_rank']
-                print(f"Found clan rank in history endpoint: {clan_rank}")
+                clan_xp = member.get('total_xp', 0)
+                print(f"Found clan rank in history endpoint: {clan_rank}, clan XP: {clan_xp}")
                 break
+        
+        # Calculate numerical clan rank (position when sorted by total_xp descending)
+        if clan_members and clan_xp is not None:
+            sorted_members = sorted(clan_members, key=lambda m: m.get('total_xp', 0), reverse=True)
+            for idx, member in enumerate(sorted_members):
+                if member['username'].lower().replace('\xa0', ' ') == decoded_username.lower().replace('\xa0', ' '):
+                    clan_rank_number = idx + 1  # 1-indexed rank
+                    print(f"Calculated clan rank number in history endpoint: {clan_rank_number}")
+                    break
         
         is_verified = False
         print(f"Checking Discord verification for username in history endpoint: '{decoded_username}'")
@@ -4529,6 +4541,10 @@ async def get_player_stats_with_history(
         
         if clan_rank:
             enhanced_stats['clan_rank'] = clan_rank
+        if clan_xp is not None:
+            enhanced_stats['clan_xp'] = clan_xp
+        if clan_rank_number is not None:
+            enhanced_stats['clan_rank_number'] = clan_rank_number
         
         enhanced_stats['is_verified'] = is_verified
         
