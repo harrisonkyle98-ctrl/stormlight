@@ -1381,7 +1381,7 @@ async def collect_daily_activities_and_drops(members_per_cycle: int = 8, cycle_d
                         activities = await fetch_member_activities_with_retry(username, client)
                         
                         if activities:
-                            print(f"  📊 [Activity Collection] Fetched {len(activities)} activities for {username} (within 14-day window)")
+                            print(f"  📊 [Activity Collection] Fetched {len(activities)} activities for {username} (all ages)")
                             conn = await get_db_connection()
                             async with conn:
                                 stored_count = 0
@@ -1410,7 +1410,7 @@ async def collect_daily_activities_and_drops(members_per_cycle: int = 8, cycle_d
                             print(f"✅ [Activity Collection] {username}: {stored_count} new, {duplicate_count} duplicates (total fetched: {len(activities)})")
                             processed_members += 1
                         else:
-                            print(f"⚠️ [Activity Collection] No activities for {username} (none in 14-day window or API error)")
+                            print(f"⚠️ [Activity Collection] No activities for {username} (none available or API error)")
                             processed_members += 1
                     
                     except Exception as e:
