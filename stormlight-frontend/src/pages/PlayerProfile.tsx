@@ -706,7 +706,7 @@ const PlayerProfile = () => {
                 <CardContent>
                   <div className="flex flex-col gap-2">
                     {allBadges.map((badge) => (
-                        <RunePixelsTooltip
+                        <Tooltip
                           key={badge.id}
                           content={
                             <div>
@@ -727,7 +727,7 @@ const PlayerProfile = () => {
                           />
                           <span>{badge.name}</span>
                           </div>
-                        </RunePixelsTooltip>
+                        </Tooltip>
                     ))}
                   </div>
                 </CardContent>
@@ -759,7 +759,7 @@ const PlayerProfile = () => {
                 <CardContent>
                   <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                     {skillsAt120Plus.map((skill) => (
-                      <RunePixelsTooltip
+                      <Tooltip
                         key={skill.name}
                         content={
                           <div>
@@ -784,7 +784,7 @@ const PlayerProfile = () => {
                             className="w-6 h-6"
                           />
                         </div>
-                      </RunePixelsTooltip>
+                      </Tooltip>
                     ))}
                   </div>
                 </CardContent>

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
-  Tooltip,
+  RadixTooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
@@ -586,7 +586,7 @@ const SidebarMenuButton = React.forwardRef<
     }
 
     return (
-      <Tooltip>
+      <RadixTooltip>
         <TooltipTrigger asChild>{button}</TooltipTrigger>
         <TooltipContent
           side="right"
@@ -594,7 +594,7 @@ const SidebarMenuButton = React.forwardRef<
           hidden={state !== "collapsed" || isMobile}
           {...tooltip}
         />
-      </Tooltip>
+      </RadixTooltip>
     )
   }
 )
