@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Package, Filter, ChevronDown, ChevronUp } from 'lucide-react'
 import { usernameToUrl } from '../../utils/urlUtils'
-import { RunePixelsTooltip } from '../ui/tooltip'
+import { Tooltip } from '../ui/tooltip'
 
 interface TabProps {
   username: string;
@@ -280,7 +280,7 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
                         }`}
                       >
                         <div className="flex items-center space-x-3">
-                          <RunePixelsTooltip
+                          <Tooltip
                             content={
                               <div>
                                 <div className="font-semibold text-white">{item.name}</div>
@@ -300,7 +300,7 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
                                 e.currentTarget.src = "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png";
                               }}
                             />
-                          </RunePixelsTooltip>
+                          </Tooltip>
                           <div>
                             <h4 className={`font-medium ${
                               item.has_drop ? 'text-white' : 'text-slate-500'

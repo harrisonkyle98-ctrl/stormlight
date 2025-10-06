@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 
 const TooltipProvider = TooltipPrimitive.Provider
 
-const Tooltip = TooltipPrimitive.Root
+const RadixTooltip = TooltipPrimitive.Root
 
 const TooltipTrigger = TooltipPrimitive.Trigger
 
@@ -30,7 +30,7 @@ const TooltipContent = React.forwardRef<
 ))
 TooltipContent.displayName = TooltipPrimitive.Content.displayName
 
-interface RunePixelsTooltipProps {
+interface TooltipProps {
   content: React.ReactNode;
   children: React.ReactNode;
   disabled?: boolean;
@@ -38,7 +38,7 @@ interface RunePixelsTooltipProps {
 
 type CaretPosition = 'top' | 'bottom' | 'left' | 'right';
 
-export const RunePixelsTooltip = ({ content, children, disabled = false }: RunePixelsTooltipProps) => {
+export const Tooltip = ({ content, children, disabled = false }: TooltipProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [caretPosition, setCaretPosition] = useState<CaretPosition>('bottom');
@@ -50,23 +50,22 @@ export const RunePixelsTooltip = ({ content, children, disabled = false }: RuneP
       const tooltip = tooltipRef.current;
       const tooltipRect = tooltip.getBoundingClientRect();
       
-      let x = event.clientX;
-      let y = event.clientY - tooltipRect.height - 5;
+      let x = event.clientX - (tooltipRect.width / 2);
+      let y = event.clientY - tooltipRect.height - 10;
       let caret: CaretPosition = 'bottom';
       
       if (x + tooltipRect.width > window.innerWidth) {
-        x = event.clientX - tooltipRect.width;
-        caret = 'right';
+        x = window.innerWidth - tooltipRect.width - 5;
       }
       
       if (y < 0) {
-        y = event.clientY + 5;
+        y = event.clientY + 10;
         caret = 'top';
+        x = event.clientX - (tooltipRect.width / 2);
       }
       
-      if (x < 0) {
-        x = event.clientX;
-        caret = 'left';
+      if (x < 5) {
+        x = 5;
       }
       
       setPosition({ x, y });
@@ -193,4 +192,4 @@ export const RunePixelsTooltip = ({ content, children, disabled = false }: RuneP
   );
 };
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+export { RadixTooltip, TooltipTrigger, TooltipContent, TooltipProvider }

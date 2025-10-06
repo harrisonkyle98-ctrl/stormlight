@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './dialog'
 import { Button } from './button'
-import { RunePixelsTooltip } from './tooltip'
+import { Tooltip } from './tooltip'
 
 interface CustomBadge {
   id: string
@@ -93,7 +93,7 @@ export const BadgeAssignmentModal: React.FC<BadgeAssignmentModalProps> = ({
                   : badge.backgroundColor || '#6b7280'
                 
                 return (
-                  <RunePixelsTooltip
+                  <Tooltip
                     key={badge.id}
                     content={
                       <div>
@@ -134,7 +134,7 @@ export const BadgeAssignmentModal: React.FC<BadgeAssignmentModalProps> = ({
                         </div>
                       )}
                     </div>
-                  </RunePixelsTooltip>
+                  </Tooltip>
                 )
               })}
             </div>
