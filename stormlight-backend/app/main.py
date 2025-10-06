@@ -1440,6 +1440,9 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
             print(f"Error fetching custom badges for {decoded_username}: {e}")
             stats['custom_badges'] = []
         
+        print(f"🔍 FINAL RESPONSE CHECK: username={decoded_username}, clan_xp={stats.get('clan_xp', 'NOT SET')}, clan_rank_number={stats.get('clan_rank_number', 'NOT SET')}")
+        print(f"🔍 RESPONSE KEYS: {list(stats.keys())}")
+        
         profile_cache['data'][decoded_username] = stats
         profile_cache['timestamps'][decoded_username] = current_time
         print(f"Cached profile data for {decoded_username} for {profile_cache['ttl']} seconds")
