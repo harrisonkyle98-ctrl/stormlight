@@ -1390,15 +1390,6 @@ async def collect_daily_activities_and_drops(members_per_cycle: int = 8, cycle_d
                                 duplicate_count = 0
                                 for activity in activities:
                                     try:
-                                        existing = await conn.fetchval("""
-                                            SELECT COUNT(*) FROM clan_activities 
-                                            WHERE username = $1 AND text = $2 AND activity_timestamp = $3
-                                        """, activity['username'], activity['text'], activity['timestamp'])
-                                        
-                                        if existing > 0:
-                                            duplicate_count += 1
-                                            continue
-                                        
                                         await store_clan_activity(
                                             conn, 
                                             activity['username'], 
@@ -1409,7 +1400,11 @@ async def collect_daily_activities_and_drops(members_per_cycle: int = 8, cycle_d
                                         )
                                         stored_count += 1
                                     except Exception as e:
-                                        print(f"  ❌ [Activity Collection] Failed to store activity for {username}: {e}")
+                                        error_str = str(e).lower()
+                                        if 'unique' in error_str or 'duplicate' in error_str:
+                                            duplicate_count += 1
+                                        else:
+                                            print(f"  ❌ [Activity Collection] Failed to store activity for {username}: {e}")
                                 
                                 drops_found = await parse_and_store_drops_from_activities(activities, username)
                                 print(f"  🎯 [Activity Collection] Found {len(drops_found) if drops_found else 0} drops for {username}")
