@@ -10,7 +10,7 @@ flyctl secrets set JWT_SECRET_KEY="G0kP4KqE4Bhs6PjB8n7E2zjYb1pQ2cR9vU6tF3xN4yM1a
 flyctl secrets set DISCORD_REDIRECT_URI="https://stormlight.fly.dev/api/auth/callback/discord" -a stormlight
 
 echo "🚀 Deploying unified app..."
-flyctl deploy -a stormlight
+flyctl deploy --no-cache -a stormlight
 
 echo "✅ Deployment complete!"
 echo "🌐 Unified App URL: https://stormlight.fly.dev/"
