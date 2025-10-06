@@ -32,6 +32,8 @@ interface PlayerStats {
   badges?: Array<{ id: string; name: string; imageUrl: string; type: string }>
   custom_badges?: CustomBadge[]
   username: string
+  clan_xp?: number
+  clan_rank_number?: number
   stats: {
     overall: {
       rank: number | null
@@ -644,20 +646,40 @@ const PlayerProfile = () => {
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <div className="text-center">
-                      <p className="text-xs text-slate-400 mb-1">Total XP</p>
-                      <p className="text-xl font-bold text-green-400">
-                        {overallStats.xp.toLocaleString()}
-                      </p>
-                    </div>
-                    {overallStats.rank && (
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="text-center">
-                        <p className="text-xs text-slate-400 mb-1">Overall Rank</p>
-                        <p className="text-xl font-bold text-blue-400">
-                          #{overallStats.rank.toLocaleString()}
+                        <p className="text-xs text-slate-400 mb-1">Total XP</p>
+                        <p className="text-xl font-bold text-green-400">
+                          {overallStats.xp.toLocaleString()}
                         </p>
                       </div>
-                    )}
+                      {playerData.clan_xp !== undefined && playerData.clan_xp !== null && (
+                        <div className="text-center">
+                          <p className="text-xs text-slate-400 mb-1">Clan XP</p>
+                          <p className="text-xl font-bold text-green-400">
+                            {playerData.clan_xp.toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      {overallStats.rank && (
+                        <div className="text-center">
+                          <p className="text-xs text-slate-400 mb-1">Overall Rank</p>
+                          <p className="text-xl font-bold text-blue-400">
+                            #{overallStats.rank.toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                      {playerData.clan_rank_number && (
+                        <div className="text-center">
+                          <p className="text-xs text-slate-400 mb-1">Clan Rank</p>
+                          <p className="text-xl font-bold text-blue-400">
+                            #{playerData.clan_rank_number.toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

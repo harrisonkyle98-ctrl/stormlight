@@ -1359,14 +1359,25 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
     
     clan_members = await fetch_clan_members()
     clan_rank = None
+    clan_xp = None
+    clan_rank_number = None
     print(f"Looking for player: '{decoded_username}'")
     print(f"Available clan members: {[m['username'] for m in clan_members[:5]]}")
     
     for member in clan_members:
         if member['username'].lower().replace('\xa0', ' ') == decoded_username.lower().replace('\xa0', ' '):
             clan_rank = member['clan_rank']
-            print(f"Found clan rank: {clan_rank}")
+            clan_xp = member.get('total_xp', 0)
+            print(f"Found clan rank: {clan_rank}, clan XP: {clan_xp}")
             break
+    
+    if clan_members and clan_xp is not None:
+        sorted_members = sorted(clan_members, key=lambda m: m.get('total_xp', 0), reverse=True)
+        for idx, member in enumerate(sorted_members):
+            if member['username'].lower().replace('\xa0', ' ') == decoded_username.lower().replace('\xa0', ' '):
+                clan_rank_number = idx + 1
+                print(f"Calculated clan rank number: {clan_rank_number}")
+                break
     
     stats = await fetch_player_stats(decoded_username)
     
@@ -1408,6 +1419,10 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
     if stats:
         if clan_rank:
             stats['clan_rank'] = clan_rank
+        if clan_xp is not None:
+            stats['clan_xp'] = clan_xp
+        if clan_rank_number is not None:
+            stats['clan_rank_number'] = clan_rank_number
         stats['is_verified'] = is_verified
         
         try:
@@ -1450,6 +1465,8 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
             },
             "last_updated": datetime.now().isoformat(),
             "clan_rank": clan_rank,
+            "clan_xp": clan_xp,
+            "clan_rank_number": clan_rank_number,
             "is_verified": is_verified,
             "custom_badges": []
         }
