@@ -5184,33 +5184,49 @@ async def startup_event():
                     has_run_today = (getattr(app.state, "last_snapshot_date_utc", None) == today)
                     
                     if now.minute < 5:  # Run in first 5 minutes of each hour
-                        print(f"🔄 Starting hourly clan member sync at {now.isoformat()}...")
+                        print(f"🔄 [Scheduler][HOURLY] Starting clan member sync at {now.isoformat()}Z")
                         
                         async with app.state.sync_lock:
                             await sync_clan_members_to_database_with_queue()
-                        print("✅ Hourly clan member sync completed")
+                        print(f"✅ [Scheduler][HOURLY] Clan member sync completed at {datetime.now(timezone.utc).isoformat()}Z")
                         
-                        print(f"[Scheduler] 🚀 Starting daily multi-cycle snapshot collection at {now.isoformat()}")
-                        async with app.state.snapshot_lock:
-                            done_count, remaining_count = await collect_daily_player_stats_multi_cycle()
-                        app.state.last_snapshot_date_utc = today
-                        print(f"[Scheduler] ✅ Daily snapshot job finished for {today.isoformat()}: done={done_count}, remaining={remaining_count}")
+                        if now.hour == 0 and not has_run_today:
+                            print(f"🚀 [Scheduler][DAILY] Starting daily snapshot collection at {now.isoformat()}Z")
+                            
+                            async def run_daily_snapshots():
+                                try:
+                                    async with app.state.snapshot_lock:
+                                        done_count, remaining_count = await collect_daily_player_stats_multi_cycle()
+                                    app.state.last_snapshot_date_utc = today
+                                    completion_time = datetime.now(timezone.utc).isoformat()
+                                    print(f"✅ [Scheduler][DAILY] Snapshot collection completed at {completion_time}Z: {done_count} processed, {remaining_count} remaining")
+                                except Exception as e:
+                                    print(f"❌ [Scheduler][DAILY] Error in snapshot collection: {e}")
+                                    import traceback
+                                    traceback.print_exc()
+                            
+                            asyncio.create_task(run_daily_snapshots())
+                            print(f"📋 [Scheduler][DAILY] Snapshot collection task created (running in background)")
+                        elif now.hour == 0:
+                            print(f"⏭️  [Scheduler][DAILY] Snapshot already ran today ({today.isoformat()}), skipping")
                         
-                        print(f"[Scheduler] 🚀 Starting daily activity/drop collection at {now.isoformat()}")
+                        print(f"🚀 [Scheduler][HOURLY] Starting activity/drop collection at {now.isoformat()}Z")
                         try:
                             processed_count, failed_count = await collect_daily_activities_and_drops()
-                            print(f"[Scheduler] ✅ Daily activity/drop collection finished: {processed_count} processed, {failed_count} failed")
+                            completion_time = datetime.now(timezone.utc).isoformat()
+                            print(f"✅ [Scheduler][HOURLY] Activity/drop collection completed at {completion_time}Z: {processed_count} processed, {failed_count} failed")
                             
                             conn = await get_db_connection()
                             async with conn:
                                 activity_count = await conn.fetchval("SELECT COUNT(*) FROM clan_activities")
                                 drop_count = await conn.fetchval("SELECT COUNT(*) FROM clan_drops") 
-                                print(f"[Scheduler] 📊 Database totals: {activity_count} activities, {drop_count} drops")
+                                print(f"📊 [Scheduler][HOURLY] Database totals: {activity_count} activities, {drop_count} drops")
                         except Exception as e:
-                            print(f"[Scheduler] ❌ Error in activity/drop collection: {e}")
+                            print(f"❌ [Scheduler][HOURLY] Error in activity/drop collection: {e}")
                             import traceback
                             traceback.print_exc()
                         
+                        # HOURLY: Cleanup old activities
                         try:
                             conn = await get_db_connection()
                             async with conn:
@@ -5220,10 +5236,12 @@ async def startup_event():
                                     from database import cleanup_old_activities
                                 await cleanup_old_activities(conn, days_to_keep=30)
                         except Exception as e:
-                            print(f"Error cleaning up activities: {e}")
+                            print(f"❌ [Scheduler][HOURLY] Error cleaning up activities: {e}")
                     
                 except Exception as e:
-                    print(f"❌ Error in hourly scheduler: {e}")
+                    print(f"❌ [Scheduler] Critical error in hourly scheduler: {e}")
+                    import traceback
+                    traceback.print_exc()
                     
                 await asyncio.sleep(3600)
         
