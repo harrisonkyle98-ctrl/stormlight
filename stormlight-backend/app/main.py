@@ -1371,6 +1371,16 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
             print(f"Found clan rank: {clan_rank}, clan XP: {clan_xp}")
             break
     
+    if clan_rank is None and len(clan_members) > 0:
+        print(f"❌ NO MATCH FOUND for '{decoded_username}'")
+        print(f"❌ First 5 clan members for comparison:")
+        for idx, member in enumerate(clan_members[:5]):
+            normalized_member = member['username'].lower().replace('\xa0', ' ')
+            normalized_search = decoded_username.lower().replace('\xa0', ' ')
+            print(f"  [{idx}] Member: '{member['username']}' | Normalized: '{normalized_member}' | Match: {normalized_member == normalized_search}")
+    elif clan_rank is None:
+        print(f"❌ CLAN ROSTER EMPTY - fetch_clan_members() returned 0 members")
+    
     if clan_members and clan_xp is not None:
         sorted_members = sorted(clan_members, key=lambda m: m.get('total_xp', 0), reverse=True)
         for idx, member in enumerate(sorted_members):
