@@ -604,9 +604,9 @@ async def fetch_hiscores_extended(username: str, client: httpx.AsyncClient, time
             
             if len(lines) > 54:
                 parts = lines[54].split(',')
-                if len(parts) >= 3:
+                if len(parts) >= 2:
                     try:
-                        score = int(parts[2])
+                        score = int(parts[1])
                         result['runescore'] = score if score > 0 else None
                     except:
                         pass
@@ -615,18 +615,18 @@ async def fetch_hiscores_extended(username: str, client: httpx.AsyncClient, time
             for difficulty, idx in clue_indices.items():
                 if len(lines) > idx:
                     parts = lines[idx].split(',')
-                    if len(parts) >= 3:
+                    if len(parts) >= 2:
                         try:
-                            count = int(parts[2])
+                            count = int(parts[1])
                             result['clue_scrolls'][difficulty] = count if count > 0 else None
                         except:
                             pass
             
             if len(lines) > 60:
                 parts = lines[60].split(',')
-                if len(parts) >= 3:
+                if len(parts) >= 2:
                     try:
-                        points = int(parts[2])
+                        points = int(parts[1])
                         result['league_points'] = points if points > 0 else None
                     except:
                         pass
