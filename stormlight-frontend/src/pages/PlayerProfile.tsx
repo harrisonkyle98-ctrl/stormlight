@@ -831,6 +831,63 @@ const PlayerProfile = () => {
             </Card>
           )}
 
+          {/* Skills at 99 [X] Card */}
+          {playerData.stats && (() => {
+            const skillsAt99 = skillOrder
+              .filter(skill => {
+                if (skill === 'overall') return false
+                return playerData.stats[skill] && playerData.stats[skill].level >= 99 && playerData.stats[skill].level < 120
+              })
+              .map(skill => ({
+                name: skill,
+                icon: getSkillIcon(skill)
+              }))
+              .filter(skill => skill.icon)
+
+            return skillsAt99.length > 0 ? (
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center space-x-2">
+                    <Trophy className="w-5 h-5 text-green-400" />
+                    <span>Skills at 99 [{skillsAt99.length}]</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                    {skillsAt99.map((skill) => (
+                      <Tooltip
+                        key={skill.name}
+                        content={
+                          <div>
+                            <div className="font-semibold text-white">
+                              {skill.name.charAt(0).toUpperCase() + skill.name.slice(1)}
+                            </div>
+                            <div className="text-green-400">
+                              Level {playerData.stats[skill.name]?.level || 0}
+                            </div>
+                            <div className="text-blue-400">
+                              {(playerData.stats[skill.name]?.xp || 0).toLocaleString()} XP
+                            </div>
+                          </div>
+                        }
+                      >
+                        <div
+                          className="flex items-center justify-center p-2 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors cursor-help"
+                        >
+                          <img
+                            src={skill.icon!}
+                            alt={skill.name}
+                            className="w-6 h-6"
+                          />
+                        </div>
+                      </Tooltip>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null
+          })()}
+
           {/* Skills at 120+ Card */}
           {playerData.stats && (() => {
             const skillsAt120Plus = skillOrder
@@ -855,6 +912,63 @@ const PlayerProfile = () => {
                 <CardContent>
                   <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                     {skillsAt120Plus.map((skill) => (
+                      <Tooltip
+                        key={skill.name}
+                        content={
+                          <div>
+                            <div className="font-semibold text-white">
+                              {skill.name.charAt(0).toUpperCase() + skill.name.slice(1)}
+                            </div>
+                            <div className="text-green-400">
+                              Level {playerData.stats[skill.name]?.level || 0}
+                            </div>
+                            <div className="text-blue-400">
+                              {(playerData.stats[skill.name]?.xp || 0).toLocaleString()} XP
+                            </div>
+                          </div>
+                        }
+                      >
+                        <div
+                          className="flex items-center justify-center p-2 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors cursor-help"
+                        >
+                          <img
+                            src={skill.icon!}
+                            alt={skill.name}
+                            className="w-6 h-6"
+                          />
+                        </div>
+                      </Tooltip>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null
+          })()}
+
+          {/* Skills at 200m [X] Card */}
+          {playerData.stats && (() => {
+            const skillsAt200m = skillOrder
+              .filter(skill => {
+                if (skill === 'overall') return false
+                return playerData.stats[skill] && playerData.stats[skill].xp >= 200000000
+              })
+              .map(skill => ({
+                name: skill,
+                icon: getSkillIcon(skill)
+              }))
+              .filter(skill => skill.icon)
+
+            return skillsAt200m.length > 0 ? (
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center space-x-2">
+                    <Trophy className="w-5 h-5 text-purple-400" />
+                    <span>Skills at 200m [{skillsAt200m.length}]</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                    {skillsAt200m.map((skill) => (
                       <Tooltip
                         key={skill.name}
                         content={
