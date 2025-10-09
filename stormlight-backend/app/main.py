@@ -618,7 +618,20 @@ async def sync_clan_members_to_database():
             try:
                 stats_data = await fetch_player_stats(member_data['username'])
                 
-                clan_member_data = {
+                # Separate update vs create data to preserve non-API fields like discord_id (important-comment)
+                update_data = {
+                    'displayName': member_data.get('display_name', member_data['username']),
+                    'clanRank': member_data['clan_rank'],
+                    'totalXp': member_data['total_xp'],
+                    'totalLevel': stats_data.get('total_level', 0) if stats_data else 0,
+                    'combatLevel': stats_data.get('combat_level', 0) if stats_data else 0,
+                    'questPoints': 0,
+                    'kills': member_data.get('kills', 0),
+                    'stats': json.dumps(stats_data.get('stats')) if stats_data and stats_data.get('stats') else None,
+                    'lastUpdated': datetime.now()
+                }
+                
+                create_data = {
                     'username': member_data['username'],
                     'displayName': member_data.get('display_name', member_data['username']),
                     'clanRank': member_data['clan_rank'],
@@ -634,8 +647,8 @@ async def sync_clan_members_to_database():
                 await prisma.clanmember.upsert(
                     where={'username': member_data['username']},
                     data={
-                        'update': clan_member_data,
-                        'create': clan_member_data
+                        'update': update_data,
+                        'create': create_data
                     }
                 )
                 
@@ -667,10 +680,6 @@ async def sync_clan_members_to_database_with_queue():
             await prisma.connect()
             print("✅ Database connected successfully")
         
-        print("🗑️ Clearing existing clan_members table to avoid duplicates...")
-        deleted_count = await prisma.clanmember.delete_many()
-        print(f"✅ Cleared {deleted_count} existing clan members")
-        
         clan_data = await fetch_clan_members()
         print(f"📥 Fetched {len(clan_data)} clan members from RuneScape API (expected: {EXPECTED_ROSTER_COUNT})")
         print(f"📊 Member count comparison: API={len(clan_data)}, Expected={EXPECTED_ROSTER_COUNT}, Difference={len(clan_data) - EXPECTED_ROSTER_COUNT}")
@@ -699,26 +708,35 @@ async def sync_clan_members_to_database_with_queue():
                         print("⚠️ Database disconnected, reconnecting...")
                         await prisma.connect()
                     
-                    clan_member_data = {
+                    # Separate update vs create data to preserve non-API fields like discord_id
+                    update_data = {
+                        'displayName': member_data.get('display_name', member_data['username']),
+                        'clanRank': member_data['clan_rank'],
+                        'totalXp': member_data['total_xp'],
+                        'kills': member_data.get('kills', 0),
+                        'lastUpdated': datetime.now()
+                    }
+                    
+                    create_data = {
                         'username': member_data['username'],
                         'displayName': member_data.get('display_name', member_data['username']),
                         'clanRank': member_data['clan_rank'],
                         'totalXp': member_data['total_xp'],
-                        'totalLevel': 0,  # Will be updated later by regular sync
-                        'combatLevel': 0,  # Will be updated later by regular sync
-                        'questPoints': 0,  # Will be updated later by regular sync
+                        'totalLevel': 0,
+                        'combatLevel': 0,
+                        'questPoints': 0,
                         'kills': member_data.get('kills', 0),
-                        'stats': json.dumps({}),  # Properly serialized empty JSON
-                        'questData': json.dumps({}),  # Properly serialized empty JSON
-                        'badges': json.dumps([]),  # Properly serialized empty array
+                        'stats': json.dumps({}),
+                        'questData': json.dumps({}),
+                        'badges': json.dumps([]),
                         'lastUpdated': datetime.now()
                     }
                     
                     result = await prisma.clanmember.upsert(
                         where={'username': member_data['username']},
                         data={
-                            'update': clan_member_data,
-                            'create': clan_member_data
+                            'update': update_data,
+                            'create': create_data
                         }
                     )
                     
@@ -810,7 +828,20 @@ async def process_failed_member_queue():
             stats_data = await fetch_player_stats(member_data['username'], max_retries=1)
             
             if stats_data is not None:
-                clan_member_data = {
+                # Separate update vs create data to preserve non-API fields like discord_id (important-comment)
+                update_data = {
+                    'displayName': member_data.get('display_name', member_data['username']),
+                    'clanRank': member_data['clan_rank'],
+                    'totalXp': member_data['total_xp'],
+                    'totalLevel': stats_data.get('total_level', 0),
+                    'combatLevel': stats_data.get('combat_level', 0),
+                    'questPoints': stats_data.get('quest_points', 0),
+                    'kills': member_data.get('kills', 0),
+                    'stats': json.dumps(stats_data.get('stats')) if stats_data.get('stats') else None,
+                    'lastUpdated': datetime.now()
+                }
+                
+                create_data = {
                     'username': member_data['username'],
                     'displayName': member_data.get('display_name', member_data['username']),
                     'clanRank': member_data['clan_rank'],
@@ -826,8 +857,8 @@ async def process_failed_member_queue():
                 await prisma.clanmember.upsert(
                     where={'username': member_data['username']},
                     data={
-                        'update': clan_member_data,
-                        'create': clan_member_data
+                        'update': update_data,
+                        'create': create_data
                     }
                 )
                 
@@ -5065,6 +5096,7 @@ async def daily_clan_member_refresh():
                         }
                         
                         try:
+                            # Already correctly split into update/create data to preserve discord_id
                             await prisma.clanmember.upsert(
                                 where={'username': username},
                                 data={
