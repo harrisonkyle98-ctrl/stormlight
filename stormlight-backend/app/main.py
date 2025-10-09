@@ -629,24 +629,21 @@ async def fetch_hiscores_extended(username: str, client: httpx.AsyncClient, time
         leagues_url = f"https://secure.runescape.com/m=hiscore_leagues/index_lite.ws?player={username}"
         leagues_resp = await client.get(leagues_url, timeout=timeout, follow_redirects=True)
         if leagues_resp.status_code == 200:
-            leagues_lines = leagues_resp.text.strip().splitlines()
+            leagues_lines = [l for l in leagues_resp.text.splitlines() if l.strip()]
             
-            if len(leagues_lines) >= 2:
-                rank_parts = leagues_lines[-2].split(',')
-                if len(rank_parts) >= 1:
-                    try:
-                        rank = int(rank_parts[0])
-                        result['league_rank'] = rank if rank > 0 else None
-                    except:
-                        pass
+            if len(leagues_lines) >= 1:
+                last_line = leagues_lines[-1]
+                parts = last_line.split(',')
                 
-                points_parts = leagues_lines[-1].split(',')
-                if len(points_parts) >= 2:
+                if len(parts) >= 2:
                     try:
-                        points = int(points_parts[1])
+                        rank = int(parts[0])
+                        points = int(parts[1])
+                        result['league_rank'] = rank if rank > 0 else None
                         result['league_points'] = points if points > 0 else None
-                    except:
-                        pass
+                        print(f"[Hiscores Extended] {username} League data: Rank={rank}, Points={points} (from line: {last_line})")
+                    except Exception as parse_error:
+                        print(f"[Hiscores Extended] Failed to parse league data for {username}: {parse_error}")
     except Exception as e:
         print(f"[Hiscores Extended] Failed to fetch leagues hiscores for {username}: {e}")
     
