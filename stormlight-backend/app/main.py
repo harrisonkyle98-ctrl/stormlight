@@ -5018,7 +5018,7 @@ async def trigger_clan_members_get(debug: bool = False):
             "members_fetched": 0,
             "members_updated": 0
         }
-@app.get("/api/admin/repopulate-clan-members")
+@app.get("/api/admin/repopulate-members")
 async def repopulate_clan_members():
     """Repopulate the clan_members table from RuneScape API"""
     try:
