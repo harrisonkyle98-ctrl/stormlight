@@ -631,17 +631,19 @@ async def fetch_hiscores_extended(username: str, client: httpx.AsyncClient, time
         if leagues_resp.status_code == 200:
             leagues_lines = leagues_resp.text.strip().splitlines()
             
-            if len(leagues_lines) > 0:
-                parts = leagues_lines[0].split(',')
-                if len(parts) >= 1:
+            if len(leagues_lines) >= 2:
+                rank_parts = leagues_lines[-2].split(',')
+                if len(rank_parts) >= 1:
                     try:
-                        rank = int(parts[0])
+                        rank = int(rank_parts[0])
                         result['league_rank'] = rank if rank > 0 else None
                     except:
                         pass
-                if len(parts) >= 2:
+                
+                points_parts = leagues_lines[-1].split(',')
+                if len(points_parts) >= 2:
                     try:
-                        points = int(parts[1])
+                        points = int(points_parts[1])
                         result['league_points'] = points if points > 0 else None
                     except:
                         pass
