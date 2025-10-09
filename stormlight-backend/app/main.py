@@ -474,6 +474,12 @@ async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Di
                     except Exception as e:
                         print(f"[Hiscores] Overlay failed for {username}: {e}")
                     
+                    hiscores_extended = {}
+                    try:
+                        hiscores_extended = await fetch_hiscores_extended(username, client)
+                    except Exception as e:
+                        print(f"[Hiscores Extended] Failed for {username}: {e}")
+                    
                     all_skills = ['overall'] + list(RUNEMETRICS_SKILL_MAPPING.values())
                     for skill_name in all_skills:
                         if skill_name not in stats:
@@ -507,7 +513,8 @@ async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Di
                         'stats': stats,
                         'quest_points': quest_points,
                         'last_updated': datetime.now(),
-                        'username': data.get('name', username)
+                        'username': data.get('name', username),
+                        'hiscores': hiscores_extended
                     }
                 elif response.status_code == 429:
                     base_delay = 2.0
@@ -570,6 +577,81 @@ async def fetch_hiscore_ranks(username: str, client: httpx.AsyncClient, timeout:
     except Exception as e:
         print(f"[Hiscores] Failed to fetch ranks for {username}: {e}")
         return ranks
+
+async def fetch_hiscores_extended(username: str, client: httpx.AsyncClient, timeout: float = 6.0) -> Dict[str, Any]:
+    """
+    Fetch extended hiscores data including RuneScore, Clue Scrolls, League Points, and League Rank.
+    Returns dict with runescore, clue_scrolls dict, league_points, and league_rank.
+    """
+    result = {
+        'runescore': None,
+        'clue_scrolls': {
+            'easy': None,
+            'medium': None,
+            'hard': None,
+            'elite': None,
+            'master': None
+        },
+        'league_points': None,
+        'league_rank': None
+    }
+    
+    try:
+        url = f"https://secure.runescape.com/m=hiscore/index_lite.ws?player={username}"
+        resp = await client.get(url, timeout=timeout, follow_redirects=True)
+        if resp.status_code == 200:
+            lines = resp.text.strip().splitlines()
+            
+            if len(lines) > 54:
+                parts = lines[54].split(',')
+                if len(parts) >= 3:
+                    try:
+                        score = int(parts[2])
+                        result['runescore'] = score if score > 0 else None
+                    except:
+                        pass
+            
+            clue_indices = {'easy': 55, 'medium': 56, 'hard': 57, 'elite': 58, 'master': 59}
+            for difficulty, idx in clue_indices.items():
+                if len(lines) > idx:
+                    parts = lines[idx].split(',')
+                    if len(parts) >= 3:
+                        try:
+                            count = int(parts[2])
+                            result['clue_scrolls'][difficulty] = count if count > 0 else None
+                        except:
+                            pass
+            
+            if len(lines) > 60:
+                parts = lines[60].split(',')
+                if len(parts) >= 3:
+                    try:
+                        points = int(parts[2])
+                        result['league_points'] = points if points > 0 else None
+                    except:
+                        pass
+    except Exception as e:
+        print(f"[Hiscores Extended] Failed to fetch standard hiscores for {username}: {e}")
+    
+    try:
+        leagues_url = f"https://secure.runescape.com/m=hiscore_leagues/index_lite.ws?player={username}"
+        leagues_resp = await client.get(leagues_url, timeout=timeout, follow_redirects=True)
+        if leagues_resp.status_code == 200:
+            leagues_lines = leagues_resp.text.strip().splitlines()
+            
+            if len(leagues_lines) > 0:
+                parts = leagues_lines[0].split(',')
+                if len(parts) >= 1:
+                    try:
+                        rank = int(parts[0])
+                        result['league_rank'] = rank if rank > 0 else None
+                    except:
+                        pass
+    except Exception as e:
+        print(f"[Hiscores Extended] Failed to fetch leagues hiscores for {username}: {e}")
+    
+    return result
+
 
 async def fetch_top_players(skill: str = 'overall', size: int = 50) -> List[Dict[str, Any]]:
     """Fetch top players from RuneScape ranking API"""
@@ -1486,6 +1568,12 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
             print(f"Error fetching custom badges for {decoded_username}: {e}")
             stats['custom_badges'] = []
         
+        if 'hiscores' in stats:
+            stats['runescore'] = stats['hiscores'].get('runescore')
+            stats['clue_scrolls'] = stats['hiscores'].get('clue_scrolls')
+            stats['league_points'] = stats['hiscores'].get('league_points')
+            stats['league_rank'] = stats['hiscores'].get('league_rank')
+        
         print(f"🔍 FINAL RESPONSE CHECK: username={decoded_username}, clan_xp={stats.get('clan_xp', 'NOT SET')}, clan_rank_number={stats.get('clan_rank_number', 'NOT SET')}")
         print(f"🔍 RESPONSE KEYS: {list(stats.keys())}")
         
@@ -1517,7 +1605,11 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
             "clan_xp": clan_xp,
             "clan_rank_number": clan_rank_number,
             "is_verified": is_verified,
-            "custom_badges": []
+            "custom_badges": [],
+            "runescore": None,
+            "clue_scrolls": None,
+            "league_points": None,
+            "league_rank": None
         }
         
         profile_cache['data'][decoded_username] = fallback_data

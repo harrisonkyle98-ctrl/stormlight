@@ -34,6 +34,16 @@ interface PlayerStats {
   username: string
   clan_xp?: number
   clan_rank_number?: number
+  runescore?: number
+  clue_scrolls?: {
+    easy?: number
+    medium?: number
+    hard?: number
+    elite?: number
+    master?: number
+  }
+  league_points?: number
+  league_rank?: number
   stats: {
     overall: {
       rank: number | null
@@ -651,6 +661,26 @@ const PlayerProfile = () => {
                       <p className="text-xl font-bold text-white">{overallStats.level}</p>
                     </div>
                   </div>
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="text-center">
+                      <p className="text-xs text-slate-400 mb-1">RuneScore</p>
+                      <p className="text-xl font-bold text-white">
+                        {playerData.runescore?.toLocaleString() || '—'}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-slate-400 mb-1">League Points</p>
+                      <p className="text-xl font-bold text-white">
+                        {playerData.league_points?.toLocaleString() || '—'}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-slate-400 mb-1">League Rank</p>
+                      <p className="text-xl font-bold text-white">
+                        {playerData.league_rank ? `#${playerData.league_rank.toLocaleString()}` : '—'}
+                      </p>
+                    </div>
+                  </div>
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="text-center">
@@ -763,6 +793,43 @@ const PlayerProfile = () => {
               </Card>
             ) : null
           })()}
+
+          {/* Clue Scrolls Card */}
+          {playerData.clue_scrolls && Object.values(playerData.clue_scrolls).some(count => count !== null && count !== undefined) && (
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center space-x-2">
+                  <Package className="w-5 h-5 text-purple-400" />
+                  <span>Clue Scrolls</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {[
+                    { name: 'Easy', key: 'easy', color: 'text-green-400' },
+                    { name: 'Medium', key: 'medium', color: 'text-yellow-400' },
+                    { name: 'Hard', key: 'hard', color: 'text-orange-400' },
+                    { name: 'Elite', key: 'elite', color: 'text-red-400' },
+                    { name: 'Master', key: 'master', color: 'text-purple-400' }
+                  ].map((clue) => {
+                    const count = playerData.clue_scrolls?.[clue.key as keyof typeof playerData.clue_scrolls]
+                    if (count === null || count === undefined) return null
+                    return (
+                      <div
+                        key={clue.key}
+                        className="flex items-center justify-between px-4 py-2 bg-slate-700/30 rounded-lg"
+                      >
+                        <span className="text-slate-300 font-medium">{clue.name}</span>
+                        <span className={`text-lg font-bold ${clue.color}`}>
+                          {count.toLocaleString()}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Skills at 120+ Card */}
           {playerData.stats && (() => {
