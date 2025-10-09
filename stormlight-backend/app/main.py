@@ -672,7 +672,8 @@ async def sync_clan_members_to_database_with_queue():
         print(f"✅ Cleared {deleted_count} existing clan members")
         
         clan_data = await fetch_clan_members()
-        print(f"📥 Fetched {len(clan_data)} clan members for repopulation")
+        print(f"📥 Fetched {len(clan_data)} clan members from RuneScape API (expected: {EXPECTED_ROSTER_COUNT})")
+        print(f"📊 Member count comparison: API={len(clan_data)}, Expected={EXPECTED_ROSTER_COUNT}, Difference={len(clan_data) - EXPECTED_ROSTER_COUNT}")
         
         successful_syncs = 0
         failed_syncs = 0
@@ -759,6 +760,10 @@ async def sync_clan_members_to_database_with_queue():
         
         print(f"✅ Repopulation completed: {successful_syncs} successful, {failed_syncs} failed")
         print(f"📊 Total members processed: {len(clan_data)}")
+        
+        clan_members_cache['data'] = []
+        clan_members_cache['timestamp'] = 0
+        print(f"🔄 Cleared clan members cache to force fresh data on next fetch")
         
         return {
             'status': 'completed',
@@ -5186,21 +5191,24 @@ async def startup_event():
             """Single 1-hour scheduler for all clan data updates"""
             await asyncio.sleep(120)
             
+            last_sync_hour = None
+            
             while True:
                 try:
                     from datetime import timezone
                     now = datetime.now(timezone.utc)
                     today = now.date()
+                    current_hour = now.hour
                     has_run_today = (getattr(app.state, "last_snapshot_date_utc", None) == today)
                     
-                    if now.minute < 5:  # Run in first 5 minutes of each hour
+                    if last_sync_hour != current_hour:
                         print(f"🔄 [Scheduler][HOURLY] Starting clan member sync at {now.isoformat()}Z")
                         
                         async with app.state.sync_lock:
                             await sync_clan_members_to_database_with_queue()
                         print(f"✅ [Scheduler][HOURLY] Clan member sync completed at {datetime.now(timezone.utc).isoformat()}Z")
                         
-                        if now.hour == 0 and not has_run_today:
+                        if current_hour == 0 and not has_run_today:
                             print(f"🚀 [Scheduler][DAILY] Starting daily snapshot collection at {now.isoformat()}Z")
                             
                             async def run_daily_snapshots():
@@ -5217,7 +5225,7 @@ async def startup_event():
                             
                             asyncio.create_task(run_daily_snapshots())
                             print(f"📋 [Scheduler][DAILY] Snapshot collection task created (running in background)")
-                        elif now.hour == 0:
+                        elif current_hour == 0:
                             print(f"⏭️  [Scheduler][DAILY] Snapshot already ran today ({today.isoformat()}), skipping")
                         
                         print(f"🚀 [Scheduler][HOURLY] Starting activity/drop collection at {now.isoformat()}Z")
@@ -5236,7 +5244,6 @@ async def startup_event():
                             import traceback
                             traceback.print_exc()
                         
-                        # HOURLY: Cleanup old activities
                         try:
                             conn = await get_db_connection()
                             async with conn:
@@ -5247,13 +5254,16 @@ async def startup_event():
                                 await cleanup_old_activities(conn, days_to_keep=30)
                         except Exception as e:
                             print(f"❌ [Scheduler][HOURLY] Error cleaning up activities: {e}")
+                        
+                        last_sync_hour = current_hour
+                        print(f"✅ [Scheduler][HOURLY] All hourly tasks completed for hour {current_hour}. Next run: {(current_hour + 1) % 24}:00 UTC")
                     
                 except Exception as e:
                     print(f"❌ [Scheduler] Critical error in hourly scheduler: {e}")
                     import traceback
                     traceback.print_exc()
                     
-                await asyncio.sleep(3600)
+                await asyncio.sleep(300)
         
         asyncio.create_task(hourly_scheduler())
         
