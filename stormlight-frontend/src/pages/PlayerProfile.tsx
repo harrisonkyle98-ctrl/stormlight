@@ -840,9 +840,12 @@ const PlayerProfile = () => {
               })
               .map(skill => ({
                 name: skill,
-                icon: getSkillIcon(skill)
+                icon: getSkillIcon(skill),
+                xp: playerData.stats[skill].xp,
+                rank: playerData.stats[skill].rank
               }))
               .filter(skill => skill.icon)
+              .sort((a, b) => (a.xp || 0) - (b.xp || 0))
 
             return skillsAt99.length > 0 ? (
               <Card className="bg-slate-800/50 border-slate-700">
@@ -867,6 +870,9 @@ const PlayerProfile = () => {
                             </div>
                             <div className="text-blue-400">
                               {(playerData.stats[skill.name]?.xp || 0).toLocaleString()} XP
+                            </div>
+                            <div className="text-yellow-400">
+                              Rank #{(playerData.stats[skill.name]?.rank || 0).toLocaleString()}
                             </div>
                           </div>
                         }
@@ -897,9 +903,12 @@ const PlayerProfile = () => {
               })
               .map(skill => ({
                 name: skill,
-                icon: getSkillIcon(skill)
+                icon: getSkillIcon(skill),
+                xp: playerData.stats[skill].xp,
+                rank: playerData.stats[skill].rank
               }))
               .filter(skill => skill.icon)
+              .sort((a, b) => (a.xp || 0) - (b.xp || 0))
 
             return skillsAt120Plus.length > 0 ? (
               <Card className="bg-slate-800/50 border-slate-700">
@@ -924,6 +933,9 @@ const PlayerProfile = () => {
                             </div>
                             <div className="text-blue-400">
                               {(playerData.stats[skill.name]?.xp || 0).toLocaleString()} XP
+                            </div>
+                            <div className="text-yellow-400">
+                              Rank #{(playerData.stats[skill.name]?.rank || 0).toLocaleString()}
                             </div>
                           </div>
                         }
@@ -954,9 +966,12 @@ const PlayerProfile = () => {
               })
               .map(skill => ({
                 name: skill,
-                icon: getSkillIcon(skill)
+                icon: getSkillIcon(skill),
+                xp: playerData.stats[skill].xp,
+                rank: playerData.stats[skill].rank
               }))
               .filter(skill => skill.icon)
+              .sort((a, b) => (a.rank || 0) - (b.rank || 0))
 
             return skillsAt200m.length > 0 ? (
               <Card className="bg-slate-800/50 border-slate-700">
@@ -981,6 +996,9 @@ const PlayerProfile = () => {
                             </div>
                             <div className="text-blue-400">
                               {(playerData.stats[skill.name]?.xp || 0).toLocaleString()} XP
+                            </div>
+                            <div className="text-yellow-400">
+                              Rank #{(playerData.stats[skill.name]?.rank || 0).toLocaleString()}
                             </div>
                           </div>
                         }
