@@ -4818,6 +4818,18 @@ async def get_player_stats_with_history(
         else:
             print(f"DEBUG: No quest_points found in current_stats for {decoded_username}")
         
+        if 'hiscores' in current_stats:
+            hiscores = current_stats['hiscores']
+            if 'runescore' in hiscores:
+                enhanced_stats['runescore'] = hiscores['runescore']
+            if 'league_points' in hiscores:
+                enhanced_stats['league_points'] = hiscores['league_points']
+            if 'league_rank' in hiscores:
+                enhanced_stats['league_rank'] = hiscores['league_rank']
+            if 'clue_scrolls' in hiscores:
+                enhanced_stats['clue_scrolls'] = hiscores['clue_scrolls']
+            print(f"DEBUG: Added hiscores data to enhanced_stats for {decoded_username}")
+        
         for skill_name, skill_data in enhanced_stats['stats'].items():
             if skill_name in changes_data:
                 skill_data.update(changes_data[skill_name])
