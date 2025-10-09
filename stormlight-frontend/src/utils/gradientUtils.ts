@@ -87,7 +87,7 @@ export interface MilestoneBadge {
   icon: string
 }
 
-export const checkPlayerMilestones = (stats: any, questData?: any, clanRank?: string, username?: string): MilestoneBadge[] => {
+export const checkPlayerMilestones = (stats: any, questData?: any, clanRank?: string, username?: string, leaguePoints?: number): MilestoneBadge[] => {
   const badges: MilestoneBadge[] = []
   
   if (clanRank) {
@@ -194,6 +194,70 @@ export const checkPlayerMilestones = (stats: any, questData?: any, clanRank?: st
       icon: '/assets/ranks/quest.png'
     }
     badges.push(questBadge)
+  }
+  
+  if (leaguePoints !== undefined && leaguePoints >= 2000) {
+    let leagueBadge: MilestoneBadge | null = null
+    
+    if (leaguePoints >= 60000) {
+      leagueBadge = {
+        id: 'league-dragon',
+        name: 'Leagues: Catalyst – Dragon',
+        backgroundColor: '#b44f5f',
+        gradientBackground: 'linear-gradient(135deg, #b44f5f, #faa3b0)',
+        icon: '/assets/badges/league_dragon.png'
+      }
+    } else if (leaguePoints >= 45000) {
+      leagueBadge = {
+        id: 'league-rune',
+        name: 'Leagues: Catalyst – Rune',
+        backgroundColor: '#618a95',
+        gradientBackground: 'linear-gradient(135deg, #618a95, #9ddff2)',
+        icon: '/assets/badges/league_rune.png'
+      }
+    } else if (leaguePoints >= 30000) {
+      leagueBadge = {
+        id: 'league-adamant',
+        name: 'Leagues: Catalyst – Adamant',
+        backgroundColor: '#546f66',
+        gradientBackground: 'linear-gradient(135deg, #546f66, #85b1a2)',
+        icon: '/assets/badges/league_adamant.png'
+      }
+    } else if (leaguePoints >= 20000) {
+      leagueBadge = {
+        id: 'league-mithril',
+        name: 'Leagues: Catalyst – Mithril',
+        backgroundColor: '#565165',
+        gradientBackground: 'linear-gradient(135deg, #565165, #b0b0e0)',
+        icon: '/assets/badges/league_mithril.png'
+      }
+    } else if (leaguePoints >= 10000) {
+      leagueBadge = {
+        id: 'league-steel',
+        name: 'Leagues: Catalyst – Steel',
+        backgroundColor: '#999999',
+        gradientBackground: 'linear-gradient(135deg, #999999, #eeeeee)',
+        icon: '/assets/badges/league_steel.png'
+      }
+    } else if (leaguePoints >= 4000) {
+      leagueBadge = {
+        id: 'league-iron',
+        name: 'Leagues: Catalyst – Iron',
+        backgroundColor: '#969696',
+        icon: '/assets/badges/league_iron.png'
+      }
+    } else if (leaguePoints >= 2000) {
+      leagueBadge = {
+        id: 'league-bronze',
+        name: 'Leagues: Catalyst – Bronze',
+        backgroundColor: '#9c7445',
+        icon: '/assets/badges/league_bronze.png'
+      }
+    }
+    
+    if (leagueBadge) {
+      badges.push(leagueBadge)
+    }
   }
   
   return badges

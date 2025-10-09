@@ -622,7 +622,7 @@ const PlayerProfile = () => {
                   
                   {/* Rank Badge */}
                   {playerData.stats && (() => {
-                    const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''))
+                    const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''), playerData.league_points)
                     const rankBadge = allBadges.find(badge => badge.id.startsWith('rank-'))
                     return rankBadge ? (
                       <div className="mt-3">
@@ -725,7 +725,7 @@ const PlayerProfile = () => {
           {playerData.stats && playerData.custom_badges !== undefined && (() => {
             console.log('🎯 RENDER START: playerData.clan_xp =', playerData.clan_xp, 'playerData.clan_rank_number =', playerData.clan_rank_number)
             console.log('🎯 BADGE RENDER: Rendering badges, custom_badges =', playerData.custom_badges)
-            const milestoneBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''))
+            const milestoneBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''), playerData.league_points)
             const nonRankBadges = milestoneBadges.filter(badge => !badge.id.startsWith('rank-'))
             
             const customBadges = (playerData.custom_badges || []).map((badge: CustomBadge) => ({
@@ -770,6 +770,11 @@ const PlayerProfile = () => {
                           content={
                             <div>
                               <div className="font-semibold text-white">{badge.name}</div>
+                              {badge.id.startsWith('league-') && playerData.league_points && (
+                                <div className="text-blue-400 text-sm mt-1">
+                                  League Points: {playerData.league_points.toLocaleString()}
+                                </div>
+                              )}
                             </div>
                           }
                         >
