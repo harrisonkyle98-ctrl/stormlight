@@ -893,7 +893,7 @@ const PlayerProfile = () => {
             const skillsAt120Plus = skillOrder
               .filter(skill => {
                 if (skill === 'overall') return false
-                return playerData.stats[skill] && playerData.stats[skill].level >= 120
+                return playerData.stats[skill] && playerData.stats[skill].level >= 120 && playerData.stats[skill].xp < 200000000
               })
               .map(skill => ({
                 name: skill,
