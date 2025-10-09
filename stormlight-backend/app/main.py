@@ -622,14 +622,6 @@ async def fetch_hiscores_extended(username: str, client: httpx.AsyncClient, time
                         except:
                             pass
             
-            if len(lines) > 60:
-                parts = lines[60].split(',')
-                if len(parts) >= 2:
-                    try:
-                        points = int(parts[1])
-                        result['league_points'] = points if points > 0 else None
-                    except:
-                        pass
     except Exception as e:
         print(f"[Hiscores Extended] Failed to fetch standard hiscores for {username}: {e}")
     
@@ -645,6 +637,12 @@ async def fetch_hiscores_extended(username: str, client: httpx.AsyncClient, time
                     try:
                         rank = int(parts[0])
                         result['league_rank'] = rank if rank > 0 else None
+                    except:
+                        pass
+                if len(parts) >= 2:
+                    try:
+                        points = int(parts[1])
+                        result['league_points'] = points if points > 0 else None
                     except:
                         pass
     except Exception as e:
