@@ -3515,7 +3515,7 @@ async def get_clan_log(
 
 
 async def is_rare_drop_item(item_name: str) -> bool:
-    """Check if an item is a rare drop using static dataset"""
+    """Check if an item is a rare drop using static dataset with exact matching"""
     try:
         common_items = [
             'coins', 'gp', 'gold pieces', 'bones', 'ashes', 'food', 'potions',
@@ -3534,10 +3534,6 @@ async def is_rare_drop_item(item_name: str) -> bool:
         
         if item_lower in ITEM_TO_BOSSES_LOOKUP:
             return True
-        
-        for known_item in ITEM_TO_BOSSES_LOOKUP.keys():
-            if item_lower in known_item or known_item in item_lower:
-                return True
                 
         return False
     except Exception as e:
@@ -3563,7 +3559,7 @@ async def get_boss_rare_drop_table(boss_name: str) -> list:
         return []
 
 async def get_item_drop_sources_from_wiki(item_name: str) -> list:
-    """Get item drop sources from static dataset with case-insensitive matching"""
+    """Get item drop sources from static dataset with exact case-insensitive matching"""
     try:
         item_lower = item_name.lower().strip()
         
@@ -3572,121 +3568,13 @@ async def get_item_drop_sources_from_wiki(item_name: str) -> list:
             print(f"DEBUG: Found {len(sources)} drop source(s) for '{item_name}': {sources}")
             return sources
         
-        for known_item, bosses in ITEM_TO_BOSSES_LOOKUP.items():
-            if item_lower in known_item or known_item in item_lower:
-                print(f"DEBUG: Fuzzy matched '{item_name}' to '{known_item}': {bosses}")
-                return bosses
-        
         print(f"DEBUG: No drop sources found for '{item_name}' in dataset")
         return []
         
     except Exception as e:
         print(f"Error fetching drop sources for {item_name}: {e}")
         return []
-        
-        async with httpx.AsyncClient() as client:
-            search_url = "https://runescape.wiki/api.php"
-            
-            headers = {
-                "User-Agent": "stormlight-clan-dashboard/1.0 (contact: harrisonkyle98@gmail.com)"
-            }
-            
-            search_variations = [
-                f'"{item_name}"',  # Exact match
-                item_name,  # Regular search
-                item_name.replace(" ", "_"),  # Wiki format
-                f"intitle:{item_name}",  # Title search
-            ]
-            
-            for search_term in search_variations:
-                search_params = {
-                    "action": "query",
-                    "format": "json",
-                    "list": "search",
-                    "srsearch": search_term,
-                    "srlimit": 5
-                }
-                
-                search_response = await client.get(search_url, params=search_params, headers=headers)
-                if search_response.status_code == 200:
-                    search_data = search_response.json()
-                    search_results = search_data.get('query', {}).get('search', [])
-                    
-                    for result in search_results:
-                        page_title = result['title']
-                        
-                        if (item_name.lower() in page_title.lower() or 
-                            page_title.lower() in item_name.lower() or
-                            any(word in page_title.lower() for word in item_name.lower().split() if len(word) > 3)):
-                            
-                            content_params = {
-                                "action": "query",
-                                "format": "json",
-                                "prop": "extracts|revisions",
-                                "titles": page_title,
-                                "explaintext": True,
-                                "exsectionformat": "plain",
-                                "rvprop": "content",
-                                "rvslots": "main"
-                            }
-                            
-                            content_response = await client.get(search_url, params=content_params, headers=headers)
-                            if content_response.status_code == 200:
-                                content_data = content_response.json()
-                                pages = content_data.get('query', {}).get('pages', {})
-                                
-                                for page_id, page_info in pages.items():
-                                    extract = ""
-                                    
-                                    if 'extract' in page_info:
-                                        extract = page_info['extract']
-                                    
-                                    elif 'revisions' in page_info and page_info['revisions']:
-                                        revision = page_info['revisions'][0]
-                                        if 'slots' in revision and 'main' in revision['slots']:
-                                            extract = revision['slots']['main'].get('*', '')
-                                    
-                                    if extract:
-                                        extract_lower = extract.lower()
-                                        
-                                        drop_sources = set()
-                                        
-                                        drop_table_patterns = [
-                                            r'(?:dropped by|obtained from|reward from)\s*([^.\n]+)',
-                                            r'(?:boss|monster|creature|enemy):\s*([^.\n]+)',
-                                            r'(?:source|location):\s*([^.\n]+)',
-                                            r'(?:found at|found in)\s*([^.\n]+)',
-                                            r'(?:vindicta|gorvek|helwyr|greg|twin furies|araxxor|araxxi|nex|vorago|telos|solak|ed1|ed2|ed3)',
-                                        ]
-                                        
-                                        for pattern in drop_table_patterns:
-                                            matches = re.findall(pattern, extract_lower)
-                                            for match in matches:
-                                                if isinstance(match, str) and len(match.strip()) > 2:
-                                                    drop_sources.add(match.strip())
-                                        
-                                        multi_boss_indicators = [
-                                            'anima core', 'dormant anima', 'refined anima',
-                                            'gwd2', 'god wars dungeon 2', 'heart of gielinor',
-                                            'all four bosses', 'any of the bosses', 'multiple bosses'
-                                        ]
-                                        
-                                        if any(indicator in extract_lower for indicator in multi_boss_indicators):
-                                            if 'anima core' in item_name.lower():
-                                                drop_sources.update(['gorvek and vindicta', 'helwyr', 'gregorovic', 'twin furies'])
-                                        
-                                        drop_sources_list = list(drop_sources)
-                                        if drop_sources_list:
-                                            print(f"DEBUG: Found {len(drop_sources_list)} drop sources for '{item_name}': {drop_sources_list}")
-                                            return drop_sources_list
-            
-            
-            print(f"DEBUG: No drop sources found for '{item_name}'")
-            return []
-            
-    except Exception as e:
-        print(f"Error fetching drop sources for {item_name}: {e}")
-        return []
+
 async def parse_and_store_drops_from_activities(activities: list, username: str):
     """Parse drops from activities and store them in database"""
     drops_found = []
@@ -3746,32 +3634,17 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
                         print(f"DEBUG: Final item name: '{item_name}'")
                         
                         if not await is_rare_drop_item(item_name):
-                            print(f"DEBUG: Skipping common item: '{item_name}'")
+                            print(f"DEBUG: Skipping - '{item_name}' not in rare drop dataset")
                             continue
                         
                         drop_sources = await get_item_drop_sources_from_wiki(item_name)
                         
-                        if len(drop_sources) > 1:
-                            boss_name = "Misc"
-                            print(f"DEBUG: Multi-boss item '{item_name}' assigned to Misc (sources: {drop_sources})")
-                        elif len(drop_sources) == 1:
+                        if len(drop_sources) > 0:
                             boss_name = drop_sources[0]
-                            print(f"DEBUG: Single-boss item '{item_name}' assigned to '{boss_name}'")
                         else:
-                            # Fallback to activity details parsing
-                            boss_match = (
-                                re.search(r"After (?:killing|defeating) (.+?), (?:it dropped|I (?:looted|found))", details) or
-                                re.search(r"While exploring (.+?), I (?:looted|found)", details) or
-                                re.search(r"(?:exploring|in|at) (?:the )?(.+?),", details)
-                            )
-                            
-                            if boss_match:
-                                boss_name = boss_match.group(1).strip()
-                                boss_name = re.sub(r'^a\s+', '', boss_name, flags=re.IGNORECASE).strip()
-                            else:
-                                boss_name = "Misc"
+                            boss_name = "Unknown"
                         
-                        print(f"DEBUG: Boss name: '{boss_name}' | Storing drop: {item_name}")
+                        print(f"DEBUG: Storing drop: {item_name} (boss: {boss_name})")
                         
                         item_image_url = get_item_image_from_manifest(item_name)
                         
@@ -5014,6 +4887,73 @@ async def repopulate_clan_members():
             "status": "error", 
             "message": f"Failed to repopulate clan_members table: {str(e)}"
         }
+@app.get("/api/admin/repopulate-drops")
+async def repopulate_drops():
+    """Repopulate clan_drops table by re-parsing all historical activity logs with exact matching"""
+    try:
+        print("🔄 Starting drops repopulation with exact matching logic...")
+        
+        conn = await get_db_connection()
+        async with conn:
+            before_count = await conn.fetchval("SELECT COUNT(*) FROM clan_drops")
+            print(f"📊 Current drops in database: {before_count}")
+            
+            await conn.execute("DELETE FROM clan_drops")
+            print("🗑️  Cleared clan_drops table")
+            
+            activities_cursor = await conn.execute("""
+                SELECT username, text, details, activity_date, activity_timestamp
+                FROM clan_activities
+                ORDER BY activity_timestamp DESC
+            """)
+            
+            all_activities = await activities_cursor.fetchall()
+            print(f"📋 Found {len(all_activities)} total activities to parse")
+            
+            username_activities = {}
+            for row in all_activities:
+                username = row[0]
+                if username not in username_activities:
+                    username_activities[username] = []
+                
+                username_activities[username].append({
+                    'username': username,
+                    'text': row[1],
+                    'details': row[2] or '',
+                    'date': row[3],
+                    'timestamp': row[4]
+                })
+            
+            print(f"👥 Processing activities for {len(username_activities)} members")
+            
+            total_drops_found = 0
+            for username, activities in username_activities.items():
+                drops = await parse_and_store_drops_from_activities(activities, username)
+                total_drops_found += len(drops)
+                if drops:
+                    print(f"  ✅ {username}: Found {len(drops)} drops")
+            
+            print(f"✅ Repopulation complete: {total_drops_found} total drops stored")
+            
+            return {
+                "status": "success",
+                "message": f"Successfully repopulated clan_drops with exact matching",
+                "before_count": before_count,
+                "after_count": total_drops_found,
+                "members_processed": len(username_activities),
+                "activities_scanned": len(all_activities)
+            }
+            
+    except Exception as e:
+        print(f"❌ Error during drops repopulation: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "status": "error",
+            "message": f"Failed to repopulate drops: {str(e)}"
+        }
+
+
 
 
 
