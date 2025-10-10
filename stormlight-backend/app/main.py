@@ -3876,7 +3876,12 @@ async def get_boss_rare_drops(boss_name: str):
         
         items = []
         for item_name in rare_drops:
-            image_url = await get_item_image_from_wiki(item_name)
+            cached_url = get_cached_wiki_image(item_name)
+            if cached_url:
+                image_url = cached_url
+            else:
+                image_url = "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png"
+            
             items.append({
                 "name": item_name,
                 "image_url": image_url
