@@ -65,8 +65,10 @@ def load_boss_drops_dataset():
         
         print(f"✅ Built item lookup index with {len(ITEM_TO_BOSSES_LOOKUP)} unique items")
         
-        frontend_path = Path(__file__).parent.parent.parent / 'stormlight-frontend'
-        manifest_path = frontend_path / 'public' / 'assets' / 'drops' / 'manifest.json'
+        production_manifest = Path('/app/static/assets/drops/manifest.json')
+        dev_manifest = Path(__file__).parent.parent.parent / 'stormlight-frontend' / 'public' / 'assets' / 'drops' / 'manifest.json'
+        
+        manifest_path = production_manifest if production_manifest.exists() else dev_manifest
         
         if manifest_path.exists():
             with open(manifest_path, 'r') as f:
