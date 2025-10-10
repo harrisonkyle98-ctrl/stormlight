@@ -18,6 +18,7 @@ from starlette.middleware.sessions import SessionMiddleware
 import asyncio
 import random
 import time as time_module
+import time
 import asyncio
 from datetime import time as datetime_time
 from collections import defaultdict
@@ -41,6 +42,43 @@ try:
 except ImportError:
     from database import init_database, get_db_connection, collect_daily_player_stats, collect_daily_player_stats_multi_cycle, collect_daily_activities_and_drops
     from admin_utils import log_admin_action, calculate_rank_needed, get_site_health_status, create_competition_snapshot
+
+BOSS_DROPS_DATASET = {}
+ITEM_TO_BOSSES_LOOKUP = {}
+WIKI_IMAGE_CACHE = {}
+WIKI_IMAGE_CACHE_DURATION = 86400
+
+def load_boss_drops_dataset():
+    global BOSS_DROPS_DATASET, ITEM_TO_BOSSES_LOOKUP
+    try:
+        dataset_path = Path(__file__).parent / 'data' / 'boss_drops.json'
+        with open(dataset_path, 'r') as f:
+            BOSS_DROPS_DATASET = json.load(f)
+        print(f"✅ Loaded boss drops dataset with {len(BOSS_DROPS_DATASET)} bosses")
+        
+        ITEM_TO_BOSSES_LOOKUP = {}
+        for boss_name, items in BOSS_DROPS_DATASET.items():
+            for item in items:
+                item_lower = item.lower()
+                if item_lower not in ITEM_TO_BOSSES_LOOKUP:
+                    ITEM_TO_BOSSES_LOOKUP[item_lower] = []
+                ITEM_TO_BOSSES_LOOKUP[item_lower].append(boss_name)
+        
+        print(f"✅ Built item lookup index with {len(ITEM_TO_BOSSES_LOOKUP)} unique items")
+    except Exception as e:
+        print(f"❌ Error loading boss drops dataset: {e}")
+        BOSS_DROPS_DATASET = {}
+        ITEM_TO_BOSSES_LOOKUP = {}
+
+def get_cached_wiki_image(item_name: str) -> str | None:
+    if item_name in WIKI_IMAGE_CACHE:
+        url, timestamp = WIKI_IMAGE_CACHE[item_name]
+        if time.time() - timestamp < WIKI_IMAGE_CACHE_DURATION:
+            return url
+    return None
+
+load_boss_drops_dataset()
+
 
 load_dotenv()
 
@@ -3461,26 +3499,31 @@ async def get_clan_log(
         raise HTTPException(status_code=500, detail="Failed to fetch clan log")
 
 async def get_item_image_from_wiki(item_name: str) -> str:
-    """Get item image URL from RuneScape Wiki API with proper User-Agent"""
+    """Get item image URL from RuneScape Wiki API with 32px size and 24h+ caching"""
     try:
+        cached_url = get_cached_wiki_image(item_name)
+        if cached_url:
+            return cached_url
+        
         hardcoded_images = {
             'dormant anima core legs': 'https://runescape.wiki/images/Dormant_anima_core_legs_detail.png?56261',
         }
         
         item_lower = item_name.lower().strip()
         if item_lower in hardcoded_images:
-            print(f"DEBUG: Using hardcoded image for '{item_name}': {hardcoded_images[item_lower]}")
-            return hardcoded_images[item_lower]
+            url = hardcoded_images[item_lower]
+            WIKI_IMAGE_CACHE[item_name] = (url, time.time())
+            return url
         
         async with httpx.AsyncClient() as client:
             search_url = "https://runescape.wiki/api.php"
             
             search_variations = [
-                item_name,  # Original name
-                item_name.replace(" ", "_"),  # Underscored version
-                f'"{item_name}"',  # Quoted exact match
-                f"{item_name} detail",  # Detail page variant
-                f"{item_name} (item)",  # Item page variant
+                item_name,
+                item_name.replace(" ", "_"),
+                f'"{item_name}"',
+                f"{item_name} detail",
+                f"{item_name} (item)",
             ]
             
             headers = {
@@ -3493,7 +3536,7 @@ async def get_item_image_from_wiki(item_name: str) -> str:
                     "format": "json",
                     "list": "search",
                     "srsearch": search_term,
-                    "srlimit": 3  # Get more results to find better matches
+                    "srlimit": 3
                 }
                 
                 search_response = await client.get(search_url, params=search_params, headers=headers)
@@ -3515,7 +3558,7 @@ async def get_item_image_from_wiki(item_name: str) -> str:
                                 "format": "json",
                                 "prop": "pageimages",
                                 "titles": page_title,
-                                "pithumbsize": 64
+                                "pithumbsize": 32
                             }
                             
                             image_response = await client.get(search_url, params=image_params, headers=headers)
@@ -3527,31 +3570,25 @@ async def get_item_image_from_wiki(item_name: str) -> str:
                                         image_url = page_info['thumbnail']['source']
                                         
                                         excluded_in_url = any(exclude in image_url.lower() for exclude in ['interface', 'crest_interface', 'token', 'scroll'])
-                                        
-                                        is_detail_image = 'detail' in image_url.lower()
                                         is_interface_image = 'interface' in image_url.lower()
                                         
                                         if not excluded_in_url and not is_interface_image:
-                                            print(f"DEBUG: Found good image for '{item_name}' via '{page_title}': {image_url}")
+                                            WIKI_IMAGE_CACHE[item_name] = (image_url, time.time())
+                                            print(f"DEBUG: Found and cached image for '{item_name}': {image_url}")
                                             return image_url
-                                        elif is_detail_image and not excluded_in_url:
-                                            print(f"DEBUG: Found detail image for '{item_name}' via '{page_title}': {image_url}")
-                                            return image_url
-                                        else:
-                                            print(f"DEBUG: Skipping excluded image for '{item_name}': {image_url}")
-                                            continue
-                                        
             
-            # Fallback to generic item icon
-            print(f"DEBUG: No specific image found for '{item_name}', using fallback")
-            return "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png"
+            fallback_url = "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png"
+            WIKI_IMAGE_CACHE[item_name] = (fallback_url, time.time())
+            print(f"DEBUG: Using fallback image for '{item_name}'")
+            return fallback_url
             
     except Exception as e:
         print(f"Error fetching item image for {item_name}: {e}")
-        return "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png"
+        fallback_url = "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png"
+        return fallback_url
 
 async def is_rare_drop_item(item_name: str) -> bool:
-    """Check if an item is a rare drop using Wiki API and known patterns"""
+    """Check if an item is a rare drop using static dataset"""
     try:
         common_items = [
             'coins', 'gp', 'gold pieces', 'bones', 'ashes', 'food', 'potions',
@@ -3561,134 +3598,37 @@ async def is_rare_drop_item(item_name: str) -> bool:
         
         item_lower = item_name.lower().strip()
         
-        # Exclude common items
         if any(common in item_lower for common in common_items):
             return False
         
-        # Exclude kill events that might have slipped through
         kill_indicators = ['killed', 'defeating', 'defeated', 'slain', 'kill count']
         if any(indicator in item_lower for indicator in kill_indicators):
             return False
         
-        drop_sources = await get_item_drop_sources_from_wiki(item_name)
-        
-        if drop_sources and len(drop_sources) <= 3:
+        if item_lower in ITEM_TO_BOSSES_LOOKUP:
             return True
-            
+        
+        for known_item in ITEM_TO_BOSSES_LOOKUP.keys():
+            if item_lower in known_item or known_item in item_lower:
+                return True
+                
         return False
     except Exception as e:
         print(f"Error checking rarity for {item_name}: {e}")
-        return True  # Default to including if unsure
+        return True
 
 async def get_boss_rare_drop_table(boss_name: str) -> list:
-    """Get the complete rare drop table for a specific boss from RuneScape Wiki"""
+    """Get the complete rare drop table for a specific boss from static dataset"""
     try:
-        known_boss_drops = {
-            'nex': ['Torva full helm', 'Torva platebody', 'Torva platelegs', 'Pernix cowl', 'Pernix body', 'Pernix chaps', 'Virtus mask', 'Virtus robe top', 'Virtus robe legs', 'Zaryte bow'],
-            'amascut': ['Boots of Tumeken\'s resplendence', 'Gloves of Tumeken\'s resplendence', 'Tumeken\'s shadow', 'Elidinis\' ward', 'Masori mask', 'Masori body', 'Masori chaps'],
-            'commander zilyana': ['Saradomin sword', 'Saradomin\'s light', 'Armadyl crossbow', 'Saradomin hilt'],
-            'general graardor': ['Bandos chestplate', 'Bandos tassets', 'Bandos boots', 'Bandos gloves', 'Bandos hilt'],
-            'kree\'arra': ['Armadyl helmet', 'Armadyl chestplate', 'Armadyl chainskirt', 'Armadyl gloves', 'Armadyl hilt'],
-            'k\'ril tsutsaroth': ['Subjugation hood', 'Subjugation gown', 'Subjugation trousers', 'Subjugation gloves', 'Zamorak hilt'],
-            'helwyr': ['Wand of the cywir elders', 'Orb of the cywir elders', 'Cywir orb', 'Dormant anima core helm', 'Dormant anima core body', 'Dormant anima core legs'],
-            'vindicta': ['Dragon rider lance', 'Dormant anima core helm', 'Dormant anima core body', 'Dormant anima core legs'],
-            'gregorovic': ['Shadow glaive', 'Dormant anima core helm', 'Dormant anima core body', 'Dormant anima core legs'],
-            'twin furies': ['Blade of Nymora', 'Blade of Avaryss', 'Dormant anima core helm', 'Dormant anima core body', 'Dormant anima core legs'],
-            'vorago': ['Seismic wand', 'Seismic singularity', 'Tectonic mask', 'Tectonic robe top', 'Tectonic robe bottom'],
-            'araxxor': ['Araxxi\'s fang', 'Araxxi\'s web', 'Araxxi\'s eye', 'Noxious scythe', 'Noxious longbow', 'Noxious staff'],
-            'telos': ['Orb of the Cywir elders', 'Wand of the Cywir elders', 'Dormant Seren godbow'],
-            'solak': ['Blightbound crossbow', 'Grimoire', 'Merethiel'],
-            'raksha': ['Ripper claw', 'Fleeting boots', 'Blast diffusion boots', 'Laceration boots'],
-            'arch-glacor': ['Leng artefact', 'Scripture of Wen', 'Frozen core of Leng'],
-            'kerapac': ['Scripture of Jas', 'Gconc', 'Time\'s arrow'],
-            'zuk': ['Magma tempest codex', 'Scripture of Ful', 'Obsidian blade'],
-            'misc': ['Dormant anima core helm', 'Dormant anima core body', 'Dormant anima core legs', 'Crest of Zaros', 'Crest of Sliske', 'Crest of Zamorak', 'Crest of Seren']
-        }
+        if boss_name in BOSS_DROPS_DATASET:
+            return BOSS_DROPS_DATASET[boss_name]
         
-        boss_key = boss_name.lower()
-        if boss_key in known_boss_drops:
-            print(f"DEBUG: Found hardcoded drops for '{boss_key}' - returning {len(known_boss_drops[boss_key])} items")
-            return known_boss_drops[boss_key]
+        boss_lower = boss_name.lower()
+        for boss_key, items in BOSS_DROPS_DATASET.items():
+            if boss_key.lower() == boss_lower:
+                return items
         
-        print(f"DEBUG: No hardcoded drops for '{boss_key}', trying Wiki API...")
-        
-        # Fallback to Wiki API if no hardcoded drops
-        search_url = "https://runescape.wiki/api.php"
-        
-        search_params = {
-            'action': 'query',
-            'format': 'json',
-            'list': 'search',
-            'srsearch': f"{boss_name} drops",
-            'srlimit': 1
-        }
-        
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            search_response = await client.get(search_url, params=search_params)
-            if search_response.status_code == 200:
-                search_data = search_response.json()
-                
-                if search_data.get('query', {}).get('search'):
-                    page_title = search_data['query']['search'][0]['title']
-                    
-                    content_params = {
-                        'action': 'query',
-                        'format': 'json',
-                        'titles': page_title,
-                        'prop': 'extracts|revisions',
-                        'exintro': False,
-                        'explaintext': True,
-                        'rvprop': 'content',
-                        'rvslots': 'main'
-                    }
-                    
-                    content_response = await client.get(search_url, params=content_params)
-                    if content_response.status_code == 200:
-                        content_data = content_response.json()
-                        pages = content_data.get('query', {}).get('pages', {})
-                        
-                        rare_drops = []
-                        
-                        for page_id, page_data in pages.items():
-                            extract = page_data.get('extract', '').lower()
-                            revisions = page_data.get('revisions', [])
-                            
-                            if revisions:
-                                raw_content = revisions[0].get('slots', {}).get('main', {}).get('*', '').lower()
-                                content_to_search = extract + " " + raw_content
-                            else:
-                                content_to_search = extract
-                            
-                            item_patterns = [
-                                r'\[\[([^|\]]+(?:\s+(?:helm|helmet|chestplate|platebody|legs|boots|gloves|gauntlets|sword|bow|staff|wand|shield|ring|amulet|necklace|cape|cloak))?)\]\]',
-                                r'\*\s*\[\[([^|\]]+)\]\](?:\s*-\s*(?:rare|1/\d+|very rare))?',
-                                r'(?:rare drop|unique drop|boss drop).*?\[\[([^|\]]+)\]\]',
-                                r'\[\[([^|\]]+)\]\].*?(?:1/\d+|rare|unique|very rare)',
-                            ]
-                            
-                            for pattern in item_patterns:
-                                matches = re.findall(pattern, content_to_search, re.IGNORECASE)
-                                for match in matches:
-                                    item_name = match.strip()
-                                    if len(item_name) > 3 and item_name not in rare_drops:
-                                        # Exclude generic terms and common items
-                                        excluded_terms = [
-                                            'coins', 'bones', 'ashes', 'runes', 'arrows', 'food', 'potions',
-                                            'smithing', 'necromancy', 'combat', 'magic', 'ranged', 'melee',
-                                            'attack', 'strength', 'defence', 'prayer', 'slayer', 'fishing',
-                                            'cooking', 'firemaking', 'woodcutting', 'mining', 'herblore',
-                                            'agility', 'thieving', 'crafting', 'fletching', 'runecrafting',
-                                            'construction', 'hunter', 'summoning', 'dungeoneering', 'divination',
-                                            'invention', 'archaeology', 'farming', 'category', 'file', 'image',
-                                            'template', 'redirect', 'disambiguation', 'infobox'
-                                        ]
-                                        if not any(term in item_name.lower() for term in excluded_terms):
-                                            rare_drops.append(item_name)
-                        
-                        print(f"DEBUG: Wiki API returned {len(rare_drops)} items for '{boss_name}'")
-                        return rare_drops[:20]
-        
-        print(f"DEBUG: No drops found for '{boss_name}' via Wiki API")
+        print(f"DEBUG: No drops found for '{boss_name}' in dataset")
         return []
         
     except Exception as e:
@@ -3696,29 +3636,26 @@ async def get_boss_rare_drop_table(boss_name: str) -> list:
         return []
 
 async def get_item_drop_sources_from_wiki(item_name: str) -> list:
-    """Get item drop sources from RuneScape Wiki API to determine boss associations"""
+    """Get item drop sources from static dataset with case-insensitive matching"""
     try:
-        known_multi_boss = {
-            'dormant anima core legs': ['gorvek and vindicta', 'helwyr', 'gregorovic', 'twin furies'],
-            'dormant anima core body': ['gorvek and vindicta', 'helwyr', 'gregorovic', 'twin furies'],
-            'dormant anima core helm': ['gorvek and vindicta', 'helwyr', 'gregorovic', 'twin furies'],
-            'refined anima core legs': ['gorvek and vindicta', 'helwyr', 'gregorovic', 'twin furies'],
-            'refined anima core body': ['gorvek and vindicta', 'helwyr', 'gregorovic', 'twin furies'],
-            'refined anima core helm': ['gorvek and vindicta', 'helwyr', 'gregorovic', 'twin furies'],
-        }
-        
         item_lower = item_name.lower().strip()
-        print(f"DEBUG: Checking hardcoded multi-boss for '{item_name}' (normalized: '{item_lower}')")
         
-        for known_item, sources in known_multi_boss.items():
-            if known_item == item_lower:
-                print(f"DEBUG: Using hardcoded multi-boss sources for '{item_name}': {sources}")
-                return sources
-        
-        if 'anima core' in item_lower and any(part in item_lower for part in ['legs', 'body', 'helm']):
-            sources = ['gorvek and vindicta', 'helwyr', 'gregorovic', 'twin furies']
-            print(f"DEBUG: Using pattern-based multi-boss sources for '{item_name}': {sources}")
+        if item_lower in ITEM_TO_BOSSES_LOOKUP:
+            sources = ITEM_TO_BOSSES_LOOKUP[item_lower]
+            print(f"DEBUG: Found {len(sources)} drop source(s) for '{item_name}': {sources}")
             return sources
+        
+        for known_item, bosses in ITEM_TO_BOSSES_LOOKUP.items():
+            if item_lower in known_item or known_item in item_lower:
+                print(f"DEBUG: Fuzzy matched '{item_name}' to '{known_item}': {bosses}")
+                return bosses
+        
+        print(f"DEBUG: No drop sources found for '{item_name}' in dataset")
+        return []
+        
+    except Exception as e:
+        print(f"Error fetching drop sources for {item_name}: {e}")
+        return []
         
         async with httpx.AsyncClient() as client:
             search_url = "https://runescape.wiki/api.php"
