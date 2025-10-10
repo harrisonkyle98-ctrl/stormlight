@@ -4887,21 +4887,22 @@ async def repopulate_clan_members():
             "status": "error", 
             "message": f"Failed to repopulate clan_members table: {str(e)}"
         }
-@app.get("/api/admin/repopulate-drops")
-async def repopulate_drops():
-    """Repopulate clan_drops table by re-parsing all historical activity logs with exact matching"""
+async def _run_repopulation_background():
+    """Background task to repopulate drops without blocking HTTP response"""
     try:
-        print("🔄 Starting drops repopulation with exact matching logic...")
+        print("=" * 80)
+        print("🔄 [BACKGROUND] Starting drops repopulation with exact matching logic...")
+        print("=" * 80)
         
         conn = await get_db_connection()
         async with conn:
             count_cursor = await conn.execute("SELECT COUNT(*) FROM clan_drops")
             count_result = await count_cursor.fetchone()
             before_count = count_result[0] if count_result else 0
-            print(f"📊 Current drops in database: {before_count}")
+            print(f"📊 [BACKGROUND] Current drops in database: {before_count}")
             
             await conn.execute("DELETE FROM clan_drops")
-            print("🗑️  Cleared clan_drops table")
+            print("🗑️  [BACKGROUND] Cleared clan_drops table")
             
             activities_cursor = await conn.execute("""
                 SELECT username, text, details, activity_date, activity_timestamp
@@ -4910,7 +4911,7 @@ async def repopulate_drops():
             """)
             
             all_activities = await activities_cursor.fetchall()
-            print(f"📋 Found {len(all_activities)} total activities to parse")
+            print(f"📋 [BACKGROUND] Found {len(all_activities)} total activities to parse")
             
             username_activities = {}
             for row in all_activities:
@@ -4926,33 +4927,71 @@ async def repopulate_drops():
                     'timestamp': row[4]
                 })
             
-            print(f"👥 Processing activities for {len(username_activities)} members")
+            print(f"👥 [BACKGROUND] Processing activities for {len(username_activities)} members")
+            print("-" * 80)
             
             total_drops_found = 0
+            processed = 0
             for username, activities in username_activities.items():
+                processed += 1
                 drops = await parse_and_store_drops_from_activities(activities, username)
                 total_drops_found += len(drops)
                 if drops:
-                    print(f"  ✅ {username}: Found {len(drops)} drops")
+                    print(f"  ✅ [BACKGROUND] {username}: Found {len(drops)} drops")
+                
+                if processed % 10 == 0:
+                    print(f"📈 [BACKGROUND] Progress: {processed}/{len(username_activities)} members, {total_drops_found} drops so far")
             
-            print(f"✅ Repopulation complete: {total_drops_found} total drops stored")
-            
-            return {
-                "status": "success",
-                "message": f"Successfully repopulated clan_drops with exact matching",
-                "before_count": before_count,
-                "after_count": total_drops_found,
-                "members_processed": len(username_activities),
-                "activities_scanned": len(all_activities)
-            }
+            print("-" * 80)
+            print(f"✅ [BACKGROUND] Repopulation complete: {total_drops_found} total drops stored")
+            print(f"📊 [BACKGROUND] Before count: {before_count}, After count: {total_drops_found}")
+            print("=" * 80)
             
     except Exception as e:
-        print(f"❌ Error during drops repopulation: {e}")
+        print(f"❌ [BACKGROUND] Error during drops repopulation: {e}")
+        import traceback
+        traceback.print_exc()
+
+@app.get("/api/admin/repopulate-drops")
+async def repopulate_drops():
+    """Repopulate clan_drops table by re-parsing all historical activity logs with exact matching"""
+    try:
+        print("🔄 Triggering background repopulation task...")
+        
+        conn = await get_db_connection()
+        async with conn:
+            count_cursor = await conn.execute("SELECT COUNT(*) FROM clan_drops")
+            count_result = await count_cursor.fetchone()
+            before_count = count_result[0] if count_result else 0
+            
+            activities_count_cursor = await conn.execute("SELECT COUNT(*) FROM clan_activities")
+            activities_result = await activities_count_cursor.fetchone()
+            activities_count = activities_result[0] if activities_result else 0
+            
+            members_count_cursor = await conn.execute("SELECT COUNT(DISTINCT username) FROM clan_activities")
+            members_result = await members_count_cursor.fetchone()
+            members_count = members_result[0] if members_result else 0
+        
+        asyncio.create_task(_run_repopulation_background())
+        
+        print("✅ Background repopulation task started")
+        
+        return {
+            "status": "started",
+            "message": "Repopulation started in background. Check server logs for progress.",
+            "before_count": before_count,
+            "members_to_process": members_count,
+            "activities_to_scan": activities_count,
+            "note": "This process may take several minutes. Check Fly.io logs with: flyctl logs --app stormlight"
+        }
+            
+    except Exception as e:
+        print(f"❌ Error triggering drops repopulation: {e}")
         import traceback
         traceback.print_exc()
         return {
             "status": "error",
-            "message": f"Failed to repopulate drops: {str(e)}"
+            "message": f"Failed to trigger repopulation: {str(e)}"
         }
 
 
