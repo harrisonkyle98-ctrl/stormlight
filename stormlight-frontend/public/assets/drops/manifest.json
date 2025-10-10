@@ -1,0 +1,2298 @@
+[
+  {
+    "item_name": "Abyssal Whip",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Abyssal scourage",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Achto Primeval boots",
+    "file": "/assets/drops/achto_primeval_boots.png",
+    "bosses": [
+      "Yakamaru"
+    ]
+  },
+  {
+    "item_name": "Achto Primeval gloves",
+    "file": "/assets/drops/achto_primeval_gloves.png",
+    "bosses": [
+      "Yakamaru"
+    ]
+  },
+  {
+    "item_name": "Achto Primeval mask",
+    "file": "/assets/drops/achto_primeval_mask.png",
+    "bosses": [
+      "Yakamaru"
+    ]
+  },
+  {
+    "item_name": "Achto Primeval robe legs",
+    "file": "/assets/drops/achto_primeval_robe_legs.png",
+    "bosses": [
+      "Yakamaru"
+    ]
+  },
+  {
+    "item_name": "Achto Primeval robe top",
+    "file": "/assets/drops/achto_primeval_robe_top.png",
+    "bosses": [
+      "Yakamaru"
+    ]
+  },
+  {
+    "item_name": "Achto Tempest body",
+    "file": "/assets/drops/achto_tempest_body.png",
+    "bosses": [
+      "Yakamaru"
+    ]
+  },
+  {
+    "item_name": "Achto Tempest boots",
+    "file": "/assets/drops/achto_tempest_boots.png",
+    "bosses": [
+      "Yakamaru"
+    ]
+  },
+  {
+    "item_name": "Achto Tempest chaps",
+    "file": "/assets/drops/achto_tempest_chaps.png",
+    "bosses": [
+      "Yakamaru"
+    ]
+  },
+  {
+    "item_name": "Achto Tempest cowl",
+    "file": "/assets/drops/achto_tempest_cowl.png",
+    "bosses": [
+      "Yakamaru"
+    ]
+  },
+  {
+    "item_name": "Achto Tempest gloves",
+    "file": "/assets/drops/achto_tempest_gloves.png",
+    "bosses": [
+      "Yakamaru"
+    ]
+  },
+  {
+    "item_name": "Achto Teralith boots",
+    "file": "/assets/drops/achto_teralith_boots.png",
+    "bosses": [
+      "Yakamaru"
+    ]
+  },
+  {
+    "item_name": "Achto Teralith cuirass",
+    "file": "/assets/drops/achto_teralith_cuirass.png",
+    "bosses": [
+      "Yakamaru"
+    ]
+  },
+  {
+    "item_name": "Achto Teralith gauntlets",
+    "file": "/assets/drops/achto_teralith_gauntlets.png",
+    "bosses": [
+      "Yakamaru"
+    ]
+  },
+  {
+    "item_name": "Achto Teralith helmet",
+    "file": "/assets/drops/achto_teralith_helmet.png",
+    "bosses": [
+      "Yakamaru"
+    ]
+  },
+  {
+    "item_name": "Achto Teralith leggings",
+    "file": "/assets/drops/achto_teralith_leggings.png",
+    "bosses": [
+      "Yakamaru"
+    ]
+  },
+  {
+    "item_name": "Amascut's promise",
+    "file": "/assets/drops/amascut_s_promise.png",
+    "bosses": [
+      "Amascut, the Devourer"
+    ]
+  },
+  {
+    "item_name": "Amulet of Ranging",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Ancient Effigy",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Ancient artefact",
+    "file": "/assets/drops/ancient_artefact.png",
+    "bosses": [
+      "Vorago"
+    ]
+  },
+  {
+    "item_name": "Ancient emblem",
+    "file": "/assets/drops/ancient_emblem.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Ancient hilt",
+    "file": "/assets/drops/ancient_hilt.png",
+    "bosses": [
+      "Tzkal-Zuk"
+    ]
+  },
+  {
+    "item_name": "Ancient summoning stone",
+    "file": "/assets/drops/ancient_summoning_stone.png",
+    "bosses": [
+      "Vorago"
+    ]
+  },
+  {
+    "item_name": "Araxxi's eye",
+    "file": "/assets/drops/araxxi_s_eye.png",
+    "bosses": [
+      "Araxxi"
+    ]
+  },
+  {
+    "item_name": "Araxxi's fang",
+    "file": "/assets/drops/araxxi_s_fang.png",
+    "bosses": [
+      "Araxxi"
+    ]
+  },
+  {
+    "item_name": "Araxxi's web",
+    "file": "/assets/drops/araxxi_s_web.png",
+    "bosses": [
+      "Araxxi"
+    ]
+  },
+  {
+    "item_name": "Araxyte egg",
+    "file": "/assets/drops/araxyte_egg.png",
+    "bosses": [
+      "Araxxi"
+    ]
+  },
+  {
+    "item_name": "Arcane sigil",
+    "file": "/assets/drops/arcane_sigil.png",
+    "bosses": [
+      "Corporeal Beast"
+    ]
+  },
+  {
+    "item_name": "Arch-Glacor's Adornment",
+    "file": "/assets/drops/arch_glacor_s_adornment.png",
+    "bosses": [
+      "Arch-Glacor"
+    ]
+  },
+  {
+    "item_name": "Archers' ring",
+    "file": "/assets/drops/archers_ring.png",
+    "bosses": [
+      "Dagannoth Kings"
+    ]
+  },
+  {
+    "item_name": "Armadyl boots",
+    "file": "/assets/drops/armadyl_boots.png",
+    "bosses": [
+      "Kree'arra"
+    ]
+  },
+  {
+    "item_name": "Armadyl buckler",
+    "file": "/assets/drops/armadyl_buckler.png",
+    "bosses": [
+      "Kree'arra"
+    ]
+  },
+  {
+    "item_name": "Armadyl chainskirt",
+    "file": "/assets/drops/armadyl_chainskirt.png",
+    "bosses": [
+      "Kree'arra"
+    ]
+  },
+  {
+    "item_name": "Armadyl chestplate",
+    "file": "/assets/drops/armadyl_chestplate.png",
+    "bosses": [
+      "Kree'arra"
+    ]
+  },
+  {
+    "item_name": "Armadyl crossbow",
+    "file": "/assets/drops/armadyl_crossbow.png",
+    "bosses": [
+      "Commander Zilyana"
+    ]
+  },
+  {
+    "item_name": "Armadyl gloves",
+    "file": "/assets/drops/armadyl_gloves.png",
+    "bosses": [
+      "Kree'arra"
+    ]
+  },
+  {
+    "item_name": "Armadyl helmet",
+    "file": "/assets/drops/armadyl_helmet.png",
+    "bosses": [
+      "Kree'arra"
+    ]
+  },
+  {
+    "item_name": "Armadyl hilt",
+    "file": "/assets/drops/armadyl_hilt.png",
+    "bosses": [
+      "Kree'arra"
+    ]
+  },
+  {
+    "item_name": "Ascension Grips",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Legiones"
+    ]
+  },
+  {
+    "item_name": "Auburn lock",
+    "file": "/assets/drops/auburn_lock.png",
+    "bosses": [
+      "Commander Zilyana"
+    ]
+  },
+  {
+    "item_name": "Avaryss' braid",
+    "file": "/assets/drops/avaryss_braid.png",
+    "bosses": [
+      "The Twin Furies"
+    ]
+  },
+  {
+    "item_name": "Bandos boots",
+    "file": "/assets/drops/bandos_boots.png",
+    "bosses": [
+      "General Graardor"
+    ]
+  },
+  {
+    "item_name": "Bandos chestplate",
+    "file": "/assets/drops/bandos_chestplate.png",
+    "bosses": [
+      "General Graardor"
+    ]
+  },
+  {
+    "item_name": "Bandos gloves",
+    "file": "/assets/drops/bandos_gloves.png",
+    "bosses": [
+      "General Graardor"
+    ]
+  },
+  {
+    "item_name": "Bandos helmet",
+    "file": "/assets/drops/bandos_helmet.png",
+    "bosses": [
+      "General Graardor"
+    ]
+  },
+  {
+    "item_name": "Bandos hilt",
+    "file": "/assets/drops/bandos_hilt.png",
+    "bosses": [
+      "General Graardor"
+    ]
+  },
+  {
+    "item_name": "Bandos tassets",
+    "file": "/assets/drops/bandos_tassets.png",
+    "bosses": [
+      "General Graardor"
+    ]
+  },
+  {
+    "item_name": "Bandos warshield",
+    "file": "/assets/drops/bandos_warshield.png",
+    "bosses": [
+      "General Graardor"
+    ]
+  },
+  {
+    "item_name": "Barrows amulet",
+    "file": "/assets/drops/barrows_amulet.png",
+    "bosses": [
+      "The Barrows: Rise of the Six"
+    ]
+  },
+  {
+    "item_name": "Berserker Ring",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Dagannoth Kings"
+    ]
+  },
+  {
+    "item_name": "Black stone heart",
+    "file": "/assets/drops/black_stone_heart.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Blade of Avaryss",
+    "file": "/assets/drops/blade_of_avaryss.png",
+    "bosses": [
+      "The Twin Furies"
+    ]
+  },
+  {
+    "item_name": "Blade of Nymora",
+    "file": "/assets/drops/blade_of_nymora.png",
+    "bosses": [
+      "The Twin Furies"
+    ]
+  },
+  {
+    "item_name": "Blast Diffusion boots",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Raksha, the Shadow Colossus"
+    ]
+  },
+  {
+    "item_name": "Blightbound crossbow",
+    "file": "/assets/drops/blightbound_crossbow.png",
+    "bosses": [
+      "Solak, Guardian of the Grove"
+    ]
+  },
+  {
+    "item_name": "Blood Necklace Shard",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Blood tentacle",
+    "file": "/assets/drops/blood_tentacle.png",
+    "bosses": [
+      "Nex, Angel of Death"
+    ]
+  },
+  {
+    "item_name": "Blood-soaked feather",
+    "file": "/assets/drops/blood_soaked_feather.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Boots of Tumeken's resplendence",
+    "file": "/assets/drops/boots_of_tumeken_s_resplendence.png",
+    "bosses": [
+      "Amascut, the Devourer"
+    ]
+  },
+  {
+    "item_name": "Boots of subjugation",
+    "file": "/assets/drops/boots_of_subjugation.png",
+    "bosses": [
+      "K'ril Tsutsaroth"
+    ]
+  },
+  {
+    "item_name": "Bottom of the Last Guardian's bow",
+    "file": "/assets/drops/bottom_of_the_last_guardian_s_bow.png",
+    "bosses": [
+      "Zamorak, Lord of Chaos"
+    ]
+  },
+  {
+    "item_name": "Broken shackle",
+    "file": "/assets/drops/broken_shackle.png",
+    "bosses": [
+      "Raksha, the Shadow Colossus"
+    ]
+  },
+  {
+    "item_name": "Celestial Handwraps",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Chaos Roar ability codex",
+    "file": "/assets/drops/chaos_roar_ability_codex.png",
+    "bosses": [
+      "Zamorak, Lord of Chaos"
+    ]
+  },
+  {
+    "item_name": "Cinderbane gloves",
+    "file": "/assets/drops/cinderbane_gloves.png",
+    "bosses": [
+      "Solak, Guardian of the Grove"
+    ]
+  },
+  {
+    "item_name": "Codex of lost knowledge",
+    "file": "/assets/drops/codex_of_lost_knowledge.png",
+    "bosses": [
+      "Zamorak, Lord of Chaos"
+    ]
+  },
+  {
+    "item_name": "Corporeal bone",
+    "file": "/assets/drops/corporeal_bone.png",
+    "bosses": [
+      "Corporeal Beast"
+    ]
+  },
+  {
+    "item_name": "Corrupted Ascension Signet I",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Legiones"
+    ]
+  },
+  {
+    "item_name": "Corrupted Ascension Signet II",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Legiones"
+    ]
+  },
+  {
+    "item_name": "Corrupted Ascension Signet III",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Legiones"
+    ]
+  },
+  {
+    "item_name": "Corrupted Ascension Signet IV",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Legiones"
+    ]
+  },
+  {
+    "item_name": "Corrupted Ascension Signet V",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Legiones"
+    ]
+  },
+  {
+    "item_name": "Corrupted Ascension Signet VI",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Legiones"
+    ]
+  },
+  {
+    "item_name": "Crest of Seren",
+    "file": "/assets/drops/crest_of_seren.png",
+    "bosses": [
+      "Helwyr"
+    ]
+  },
+  {
+    "item_name": "Crest of Sliske",
+    "file": "/assets/drops/crest_of_sliske.png",
+    "bosses": [
+      "Gregorovic"
+    ]
+  },
+  {
+    "item_name": "Crest of Zamorak",
+    "file": "/assets/drops/crest_of_zamorak.png",
+    "bosses": [
+      "The Twin Furies"
+    ]
+  },
+  {
+    "item_name": "Crest of Zaros",
+    "file": "/assets/drops/crest_of_zaros.png",
+    "bosses": [
+      "Vindicta & Gorvek"
+    ]
+  },
+  {
+    "item_name": "Croesus foultorch",
+    "file": "/assets/drops/croesus_foultorch.png",
+    "bosses": [
+      "Croesus"
+    ]
+  },
+  {
+    "item_name": "Croesus spore sack",
+    "file": "/assets/drops/croesus_spore_sack.png",
+    "bosses": [
+      "Croesus"
+    ]
+  },
+  {
+    "item_name": "Croesus sporehammer",
+    "file": "/assets/drops/croesus_sporehammer.png",
+    "bosses": [
+      "Croesus"
+    ]
+  },
+  {
+    "item_name": "Croesus's enriched root",
+    "file": "/assets/drops/croesus_s_enriched_root.png",
+    "bosses": [
+      "Croesus"
+    ]
+  },
+  {
+    "item_name": "Crown of the First Necromancer",
+    "file": "/assets/drops/crown_of_the_first_necromancer.png",
+    "bosses": [
+      "Rasial, the First Necromancer"
+    ]
+  },
+  {
+    "item_name": "Cryptbloom boots",
+    "file": "/assets/drops/cryptbloom_boots.png",
+    "bosses": [
+      "Croesus"
+    ]
+  },
+  {
+    "item_name": "Cryptbloom bottoms",
+    "file": "/assets/drops/cryptbloom_bottoms.png",
+    "bosses": [
+      "Croesus"
+    ]
+  },
+  {
+    "item_name": "Cryptbloom gloves",
+    "file": "/assets/drops/cryptbloom_gloves.png",
+    "bosses": [
+      "Croesus"
+    ]
+  },
+  {
+    "item_name": "Cryptbloom helm",
+    "file": "/assets/drops/cryptbloom_helm.png",
+    "bosses": [
+      "Croesus"
+    ]
+  },
+  {
+    "item_name": "Cryptbloom top",
+    "file": "/assets/drops/cryptbloom_top.png",
+    "bosses": [
+      "Croesus"
+    ]
+  },
+  {
+    "item_name": "Crystal Triskelion Fragment",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Dagannoth egg",
+    "file": "/assets/drops/dagannoth_egg.png",
+    "bosses": [
+      "Dagannoth Kings"
+    ]
+  },
+  {
+    "item_name": "Dagannoth scale",
+    "file": "/assets/drops/dagannoth_scale.png",
+    "bosses": [
+      "Dagannoth Kings"
+    ]
+  },
+  {
+    "item_name": "Dark Bow",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Dark Shard of Leng",
+    "file": "/assets/drops/dark_shard_of_leng.png",
+    "bosses": [
+      "Arch-Glacor"
+    ]
+  },
+  {
+    "item_name": "Dark Sliver of Leng",
+    "file": "/assets/drops/dark_sliver_of_leng.png",
+    "bosses": [
+      "Arch-Glacor"
+    ]
+  },
+  {
+    "item_name": "Dark ice shard",
+    "file": "/assets/drops/dark_ice_shard.png",
+    "bosses": [
+      "Arch-Glacor"
+    ]
+  },
+  {
+    "item_name": "Dark ice sliver",
+    "file": "/assets/drops/dark_ice_sliver.png",
+    "bosses": [
+      "Arch-Glacor"
+    ]
+  },
+  {
+    "item_name": "Dark nilas",
+    "file": "/assets/drops/dark_nilas.png",
+    "bosses": [
+      "Arch-Glacor"
+    ]
+  },
+  {
+    "item_name": "Decaying tooth",
+    "file": "/assets/drops/decaying_tooth.png",
+    "bosses": [
+      "General Graardor"
+    ]
+  },
+  {
+    "item_name": "Demon slayer boots",
+    "file": "/assets/drops/demon_slayer_boots.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Demon slayer circlet",
+    "file": "/assets/drops/demon_slayer_circlet.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Demon slayer crossbow",
+    "file": "/assets/drops/demon_slayer_crossbow.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Demon slayer gloves",
+    "file": "/assets/drops/demon_slayer_gloves.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Demon slayer skirt",
+    "file": "/assets/drops/demon_slayer_skirt.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Demon slayer torso",
+    "file": "/assets/drops/demon_slayer_torso.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Devourer's Guard",
+    "file": "/assets/drops/devourer_s_guard.png",
+    "bosses": [
+      "Amascut, the Devourer"
+    ]
+  },
+  {
+    "item_name": "Divert ability codex",
+    "file": "/assets/drops/divert_ability_codex.png",
+    "bosses": [
+      "Raksha, the Shadow Colossus"
+    ]
+  },
+  {
+    "item_name": "Divine Rage prayer codex",
+    "file": "/assets/drops/divine_rage_prayer_codex.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Divine bowstring",
+    "file": "/assets/drops/divine_bowstring.png",
+    "bosses": [
+      "Zamorak, Lord of Chaos"
+    ]
+  },
+  {
+    "item_name": "Divine sigil",
+    "file": "/assets/drops/divine_sigil.png",
+    "bosses": [
+      "Corporeal Beast"
+    ]
+  },
+  {
+    "item_name": "Dormant Seren godbow",
+    "file": "/assets/drops/dormant_seren_godbow.png",
+    "bosses": [
+      "Telos"
+    ]
+  },
+  {
+    "item_name": "Dormant Zaros godsword",
+    "file": "/assets/drops/dormant_zaros_godsword.png",
+    "bosses": [
+      "Telos"
+    ]
+  },
+  {
+    "item_name": "Dormant anima core body",
+    "file": "/assets/drops/dormant_anima_core_body.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Dormant anima core helm",
+    "file": "/assets/drops/dormant_anima_core_helm.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Dormant anima core legs",
+    "file": "/assets/drops/dormant_anima_core_legs.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Dormant staff of Sliske",
+    "file": "/assets/drops/dormant_staff_of_sliske.png",
+    "bosses": [
+      "Telos"
+    ]
+  },
+  {
+    "item_name": "Draconic Visage",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Draconic visage",
+    "file": "/assets/drops/draconic_visage.png",
+    "bosses": [
+      "King Black Dragon"
+    ]
+  },
+  {
+    "item_name": "Dragon 2h sword",
+    "file": "/assets/drops/dragon_2h_sword.png",
+    "bosses": [
+      "Kalphite Queen"
+    ]
+  },
+  {
+    "item_name": "Dragon Helm",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Dragon Platelegs",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Dragon Plateskirt",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Dragon Rider lance",
+    "file": "/assets/drops/dragon_rider_lance.png",
+    "bosses": [
+      "Vindicta & Gorvek"
+    ]
+  },
+  {
+    "item_name": "Dragon Shield Left Half",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Dragon Shield Right Half",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Dragon boots",
+    "file": "/assets/drops/dragon_boots.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Dragon chianbody",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Kalphite Queen"
+    ]
+  },
+  {
+    "item_name": "Dragon claws",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Dragon hatchet",
+    "file": "/assets/drops/dragon_hatchet.png",
+    "bosses": [
+      "Dagannoth Kings"
+    ]
+  },
+  {
+    "item_name": "Dragon kiteshield",
+    "file": "/assets/drops/dragon_kiteshield.png",
+    "bosses": [
+      "Queen Black Dragon"
+    ]
+  },
+  {
+    "item_name": "Dragon limbs",
+    "file": "/assets/drops/dragon_limbs.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Dragon mattock",
+    "file": "/assets/drops/dragon_mattock.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Dragonbone upgrade kit",
+    "file": "/assets/drops/dragonbone_upgrade_kit.png",
+    "bosses": [
+      "Queen Black Dragon"
+    ]
+  },
+  {
+    "item_name": "Drygore longsword",
+    "file": "/assets/drops/drygore_longsword.png",
+    "bosses": [
+      "Kalphite King"
+    ]
+  },
+  {
+    "item_name": "Drygore mace",
+    "file": "/assets/drops/drygore_mace.png",
+    "bosses": [
+      "Kalphite King"
+    ]
+  },
+  {
+    "item_name": "Drygore rapier",
+    "file": "/assets/drops/drygore_rapier.png",
+    "bosses": [
+      "Kalphite King"
+    ]
+  },
+  {
+    "item_name": "Durzag's helmet",
+    "file": "/assets/drops/durzag_s_helmet.png",
+    "bosses": [
+      "Beastmaster Durzag"
+    ]
+  },
+  {
+    "item_name": "Dwarf Multicannon upgrade kit",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Eclipsed Soul prayer codex",
+    "file": "/assets/drops/eclipsed_soul_prayer_codex.png",
+    "bosses": [
+      "Gate of Elidinis"
+    ]
+  },
+  {
+    "item_name": "Eldritch crossbow limb",
+    "file": "/assets/drops/eldritch_crossbow_limb.png",
+    "bosses": [
+      "The Ambassador"
+    ]
+  },
+  {
+    "item_name": "Eldritch crossbow mechanism",
+    "file": "/assets/drops/eldritch_crossbow_mechanism.png",
+    "bosses": [
+      "The Ambassador"
+    ]
+  },
+  {
+    "item_name": "Eldritch crossbow stock",
+    "file": "/assets/drops/eldritch_crossbow_stock.png",
+    "bosses": [
+      "The Ambassador"
+    ]
+  },
+  {
+    "item_name": "Elysian sigil",
+    "file": "/assets/drops/elysian_sigil.png",
+    "bosses": [
+      "Corporeal Beast"
+    ]
+  },
+  {
+    "item_name": "Erethdor's grimoire",
+    "file": "/assets/drops/erethdor_s_grimoire.png",
+    "bosses": [
+      "Solak, Guardian of the Grove"
+    ]
+  },
+  {
+    "item_name": "Faceless mask",
+    "file": "/assets/drops/faceless_mask.png",
+    "bosses": [
+      "Gregorovic"
+    ]
+  },
+  {
+    "item_name": "Femur bone",
+    "file": "/assets/drops/femur_bone.png",
+    "bosses": [
+      "General Graardor"
+    ]
+  },
+  {
+    "item_name": "Fleeting boots",
+    "file": "/assets/drops/fleeting_boots.png",
+    "bosses": [
+      "Raksha, the Shadow Colossus"
+    ]
+  },
+  {
+    "item_name": "Foot wraps of the First Necromancer",
+    "file": "/assets/drops/foot_wraps_of_the_first_necromancer.png",
+    "bosses": [
+      "Rasial, the First Necromancer"
+    ]
+  },
+  {
+    "item_name": "Fractured Armadyl symbol",
+    "file": "/assets/drops/fractured_armadyl_symbol.png",
+    "bosses": [
+      "Kerapac, the Bound"
+    ]
+  },
+  {
+    "item_name": "Fractured stabilisation gem",
+    "file": "/assets/drops/fractured_stabilisation_gem.png",
+    "bosses": [
+      "Kerapac, the Bound"
+    ]
+  },
+  {
+    "item_name": "Fragment of the Gate",
+    "file": "/assets/drops/fragment_of_the_gate.png",
+    "bosses": [
+      "Gate of Elidinis"
+    ]
+  },
+  {
+    "item_name": "Frozen core of Leng",
+    "file": "/assets/drops/frozen_core_of_leng.png",
+    "bosses": [
+      "Arch-Glacor"
+    ]
+  },
+  {
+    "item_name": "Garb of subjugation",
+    "file": "/assets/drops/garb_of_subjugation.png",
+    "bosses": [
+      "K'ril Tsutsaroth"
+    ]
+  },
+  {
+    "item_name": "Giant feather",
+    "file": "/assets/drops/giant_feather.png",
+    "bosses": [
+      "Kree'arra"
+    ]
+  },
+  {
+    "item_name": "Glacor core",
+    "file": "/assets/drops/glacor_core.png",
+    "bosses": [
+      "Arch-Glacor"
+    ]
+  },
+  {
+    "item_name": "Glacor's Adornment",
+    "file": "/assets/drops/glacor_s_adornment.png",
+    "bosses": [
+      "Arch-Glacor"
+    ]
+  },
+  {
+    "item_name": "Glaiven Wing-Tip",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Glaiven boots",
+    "file": "/assets/drops/glaiven_boots.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Glimmering scale",
+    "file": "/assets/drops/glimmering_scale.png",
+    "bosses": [
+      "Vindicta & Gorvek"
+    ]
+  },
+  {
+    "item_name": "Gloves of Tumeken's resplendence",
+    "file": "/assets/drops/gloves_of_tumeken_s_resplendence.png",
+    "bosses": [
+      "Amascut, the Devourer"
+    ]
+  },
+  {
+    "item_name": "Gloves of passage",
+    "file": "/assets/drops/gloves_of_passage.png",
+    "bosses": [
+      "The Magister"
+    ]
+  },
+  {
+    "item_name": "Gloves of subjugation",
+    "file": "/assets/drops/gloves_of_subjugation.png",
+    "bosses": [
+      "K'ril Tsutsaroth"
+    ]
+  },
+  {
+    "item_name": "Godsword shard 1",
+    "file": "/assets/drops/godsword_shard_1.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Godsword shard 2",
+    "file": "/assets/drops/godsword_shard_2.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Godsword shard 3",
+    "file": "/assets/drops/godsword_shard_3.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Gown of subjugation",
+    "file": "/assets/drops/gown_of_subjugation.png",
+    "bosses": [
+      "K'ril Tsutsaroth"
+    ]
+  },
+  {
+    "item_name": "Granite maul",
+    "file": "/assets/drops/granite_maul.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Greater Barge ability codex",
+    "file": "/assets/drops/greater_barge_ability_codex.png",
+    "bosses": [
+      "Blackstone Dragon"
+    ]
+  },
+  {
+    "item_name": "Greater Chain ability codex",
+    "file": "/assets/drops/greater_chain_ability_codex.png",
+    "bosses": [
+      "Raksha, the Shadow Colossus"
+    ]
+  },
+  {
+    "item_name": "Greater Concentrated blast ability codex",
+    "file": "/assets/drops/greater_concentrated_blast_ability_codex.png",
+    "bosses": [
+      "Kerapac, the Bound"
+    ]
+  },
+  {
+    "item_name": "Greater Flurry ability codex",
+    "file": "/assets/drops/greater_flurry_ability_codex.png",
+    "bosses": [
+      "Astellarn"
+    ]
+  },
+  {
+    "item_name": "Greater Fury ability codex",
+    "file": "/assets/drops/greater_fury_ability_codex.png",
+    "bosses": [
+      "Verak Lith"
+    ]
+  },
+  {
+    "item_name": "Greater Ricochet ability codex",
+    "file": "/assets/drops/greater_ricochet_ability_codex.png",
+    "bosses": [
+      "Raksha, the Shadow Colossus"
+    ]
+  },
+  {
+    "item_name": "Greater Sonic Wave Ability Codex",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Hand wrap of the First Necromancer",
+    "file": "/assets/drops/hand_wrap_of_the_first_necromancer.png",
+    "bosses": [
+      "Rasial, the First Necromancer"
+    ]
+  },
+  {
+    "item_name": "Heart of the Archer",
+    "file": "/assets/drops/heart_of_the_archer.png",
+    "bosses": [
+      "Rex Matriarchs"
+    ]
+  },
+  {
+    "item_name": "Heart of the Berserker",
+    "file": "/assets/drops/heart_of_the_berserker.png",
+    "bosses": [
+      "Rex Matriarchs"
+    ]
+  },
+  {
+    "item_name": "Heart of the Seer",
+    "file": "/assets/drops/heart_of_the_seer.png",
+    "bosses": [
+      "Rex Matriarchs"
+    ]
+  },
+  {
+    "item_name": "Heart of the Warrior",
+    "file": "/assets/drops/heart_of_the_warrior.png",
+    "bosses": [
+      "Rex Matriarchs"
+    ]
+  },
+  {
+    "item_name": "Hermod's armour spike",
+    "file": "/assets/drops/hermod_s_armour_spike.png",
+    "bosses": [
+      "Hermod, the Spirit of War"
+    ]
+  },
+  {
+    "item_name": "Hermodic plate",
+    "file": "/assets/drops/hermodic_plate.png",
+    "bosses": [
+      "Hermod, the Spirit of War"
+    ]
+  },
+  {
+    "item_name": "Himiko's Vision",
+    "file": "/assets/drops/himiko_s_vision.png",
+    "bosses": [
+      "Masuta, the Ascended"
+    ]
+  },
+  {
+    "item_name": "Hood of subjugation",
+    "file": "/assets/drops/hood_of_subjugation.png",
+    "bosses": [
+      "K'ril Tsutsaroth"
+    ]
+  },
+  {
+    "item_name": "Igneous stone",
+    "file": "/assets/drops/igneous_stone.png",
+    "bosses": [
+      "Tzkal-Zuk"
+    ]
+  },
+  {
+    "item_name": "Imbued bark shard",
+    "file": "/assets/drops/imbued_bark_shard.png",
+    "bosses": [
+      "Solak, Guardian of the Grove"
+    ]
+  },
+  {
+    "item_name": "Imbued blade slice",
+    "file": "/assets/drops/imbued_blade_slice.png",
+    "bosses": [
+      "Vindicta & Gorvek"
+    ]
+  },
+  {
+    "item_name": "Imperium core",
+    "file": "/assets/drops/imperium_core.png",
+    "bosses": [
+      "Nex, Angel of Death"
+    ]
+  },
+  {
+    "item_name": "Invoke Lord of Bones incantation codex",
+    "file": "/assets/drops/invoke_lord_of_bones_incantation_codex.png",
+    "bosses": [
+      "Zemouregal & Vorkath"
+    ]
+  },
+  {
+    "item_name": "Jaws of the Abyss",
+    "file": "/assets/drops/jaws_of_the_abyss.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Jewels of Zamorak",
+    "file": "/assets/drops/jewels_of_zamorak.png",
+    "bosses": [
+      "Zamorak, Lord of Chaos"
+    ]
+  },
+  {
+    "item_name": "Kalphite claw",
+    "file": "/assets/drops/kalphite_claw.png",
+    "bosses": [
+      "Kalphite King"
+    ]
+  },
+  {
+    "item_name": "Kalphite egg",
+    "file": "/assets/drops/kalphite_egg.png",
+    "bosses": [
+      "Kalphite Queen"
+    ]
+  },
+  {
+    "item_name": "Kalphite queen head",
+    "file": "/assets/drops/kalphite_queen_head.png",
+    "bosses": [
+      "Kalphite Queen"
+    ]
+  },
+  {
+    "item_name": "Kerapac's mask piece",
+    "file": "/assets/drops/kerapac_s_mask_piece.png",
+    "bosses": [
+      "Kerapac, the Bound"
+    ]
+  },
+  {
+    "item_name": "Kerapac's wrist wraps",
+    "file": "/assets/drops/kerapac_s_wrist_wraps.png",
+    "bosses": [
+      "Kerapac, the Bound"
+    ]
+  },
+  {
+    "item_name": "Kethsi Ring",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Kinetic cyclone upgrade kit",
+    "file": "/assets/drops/kinetic_cyclone_upgrade_kit.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "King black dragon scale",
+    "file": "/assets/drops/king_black_dragon_scale.png",
+    "bosses": [
+      "King Black Dragon"
+    ]
+  },
+  {
+    "item_name": "Laceration boots",
+    "file": "/assets/drops/laceration_boots.png",
+    "bosses": [
+      "Raksha, the Shadow Colossus"
+    ]
+  },
+  {
+    "item_name": "Latent Offering",
+    "file": "/assets/drops/latent_offering.png",
+    "bosses": [
+      "Gate of Elidinis"
+    ]
+  },
+  {
+    "item_name": "Leng artefact",
+    "file": "/assets/drops/leng_artefact.png",
+    "bosses": [
+      "Arch-Glacor"
+    ]
+  },
+  {
+    "item_name": "Lil' tuzzy",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Beastmaster Durzag"
+    ]
+  },
+  {
+    "item_name": "Magma Tempest ability codex",
+    "file": "/assets/drops/magma_tempest_ability_codex.png",
+    "bosses": [
+      "Tzkal-Zuk"
+    ]
+  },
+  {
+    "item_name": "Magma core",
+    "file": "/assets/drops/magma_core.png",
+    "bosses": [
+      "Tzkal-Zuk"
+    ]
+  },
+  {
+    "item_name": "Malevolent kiteshield",
+    "file": "/assets/drops/malevolent_kiteshield.png",
+    "bosses": [
+      "The Barrows: Rise of the Six"
+    ]
+  },
+  {
+    "item_name": "Mask of Tumeken's resplendence",
+    "file": "/assets/drops/mask_of_tumeken_s_resplendence.png",
+    "bosses": [
+      "Amascut, the Devourer"
+    ]
+  },
+  {
+    "item_name": "Masuta's warspear",
+    "file": "/assets/drops/masuta_s_warspear.png",
+    "bosses": [
+      "Masuta, the Ascended"
+    ]
+  },
+  {
+    "item_name": "Mazcab ability codex",
+    "file": "/assets/drops/mazcab_ability_codex.png",
+    "bosses": [
+      "Yakamaru"
+    ]
+  },
+  {
+    "item_name": "Memory dowser",
+    "file": "/assets/drops/memory_dowser.png",
+    "bosses": [
+      "Gate of Elidinis"
+    ]
+  },
+  {
+    "item_name": "Merciless kiteshield",
+    "file": "/assets/drops/merciless_kiteshield.png",
+    "bosses": [
+      "The Barrows: Rise of the Six"
+    ]
+  },
+  {
+    "item_name": "Merethiel's stave",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Solak, Guardian of the Grove"
+    ]
+  },
+  {
+    "item_name": "Miso's collar",
+    "file": "/assets/drops/miso_s_collar.png",
+    "bosses": [
+      "Rasial, the First Necromancer"
+    ]
+  },
+  {
+    "item_name": "Nefthys' Tooth",
+    "file": "/assets/drops/nefthys_tooth.png",
+    "bosses": [
+      "Nakatra, Devourer Eternal"
+    ]
+  },
+  {
+    "item_name": "Nightmare gauntlets",
+    "file": "/assets/drops/nightmare_gauntlets.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Nymora's braid",
+    "file": "/assets/drops/nymora_s_braid.png",
+    "bosses": [
+      "The Twin Furies"
+    ]
+  },
+  {
+    "item_name": "Obsidian blade",
+    "file": "/assets/drops/obsidian_blade.png",
+    "bosses": [
+      "Tzkal-Zuk"
+    ]
+  },
+  {
+    "item_name": "Ode to Deceit",
+    "file": "/assets/drops/ode_to_deceit.png",
+    "bosses": [
+      "Nakatra, Devourer Eternal"
+    ]
+  },
+  {
+    "item_name": "Off-hand Armadyl crossbow",
+    "file": "/assets/drops/off_hand_armadyl_crossbow.png",
+    "bosses": [
+      "Commander Zilyana"
+    ]
+  },
+  {
+    "item_name": "Off-hand Blightbound crossbow",
+    "file": "/assets/drops/off_hand_blightbound_crossbow.png",
+    "bosses": [
+      "Solak, Guardian of the Grove"
+    ]
+  },
+  {
+    "item_name": "Off-hand drygore longsword",
+    "file": "/assets/drops/off_hand_drygore_longsword.png",
+    "bosses": [
+      "Kalphite King"
+    ]
+  },
+  {
+    "item_name": "Off-hand drygore mace",
+    "file": "/assets/drops/off_hand_drygore_mace.png",
+    "bosses": [
+      "Kalphite King"
+    ]
+  },
+  {
+    "item_name": "Off-hand drygore rapier",
+    "file": "/assets/drops/off_hand_drygore_rapier.png",
+    "bosses": [
+      "Kalphite King"
+    ]
+  },
+  {
+    "item_name": "Off-hand shadow glaive",
+    "file": "/assets/drops/off_hand_shadow_glaive.png",
+    "bosses": [
+      "Gregorovic"
+    ]
+  },
+  {
+    "item_name": "Omni guard",
+    "file": "/assets/drops/omni_guard.png",
+    "bosses": [
+      "Rasial, the First Necromancer"
+    ]
+  },
+  {
+    "item_name": "Orb of corrupted anima",
+    "file": "/assets/drops/orb_of_corrupted_anima.png",
+    "bosses": [
+      "Telos"
+    ]
+  },
+  {
+    "item_name": "Orb of pure anima",
+    "file": "/assets/drops/orb_of_pure_anima.png",
+    "bosses": [
+      "Telos"
+    ]
+  },
+  {
+    "item_name": "Orb of the Cywir elders",
+    "file": "/assets/drops/orb_of_the_cywir_elders.png",
+    "bosses": [
+      "Helwyr"
+    ]
+  },
+  {
+    "item_name": "Orb of volcanic anima",
+    "file": "/assets/drops/orb_of_volcanic_anima.png",
+    "bosses": [
+      "Telos"
+    ]
+  },
+  {
+    "item_name": "Pernix body",
+    "file": "/assets/drops/pernix_body.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Pernix boots",
+    "file": "/assets/drops/pernix_boots.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Pernix chaps",
+    "file": "/assets/drops/pernix_chaps.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Pernix cowl",
+    "file": "/assets/drops/pernix_cowl.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Pernix gloves",
+    "file": "/assets/drops/pernix_gloves.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Praesul codex",
+    "file": "/assets/drops/praesul_codex.png",
+    "bosses": [
+      "Nex, Angel of Death"
+    ]
+  },
+  {
+    "item_name": "Pristine Bagrada rex egg",
+    "file": "/assets/drops/pristine_bagrada_rex_egg.png",
+    "bosses": [
+      "Rex Matriarchs"
+    ]
+  },
+  {
+    "item_name": "Pristine Corbicula rex egg",
+    "file": "/assets/drops/pristine_corbicula_rex_egg.png",
+    "bosses": [
+      "Rex Matriarchs"
+    ]
+  },
+  {
+    "item_name": "Pristine Pavosaurus rex egg",
+    "file": "/assets/drops/pristine_pavosaurus_rex_egg.png",
+    "bosses": [
+      "Rex Matriarchs"
+    ]
+  },
+  {
+    "item_name": "Purple mushroom",
+    "file": "/assets/drops/purple_mushroom.png",
+    "bosses": [
+      "Solak, Guardian of the Grove"
+    ]
+  },
+  {
+    "item_name": "Queen Black Dragon scale",
+    "file": "/assets/drops/queen_black_dragon_scale.png",
+    "bosses": [
+      "Queen Black Dragon"
+    ]
+  },
+  {
+    "item_name": "Ragefire boots",
+    "file": "/assets/drops/ragefire_boots.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Ragefire gland",
+    "file": "/assets/drops/ragefire_gland.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Reprisal ability codex",
+    "file": "/assets/drops/reprisal_ability_codex.png",
+    "bosses": [
+      "Telos"
+    ]
+  },
+  {
+    "item_name": "Ribs of chaos",
+    "file": "/assets/drops/ribs_of_chaos.png",
+    "bosses": [
+      "Chaos Elemental"
+    ]
+  },
+  {
+    "item_name": "Roar of Awakening",
+    "file": "/assets/drops/roar_of_awakening.png",
+    "bosses": [
+      "Nakatra, Devourer Eternal"
+    ]
+  },
+  {
+    "item_name": "Robe bottom of Tumeken's resplendence",
+    "file": "/assets/drops/robe_bottom_of_tumeken_s_resplendence.png",
+    "bosses": [
+      "Amascut, the Devourer"
+    ]
+  },
+  {
+    "item_name": "Robe bottom of the First Necromancer",
+    "file": "/assets/drops/robe_bottom_of_the_first_necromancer.png",
+    "bosses": [
+      "Rasial, the First Necromancer"
+    ]
+  },
+  {
+    "item_name": "Robe top of Tumeken's resplendence",
+    "file": "/assets/drops/robe_top_of_tumeken_s_resplendence.png",
+    "bosses": [
+      "Amascut, the Devourer"
+    ]
+  },
+  {
+    "item_name": "Robe top of the First Necromancer",
+    "file": "/assets/drops/robe_top_of_the_first_necromancer.png",
+    "bosses": [
+      "Rasial, the First Necromancer"
+    ]
+  },
+  {
+    "item_name": "Rotten fang",
+    "file": "/assets/drops/rotten_fang.png",
+    "bosses": [
+      "Giant Mole"
+    ]
+  },
+  {
+    "item_name": "Ruined dragon armour lump",
+    "file": "/assets/drops/ruined_dragon_armour_lump.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Ruined dragon armour slice",
+    "file": "/assets/drops/ruined_dragon_armour_slice.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Runic attuner",
+    "file": "/assets/drops/runic_attuner.png",
+    "bosses": [
+      "Gate of Elidinis"
+    ]
+  },
+  {
+    "item_name": "Saradomin hilt",
+    "file": "/assets/drops/saradomin_hilt.png",
+    "bosses": [
+      "Commander Zilyana"
+    ]
+  },
+  {
+    "item_name": "Saradomin's hiss",
+    "file": "/assets/drops/saradomin_s_hiss.png",
+    "bosses": [
+      "Commander Zilyana"
+    ]
+  },
+  {
+    "item_name": "Saradomin's murmur",
+    "file": "/assets/drops/saradomin_s_murmur.png",
+    "bosses": [
+      "Commander Zilyana"
+    ]
+  },
+  {
+    "item_name": "Saradomin's sword",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Commander Zilyana"
+    ]
+  },
+  {
+    "item_name": "Saradomin's whisper",
+    "file": "/assets/drops/saradomin_s_whisper.png",
+    "bosses": [
+      "Commander Zilyana"
+    ]
+  },
+  {
+    "item_name": "Savage plume",
+    "file": "/assets/drops/savage_plume.png",
+    "bosses": [
+      "Rex Matriarchs"
+    ]
+  },
+  {
+    "item_name": "Savage spear cap",
+    "file": "/assets/drops/savage_spear_cap.png",
+    "bosses": [
+      "Rex Matriarchs"
+    ]
+  },
+  {
+    "item_name": "Savage spear shaft",
+    "file": "/assets/drops/savage_spear_shaft.png",
+    "bosses": [
+      "Rex Matriarchs"
+    ]
+  },
+  {
+    "item_name": "Savage spear tip",
+    "file": "/assets/drops/savage_spear_tip.png",
+    "bosses": [
+      "Rex Matriarchs"
+    ]
+  },
+  {
+    "item_name": "Scripture of Amascut",
+    "file": "/assets/drops/scripture_of_amascut.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Scripture of Bik",
+    "file": "/assets/drops/scripture_of_bik.png",
+    "bosses": [
+      "Croesus"
+    ]
+  },
+  {
+    "item_name": "Scripture of Elidinis",
+    "file": "/assets/drops/scripture_of_elidinis.png",
+    "bosses": [
+      "Gate of Elidinis"
+    ]
+  },
+  {
+    "item_name": "Scripture of Ful",
+    "file": "/assets/drops/scripture_of_ful.png",
+    "bosses": [
+      "Tzkal-Zuk"
+    ]
+  },
+  {
+    "item_name": "Scripture of Jas",
+    "file": "/assets/drops/scripture_of_jas.png",
+    "bosses": [
+      "Kerapac, the Bound"
+    ]
+  },
+  {
+    "item_name": "Scripture of Wen",
+    "file": "/assets/drops/scripture_of_wen.png",
+    "bosses": [
+      "Arch-Glacor"
+    ]
+  },
+  {
+    "item_name": "Seers' Ring",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Dagannoth Kings"
+    ]
+  },
+  {
+    "item_name": "Seismic singularity",
+    "file": "/assets/drops/seismic_singularity.png",
+    "bosses": [
+      "Vorago"
+    ]
+  },
+  {
+    "item_name": "Seismic wand",
+    "file": "/assets/drops/seismic_wand.png",
+    "bosses": [
+      "Vorago"
+    ]
+  },
+  {
+    "item_name": "Severed hoof",
+    "file": "/assets/drops/severed_hoof.png",
+    "bosses": [
+      "K'ril Tsutsaroth"
+    ]
+  },
+  {
+    "item_name": "Shadow glaive",
+    "file": "/assets/drops/shadow_glaive.png",
+    "bosses": [
+      "Gregorovic"
+    ]
+  },
+  {
+    "item_name": "Shadow spike",
+    "file": "/assets/drops/shadow_spike.png",
+    "bosses": [
+      "Raksha, the Shadow Colossus"
+    ]
+  },
+  {
+    "item_name": "Shadowy Egg",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "The Ambassador"
+    ]
+  },
+  {
+    "item_name": "Shard of Genesis Essence",
+    "file": "/assets/drops/shard_of_genesis_essence.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Shrivelled dagannoth claw",
+    "file": "/assets/drops/shrivelled_dagannoth_claw.png",
+    "bosses": [
+      "Dagannoth Kings"
+    ]
+  },
+  {
+    "item_name": "Soul fragment",
+    "file": "/assets/drops/soul_fragment.png",
+    "bosses": [
+      "The Magister"
+    ]
+  },
+  {
+    "item_name": "Soulbound lantern",
+    "file": "/assets/drops/soulbound_lantern.png",
+    "bosses": [
+      "Rasial, the First Necromancer"
+    ]
+  },
+  {
+    "item_name": "Spectral lens",
+    "file": "/assets/drops/spectral_lens.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Spectral sigil",
+    "file": "/assets/drops/spectral_sigil.png",
+    "bosses": [
+      "Corporeal Beast"
+    ]
+  },
+  {
+    "item_name": "Spider leg bottom",
+    "file": "/assets/drops/spider_leg_bottom.png",
+    "bosses": [
+      "Araxxi"
+    ]
+  },
+  {
+    "item_name": "Spider leg middle",
+    "file": "/assets/drops/spider_leg_middle.png",
+    "bosses": [
+      "Araxxi"
+    ]
+  },
+  {
+    "item_name": "Spider leg top",
+    "file": "/assets/drops/spider_leg_top.png",
+    "bosses": [
+      "Araxxi"
+    ]
+  },
+  {
+    "item_name": "Staff of Armadyl's fractured shaft",
+    "file": "/assets/drops/staff_of_armadyl_s_fractured_shaft.png",
+    "bosses": [
+      "Kerapac, the Bound"
+    ]
+  },
+  {
+    "item_name": "Staff of Light",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Static gloves",
+    "file": "/assets/drops/static_gloves.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Steadfast boots",
+    "file": "/assets/drops/steadfast_boots.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Steadfast scale",
+    "file": "/assets/drops/steadfast_scale.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Swordy McSwordFace",
+    "file": "/assets/drops/swordy_mcswordface.png",
+    "bosses": [
+      "The Ambassador"
+    ]
+  },
+  {
+    "item_name": "Telos' tendril",
+    "file": "/assets/drops/telos_tendril.png",
+    "bosses": [
+      "Telos"
+    ]
+  },
+  {
+    "item_name": "The Devourer's Nexus",
+    "file": "/assets/drops/the_devourer_s_nexus.png",
+    "bosses": [
+      "Amascut, the Devourer"
+    ]
+  },
+  {
+    "item_name": "Top of the Last Guardian's bow",
+    "file": "/assets/drops/top_of_the_last_guardian_s_bow.png",
+    "bosses": [
+      "Zamorak, Lord of Chaos"
+    ]
+  },
+  {
+    "item_name": "Torva boots",
+    "file": "/assets/drops/torva_boots.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Torva full helm",
+    "file": "/assets/drops/torva_full_helm.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Torva gloves",
+    "file": "/assets/drops/torva_gloves.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Torva platebody",
+    "file": "/assets/drops/torva_platebody.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Torva platelegs",
+    "file": "/assets/drops/torva_platelegs.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Tumeken's Light",
+    "file": "/assets/drops/tumeken_s_light.png",
+    "bosses": [
+      "Amascut, the Devourer"
+    ]
+  },
+  {
+    "item_name": "Twisted antler",
+    "file": "/assets/drops/twisted_antler.png",
+    "bosses": [
+      "Helwyr"
+    ]
+  },
+  {
+    "item_name": "Tzkal-Zuk's armour piece",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Tzkal-Zuk"
+    ]
+  },
+  {
+    "item_name": "Umbral urn",
+    "file": "/assets/drops/umbral_urn.png",
+    "bosses": [
+      "The Ambassador"
+    ]
+  },
+  {
+    "item_name": "Ur-Glacor's Adornment",
+    "file": "/assets/drops/ur_glacor_s_adornment.png",
+    "bosses": [
+      "Arch-Glacor"
+    ]
+  },
+  {
+    "item_name": "Vengeful kiteshield",
+    "file": "/assets/drops/vengeful_kiteshield.png",
+    "bosses": [
+      "The Barrows: Rise of the Six"
+    ]
+  },
+  {
+    "item_name": "Vestments of havoc boots",
+    "file": "/assets/drops/vestments_of_havoc_boots.png",
+    "bosses": [
+      "Zamorak, Lord of Chaos"
+    ]
+  },
+  {
+    "item_name": "Vestments of havoc hood",
+    "file": "/assets/drops/vestments_of_havoc_hood.png",
+    "bosses": [
+      "Zamorak, Lord of Chaos"
+    ]
+  },
+  {
+    "item_name": "Vestments of havoc robe bottom",
+    "file": "/assets/drops/vestments_of_havoc_robe_bottom.png",
+    "bosses": [
+      "Zamorak, Lord of Chaos"
+    ]
+  },
+  {
+    "item_name": "Vestments of havoc robe top",
+    "file": "/assets/drops/vestments_of_havoc_robe_top.png",
+    "bosses": [
+      "Zamorak, Lord of Chaos"
+    ]
+  },
+  {
+    "item_name": "Virtus book",
+    "file": "/assets/drops/virtus_book.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Virtus boots",
+    "file": "/assets/drops/virtus_boots.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Virtus gloves",
+    "file": "/assets/drops/virtus_gloves.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Virtus mask",
+    "file": "/assets/drops/virtus_mask.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Virtus robe legs",
+    "file": "/assets/drops/virtus_robe_legs.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Virtus robe top",
+    "file": "/assets/drops/virtus_robe_top.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Virtus wand",
+    "file": "/assets/drops/virtus_wand.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Volcanic Fragments",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Misc"
+    ]
+  },
+  {
+    "item_name": "Volcanic Shard",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Hark-Aken"
+    ]
+  },
+  {
+    "item_name": "Vorkath's claw",
+    "file": "/assets/drops/vorkath_s_claw.png",
+    "bosses": [
+      "Zemouregal & Vorkath"
+    ]
+  },
+  {
+    "item_name": "Vorkath's scale",
+    "file": "/assets/drops/vorkath_s_scale.png",
+    "bosses": [
+      "Zemouregal & Vorkath"
+    ]
+  },
+  {
+    "item_name": "Vorkath's spike",
+    "file": "/assets/drops/vorkath_s_spike.png",
+    "bosses": [
+      "Zemouregal & Vorkath"
+    ]
+  },
+  {
+    "item_name": "Wand of the Cywir elders",
+    "file": "/assets/drops/wand_of_the_cywir_elders.png",
+    "bosses": [
+      "Helwyr"
+    ]
+  },
+  {
+    "item_name": "Wand of the praesul",
+    "file": "/assets/drops/wand_of_the_praesul.png",
+    "bosses": [
+      "Nex, Angel of Death"
+    ]
+  },
+  {
+    "item_name": "Ward of subjugation",
+    "file": "/assets/drops/ward_of_subjugation.png",
+    "bosses": [
+      "K'ril Tsutsaroth"
+    ]
+  },
+  {
+    "item_name": "Warriors' Ring",
+    "file": "/assets/drops/unknown_drop.png",
+    "bosses": [
+      "Dagannoth Kings"
+    ]
+  },
+  {
+    "item_name": "Yakamaru's helmet",
+    "file": "/assets/drops/yakamaru_s_helmet.png",
+    "bosses": [
+      "Yakamaru"
+    ]
+  },
+  {
+    "item_name": "Zamorak hilt",
+    "file": "/assets/drops/zamorak_hilt.png",
+    "bosses": [
+      "K'ril Tsutsaroth"
+    ]
+  },
+  {
+    "item_name": "Zamorakian essence",
+    "file": "/assets/drops/zamorakian_essence.png",
+    "bosses": [
+      "The Twin Furies"
+    ]
+  },
+  {
+    "item_name": "Zarosian essence",
+    "file": "/assets/drops/zarosian_essence.png",
+    "bosses": [
+      "Vindicta & Gorvek"
+    ]
+  },
+  {
+    "item_name": "Zaryte bow",
+    "file": "/assets/drops/zaryte_bow.png",
+    "bosses": [
+      "Nex"
+    ]
+  },
+  {
+    "item_name": "Zemouregal's nexus",
+    "file": "/assets/drops/zemouregal_s_nexus.png",
+    "bosses": [
+      "Zemouregal & Vorkath"
+    ]
+  }
+]

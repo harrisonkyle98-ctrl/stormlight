@@ -45,11 +45,10 @@ except ImportError:
 
 BOSS_DROPS_DATASET = {}
 ITEM_TO_BOSSES_LOOKUP = {}
-WIKI_IMAGE_CACHE = {}
-WIKI_IMAGE_CACHE_DURATION = 86400
+IMAGE_MANIFEST = {}
 
 def load_boss_drops_dataset():
-    global BOSS_DROPS_DATASET, ITEM_TO_BOSSES_LOOKUP
+    global BOSS_DROPS_DATASET, ITEM_TO_BOSSES_LOOKUP, IMAGE_MANIFEST
     try:
         dataset_path = Path(__file__).parent / 'data' / 'boss_drops.json'
         with open(dataset_path, 'r') as f:
@@ -65,17 +64,31 @@ def load_boss_drops_dataset():
                 ITEM_TO_BOSSES_LOOKUP[item_lower].append(boss_name)
         
         print(f"✅ Built item lookup index with {len(ITEM_TO_BOSSES_LOOKUP)} unique items")
+        
+        frontend_path = Path(__file__).parent.parent.parent / 'stormlight-frontend'
+        manifest_path = frontend_path / 'public' / 'assets' / 'drops' / 'manifest.json'
+        
+        if manifest_path.exists():
+            with open(manifest_path, 'r') as f:
+                manifest_data = json.load(f)
+                for item in manifest_data:
+                    IMAGE_MANIFEST[item['item_name'].lower()] = item['file']
+            print(f"✅ Loaded image manifest with {len(IMAGE_MANIFEST)} items")
+        else:
+            print(f"⚠️ Image manifest not found at {manifest_path}")
+            
     except Exception as e:
         print(f"❌ Error loading boss drops dataset: {e}")
         BOSS_DROPS_DATASET = {}
         ITEM_TO_BOSSES_LOOKUP = {}
+        IMAGE_MANIFEST = {}
 
-def get_cached_wiki_image(item_name: str) -> str | None:
-    if item_name in WIKI_IMAGE_CACHE:
-        url, timestamp = WIKI_IMAGE_CACHE[item_name]
-        if time.time() - timestamp < WIKI_IMAGE_CACHE_DURATION:
-            return url
-    return None
+def get_item_image_from_manifest(item_name: str) -> str:
+    """Get local image path for an item from the manifest"""
+    item_lower = item_name.lower()
+    if item_lower in IMAGE_MANIFEST:
+        return IMAGE_MANIFEST[item_lower]
+    return "/assets/drops/unknown_drop.png"
 
 load_boss_drops_dataset()
 
@@ -3498,94 +3511,6 @@ async def get_clan_log(
         print(f"❌ [ClanLog API] Error fetching clan log: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch clan log")
 
-async def get_item_image_from_wiki(item_name: str) -> str:
-    """Get item image URL from RuneScape Wiki API with 32px size and 24h+ caching"""
-    try:
-        cached_url = get_cached_wiki_image(item_name)
-        if cached_url:
-            return cached_url
-        
-        hardcoded_images = {
-            'dormant anima core legs': 'https://runescape.wiki/images/Dormant_anima_core_legs_detail.png?56261',
-        }
-        
-        item_lower = item_name.lower().strip()
-        if item_lower in hardcoded_images:
-            url = hardcoded_images[item_lower]
-            WIKI_IMAGE_CACHE[item_name] = (url, time.time())
-            return url
-        
-        async with httpx.AsyncClient() as client:
-            search_url = "https://runescape.wiki/api.php"
-            
-            search_variations = [
-                item_name,
-                item_name.replace(" ", "_"),
-                f'"{item_name}"',
-                f"{item_name} detail",
-                f"{item_name} (item)",
-            ]
-            
-            headers = {
-                "User-Agent": "stormlight-clan-dashboard/1.0 (contact: harrisonkyle98@gmail.com)"
-            }
-            
-            for search_term in search_variations:
-                search_params = {
-                    "action": "query",
-                    "format": "json",
-                    "list": "search",
-                    "srsearch": search_term,
-                    "srlimit": 3
-                }
-                
-                search_response = await client.get(search_url, params=search_params, headers=headers)
-                if search_response.status_code == 200:
-                    search_data = search_response.json()
-                    search_results = search_data.get('query', {}).get('search', [])
-                    
-                    for result in search_results:
-                        page_title = result['title']
-                        
-                        is_exact_match = (item_name.lower() == page_title.lower() or 
-                                        item_name.lower().replace(" ", "_") == page_title.lower())
-                        is_good_match = (item_name.lower() in page_title.lower() and 
-                                       not any(exclude in page_title.lower() for exclude in ['interface', 'crest', 'token', 'scroll']))
-                        
-                        if is_exact_match or is_good_match:
-                            image_params = {
-                                "action": "query",
-                                "format": "json",
-                                "prop": "pageimages",
-                                "titles": page_title,
-                                "pithumbsize": 32
-                            }
-                            
-                            image_response = await client.get(search_url, params=image_params, headers=headers)
-                            if image_response.status_code == 200:
-                                image_data = image_response.json()
-                                pages = image_data.get('query', {}).get('pages', {})
-                                for page_id, page_info in pages.items():
-                                    if 'thumbnail' in page_info:
-                                        image_url = page_info['thumbnail']['source']
-                                        
-                                        excluded_in_url = any(exclude in image_url.lower() for exclude in ['interface', 'crest_interface', 'token', 'scroll'])
-                                        is_interface_image = 'interface' in image_url.lower()
-                                        
-                                        if not excluded_in_url and not is_interface_image:
-                                            WIKI_IMAGE_CACHE[item_name] = (image_url, time.time())
-                                            print(f"DEBUG: Found and cached image for '{item_name}': {image_url}")
-                                            return image_url
-            
-            fallback_url = "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png"
-            WIKI_IMAGE_CACHE[item_name] = (fallback_url, time.time())
-            print(f"DEBUG: Using fallback image for '{item_name}'")
-            return fallback_url
-            
-    except Exception as e:
-        print(f"Error fetching item image for {item_name}: {e}")
-        fallback_url = "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png"
-        return fallback_url
 
 async def is_rare_drop_item(item_name: str) -> bool:
     """Check if an item is a rare drop using static dataset"""
@@ -3846,7 +3771,7 @@ async def parse_and_store_drops_from_activities(activities: list, username: str)
                         
                         print(f"DEBUG: Boss name: '{boss_name}' | Storing drop: {item_name}")
                         
-                        item_image_url = await get_item_image_from_wiki(item_name)
+                        item_image_url = get_item_image_from_manifest(item_name)
                         
                         await store_clan_drop(
                             conn,
@@ -3876,11 +3801,7 @@ async def get_boss_rare_drops(boss_name: str):
         
         items = []
         for item_name in rare_drops:
-            cached_url = get_cached_wiki_image(item_name)
-            if cached_url:
-                image_url = cached_url
-            else:
-                image_url = "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png"
+            image_url = get_item_image_from_manifest(item_name)
             
             items.append({
                 "name": item_name,
@@ -4114,7 +4035,7 @@ async def get_player_drops(username: str, page: int = Query(1, ge=1), limit: int
                     else:
                         boss_name = "Misc"
                     
-                    item_image_url = await get_item_image_from_wiki(item_name)
+                    item_image_url = get_item_image_from_manifest(item_name)
                     
                     drops.append({
                         'item_name': item_name,

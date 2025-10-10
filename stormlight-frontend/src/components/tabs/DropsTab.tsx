@@ -161,6 +161,10 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
   const mergedData = mergeDropData();
   
   const filteredData = mergedData.filter(table => {
+    if (table.boss_name === "Misc" && !table.items.some(item => item.has_drop)) {
+      return false;
+    }
+    
     if (bossFilter && !table.boss_name.toLowerCase().includes(bossFilter.toLowerCase())) {
       return false;
     }
