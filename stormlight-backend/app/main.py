@@ -3890,6 +3890,15 @@ async def get_boss_rare_drops(boss_name: str):
         print(f"Error getting rare drops for {boss_name}: {e}")
         return {"boss_name": boss_name, "items": []}
 
+@api_router.get("/bosses/all")
+async def get_all_bosses():
+    """Get all boss names from the static dataset"""
+    try:
+        return {"bosses": list(BOSS_DROPS_DATASET.keys())}
+    except Exception as e:
+        print(f"Error getting all bosses: {e}")
+        return {"bosses": []}
+
 @api_router.get("/clan/drops")
 async def get_clan_drops(page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50)):
     """Get recent drops from all clan members"""

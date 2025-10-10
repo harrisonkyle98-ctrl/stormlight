@@ -41,23 +41,14 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
 
   const fetchBossDropTables = async () => {
     try {
-      const bosses = [
-        "Amascut, the Devourer",
-        "Commander Zilyana", 
-        "Kree'arra",
-        "General Graardor",
-        "K'ril Tsutsaroth",
-        "Helwyr",
-        "Vindicta",
-        "Gregorovic", 
-        "Twin Furies",
-        "Nex",
-        "Vorago",
-        "Araxxor",
-        "Telos",
-        "Solak",
-        "Raksha"
-      ];
+      const bossesResponse = await fetch(`${API_URL}/api/bosses/all`);
+      if (!bossesResponse.ok) {
+        throw new Error('Failed to fetch boss list');
+      }
+      const bossesData = await bossesResponse.json();
+      const bosses = bossesData.bosses || [];
+      
+      console.log(`Fetching drop tables for ${bosses.length} bosses from dataset`);
 
       const fetchBossWithTimeout = async (boss: string): Promise<BossDropTable | null> => {
         try {
@@ -284,33 +275,39 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
                             content={
                               <div>
                                 <div className="font-semibold text-white">{item.name}</div>
-                                {item.has_drop && (
+                                {item.has_drop ? (
                                   <div className="text-green-400 mt-1">
-                                    Owned: {item.count} {item.count === 1 ? 'drop' : 'drops'}
+                                    ✅ Unlocked - Owned: {item.count} {item.count === 1 ? 'drop' : 'drops'}
+                                  </div>
+                                ) : (
+                                  <div className="text-slate-400 mt-1">
+                                    🔒 Not obtained
                                   </div>
                                 )}
                               </div>
                             }
                           >
-                            <img
-                              src={item.image_url}
-                              alt={item.name}
-                              className={`w-10 h-10 rounded border border-slate-600 cursor-help ${item.has_drop ? '' : 'grayscale'}`}
-                              onError={(e) => {
-                                e.currentTarget.src = "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png";
-                              }}
-                            />
+                            <div className="relative">
+                              <img
+                                src={item.image_url}
+                                alt={item.name}
+                                className={`w-10 h-10 rounded border border-slate-600 cursor-help ${item.has_drop ? '' : 'grayscale'}`}
+                                onError={(e) => {
+                                  e.currentTarget.src = "https://runescape.wiki/images/thumb/b/b0/Item_icon.png/32px-Item_icon.png";
+                                }}
+                              />
+                              {item.has_drop && item.count > 0 && (
+                                <div className="absolute bottom-0 right-0 bg-black/80 text-white text-xs px-1 rounded-tl border border-slate-600 font-bold">
+                                  ×{item.count}
+                                </div>
+                              )}
+                            </div>
                           </Tooltip>
                           <div>
                             <h4 className={`font-medium ${
                               item.has_drop ? 'text-white' : 'text-slate-500'
                             }`}>{item.name}</h4>
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <p className={`text-lg font-bold ${
-                            item.has_drop ? 'text-green-400' : 'text-slate-600'
-                          }`}>{item.count}</p>
                         </div>
                       </div>
                     ))}
