@@ -3515,18 +3515,9 @@ async def get_clan_log(
 
 
 async def is_rare_drop_item(item_name: str) -> bool:
-    """Check if an item is a rare drop using static dataset with exact matching"""
+    """Check if an item is a rare drop using exact case-insensitive matching only"""
     try:
-        common_items = [
-            'coins', 'gp', 'gold pieces', 'bones', 'ashes', 'food', 'potions',
-            'runes', 'arrows', 'bolts', 'logs', 'ore', 'bars', 'herbs',
-            'seeds', 'gems', 'charms', 'essence', 'shards', 'large amount of coins'
-        ]
-        
         item_lower = item_name.lower().strip()
-        
-        if any(common in item_lower for common in common_items):
-            return False
         
         kill_indicators = ['killed', 'defeating', 'defeated', 'slain', 'kill count']
         if any(indicator in item_lower for indicator in kill_indicators):
@@ -3538,7 +3529,7 @@ async def is_rare_drop_item(item_name: str) -> bool:
         return False
     except Exception as e:
         print(f"Error checking rarity for {item_name}: {e}")
-        return True
+        return False
 
 async def get_boss_rare_drop_table(boss_name: str) -> list:
     """Get the complete rare drop table for a specific boss from static dataset"""
