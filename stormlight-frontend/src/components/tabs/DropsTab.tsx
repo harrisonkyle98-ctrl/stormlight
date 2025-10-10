@@ -84,7 +84,7 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
       };
 
       const results = await Promise.allSettled(
-        bosses.map(boss => fetchBossWithTimeout(boss))
+        bosses.map((boss: string) => fetchBossWithTimeout(boss))
       );
 
       const dropTables: BossDropTable[] = results
