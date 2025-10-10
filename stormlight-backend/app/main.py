@@ -4895,7 +4895,9 @@ async def repopulate_drops():
         
         conn = await get_db_connection()
         async with conn:
-            before_count = await conn.fetchval("SELECT COUNT(*) FROM clan_drops")
+            count_cursor = await conn.execute("SELECT COUNT(*) FROM clan_drops")
+            count_result = await count_cursor.fetchone()
+            before_count = count_result[0] if count_result else 0
             print(f"📊 Current drops in database: {before_count}")
             
             await conn.execute("DELETE FROM clan_drops")
