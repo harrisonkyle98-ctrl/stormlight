@@ -266,7 +266,12 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
                 {isExpanded && (
                   <div className="space-y-1 ml-4">
                     {table.items
-                      .filter(item => !itemFilter || item.name.toLowerCase().includes(itemFilter.toLowerCase()))
+                      .filter(item => {
+                        if (table.boss_name === "Misc" && !item.has_drop) {
+                          return false;
+                        }
+                        return !itemFilter || item.name.toLowerCase().includes(itemFilter.toLowerCase());
+                      })
                       .map((item) => (
                       <div 
                         key={item.name} 

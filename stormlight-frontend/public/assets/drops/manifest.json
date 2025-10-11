@@ -1778,8 +1778,8 @@
     ]
   },
   {
-    "item_name": "Saradomin's sword",
-    "file": "/assets/drops/unknown_drop.png",
+    "item_name": "Saradomin Sword",
+    "file": "/assets/drops/saradomin_sword.png",
     "bosses": [
       "Commander Zilyana"
     ]
