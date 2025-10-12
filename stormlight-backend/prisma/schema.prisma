@@ -24,24 +24,27 @@ model User {
 }
 
 model ClanMember {
-  id          String   @id @default(cuid())
-  username    String   @unique
-  displayName String?  @map("display_name")
-  clanRank    String   @map("clan_rank")
-  totalXp     BigInt   @map("total_xp")
-  totalLevel  Int      @map("total_level")
-  combatLevel Int      @map("combat_level")
-  questPoints Int      @default(0) @map("quest_points")
-  kills       Int      @default(0)
-  stats       Json?
-  questData   Json?    @map("quest_data")
-  lastUpdated DateTime @map("last_updated")
-  createdAt   DateTime @default(now()) @map("created_at")
-  discordId   String?  @unique @map("discord_id")
-  badges      Json?    @default("[]")
-  joinDate    DateTime? @map("join_date")
+  id            String    @id @default(cuid())
+  username      String    @unique
+  displayName   String?   @map("display_name")
+  clanRank      String    @map("clan_rank")
+  totalXp       BigInt    @map("total_xp")
+  totalLevel    Int       @map("total_level")
+  combatLevel   Int       @map("combat_level")
+  questPoints   Int       @default(0) @map("quest_points")
+  kills         Int       @default(0)
+  stats         Json?
+  questData     Json?     @map("quest_data")
+  lastUpdated   DateTime  @map("last_updated")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  discordId     String?   @unique @map("discord_id")
+  badges        Json?     @default("[]")
+  joinDate      DateTime? @map("join_date")
+  active        Boolean   @default(true)
+  lastSeenInApi DateTime? @map("last_seen_in_api")
 
   @@index([discordId], map: "idx_clan_members_discord_id")
+  @@index([active])
   @@map("clan_members")
 }
 

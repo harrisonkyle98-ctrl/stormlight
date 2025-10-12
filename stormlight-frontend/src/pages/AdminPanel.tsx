@@ -3,11 +3,12 @@ import { useAuth } from '../contexts/AuthContext'
 import { Navigate } from 'react-router-dom'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Card, CardContent } from '../components/ui/card'
-import { Settings, Home, Crown, Swords, Users } from 'lucide-react'
+import { Settings, Home, Crown, Swords, Users, ClipboardList } from 'lucide-react'
 import { AdminHomeTab } from '../components/admin/AdminHomeTab'
 import { BadgeManagementTab } from '../components/admin/BadgeManagementTab'
 import { CompetitionManagementTab } from '../components/admin/CompetitionManagementTab'
 import { RankTrackingTab } from '../components/admin/RankTrackingTab'
+import { MemberLogTab } from '../components/admin/MemberLogTab'
 
 const AdminPanel = () => {
   const { user, loading } = useAuth()
@@ -38,7 +39,7 @@ const AdminPanel = () => {
       <Card className="bg-slate-800/50 border-slate-700">
         <CardContent className="p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4 bg-slate-700">
+            <TabsList className="grid w-full grid-cols-5 bg-slate-700">
               <TabsTrigger value="home" className="flex items-center space-x-2">
                 <Home className="w-4 h-4" />
                 <span>Home</span>
@@ -55,6 +56,10 @@ const AdminPanel = () => {
                 <Users className="w-4 h-4" />
                 <span>Rank Tracking</span>
               </TabsTrigger>
+              <TabsTrigger value="memberlog" className="flex items-center space-x-2">
+                <ClipboardList className="w-4 h-4" />
+                <span>Member Log</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="home">
@@ -68,6 +73,9 @@ const AdminPanel = () => {
             </TabsContent>
             <TabsContent value="ranks">
               <RankTrackingTab />
+            </TabsContent>
+            <TabsContent value="memberlog">
+              <MemberLogTab />
             </TabsContent>
           </Tabs>
         </CardContent>

@@ -846,7 +846,9 @@ async def sync_clan_members_to_database_with_queue():
                         'clanRank': member_data['clan_rank'],
                         'totalXp': member_data['total_xp'],
                         'kills': member_data.get('kills', 0),
-                        'lastUpdated': datetime.now()
+                        'lastUpdated': datetime.now(),
+                        'lastSeenInApi': datetime.now(),
+                        'active': True
                     }
                     
                     create_data = {
@@ -861,8 +863,16 @@ async def sync_clan_members_to_database_with_queue():
                         'stats': json.dumps({}),
                         'questData': json.dumps({}),
                         'badges': json.dumps([]),
-                        'lastUpdated': datetime.now()
+                        'lastUpdated': datetime.now(),
+                        'lastSeenInApi': datetime.now(),
+                        'active': True
                     }
+                    
+                    existing_member = await prisma.clanmember.find_unique(
+                        where={'username': member_data['username']}
+                    )
+                    is_new_member = existing_member is None
+                    was_inactive = existing_member and not existing_member.active if existing_member else False
                     
                     result = await prisma.clanmember.upsert(
                         where={'username': member_data['username']},
@@ -871,6 +881,19 @@ async def sync_clan_members_to_database_with_queue():
                             'create': create_data
                         }
                     )
+                    
+                    if is_new_member or was_inactive:
+                        await log_clan_event_if_new(
+                            username=member_data['username'],
+                            event_type='Join',
+                            old_rank=None,
+                            new_rank=member_data['clan_rank'],
+                            window_minutes=60
+                        )
+                        if is_new_member:
+                            print(f"🎉 {member_data['username']} joined the clan as {member_data['clan_rank']}")
+                        else:
+                            print(f"🔄 {member_data['username']} returned to the clan as {member_data['clan_rank']}")
                     
                     if result:
                         batch_successful += 1
@@ -902,9 +925,41 @@ async def sync_clan_members_to_database_with_queue():
                 print(f"⏳ Waiting 3 seconds before next batch...")
                 await asyncio.sleep(3)
         
+        print("🔍 Checking for members who left the clan...")
+        api_usernames = {member['username'].lower() for member in clan_data}
+        
+        all_db_members = await prisma.clanmember.find_many(
+            where={'active': True}
+        )
+        
+        left_count = 0
+        for db_member in all_db_members:
+            if db_member.username.lower() not in api_usernames:
+                await prisma.clanmember.update(
+                    where={'username': db_member.username},
+                    data={'active': False}
+                )
+                
+                await log_clan_event_if_new(
+                    username=db_member.username,
+                    event_type='Leave',
+                    old_rank=db_member.clanRank,
+                    new_rank=None,
+                    window_minutes=60
+                )
+                
+                left_count += 1
+                print(f"👋 {db_member.username} left the clan (was {db_member.clanRank})")
+        
+        if left_count > 0:
+            print(f"📊 Detected {left_count} member(s) who left the clan")
+        else:
+            print(f"✅ No members have left the clan")
+        
         try:
             final_count = await prisma.clanmember.count()
-            print(f"🔍 Final database verification: {final_count} members in database")
+            active_count = await prisma.clanmember.count(where={'active': True})
+            print(f"🔍 Final database verification: {final_count} total members, {active_count} active")
         except Exception as final_count_error:
             print(f"⚠️ Could not verify final database count: {final_count_error}")
         
@@ -3284,6 +3339,7 @@ async def get_rank_tracking(admin_id: str = Depends(verify_admin_access)):
         
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
             members = await prisma.clanmember.find_many(
+                where={'active': True},
                 order={'username': 'asc'}
             )
             tracking = []
