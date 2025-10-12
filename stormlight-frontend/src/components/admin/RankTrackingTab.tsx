@@ -30,6 +30,8 @@ export const RankTrackingTab = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [editingMember, setEditingMember] = useState<string | null>(null)
   const [editJoinDate, setEditJoinDate] = useState('')
+  const [activeMembersPage, setActiveMembersPage] = useState(1)
+  const pageSize = 25
 
   const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000'
 
@@ -132,6 +134,10 @@ export const RankTrackingTab = () => {
   const activeMembers = filteredAndSortedTracking.filter(t => 
     !isLeadershipRank(t.actualRank) && !t.dueForPromotion
   )
+
+  const totalActivePages = Math.ceil(activeMembers.length / pageSize)
+  const startIdx = (activeMembersPage - 1) * pageSize
+  const paginatedActiveMembers = activeMembers.slice(startIdx, startIdx + pageSize)
 
   const dueForPromotionCount = rankTracking.filter(t => 
     !isLeadershipRank(t.actualRank) && t.dueForPromotion
@@ -279,7 +285,7 @@ export const RankTrackingTab = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {activeMembers.map((tracking) => (
+              {paginatedActiveMembers.map((tracking) => (
                 <div key={tracking.username} className="p-4 bg-slate-600/30 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-3">
@@ -355,6 +361,33 @@ export const RankTrackingTab = () => {
                 </div>
               ))}
             </div>
+
+            {/* Pagination Controls */}
+            {totalActivePages > 1 && (
+              <div className="flex items-center justify-end space-x-2 mt-4 pt-4 border-t border-slate-600">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setActiveMembersPage(p => Math.max(1, p - 1))}
+                  disabled={activeMembersPage === 1}
+                  className="text-white border-slate-500 hover:bg-slate-600"
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-slate-400">
+                  Page {activeMembersPage} of {totalActivePages}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setActiveMembersPage(p => Math.min(totalActivePages, p + 1))}
+                  disabled={activeMembersPage === totalActivePages}
+                  className="text-white border-slate-500 hover:bg-slate-600"
+                >
+                  Next
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
