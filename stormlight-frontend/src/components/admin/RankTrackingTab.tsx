@@ -31,7 +31,7 @@ export const RankTrackingTab = () => {
   const [editingMember, setEditingMember] = useState<string | null>(null)
   const [editJoinDate, setEditJoinDate] = useState('')
   const [activeMembersPage, setActiveMembersPage] = useState(1)
-  const pageSize = 25
+  const pageSize = 15
 
   const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000'
 
