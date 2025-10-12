@@ -3337,6 +3337,8 @@ async def get_rank_tracking(admin_id: str = Depends(verify_admin_access)):
     try:
         from .admin_utils import calculate_rank_needed
         
+        LEADERSHIP_RANKS = ['Owner', 'Deputy Owner', 'Overseer']
+        
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
             members = await prisma.clanmember.find_many(
                 where={'active': True},
@@ -3349,12 +3351,19 @@ async def get_rank_tracking(admin_id: str = Depends(verify_admin_access)):
                 days_in_clan = 0
                 rank_needed = "Unknown"
                 
+                is_leadership = member.clanRank in LEADERSHIP_RANKS
+                
                 if join_date:
                     join_date_naive = join_date.replace(tzinfo=None) if join_date.tzinfo else join_date
                     days_in_clan = (datetime.now() - join_date_naive).days
-                    rank_needed = calculate_rank_needed(join_date, member.clanRank)
+                    
+                    if is_leadership:
+                        rank_needed = member.clanRank
+                    else:
+                        rank_needed = calculate_rank_needed(join_date, member.clanRank)
                 
                 due_for_promotion = (
+                    not is_leadership and
                     rank_needed != "Unknown" and 
                     rank_needed != member.clanRank and
                     days_in_clan > 0

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
-import { Users, Search, Calendar, TrendingUp } from 'lucide-react'
+import { Users, Search, Calendar, TrendingUp, Crown } from 'lucide-react'
 
 interface ClanMember {
   id: string
@@ -30,8 +30,6 @@ export const RankTrackingTab = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [editingMember, setEditingMember] = useState<string | null>(null)
   const [editJoinDate, setEditJoinDate] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(15)
 
   const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000'
 
@@ -119,16 +117,25 @@ export const RankTrackingTab = () => {
     return rankPriority[rank] || 999
   }
 
+  const isLeadershipRank = (rank: string): boolean => {
+    return ['Owner', 'Deputy Owner', 'Overseer'].includes(rank)
+  }
+
   const filteredAndSortedTracking = rankTracking
     .filter(tracking => tracking.username.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => getRankPriority(a.actualRank) - getRankPriority(b.actualRank))
 
-  const totalItems = filteredAndSortedTracking.length
-  const startIndex = (currentPage - 1) * pageSize
-  const paginatedTracking = filteredAndSortedTracking.slice(startIndex, startIndex + pageSize)
-  const totalPages = Math.ceil(totalItems / pageSize)
+  const leadershipMembers = filteredAndSortedTracking.filter(t => isLeadershipRank(t.actualRank))
+  const dueForPromotionMembers = filteredAndSortedTracking.filter(t => 
+    !isLeadershipRank(t.actualRank) && t.dueForPromotion
+  )
+  const activeMembers = filteredAndSortedTracking.filter(t => 
+    !isLeadershipRank(t.actualRank) && !t.dueForPromotion
+  )
 
-  const dueForPromotionCount = rankTracking.filter(t => t.dueForPromotion).length
+  const dueForPromotionCount = rankTracking.filter(t => 
+    !isLeadershipRank(t.actualRank) && t.dueForPromotion
+  ).length
 
   if (loading) {
     return <div className="text-center py-8 text-slate-400">Loading rank tracking data...</div>
@@ -160,52 +167,29 @@ export const RankTrackingTab = () => {
         </CardContent>
       </Card>
 
-      {/* Rank Tracking List */}
-      <Card className="bg-slate-700/30 border-slate-600">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center space-x-2">
-            <Users className="w-5 h-5 text-blue-400" />
-            <span>Member Rank Tracking</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {paginatedTracking.length === 0 ? (
-            <p className="text-slate-400 text-center py-8">No members found</p>
-          ) : (
-            <>
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-slate-400 text-sm">
-                  Showing {startIndex + 1}-{Math.min(startIndex + pageSize, totalItems)} of {totalItems} members
-                </span>
-                <div className="flex items-center space-x-2">
-                  <span className="text-slate-400 text-sm">Per page:</span>
-                  <select
-                    value={pageSize}
-                    onChange={(e) => {
-                      setPageSize(parseInt(e.target.value))
-                      setCurrentPage(1)
-                    }}
-                    className="bg-slate-600 border-slate-500 text-white rounded px-2 py-1 text-sm"
-                  >
-                    <option value={15}>15</option>
-                    <option value={30}>30</option>
-                    <option value={50}>50</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div className="space-y-3">
-                {paginatedTracking.map((tracking) => (
+      {/* Section 1: Members Due for Promotion */}
+      {dueForPromotionMembers.length > 0 && (
+        <Card className="bg-slate-700/30 border-slate-600">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center space-x-2">
+              <TrendingUp className="w-5 h-5 text-yellow-400" />
+              <span>Members Due for Promotion</span>
+              <Badge className="bg-yellow-600 text-white ml-2">
+                {dueForPromotionMembers.length}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {dueForPromotionMembers.map((tracking) => (
                 <div key={tracking.username} className="p-4 bg-slate-600/30 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-3">
                       <h3 className="text-white font-medium">{tracking.username}</h3>
-                      {tracking.dueForPromotion && (
-                        <Badge className="bg-yellow-600 text-white">
-                          <TrendingUp className="w-3 h-3 mr-1" />
-                          Due for Promotion
-                        </Badge>
-                      )}
+                      <Badge className="bg-yellow-600 text-white">
+                        <TrendingUp className="w-3 h-3 mr-1" />
+                        Due for Promotion
+                      </Badge>
                     </div>
                     <div className="flex items-center space-x-2">
                       {editingMember === tracking.username ? (
@@ -275,56 +259,199 @@ export const RankTrackingTab = () => {
                     </div>
                   </div>
                 </div>
-                ))}
-              </div>
-              
-              {totalPages > 1 && (
-                <div className="flex justify-center items-center space-x-2 mt-6">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(1)}
-                    disabled={currentPage === 1}
-                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                  >
-                    First
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                  >
-                    Previous
-                  </Button>
-                  <span className="text-white text-sm px-3">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
-                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                  >
-                    Next
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(totalPages)}
-                    disabled={currentPage === totalPages}
-                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                  >
-                    Last
-                  </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Section 2: All Active Members */}
+      {activeMembers.length > 0 && (
+        <Card className="bg-slate-700/30 border-slate-600">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center space-x-2">
+              <Users className="w-5 h-5 text-blue-400" />
+              <span>All Active Members</span>
+              <Badge className="bg-slate-600 text-white ml-2">
+                {activeMembers.length}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {activeMembers.map((tracking) => (
+                <div key={tracking.username} className="p-4 bg-slate-600/30 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-3">
+                      <h3 className="text-white font-medium">{tracking.username}</h3>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {editingMember === tracking.username ? (
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            type="date"
+                            value={editJoinDate}
+                            onChange={(e) => setEditJoinDate(e.target.value)}
+                            className="bg-slate-600 border-slate-500 text-white w-40"
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => handleUpdateJoinDate(tracking.username, editJoinDate)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            Save
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingMember(null)
+                              setEditJoinDate('')
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const member = members.find(m => m.username === tracking.username)
+                            if (member) startEditJoinDate(member)
+                          }}
+                          className="flex items-center space-x-1"
+                        >
+                          <Calendar className="w-3 h-3" />
+                          <span>Edit Join Date</span>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <span className="text-slate-400">Actual Rank:</span>
+                      <div className="text-white font-medium">{tracking.actualRank}</div>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">Rank Needed:</span>
+                      <div className="text-white font-medium">{tracking.rankNeeded}</div>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">Join Date:</span>
+                      <div className="text-white">
+                        {tracking.joinDate 
+                          ? new Date(tracking.joinDate).toLocaleDateString()
+                          : 'Not set'
+                        }
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">Days in Clan:</span>
+                      <div className="text-white font-medium">{tracking.daysInClan}</div>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Section 3: Leadership Ranks */}
+      {leadershipMembers.length > 0 && (
+        <Card className="bg-slate-700/30 border-slate-600">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center space-x-2">
+              <Crown className="w-5 h-5 text-purple-400" />
+              <span>Leadership Ranks</span>
+              <Badge className="bg-purple-600 text-white ml-2">
+                {leadershipMembers.length}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {leadershipMembers.map((tracking) => (
+                <div key={tracking.username} className="p-4 bg-slate-600/30 rounded-lg border border-purple-500/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-3">
+                      <h3 className="text-white font-medium">{tracking.username}</h3>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {editingMember === tracking.username ? (
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            type="date"
+                            value={editJoinDate}
+                            onChange={(e) => setEditJoinDate(e.target.value)}
+                            className="bg-slate-600 border-slate-500 text-white w-40"
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => handleUpdateJoinDate(tracking.username, editJoinDate)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            Save
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingMember(null)
+                              setEditJoinDate('')
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const member = members.find(m => m.username === tracking.username)
+                            if (member) startEditJoinDate(member)
+                          }}
+                          className="flex items-center space-x-1"
+                        >
+                          <Calendar className="w-3 h-3" />
+                          <span>Edit Join Date</span>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <span className="text-slate-400">Rank:</span>
+                      <div className="text-white font-medium">{tracking.actualRank}</div>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">Status:</span>
+                      <div className="text-white font-medium">Leadership</div>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">Join Date:</span>
+                      <div className="text-white">
+                        {tracking.joinDate 
+                          ? new Date(tracking.joinDate).toLocaleDateString()
+                          : 'Not set'
+                        }
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">Days in Clan:</span>
+                      <div className="text-white font-medium">{tracking.daysInClan}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Longevity Rules */}
       <Card className="bg-slate-700/30 border-slate-600">
