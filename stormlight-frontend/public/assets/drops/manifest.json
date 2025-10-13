@@ -351,7 +351,7 @@
   },
   {
     "item_name": "Berserker Ring",
-    "file": "/assets/drops/unknown_drop.png",
+    "file": "/assets/drops/berserker_ring.png",
     "bosses": [
       "Dagannoth Kings"
     ]
@@ -379,7 +379,7 @@
   },
   {
     "item_name": "Blast Diffusion boots",
-    "file": "/assets/drops/unknown_drop.png",
+    "file": "/assets/drops/blast_diffusion_boots.png",
     "bosses": [
       "Raksha, the Shadow Colossus"
     ]
@@ -875,8 +875,8 @@
     ]
   },
   {
-    "item_name": "Dragon chianbody",
-    "file": "/assets/drops/unknown_drop.png",
+    "item_name": "Dragon chainbody",
+    "file": "/assets/drops/dragon_chainbody.png",
     "bosses": [
       "Kalphite Queen"
     ]
@@ -1401,7 +1401,7 @@
   },
   {
     "item_name": "Lil' tuzzy",
-    "file": "/assets/drops/unknown_drop.png",
+    "file": "/assets/drops/lil_tuzzy.png",
     "bosses": [
       "Beastmaster Durzag"
     ]
@@ -1464,7 +1464,7 @@
   },
   {
     "item_name": "Merethiel's stave",
-    "file": "/assets/drops/unknown_drop.png",
+    "file": "/assets/drops/merethiels_stave.png",
     "bosses": [
       "Solak, Guardian of the Grove"
     ]
@@ -1863,7 +1863,7 @@
   },
   {
     "item_name": "Seers' Ring",
-    "file": "/assets/drops/unknown_drop.png",
+    "file": "/assets/drops/seers_ring.png",
     "bosses": [
       "Dagannoth Kings"
     ]
@@ -1905,7 +1905,7 @@
   },
   {
     "item_name": "Shadowy Egg",
-    "file": "/assets/drops/unknown_drop.png",
+    "file": "/assets/drops/shadowy_egg.png",
     "bosses": [
       "The Ambassador"
     ]
@@ -2199,9 +2199,9 @@
   },
   {
     "item_name": "Volcanic Shard",
-    "file": "/assets/drops/unknown_drop.png",
+    "file": "/assets/drops/volcanic_shard.png",
     "bosses": [
-      "Hark-Aken"
+      "Har-Aken"
     ]
   },
   {
@@ -2247,8 +2247,8 @@
     ]
   },
   {
-    "item_name": "Warriors' Ring",
-    "file": "/assets/drops/unknown_drop.png",
+    "item_name": "Warrior Ring",
+    "file": "/assets/drops/warrior_ring.png",
     "bosses": [
       "Dagannoth Kings"
     ]
