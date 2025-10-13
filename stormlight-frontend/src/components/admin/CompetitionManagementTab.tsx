@@ -91,15 +91,6 @@ export const CompetitionManagementTab = () => {
     e.preventDefault()
 
     try {
-      const startDate = new Date(formData.startDate + 'T00:00:00.000Z')
-      const endDate = new Date(formData.endDate + 'T00:00:00.000Z')
-      
-      if (startDate.getUTCHours() !== 0 || startDate.getUTCMinutes() !== 0 || 
-          endDate.getUTCHours() !== 0 || endDate.getUTCMinutes() !== 0) {
-        alert('Competition times must be at midnight UTC (00:00:00). Please adjust your dates.')
-        return
-      }
-
       const token = localStorage.getItem('access_token')
       const url = editingCompetition
         ? `${API_URL}/api/admin/competitions/${editingCompetition.id}`
@@ -111,8 +102,8 @@ export const CompetitionManagementTab = () => {
         name: formData.name,
         description: formData.description,
         type: formData.type,
-        start_date: startDate.toISOString(),
-        end_date: endDate.toISOString()
+        start_date: formData.startDate + 'T00:00:00.000Z',
+        end_date: formData.endDate + 'T00:00:00.000Z'
       }
 
       if (formData.type === 'XP') {
