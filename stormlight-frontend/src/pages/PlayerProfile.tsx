@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { ArrowLeft, User, TrendingUp, Crown, Package, Activity, MapPin, BarChart3, Swords, FileText, RefreshCw, Plus, Trophy } from 'lucide-react'
+import { ArrowLeft, User, Award, Scroll, Trophy, Package, Activity, BarChart3, Compass, BarChart2, FileText, RefreshCw, Plus } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { getSkillIcon } from '../utils/skillIcons'
 import { getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
@@ -410,12 +410,12 @@ const PlayerProfile = () => {
   
 
   const tabs = [
-    { id: 'skills', label: 'Skill Breakdown', icon: TrendingUp },
+    { id: 'skills', label: 'Skill Breakdown', icon: BarChart2 },
     { id: 'drops', label: 'Drops', icon: Package },
     { id: 'activity', label: 'Activity', icon: Activity },
-    { id: 'quests', label: 'Quests', icon: MapPin },
+    { id: 'quests', label: 'Quests', icon: Compass },
     { id: 'analytics', label: 'XP Analytics', icon: BarChart3 },
-    { id: 'competitions', label: 'Competitions', icon: Swords },
+    { id: 'competitions', label: 'Competitions', icon: Trophy },
     { id: 'log', label: 'Log', icon: FileText }
   ]
 
@@ -746,7 +746,7 @@ const PlayerProfile = () => {
                 <CardHeader>
                   <CardTitle className="text-white flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <Crown className="w-5 h-5 text-yellow-400" />
+                      <Award className="w-5 h-5 text-yellow-400" />
                       <span>Badges</span>
                     </div>
                     {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
@@ -804,7 +804,7 @@ const PlayerProfile = () => {
             <Card className="bg-slate-800/50 border-slate-700">
               <CardHeader>
                 <CardTitle className="text-white flex items-center space-x-2">
-                  <Package className="w-5 h-5 text-purple-400" />
+                  <Scroll className="w-5 h-5 text-purple-400" />
                   <span>Clue Scrolls</span>
                 </CardTitle>
               </CardHeader>
@@ -856,7 +856,7 @@ const PlayerProfile = () => {
               <Card className="bg-slate-800/50 border-slate-700">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center space-x-2">
-                    <Trophy className="w-5 h-5 text-green-400" />
+                    <BarChart2 className="w-5 h-5 text-green-400" />
                     <span>Skills at 99 [{skillsAt99.length}]</span>
                   </CardTitle>
                 </CardHeader>
@@ -919,7 +919,7 @@ const PlayerProfile = () => {
               <Card className="bg-slate-800/50 border-slate-700">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center space-x-2">
-                    <Trophy className="w-5 h-5 text-yellow-400" />
+                    <BarChart2 className="w-5 h-5 text-yellow-400" />
                     <span>Skills at 120 [{skillsAt120Plus.length}]</span>
                   </CardTitle>
                 </CardHeader>
@@ -982,7 +982,7 @@ const PlayerProfile = () => {
               <Card className="bg-slate-800/50 border-slate-700">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center space-x-2">
-                    <Trophy className="w-5 h-5 text-purple-400" />
+                    <BarChart2 className="w-5 h-5 text-purple-400" />
                     <span>Skills at 200m [{skillsAt200m.length}]</span>
                   </CardTitle>
                 </CardHeader>

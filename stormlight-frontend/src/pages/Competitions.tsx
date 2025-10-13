@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
-import { Swords, Calendar, Trophy, Users, Plus } from 'lucide-react'
+import { Trophy, Calendar, Users, Plus } from 'lucide-react'
 import { getSkillIcon } from '../utils/skillIcons'
 
 interface Competition {
@@ -96,7 +96,7 @@ const Competitions = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">
-            <Swords className="inline-block w-8 h-8 mr-2 text-green-400" />
+            <Trophy className="inline-block w-8 h-8 mr-2 text-green-400" />
             Clan Competitions
           </h1>
           <p className="text-slate-300">
@@ -338,7 +338,7 @@ const Competitions = () => {
           {competitionsData?.competitions.length === 0 ? (
           <Card className="bg-slate-800/50 border-slate-700">
             <CardContent className="p-8 text-center">
-              <Swords className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+              <Trophy className="w-16 h-16 text-slate-600 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-white mb-2">No Competitions Yet</h3>
               <p className="text-slate-400 mb-4">
                 Be the first to create a competition for your clan!
@@ -352,7 +352,7 @@ const Competitions = () => {
           ) : (
             <Card className="bg-slate-800/50 border-slate-700">
               <CardContent className="p-8 text-center">
-                <Swords className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                <Trophy className="w-16 h-16 text-slate-600 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-white mb-2">No {typeFilter} competitions found</h3>
                 <p className="text-slate-400 mb-4">
                   Try adjusting your filter or check back later for new competitions!

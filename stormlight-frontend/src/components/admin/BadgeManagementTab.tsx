@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
-import { Crown, Plus, Edit, Trash2 } from 'lucide-react'
+import { Award, Plus, Edit, Trash2 } from 'lucide-react'
 
 interface CustomBadge {
   id: string
@@ -323,7 +323,7 @@ export const BadgeManagementTab = () => {
       <Card className="bg-slate-700/30 border-slate-600">
         <CardHeader>
           <CardTitle className="text-white flex items-center space-x-2">
-            <Crown className="w-5 h-5 text-yellow-400" />
+            <Award className="w-5 h-5 text-yellow-400" />
             <span>Custom Badges</span>
           </CardTitle>
         </CardHeader>

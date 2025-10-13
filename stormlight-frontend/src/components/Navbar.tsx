@@ -8,7 +8,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from './ui/dropdown-menu'
-import { Home, Users, Swords, LogOut, Settings } from 'lucide-react'
+import { Home, Users, Trophy, LogOut, Settings } from 'lucide-react'
 
 const Navbar = () => {
   const { user, logout } = useAuth()
@@ -17,7 +17,7 @@ const Navbar = () => {
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
     { path: '/members', label: 'Members', icon: Users },
-    { path: '/competitions', label: 'Competitions', icon: Swords },
+    { path: '/competitions', label: 'Competitions', icon: Trophy },
   ]
 
   const isActive = (path: string) => location.pathname === path

@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { Navigate } from 'react-router-dom'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Card, CardContent } from '../components/ui/card'
-import { Settings, Home, Crown, Swords, Users, ClipboardList } from 'lucide-react'
+import { Settings, LayoutDashboard, Award, Trophy, BarChart3, UsersRound } from 'lucide-react'
 import { AdminHomeTab } from '../components/admin/AdminHomeTab'
 import { BadgeManagementTab } from '../components/admin/BadgeManagementTab'
 import { CompetitionManagementTab } from '../components/admin/CompetitionManagementTab'
@@ -41,23 +41,23 @@ const AdminPanel = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-5 bg-slate-700">
               <TabsTrigger value="home" className="flex items-center space-x-2">
-                <Home className="w-4 h-4" />
+                <LayoutDashboard className="w-4 h-4" />
                 <span>Home</span>
               </TabsTrigger>
               <TabsTrigger value="badges" className="flex items-center space-x-2">
-                <Crown className="w-4 h-4" />
+                <Award className="w-4 h-4" />
                 <span>Badges</span>
               </TabsTrigger>
               <TabsTrigger value="competitions" className="flex items-center space-x-2">
-                <Swords className="w-4 h-4" />
+                <Trophy className="w-4 h-4" />
                 <span>Competitions</span>
               </TabsTrigger>
               <TabsTrigger value="ranks" className="flex items-center space-x-2">
-                <Users className="w-4 h-4" />
+                <BarChart3 className="w-4 h-4" />
                 <span>Rank Tracking</span>
               </TabsTrigger>
               <TabsTrigger value="memberlog" className="flex items-center space-x-2">
-                <ClipboardList className="w-4 h-4" />
+                <UsersRound className="w-4 h-4" />
                 <span>Member Log</span>
               </TabsTrigger>
             </TabsList>

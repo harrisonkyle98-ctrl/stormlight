@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Scroll, MapPin } from 'lucide-react'
+import { Compass, MapPin } from 'lucide-react'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/table'
 import { Badge } from '../ui/badge'
 import { usernameToUrl } from '../../utils/urlUtils'
@@ -61,7 +61,7 @@ export const QuestsTab = ({ username, playerData: _playerData, API_URL }: TabPro
   if (loading) {
     return (
       <div className="text-center py-12">
-        <Scroll className="w-16 h-16 text-slate-400 mx-auto mb-4 animate-spin" />
+        <Compass className="w-16 h-16 text-slate-400 mx-auto mb-4 animate-spin" />
         <p className="text-slate-400 text-lg">Loading quests...</p>
       </div>
     );
@@ -70,7 +70,7 @@ export const QuestsTab = ({ username, playerData: _playerData, API_URL }: TabPro
   if (error || !questData) {
     return (
       <div className="text-center py-12">
-        <Scroll className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+        <Compass className="w-16 h-16 text-slate-400 mx-auto mb-4" />
         <p className="text-red-400 text-lg">{error || 'No quest data available'}</p>
       </div>
     );
