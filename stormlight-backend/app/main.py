@@ -2048,6 +2048,44 @@ async def get_competition(competition_id: str):
             for idx, entry in enumerate(leaderboard, 1):
                 entry['rank'] = idx
             
+            from datetime import timezone
+            now = datetime.now(timezone.utc)
+            if competition.endDate < now and competition.rewardBadgeId and len(leaderboard) > 0:
+                winner_username = leaderboard[0]['username']
+                
+                winner_member = await prisma.clanmember.find_unique(
+                    where={'username': winner_username}
+                )
+                
+                if winner_member:
+                    current_badges = winner_member.badges if winner_member.badges else []
+                    if isinstance(current_badges, str):
+                        import json
+                        current_badges = json.loads(current_badges)
+                    
+                    if competition.rewardBadgeId not in [b.get('id') if isinstance(b, dict) else b for b in current_badges]:
+                        badge = await prisma.custombadge.find_unique(
+                            where={'id': competition.rewardBadgeId}
+                        )
+                        if badge:
+                            badge_data = {
+                                'id': badge.id,
+                                'name': badge.name,
+                                'description': badge.description,
+                                'imageUrl': badge.imageUrl,
+                                'backgroundColor': badge.backgroundColor,
+                                'gradientColors': badge.gradientColors
+                            }
+                            current_badges.append(badge_data)
+                            
+                            import json
+                            await prisma.clanmember.update(
+                                where={'username': winner_username},
+                                data={'badges': json.dumps(current_badges)}
+                            )
+                            
+                            invalidate_player_cache(winner_username)
+            
             return {
                 **competition.dict(),
                 "leaderboard": leaderboard[:50]
@@ -3288,9 +3326,19 @@ async def delete_custom_badge(
     try:
         
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
-            badge = await prisma.custombadge.find_unique(where={'id': badge_id})
+            badge = await prisma.custombadge.find_unique(
+                where={'id': badge_id},
+                include={'competitions': True}
+            )
             if not badge:
                 raise HTTPException(status_code=404, detail="Badge not found")
+            
+            if badge.competitions and len(badge.competitions) > 0:
+                competition_names = [c.name for c in badge.competitions]
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Cannot delete badge '{badge.name}' - it is linked to competitions: {', '.join(competition_names)}"
+                )
             
             import os
             if os.path.exists(badge.imagePath):
@@ -3363,7 +3411,11 @@ async def create_admin_competition(
                 'dropsGrid': competition_data.get('drops_grid'),
                 'startDate': start_date,
                 'endDate': end_date,
-                'createdBy': admin_id
+                'createdBy': admin_id,
+                'rewardFirstGp': competition_data.get('reward_first_gp'),
+                'rewardSecondGp': competition_data.get('reward_second_gp'),
+                'rewardThirdGp': competition_data.get('reward_third_gp'),
+                'rewardBadgeId': competition_data.get('reward_badge_id')
             })
             
             members = await prisma.clanmember.find_many(where={'active': True})
@@ -3442,6 +3494,10 @@ async def update_admin_competition(
             if not competition:
                 raise HTTPException(status_code=404, detail="Competition not found")
             
+            from datetime import timezone
+            now = datetime.now(timezone.utc)
+            competition_started = now >= competition.startDate
+            
             update_data = {}
             if 'start_date' in competition_data:
                 start_date = datetime.fromisoformat(competition_data['start_date'].replace('Z', '+00:00'))
@@ -3460,6 +3516,16 @@ async def update_admin_competition(
                         detail="End time must be at midnight UTC (00:00:00)"
                     )
                 update_data['endDate'] = end_date
+            
+            if not competition_started:
+                if 'reward_first_gp' in competition_data:
+                    update_data['rewardFirstGp'] = competition_data['reward_first_gp']
+                if 'reward_second_gp' in competition_data:
+                    update_data['rewardSecondGp'] = competition_data['reward_second_gp']
+                if 'reward_third_gp' in competition_data:
+                    update_data['rewardThirdGp'] = competition_data['reward_third_gp']
+                if 'reward_badge_id' in competition_data:
+                    update_data['rewardBadgeId'] = competition_data['reward_badge_id']
             
             if 'name' in competition_data:
                 update_data['name'] = competition_data['name']

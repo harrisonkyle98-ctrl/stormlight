@@ -33,6 +33,10 @@ export const CompetitionManagementTab = () => {
     boss: string
     board_size?: number
     drops_grid?: any[]
+    reward_first_gp?: string
+    reward_second_gp?: string
+    reward_third_gp?: string
+    reward_badge_id?: string
     startDate: string
     endDate: string
   }>({
@@ -45,7 +49,7 @@ export const CompetitionManagementTab = () => {
     endDate: ''
   })
   const [showGridBuilder, setShowGridBuilder] = useState(false)
-  const [gridSize, setGridSize] = useState<6 | 10 | 12>(6)
+  const [gridSize, setGridSize] = useState<5 | 7 | 9 | 11>(5)
   const [gridItems, setGridItems] = useState<Array<{
     position: number
     itemName: string
@@ -54,6 +58,7 @@ export const CompetitionManagementTab = () => {
   }>>([])
   const [selectedPosition, setSelectedPosition] = useState<number | null>(null)
   const [showDropModal, setShowDropModal] = useState(false)
+  const [customBadges, setCustomBadges] = useState<any[]>([])
 
   const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000'
 
@@ -67,6 +72,7 @@ export const CompetitionManagementTab = () => {
 
   useEffect(() => {
     fetchCompetitions()
+    fetchCustomBadges()
   }, [])
 
   const fetchCompetitions = async () => {
@@ -87,6 +93,21 @@ export const CompetitionManagementTab = () => {
     }
   }
 
+  const fetchCustomBadges = async () => {
+    try {
+      const token = localStorage.getItem('access_token')
+      const response = await fetch(`${API_URL}/api/admin/badges`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setCustomBadges(data.badges || [])
+      }
+    } catch (error) {
+      console.error('Error fetching badges:', error)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -103,7 +124,11 @@ export const CompetitionManagementTab = () => {
         description: formData.description,
         type: formData.type,
         start_date: formData.startDate + 'T00:00:00.000Z',
-        end_date: formData.endDate + 'T00:00:00.000Z'
+        end_date: formData.endDate + 'T00:00:00.000Z',
+        reward_first_gp: formData.reward_first_gp ? parseInt(formData.reward_first_gp) : null,
+        reward_second_gp: formData.reward_second_gp ? parseInt(formData.reward_second_gp) : null,
+        reward_third_gp: formData.reward_third_gp ? parseInt(formData.reward_third_gp) : null,
+        reward_badge_id: formData.reward_badge_id || null
       }
 
       if (formData.type === 'XP') {
@@ -191,6 +216,15 @@ export const CompetitionManagementTab = () => {
 
   const handleDropSelect = (drop: any, bossName: string) => {
     if (selectedPosition === null) return
+    
+    const isDuplicate = gridItems.some(item => 
+      item.itemName === drop.item_name && item.bossName === bossName && item.position !== selectedPosition
+    )
+    
+    if (isDuplicate) {
+      alert(`${drop.item_name} from ${bossName} is already in the grid. Each item can only be selected once.`)
+      return
+    }
     
     const newGridItems = [...gridItems]
     const existingIndex = newGridItems.findIndex(item => item.position === selectedPosition)
@@ -331,7 +365,7 @@ export const CompetitionManagementTab = () => {
                             <Select
                               value={gridSize.toString()}
                               onValueChange={(value) => {
-                                const size = parseInt(value) as 6 | 10 | 12
+                                const size = parseInt(value) as 5 | 7 | 9 | 11
                                 setGridSize(size)
                                 setGridItems([])
                               }}
@@ -340,22 +374,28 @@ export const CompetitionManagementTab = () => {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="6">6x6 (36 squares)</SelectItem>
-                                <SelectItem value="10">10x10 (100 squares)</SelectItem>
-                                <SelectItem value="12">12x12 (144 squares)</SelectItem>
+                                <SelectItem value="5">5x5 (25 squares)</SelectItem>
+                                <SelectItem value="7">7x7 (49 squares)</SelectItem>
+                                <SelectItem value="9">9x9 (81 squares)</SelectItem>
+                                <SelectItem value="11">11x11 (121 squares)</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
                           
-                          <div className="grid gap-1" style={{
-                            gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`
-                          }}>
+                          <div 
+                            className="grid gap-1 max-w-full overflow-auto" 
+                            style={{
+                              gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+                              maxHeight: '500px',
+                              aspectRatio: '1/1'
+                            }}
+                          >
                             {Array.from({ length: gridSize * gridSize }).map((_, index) => {
                               const item = gridItems.find(i => i.position === index)
                               return (
                                 <div
                                   key={index}
-                                  className="aspect-square border border-slate-600 rounded bg-slate-700/50 hover:bg-slate-700 cursor-pointer p-1"
+                                  className="aspect-square border border-slate-600 rounded bg-slate-700/50 hover:bg-slate-700 cursor-pointer p-0.5"
                                   onClick={() => {
                                     setSelectedPosition(index)
                                     setShowDropModal(true)
@@ -423,6 +463,80 @@ export const CompetitionManagementTab = () => {
                     required
                     className="bg-slate-600 border-slate-500 text-white"
                   />
+                </div>
+              </div>
+
+              <div className="border-t border-slate-600 pt-4 mt-4">
+                <h3 className="text-lg font-semibold text-white mb-4">Competition Rewards</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      1st Place GP Reward
+                    </label>
+                    <Input
+                      type="number"
+                      value={formData.reward_first_gp || ''}
+                      onChange={(e) => setFormData({ ...formData, reward_first_gp: e.target.value })}
+                      placeholder="e.g., 100000000"
+                      disabled={!!(editingCompetition && new Date() >= new Date(editingCompetition.startDate))}
+                      className="bg-slate-600 border-slate-500 text-white"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      2nd Place GP Reward
+                    </label>
+                    <Input
+                      type="number"
+                      value={formData.reward_second_gp || ''}
+                      onChange={(e) => setFormData({ ...formData, reward_second_gp: e.target.value })}
+                      placeholder="e.g., 50000000"
+                      disabled={!!(editingCompetition && new Date() >= new Date(editingCompetition.startDate))}
+                      className="bg-slate-600 border-slate-500 text-white"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      3rd Place GP Reward
+                    </label>
+                    <Input
+                      type="number"
+                      value={formData.reward_third_gp || ''}
+                      onChange={(e) => setFormData({ ...formData, reward_third_gp: e.target.value })}
+                      placeholder="e.g., 25000000"
+                      disabled={!!(editingCompetition && new Date() >= new Date(editingCompetition.startDate))}
+                      className="bg-slate-600 border-slate-500 text-white"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    1st Place Badge Reward (Auto-Awarded)
+                  </label>
+                  <Select
+                    value={formData.reward_badge_id || ''}
+                    onValueChange={(value) => setFormData({ ...formData, reward_badge_id: value })}
+                    disabled={!!(editingCompetition && new Date() >= new Date(editingCompetition.startDate))}
+                  >
+                    <SelectTrigger className="bg-slate-600 border-slate-500 text-white">
+                      <SelectValue placeholder="Select a badge (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">None</SelectItem>
+                      {customBadges.map((badge) => (
+                        <SelectItem key={badge.id} value={badge.id}>
+                          {badge.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Badge will be automatically awarded to 1st place when competition ends
+                  </p>
                 </div>
               </div>
 

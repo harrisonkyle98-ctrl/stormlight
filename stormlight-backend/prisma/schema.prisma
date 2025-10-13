@@ -49,20 +49,25 @@ model ClanMember {
 }
 
 model Competition {
-  id          String             @id @default(cuid())
-  name        String
-  description String?
-  type        CompetitionType
-  skill       String?
-  boardSize   Int?               @map("board_size")
-  dropsGrid   Json?              @map("drops_grid")
-  startDate   DateTime           @map("start_date")
-  endDate     DateTime           @map("end_date")
-  isActive    Boolean            @default(true) @map("is_active")
-  createdBy   String?            @map("created_by")
-  createdAt   DateTime           @default(now()) @map("created_at")
-  updatedAt   DateTime           @updatedAt @map("updated_at")
-  entries     CompetitionEntry[]
+  id               String             @id @default(cuid())
+  name             String
+  description      String?
+  type             CompetitionType
+  skill            String?
+  boardSize        Int?               @map("board_size")
+  dropsGrid        Json?              @map("drops_grid")
+  startDate        DateTime           @map("start_date")
+  endDate          DateTime           @map("end_date")
+  isActive         Boolean            @default(true) @map("is_active")
+  createdBy        String?            @map("created_by")
+  rewardFirstGp    BigInt?            @map("reward_first_gp")
+  rewardSecondGp   BigInt?            @map("reward_second_gp")
+  rewardThirdGp    BigInt?            @map("reward_third_gp")
+  rewardBadgeId    String?            @map("reward_badge_id")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  entries          CompetitionEntry[]
+  rewardBadge      CustomBadge?       @relation(fields: [rewardBadgeId], references: [id], onDelete: SetNull)
 
   @@map("competitions")
 }
@@ -88,15 +93,16 @@ model CompetitionEntry {
 }
 
 model CustomBadge {
-  id              String   @id @default(cuid())
+  id              String        @id @default(cuid())
   name            String
   description     String?
-  imagePath       String   @map("image_path")
-  imageUrl        String   @map("image_url")
-  backgroundColor String?  @map("background_color")
-  gradientColors  Json?    @map("gradient_colors")
-  createdBy       String   @map("created_by")
-  createdAt       DateTime @default(now()) @map("created_at")
+  imagePath       String        @map("image_path")
+  imageUrl        String        @map("image_url")
+  backgroundColor String?       @map("background_color")
+  gradientColors  Json?         @map("gradient_colors")
+  createdBy       String        @map("created_by")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  competitions    Competition[]
   
   @@map("custom_badges")
 }

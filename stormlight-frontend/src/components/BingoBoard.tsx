@@ -37,9 +37,11 @@ export const BingoBoard = ({
       </CardHeader>
       <CardContent>
         <div
-          className="grid gap-1"
+          className="grid gap-0.5 md:gap-1 max-w-full"
           style={{
-            gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`
+            gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+            maxWidth: gridSize <= 7 ? '600px' : '800px',
+            margin: '0 auto'
           }}
         >
           {Array.from({ length: gridSize * gridSize }).map((_, index) => {
@@ -49,11 +51,15 @@ export const BingoBoard = ({
             return (
               <div
                 key={index}
-                className={`aspect-square border rounded p-1 transition-all ${
+                className={`aspect-square border rounded p-0.5 transition-all ${
                   isCompleted
                     ? 'border-green-500 bg-green-500/20'
                     : 'border-slate-600 bg-slate-700/50'
                 }`}
+                style={{
+                  minWidth: '0',
+                  minHeight: '0'
+                }}
               >
                 {item && (
                   <img

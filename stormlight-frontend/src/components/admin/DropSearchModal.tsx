@@ -28,8 +28,11 @@ export const DropSearchModal = ({ isOpen, onClose, onSelect, position }: DropSea
     fetch('/assets/drops/manifest.json')
       .then(res => res.json())
       .then(data => {
-        setDrops(data)
-        setFilteredDrops(data)
+        const filteredData = data.filter((drop: Drop) => 
+          !drop.bosses.every(boss => boss.toLowerCase() === 'misc')
+        )
+        setDrops(filteredData)
+        setFilteredDrops(filteredData)
       })
       .catch(err => console.error('Error loading drops:', err))
   }, [])
