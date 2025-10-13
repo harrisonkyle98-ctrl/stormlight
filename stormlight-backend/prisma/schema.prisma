@@ -54,6 +54,8 @@ model Competition {
   description String?
   type        CompetitionType
   skill       String?
+  boardSize   Int?               @map("board_size")
+  dropsGrid   Json?              @map("drops_grid")
   startDate   DateTime           @map("start_date")
   endDate     DateTime           @map("end_date")
   isActive    Boolean            @default(true) @map("is_active")
@@ -66,19 +68,20 @@ model Competition {
 }
 
 model CompetitionEntry {
-  id            String      @id @default(cuid())
-  competitionId String      @map("competition_id")
-  userId        String      @map("user_id")
-  username      String
-  xpStart       BigInt      @map("xp_start")
-  xpEnd         BigInt?     @map("xp_end")
-  xpGained      BigInt      @default(0) @map("xp_gained")
-  rank          Int?
-  isActive      Boolean     @default(true) @map("is_active")
-  createdAt     DateTime    @default(now()) @map("created_at")
-  updatedAt     DateTime    @updatedAt @map("updated_at")
-  competition   Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String      @id @default(cuid())
+  competitionId   String      @map("competition_id")
+  userId          String      @map("user_id")
+  username        String
+  xpStart         BigInt      @map("xp_start")
+  xpEnd           BigInt?     @map("xp_end")
+  xpGained        BigInt      @default(0) @map("xp_gained")
+  dropsCompleted  Json?       @map("drops_completed")
+  rank            Int?
+  isActive        Boolean     @default(true) @map("is_active")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+  competition     Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([competitionId, userId])
   @@map("competition_entries")

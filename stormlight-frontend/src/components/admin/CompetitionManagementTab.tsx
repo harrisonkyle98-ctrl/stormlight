@@ -5,6 +5,7 @@ import { Input } from '../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Badge } from '../ui/badge'
 import { Trophy, Plus, Edit, Trash2, Users } from 'lucide-react'
+import { DropSearchModal } from './DropSearchModal'
 
 interface Competition {
   id: number
@@ -24,15 +25,35 @@ export const CompetitionManagementTab = () => {
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingCompetition, setEditingCompetition] = useState<Competition | null>(null)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string
+    description: string
+    type: 'XP' | 'DROPS'
+    skill: string
+    boss: string
+    board_size?: number
+    drops_grid?: any[]
+    startDate: string
+    endDate: string
+  }>({
     name: '',
     description: '',
-    type: 'XP' as 'XP' | 'DROPS',
+    type: 'XP',
     skill: '',
     boss: '',
     startDate: '',
     endDate: ''
   })
+  const [showGridBuilder, setShowGridBuilder] = useState(false)
+  const [gridSize, setGridSize] = useState<6 | 10 | 12>(6)
+  const [gridItems, setGridItems] = useState<Array<{
+    position: number
+    itemName: string
+    bossName: string
+    imageUrl: string
+  }>>([])
+  const [selectedPosition, setSelectedPosition] = useState<number | null>(null)
+  const [showDropModal, setShowDropModal] = useState(false)
 
   const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000'
 
@@ -42,12 +63,6 @@ export const CompetitionManagementTab = () => {
     'crafting', 'smithing', 'mining', 'herblore', 'agility', 'thieving',
     'slayer', 'farming', 'runecrafting', 'hunter', 'construction',
     'summoning', 'dungeoneering', 'divination', 'invention', 'archaeology', 'necromancy'
-  ]
-
-  const bosses = [
-    'General Graardor', 'Kree\'arra', 'Commander Zilyana', 'K\'ril Tsutsaroth',
-    'Nex', 'Vorago', 'Araxxor', 'Telos', 'Angel of Death', 'Solak',
-    'Raksha', 'Kerapac', 'Arch-Glacor', 'Croesus', 'Zamorak', 'Misc'
   ]
 
   useEffect(() => {
@@ -76,6 +91,15 @@ export const CompetitionManagementTab = () => {
     e.preventDefault()
 
     try {
+      const startDate = new Date(formData.startDate + 'T00:00:00.000Z')
+      const endDate = new Date(formData.endDate + 'T00:00:00.000Z')
+      
+      if (startDate.getUTCHours() !== 0 || startDate.getUTCMinutes() !== 0 || 
+          endDate.getUTCHours() !== 0 || endDate.getUTCMinutes() !== 0) {
+        alert('Competition times must be at midnight UTC (00:00:00). Please adjust your dates.')
+        return
+      }
+
       const token = localStorage.getItem('access_token')
       const url = editingCompetition
         ? `${API_URL}/api/admin/competitions/${editingCompetition.id}`
@@ -83,23 +107,36 @@ export const CompetitionManagementTab = () => {
 
       const method = editingCompetition ? 'PUT' : 'POST'
 
+      const payload: any = {
+        name: formData.name,
+        description: formData.description,
+        type: formData.type,
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString()
+      }
+
+      if (formData.type === 'XP') {
+        payload.skill = formData.skill || 'overall'
+      } else if (formData.type === 'DROPS') {
+        payload.board_size = gridSize
+        payload.drops_grid = gridItems
+      }
+
       const response = await fetch(url, {
         method,
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          ...formData,
-          start_date: formData.startDate,
-          end_date: formData.endDate
-        })
+        body: JSON.stringify(payload)
       })
 
       if (response.ok) {
         await fetchCompetitions()
         setShowCreateForm(false)
         setEditingCompetition(null)
+        setShowGridBuilder(false)
+        setGridItems([])
         setFormData({
           name: '',
           description: '',
@@ -109,9 +146,13 @@ export const CompetitionManagementTab = () => {
           startDate: '',
           endDate: ''
         })
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.detail || 'Failed to save competition'}`)
       }
     } catch (error) {
       console.error('Error saving competition:', error)
+      alert('Error saving competition')
     }
   }
 
@@ -155,6 +196,29 @@ export const CompetitionManagementTab = () => {
     if (now < start) return { status: 'upcoming', color: 'bg-blue-500' }
     if (now > end) return { status: 'ended', color: 'bg-gray-500' }
     return { status: 'active', color: 'bg-green-500' }
+  }
+
+  const handleDropSelect = (drop: any, bossName: string) => {
+    if (selectedPosition === null) return
+    
+    const newGridItems = [...gridItems]
+    const existingIndex = newGridItems.findIndex(item => item.position === selectedPosition)
+    
+    const newItem = {
+      position: selectedPosition,
+      itemName: drop.item_name,
+      bossName: bossName,
+      imageUrl: drop.file
+    }
+    
+    if (existingIndex >= 0) {
+      newGridItems[existingIndex] = newItem
+    } else {
+      newGridItems.push(newItem)
+    }
+    
+    setGridItems(newGridItems)
+    setSelectedPosition(null)
   }
 
   if (loading) {
@@ -253,25 +317,93 @@ export const CompetitionManagementTab = () => {
               )}
 
               {formData.type === 'DROPS' && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Boss
-                  </label>
-                  <Select
-                    value={formData.boss}
-                    onValueChange={(value) => setFormData({ ...formData, boss: value })}
+                <div className="space-y-4">
+                  <Button
+                    type="button"
+                    onClick={() => setShowGridBuilder(!showGridBuilder)}
+                    className="bg-purple-600 hover:bg-purple-700"
                   >
-                    <SelectTrigger className="bg-slate-600 border-slate-500 text-white">
-                      <SelectValue placeholder="Select boss" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {bosses.map((boss) => (
-                        <SelectItem key={boss} value={boss}>
-                          {boss}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    {showGridBuilder ? 'Hide' : 'Build'} Bingo Grid
+                  </Button>
+
+                  {showGridBuilder && (
+                    <Card className="bg-slate-700/30 border-slate-600">
+                      <CardHeader>
+                        <CardTitle className="text-white">Bingo Grid Builder</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                              Grid Size
+                            </label>
+                            <Select
+                              value={gridSize.toString()}
+                              onValueChange={(value) => {
+                                const size = parseInt(value) as 6 | 10 | 12
+                                setGridSize(size)
+                                setGridItems([])
+                              }}
+                            >
+                              <SelectTrigger className="bg-slate-600 border-slate-500 text-white">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="6">6x6 (36 squares)</SelectItem>
+                                <SelectItem value="10">10x10 (100 squares)</SelectItem>
+                                <SelectItem value="12">12x12 (144 squares)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="grid gap-1" style={{
+                            gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`
+                          }}>
+                            {Array.from({ length: gridSize * gridSize }).map((_, index) => {
+                              const item = gridItems.find(i => i.position === index)
+                              return (
+                                <div
+                                  key={index}
+                                  className="aspect-square border border-slate-600 rounded bg-slate-700/50 hover:bg-slate-700 cursor-pointer p-1"
+                                  onClick={() => {
+                                    setSelectedPosition(index)
+                                    setShowDropModal(true)
+                                  }}
+                                >
+                                  {item ? (
+                                    <img
+                                      src={item.imageUrl}
+                                      alt={item.itemName}
+                                      className="w-full h-full object-contain"
+                                      title={`${item.itemName} - ${item.bossName}`}
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">
+                                      +
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                          
+                          <div className="flex justify-between">
+                            <span className="text-slate-300 text-sm">
+                              {gridItems.length} / {gridSize * gridSize} squares filled
+                            </span>
+                            <Button
+                              type="button"
+                              onClick={() => setGridItems([])}
+                              variant="outline"
+                              className="text-red-400 border-red-400"
+                            >
+                              Clear Grid
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
               )}
 
@@ -417,6 +549,16 @@ export const CompetitionManagementTab = () => {
           )}
         </CardContent>
       </Card>
+
+      <DropSearchModal
+        isOpen={showDropModal}
+        onClose={() => {
+          setShowDropModal(false)
+          setSelectedPosition(null)
+        }}
+        onSelect={handleDropSelect}
+        position={selectedPosition || 0}
+      />
     </div>
   )
 }
