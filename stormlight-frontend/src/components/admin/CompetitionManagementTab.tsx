@@ -526,7 +526,6 @@ export const CompetitionManagementTab = () => {
                       <SelectValue placeholder="Select a badge (optional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
                       {customBadges.map((badge) => (
                         <SelectItem key={badge.id} value={badge.id}>
                           {badge.name}
