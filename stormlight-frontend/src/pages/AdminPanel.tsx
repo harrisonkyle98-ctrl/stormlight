@@ -28,12 +28,12 @@ const AdminPanel = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center space-x-3">
-        <Settings className="w-8 h-8 text-blue-400" />
-        <div>
-          <h1 className="text-3xl font-bold text-white">Admin Control Panel</h1>
-          <p className="text-slate-300">Manage clan settings and operations</p>
-        </div>
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-white mb-2">
+          <Settings className="inline-block w-8 h-8 mr-2 text-blue-400" />
+          Admin Control Panel
+        </h1>
+        <p className="text-slate-300">Manage clan settings and operations</p>
       </div>
 
       <Card className="bg-slate-800/50 border-slate-700">

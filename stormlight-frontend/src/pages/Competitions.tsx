@@ -93,20 +93,14 @@ const Competitions = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">
-            <Trophy className="inline-block w-8 h-8 mr-2 text-green-400" />
-            Clan Competitions
-          </h1>
-          <p className="text-slate-300">
-            Compete with your clan mates in XP and Drop challenges
-          </p>
-        </div>
-        <Button className="bg-green-600 hover:bg-green-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Create Competition
-        </Button>
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-white mb-2">
+          <Trophy className="inline-block w-8 h-8 mr-2 text-green-400" />
+          Clan Competitions
+        </h1>
+        <p className="text-slate-300">
+          Compete with your clan mates in XP and Drop challenges
+        </p>
       </div>
 
       <div className="flex items-center space-x-4 p-4 bg-slate-700/30 rounded-lg">
