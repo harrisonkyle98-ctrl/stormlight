@@ -2087,7 +2087,7 @@
   },
   {
     "item_name": "Tzkal-Zuk's armour piece",
-    "file": "/assets/drops/unknown_drop.png",
+    "file": "/assets/drops/tzkal_zuk_armour_piece.png",
     "bosses": [
       "Tzkal-Zuk"
     ]
