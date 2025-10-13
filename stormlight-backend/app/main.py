@@ -3025,7 +3025,8 @@ async def get_custom_badges(admin_id: str = Depends(verify_admin_access)):
     try:
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
             badges = await prisma.custombadge.find_many(
-                order={'createdAt': 'desc'}
+                order={'createdAt': 'desc'},
+                include={'competitions': True}
             )
             return {"badges": badges}
         return {"badges": []}

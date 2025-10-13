@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
-import { Award, Plus, Edit, Trash2 } from 'lucide-react'
+import { Award, Plus, Edit, Trash2, Lock } from 'lucide-react'
 
 interface CustomBadge {
   id: string
@@ -14,6 +14,7 @@ interface CustomBadge {
   gradientColors?: string[]
   createdBy: string
   createdAt: string
+  competitions?: any[]
 }
 
 export const BadgeManagementTab = () => {
@@ -351,6 +352,11 @@ export const BadgeManagementTab = () => {
                         className="w-4 h-4"
                       />
                       <span>{badge.name}</span>
+                      {badge.competitions && badge.competitions.length > 0 && (
+                        <span title={`Linked to ${badge.competitions.length} competition(s)`}>
+                          <Lock className="w-3 h-3 ml-1 text-yellow-400" />
+                        </span>
+                      )}
                     </div>
                     <div className="flex space-x-1 ml-2">
                       <Button
