@@ -4,7 +4,7 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Badge } from '../ui/badge'
-import { Swords, Plus, Edit, Trash2, Users } from 'lucide-react'
+import { Trophy, Plus, Edit, Trash2, Users } from 'lucide-react'
 
 interface Competition {
   id: number
@@ -74,15 +74,15 @@ export const CompetitionManagementTab = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     try {
       const token = localStorage.getItem('access_token')
-      const url = editingCompetition 
+      const url = editingCompetition
         ? `${API_URL}/api/admin/competitions/${editingCompetition.id}`
         : `${API_URL}/api/admin/competitions`
-      
+
       const method = editingCompetition ? 'PUT' : 'POST'
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -165,7 +165,7 @@ export const CompetitionManagementTab = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-white">Competition Management</h2>
-        <Button 
+        <Button
           onClick={() => setShowCreateForm(true)}
           className="bg-blue-600 hover:bg-blue-700"
         >
@@ -197,13 +197,13 @@ export const CompetitionManagementTab = () => {
                     className="bg-slate-600 border-slate-500 text-white"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">
                     Type
                   </label>
-                  <Select 
-                    value={formData.type} 
+                  <Select
+                    value={formData.type}
                     onValueChange={(value: 'XP' | 'DROPS') => setFormData({ ...formData, type: value })}
                   >
                     <SelectTrigger className="bg-slate-600 border-slate-500 text-white">
@@ -234,8 +234,8 @@ export const CompetitionManagementTab = () => {
                   <label className="block text-sm font-medium text-slate-300 mb-2">
                     Skill
                   </label>
-                  <Select 
-                    value={formData.skill} 
+                  <Select
+                    value={formData.skill}
                     onValueChange={(value) => setFormData({ ...formData, skill: value })}
                   >
                     <SelectTrigger className="bg-slate-600 border-slate-500 text-white">
@@ -257,8 +257,8 @@ export const CompetitionManagementTab = () => {
                   <label className="block text-sm font-medium text-slate-300 mb-2">
                     Boss
                   </label>
-                  <Select 
-                    value={formData.boss} 
+                  <Select
+                    value={formData.boss}
                     onValueChange={(value) => setFormData({ ...formData, boss: value })}
                   >
                     <SelectTrigger className="bg-slate-600 border-slate-500 text-white">
@@ -288,7 +288,7 @@ export const CompetitionManagementTab = () => {
                     className="bg-slate-600 border-slate-500 text-white"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">
                     End Date
@@ -307,9 +307,9 @@ export const CompetitionManagementTab = () => {
                 <Button type="submit" className="bg-green-600 hover:bg-green-700">
                   {editingCompetition ? 'Update' : 'Create'} Competition
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => {
                     setShowCreateForm(false)
                     setEditingCompetition(null)
@@ -336,7 +336,7 @@ export const CompetitionManagementTab = () => {
       <Card className="bg-slate-700/30 border-slate-600">
         <CardHeader>
           <CardTitle className="text-white flex items-center space-x-2">
-            <Swords className="w-5 h-5 text-blue-400" />
+            <Trophy className="w-5 h-5 text-blue-400" />
             <span>Active Competitions</span>
           </CardTitle>
         </CardHeader>
@@ -347,7 +347,7 @@ export const CompetitionManagementTab = () => {
             <div className="space-y-4">
               {competitions.map((competition) => {
                 const { status, color } = getCompetitionStatus(competition.startDate, competition.endDate)
-                
+
                 return (
                   <div key={competition.id} className="p-4 bg-slate-600/30 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
@@ -379,9 +379,9 @@ export const CompetitionManagementTab = () => {
                         </Button>
                       </div>
                     </div>
-                    
+
                     <p className="text-slate-400 text-sm mb-2">{competition.description}</p>
-                    
+
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <span className="text-slate-400">
