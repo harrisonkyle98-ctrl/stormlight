@@ -3478,6 +3478,7 @@ async def create_admin_competition(
         print(f"Error creating competition: {e}")
         import traceback
         traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error creating competition: {str(e)}")
 
 @api_router.put("/admin/competitions/{competition_id}")
 async def update_admin_competition(
