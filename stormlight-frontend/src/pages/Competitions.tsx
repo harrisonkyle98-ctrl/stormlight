@@ -7,21 +7,32 @@ import { Trophy, Calendar, Users } from 'lucide-react'
 import { getSkillIcon } from '../utils/skillIcons'
 
 interface Competition {
-  id: number
+  id: string
   name: string
   description: string
-  type: 'xp' | 'drops'
+  type: 'XP_GAIN' | 'BOSS_KILLS'
   skill?: string
-  boss?: string
+  boardSize?: number
+  dropsGrid?: any[]
   start_date: string
   end_date: string
   created_by: string
   created_at: string
   participants: string[]
+  rewardFirstGp?: number
+  rewardSecondGp?: number
+  rewardThirdGp?: number
+  rewardBadgeId?: string
 }
 
 interface CompetitionsData {
   competitions: Competition[]
+}
+
+const getCompetitionTypeLabel = (type: string): string => {
+  if (type === 'XP_GAIN') return 'Skilling'
+  if (type === 'BOSS_KILLS') return 'PvM'
+  return type
 }
 
 const Competitions = () => {
@@ -129,7 +140,7 @@ const Competitions = () => {
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center space-x-3">
-                        {competition.type === 'xp' ? (
+                        {competition.type === 'XP_GAIN' ? (
                           getSkillIcon(competition.skill || 'overall') ? (
                             <img 
                               src={getSkillIcon(competition.skill || 'overall')!} 
@@ -180,25 +191,46 @@ const Competitions = () => {
                         <Users className="w-4 h-4 text-slate-400" />
                         <div>
                           <p className="text-sm text-slate-400">Type</p>
-                          <p className="text-white font-medium capitalize">
-                            {competition.type}
+                          <p className="text-white font-medium">
+                            {getCompetitionTypeLabel(competition.type)}
                           </p>
                         </div>
                       </div>
                     </div>
                     
                     <div className="flex items-center justify-between pt-4 border-t border-slate-700">
-                      <div className="flex items-center space-x-2">
-                        <Trophy className="w-4 h-4 text-yellow-400" />
-                        <span className="text-sm text-slate-400">
-                          {competition.type === 'xp' ? 'Skill' : 'Boss'}: 
-                          <span className="text-white capitalize ml-1">
-                            {competition.type === 'xp' 
-                              ? competition.skill 
-                              : competition.boss || 'All bosses'
-                            }
-                          </span>
-                        </span>
+                      <div className="flex flex-col space-y-2">
+                        {competition.type === 'BOSS_KILLS' && competition.boardSize && (
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm text-slate-400">Grid Size:</span>
+                            <span className="text-white font-medium">
+                              {competition.boardSize}x{competition.boardSize}
+                            </span>
+                          </div>
+                        )}
+                        {(competition.rewardFirstGp || competition.rewardSecondGp || competition.rewardThirdGp) && (
+                          <div className="flex items-center space-x-2">
+                            <Trophy className="w-4 h-4 text-yellow-400" />
+                            <span className="text-sm text-slate-400">Rewards:</span>
+                            <div className="flex space-x-3 text-white text-sm">
+                              {competition.rewardFirstGp && (
+                                <span className="text-yellow-400 font-bold">
+                                  1st: {(competition.rewardFirstGp / 1000000).toFixed(0)}M GP
+                                </span>
+                              )}
+                              {competition.rewardSecondGp && (
+                                <span className="text-gray-300">
+                                  2nd: {(competition.rewardSecondGp / 1000000).toFixed(0)}M GP
+                                </span>
+                              )}
+                              {competition.rewardThirdGp && (
+                                <span className="text-amber-600">
+                                  3rd: {(competition.rewardThirdGp / 1000000).toFixed(0)}M GP
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <Button asChild variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
                         <Link to={`/competitions/${competition.id}`}>

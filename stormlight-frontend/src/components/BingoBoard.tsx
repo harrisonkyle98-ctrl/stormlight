@@ -4,7 +4,7 @@ interface GridItem {
   position: number
   itemName: string
   bossName: string
-  imageUrl: string
+  imagePath: string
 }
 
 interface BingoBoardProps {
@@ -51,7 +51,7 @@ export const BingoBoard = ({
             return (
               <div
                 key={index}
-                className={`aspect-square border rounded p-0.5 transition-all ${
+                className={`aspect-square border rounded p-0.5 transition-all relative ${
                   isCompleted
                     ? 'border-green-500 bg-green-500/20'
                     : 'border-slate-600 bg-slate-700/50'
@@ -63,13 +63,18 @@ export const BingoBoard = ({
               >
                 {item && (
                   <img
-                    src={item.imageUrl}
+                    src={`https://stormlight.fly.dev${item.imagePath}`}
                     alt={item.itemName}
                     className={`w-full h-full object-contain transition-all ${
-                      isCompleted ? '' : 'grayscale opacity-50'
+                      isCompleted ? '' : 'opacity-50'
                     }`}
                     title={`${item.itemName} - ${item.bossName}`}
                   />
+                )}
+                {isCompleted && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-2xl text-green-400">✓</span>
+                  </div>
                 )}
               </div>
             )

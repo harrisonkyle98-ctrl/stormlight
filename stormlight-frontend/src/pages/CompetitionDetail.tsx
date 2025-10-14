@@ -7,31 +7,37 @@ import { ArrowLeft, Trophy, Calendar, Users, TrendingUp } from 'lucide-react'
 import { getSkillIcon } from '../utils/skillIcons'
 import { fetchClanMembers, getGradientStyle } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { BingoBoard } from '../components/BingoBoard'
 
 interface CompetitionLeaderboard {
   username: string
   xp_gain?: number
-  drop_count?: number
+  squares_completed?: number
+  total_squares?: number
+  completion_percentage?: number
+  completed_positions?: number[]
   skill?: string
-  boss?: string
-  xp?: number
-  level?: number
   rank?: number | null
 }
 
 interface CompetitionDetail {
-  id: number
+  id: string
   name: string
   description: string
-  type: 'xp' | 'drops'
+  type: 'XP_GAIN' | 'BOSS_KILLS'
   skill?: string
-  boss?: string
+  boardSize?: number
+  dropsGrid?: any[]
   start_date: string
   end_date: string
   created_by: string
   created_at: string
-  participants: string[]
   leaderboard: CompetitionLeaderboard[]
+  rewardFirstGp?: number
+  rewardSecondGp?: number
+  rewardThirdGp?: number
+  rewardBadgeId?: string
 }
 
 const CompetitionDetail = () => {
@@ -126,15 +132,7 @@ const CompetitionDetail = () => {
 
   const { status, color } = getCompetitionStatus(competition.start_date, competition.end_date)
 
-  const sampleLeaderboard = [
-    { username: 'ClanLeader', xp: 2500000, xp_gain: 2500000, drop_count: 15, level: 85, rank: 1245, boss: 'All bosses' },
-    { username: 'SkillMaster', xp: 2200000, xp_gain: 2200000, drop_count: 12, level: 82, rank: 1456, boss: 'All bosses' },
-    { username: 'PvPWarrior', xp: 1800000, xp_gain: 1800000, drop_count: 10, level: 78, rank: 2134, boss: 'All bosses' },
-    { username: 'QuestHero', xp: 1500000, xp_gain: 1500000, drop_count: 8, level: 75, rank: 2567, boss: 'All bosses' },
-    { username: 'BossSlayer', xp: 1200000, xp_gain: 1200000, drop_count: 6, level: 72, rank: 3245, boss: 'All bosses' },
-  ]
-
-  const leaderboardData = competition.leaderboard.length > 0 ? competition.leaderboard : sampleLeaderboard
+  const leaderboardData = competition.leaderboard || []
 
   return (
     <div className="space-y-6">
@@ -149,7 +147,7 @@ const CompetitionDetail = () => {
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-4">
-              {competition.type === 'xp' ? (
+              {competition.type === 'XP_GAIN' ? (
                 getSkillIcon(competition.skill || 'overall') ? (
                   <img 
                     src={getSkillIcon(competition.skill || 'overall')!} 
@@ -164,10 +162,10 @@ const CompetitionDetail = () => {
               )}
               <div>
                 <CardTitle className="text-2xl text-white mb-2">
-                  {competition.name || `${competition.type === 'xp' ? (competition.skill?.charAt(0).toUpperCase() || '') + (competition.skill?.slice(1) || '') : 'Boss Drop'} Competition`}
+                  {competition.name}
                 </CardTitle>
                 <p className="text-slate-400">
-                  {competition.description || `Compete for the ${competition.type === 'xp' ? 'highest XP gains' : 'most boss drops'}!`}
+                  {competition.description || `Compete for the ${competition.type === 'XP_GAIN' ? 'highest XP gains' : 'most boss drops'}!`}
                 </p>
               </div>
             </div>
@@ -208,18 +206,117 @@ const CompetitionDetail = () => {
             <div className="flex items-center space-x-3">
               <TrendingUp className="w-5 h-5 text-purple-400" />
               <div>
-                <p className="text-sm text-slate-400">{competition.type === 'xp' ? 'Skill' : 'Boss'}</p>
-                <p className="text-white font-medium capitalize">
-                  {competition.type === 'xp' 
-                    ? competition.skill 
-                    : competition.boss || 'All bosses'
-                  }
+                <p className="text-sm text-slate-400">Type</p>
+                <p className="text-white font-medium">
+                  {competition.type === 'XP_GAIN' ? 'Skilling' : 'PvM'}
+                  {competition.type === 'XP_GAIN' && competition.skill && (
+                    <span className="text-slate-400 text-sm ml-1">({competition.skill})</span>
+                  )}
                 </p>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {(competition.rewardFirstGp || competition.rewardSecondGp || competition.rewardThirdGp) && (
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center space-x-2">
+              <Trophy className="w-5 h-5 text-yellow-400" />
+              <span>Competition Rewards</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {competition.rewardFirstGp && (
+                <div className="p-4 bg-gradient-to-br from-yellow-600/20 to-yellow-800/20 border border-yellow-600/30 rounded-lg">
+                  <div className="text-2xl mb-2">🥇</div>
+                  <div className="text-sm text-slate-400">1st Place</div>
+                  <div className="text-2xl font-bold text-yellow-400">{(competition.rewardFirstGp / 1000000).toFixed(0)}M GP</div>
+                  {competition.rewardBadgeId && <div className="text-xs text-yellow-300 mt-1">+ Competition Badge</div>}
+                </div>
+              )}
+              {competition.rewardSecondGp && (
+                <div className="p-4 bg-gradient-to-br from-gray-400/20 to-gray-600/20 border border-gray-400/30 rounded-lg">
+                  <div className="text-2xl mb-2">🥈</div>
+                  <div className="text-sm text-slate-400">2nd Place</div>
+                  <div className="text-2xl font-bold text-gray-300">{(competition.rewardSecondGp / 1000000).toFixed(0)}M GP</div>
+                </div>
+              )}
+              {competition.rewardThirdGp && (
+                <div className="p-4 bg-gradient-to-br from-amber-600/20 to-amber-800/20 border border-amber-600/30 rounded-lg">
+                  <div className="text-2xl mb-2">🥉</div>
+                  <div className="text-sm text-slate-400">3rd Place</div>
+                  <div className="text-2xl font-bold text-amber-400">{(competition.rewardThirdGp / 1000000).toFixed(0)}M GP</div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {competition.type === 'XP_GAIN' && leaderboardData.length > 0 && (
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center space-x-2">
+              <TrendingUp className="w-5 h-5 text-green-400" />
+              <span>Top 10 Progress</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={leaderboardData.slice(0, 10)} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  dataKey="username" 
+                  stroke="#9ca3af"
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                />
+                <YAxis 
+                  stroke="#9ca3af"
+                  tickFormatter={(value) => {
+                    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
+                    if (value >= 1000) return `${(value / 1000).toFixed(0)}K`
+                    return value.toString()
+                  }}
+                />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569' }}
+                  labelStyle={{ color: '#f1f5f9' }}
+                  formatter={(value: any) => [formatNumber(value), 'XP Gained']}
+                />
+                <Bar dataKey="xp_gain" radius={[8, 8, 0, 0]}>
+                  {leaderboardData.slice(0, 10).map((_entry, index) => (
+                    <Cell key={`cell-${index}`} fill={index === 0 ? '#fbbf24' : index === 1 ? '#9ca3af' : index === 2 ? '#f59e0b' : '#10b981'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {competition.type === 'BOSS_KILLS' && competition.dropsGrid && competition.boardSize && (
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center space-x-2">
+              <Trophy className="w-5 h-5 text-purple-400" />
+              <span>Competition Board ({competition.boardSize}x{competition.boardSize})</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BingoBoard 
+              competitionId={competition.id}
+              gridSize={competition.boardSize}
+              dropsGrid={competition.dropsGrid}
+              completedPositions={leaderboardData[0]?.completed_positions || []}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader>
@@ -275,31 +372,36 @@ const CompetitionDetail = () => {
                 </div>
                 
                 <div className="flex items-center space-x-6">
-                  <div className="text-right">
-                    <p className="text-sm text-slate-400">{competition.type === 'xp' ? 'Level' : 'Boss'}</p>
-                    <p className="text-lg font-bold text-white">
-                      {competition.type === 'xp' 
-                        ? player.level || '-'
-                        : player.boss || 'All bosses'
-                      }
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-slate-400">{competition.type === 'xp' ? 'XP Gained' : 'Drops'}</p>
-                    <p className="text-lg font-bold text-green-400">
-                      {competition.type === 'xp' 
-                        ? formatNumber(player.xp_gain || player.xp || 0)
-                        : (player.drop_count || 0).toString()
-                      }
-                    </p>
-                  </div>
-                  {player.rank && (
-                    <div className="text-right">
-                      <p className="text-sm text-slate-400">Global Rank</p>
-                      <p className="text-lg font-semibold text-blue-400">
-                        #{player.rank.toLocaleString()}
-                      </p>
-                    </div>
+                  {competition.type === 'XP_GAIN' ? (
+                    <>
+                      <div className="text-right">
+                        <p className="text-sm text-slate-400">Skill</p>
+                        <p className="text-lg font-bold text-white capitalize">
+                          {competition.skill || 'Overall'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-slate-400">XP Gained</p>
+                        <p className="text-lg font-bold text-green-400">
+                          {formatNumber(player.xp_gain || 0)}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-right">
+                        <p className="text-sm text-slate-400">Completed</p>
+                        <p className="text-lg font-bold text-green-400">
+                          {player.squares_completed || 0} / {player.total_squares || 0}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-slate-400">Progress</p>
+                        <p className="text-lg font-bold text-purple-400">
+                          {player.completion_percentage || 0}%
+                        </p>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
