@@ -127,10 +127,15 @@ export const CompetitionManagementTab = () => {
 
       const method = editingCompetition ? 'PUT' : 'POST'
 
+      const typeMapping: Record<string, string> = {
+        'XP': 'XP_GAIN',
+        'DROPS': 'BOSS_KILLS'
+      }
+
       const payload: any = {
         name: formData.name,
         description: formData.description,
-        type: formData.type,
+        type: typeMapping[formData.type] || formData.type,
         start_date: formData.startDate + 'T00:00:00.000Z',
         end_date: formData.endDate + 'T00:00:00.000Z',
         reward_first_gp: formData.reward_first_gp ? parseInt(formData.reward_first_gp) : null,
