@@ -3403,13 +3403,10 @@ async def create_admin_competition(
             elif comp_type in ['DROPS', 'PVM']:
                 comp_type = 'BOSS_KILLS'
             
-            competition = await prisma.competition.create({
+            create_data = {
                 'name': competition_data['name'],
                 'description': competition_data.get('description', ''),
                 'type': comp_type,
-                'skill': competition_data.get('skill'),
-                'boardSize': competition_data.get('board_size'),
-                'dropsGrid': competition_data.get('drops_grid'),
                 'startDate': start_date,
                 'endDate': end_date,
                 'createdBy': admin_id,
@@ -3417,7 +3414,16 @@ async def create_admin_competition(
                 'rewardSecondGp': competition_data.get('reward_second_gp'),
                 'rewardThirdGp': competition_data.get('reward_third_gp'),
                 'rewardBadgeId': competition_data.get('reward_badge_id')
-            })
+            }
+            
+            if competition_data.get('skill'):
+                create_data['skill'] = competition_data['skill']
+            if competition_data.get('board_size'):
+                create_data['boardSize'] = competition_data['board_size']
+            if competition_data.get('drops_grid'):
+                create_data['dropsGrid'] = competition_data['drops_grid']
+            
+            competition = await prisma.competition.create(create_data)
             
             members = await prisma.clanmember.find_many(where={'active': True})
             
