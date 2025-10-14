@@ -19,6 +19,7 @@ interface Competition {
   createdBy: string
   createdAt: string
   participants: string[]
+  participantCount?: number
   rewardFirstGp?: number
   rewardSecondGp?: number
   rewardThirdGp?: number
@@ -200,6 +201,13 @@ const Competitions = () => {
                     
                     <div className="flex items-center justify-between pt-4 border-t border-slate-700">
                       <div className="flex flex-col space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Users className="w-4 h-4 text-slate-400" />
+                          <span className="text-sm text-slate-400">Participants:</span>
+                          <span className="text-white font-medium">
+                            {competition.participantCount || 0}
+                          </span>
+                        </div>
                         {competition.type === 'BOSS_KILLS' && competition.boardSize && (
                           <div className="flex items-center space-x-2">
                             <span className="text-sm text-slate-400">Grid Size:</span>

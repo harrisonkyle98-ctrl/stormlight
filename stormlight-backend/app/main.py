@@ -1874,7 +1874,8 @@ async def get_competitions(status: Optional[str] = None):
     try:
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
             competitions = await prisma.competition.find_many(
-                order={'startDate': 'desc'}
+                order={'startDate': 'desc'},
+                include={'entries': True}
             )
             
             from datetime import timezone
@@ -1892,6 +1893,7 @@ async def get_competitions(status: Optional[str] = None):
                 if status is None or comp_status == status:
                     comp_dict = comp.dict()
                     comp_dict['status'] = comp_status
+                    comp_dict['participantCount'] = len(comp.entries) if comp.entries else 0
                     competition_list.append(comp_dict)
             
             return {"competitions": competition_list}
@@ -1951,7 +1953,7 @@ async def calculate_drop_leaderboard(competition, members):
     return leaderboard
 
 @api_router.get("/competitions/{competition_id}")
-async def get_competition(competition_id: str):
+async def get_competition(competition_id: str, page: int = 1, per_page: int = 25):
     """Get specific competition with leaderboard (on-demand calculation)"""
     try:
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
@@ -1974,6 +1976,7 @@ async def get_competition(competition_id: str):
                 conn = await get_db_connection()
                 async with conn:
                     for entry in competition.entries:
+                        xp_gain = 0
                         try:
                             end_snapshot = await get_snapshot_json_on_or_before(
                                 conn, entry.username, competition.endDate.date()
@@ -1987,15 +1990,15 @@ async def get_competition(competition_id: str):
                                     xp_end = end_snapshot.get(skill, {}).get('xp', 0)
                                 
                                 xp_gain = max(0, xp_end - entry.xpStart)
-                                
-                                leaderboard.append({
-                                    'username': entry.username,
-                                    'xp_gain': xp_gain,
-                                    'skill': competition.skill
-                                })
                         except Exception as e:
                             print(f"Error calculating XP for {entry.username}: {e}")
-                            continue
+                            xp_gain = 0
+                        
+                        leaderboard.append({
+                            'username': entry.username,
+                            'xp_gain': xp_gain,
+                            'skill': competition.skill
+                        })
                 
                 leaderboard.sort(key=lambda x: x['xp_gain'], reverse=True)
             
@@ -2008,6 +2011,8 @@ async def get_competition(competition_id: str):
                 
                 async with conn:
                     for entry in competition.entries:
+                        completed_count = 0
+                        completed_positions = []
                         try:
                             cursor = await conn.execute("""
                                 SELECT item_name, boss_name
@@ -2023,25 +2028,22 @@ async def get_competition(competition_id: str):
                             member_drops = await cursor.fetchall()
                             drops_set = {(drop['item_name'], drop['boss_name']) for drop in member_drops}
                             
-                            completed_count = 0
-                            completed_positions = []
                             for grid_item in drops_grid:
                                 if (grid_item['itemName'], grid_item['bossName']) in drops_set:
                                     completed_count += 1
                                     completed_positions.append(grid_item['position'])
-                            
-                            leaderboard.append({
-                                'username': entry.username,
-                                'squares_completed': completed_count,
-                                'total_squares': len(drops_grid),
-                                'completion_percentage': round((completed_count / len(drops_grid) * 100), 1) if drops_grid else 0,
-                                'completed_positions': completed_positions
-                            })
                         except Exception as e:
                             print(f"Error calculating drops for {entry.username}: {e}")
-                            import traceback
-                            traceback.print_exc()
-                            continue
+                            completed_count = 0
+                            completed_positions = []
+                        
+                        leaderboard.append({
+                            'username': entry.username,
+                            'squares_completed': completed_count,
+                            'total_squares': len(drops_grid),
+                            'completion_percentage': round((completed_count / len(drops_grid) * 100), 1) if drops_grid else 0,
+                            'completed_positions': completed_positions
+                        })
                 
                 leaderboard.sort(key=lambda x: x['squares_completed'], reverse=True)
             
@@ -2086,9 +2088,19 @@ async def get_competition(competition_id: str):
                             
                             invalidate_player_cache(winner_username)
             
+            start_idx = (page - 1) * per_page
+            end_idx = start_idx + per_page
+            total_participants = len(leaderboard)
+            
             return {
                 **competition.dict(),
-                "leaderboard": leaderboard[:50]
+                "leaderboard": leaderboard[start_idx:end_idx],
+                "pagination": {
+                    "page": page,
+                    "per_page": per_page,
+                    "total": total_participants,
+                    "total_pages": (total_participants + per_page - 1) // per_page
+                }
             }
         else:
             raise HTTPException(status_code=503, detail="Database not available")
@@ -3436,35 +3448,43 @@ async def create_admin_competition(
                 conn = await get_db_connection()
                 async with conn:
                     for member in members:
-                        start_snapshot = await get_snapshot_json_on_or_before(
-                            conn, member.username, start_date.date()
-                        )
-                        
-                        xp_start = 0
-                        if start_snapshot:
-                            skill = competition_data.get('skill', 'overall')
-                            if skill and skill.lower() == 'overall':
-                                xp_start = sum(s.get('xp', 0) for s in start_snapshot.values() if isinstance(s, dict))
-                            else:
-                                xp_start = start_snapshot.get(skill, {}).get('xp', 0)
-                        
-                        await prisma.competitionentry.create({
-                            'competitionId': competition.id,
-                            'userId': member.discordId or f"clan_{member.username}",
-                            'username': member.username,
-                            'xpStart': xp_start,
-                            'xpEnd': None
-                        })
+                        try:
+                            start_snapshot = await get_snapshot_json_on_or_before(
+                                conn, member.username, start_date.date()
+                            )
+                            
+                            xp_start = 0
+                            if start_snapshot:
+                                skill = competition_data.get('skill', 'overall')
+                                if skill and skill.lower() == 'overall':
+                                    xp_start = sum(s.get('xp', 0) for s in start_snapshot.values() if isinstance(s, dict))
+                                else:
+                                    xp_start = start_snapshot.get(skill, {}).get('xp', 0)
+                            
+                            await prisma.competitionentry.create({
+                                'competitionId': competition.id,
+                                'memberId': member.id,
+                                'username': member.username,
+                                'xpStart': xp_start,
+                                'xpEnd': None
+                            })
+                        except Exception as e:
+                            print(f"Warning: Failed to create entry for {member.username}: {e}")
+                            continue
             else:
                 for member in members:
-                    await prisma.competitionentry.create({
-                        'competitionId': competition.id,
-                        'userId': member.discordId or f"clan_{member.username}",
-                        'username': member.username,
-                        'xpStart': 0,
-                        'xpEnd': None,
-                        'dropsCompleted': []
-                    })
+                    try:
+                        await prisma.competitionentry.create({
+                            'competitionId': competition.id,
+                            'memberId': member.id,
+                            'username': member.username,
+                            'xpStart': 0,
+                            'xpEnd': None,
+                            'dropsCompleted': []
+                        })
+                    except Exception as e:
+                        print(f"Warning: Failed to create entry for {member.username}: {e}")
+                        continue
             
             await log_admin_action(
                 admin_id,
@@ -3484,7 +3504,16 @@ async def create_admin_competition(
         print(f"Error creating competition: {e}")
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error creating competition: {str(e)}")
+        
+        error_msg = str(e)
+        if "dropsGrid" in error_msg or "drops_grid" in error_msg:
+            error_msg = "Invalid Bingo grid configuration. Please ensure all grid cells are filled."
+        elif "skill" in error_msg:
+            error_msg = "Invalid skill selection. Please select a valid skill."
+        elif "start_date" in error_msg or "end_date" in error_msg:
+            error_msg = "Invalid competition dates. Dates must be at midnight UTC."
+        
+        raise HTTPException(status_code=400, detail=error_msg)
 
 @api_router.put("/admin/competitions/{competition_id}")
 async def update_admin_competition(

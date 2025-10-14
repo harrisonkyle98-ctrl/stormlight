@@ -46,12 +46,15 @@ const CompetitionDetail = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [clanMembers, setClanMembers] = useState<any[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalParticipants, setTotalParticipants] = useState(0)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
   useEffect(() => {
     if (id) {
-      fetchCompetition()
+      fetchCompetition(1)
       loadClanMembers()
     }
   }, [id])
@@ -61,12 +64,17 @@ const CompetitionDetail = () => {
     setClanMembers(members)
   }
 
-  const fetchCompetition = async () => {
+  const fetchCompetition = async (page: number = 1) => {
     try {
-      const response = await fetch(`${API_URL}/api/competitions/${id}`)
+      const response = await fetch(`${API_URL}/api/competitions/${id}?page=${page}&per_page=25`)
       if (response.ok) {
         const data = await response.json()
         setCompetition(data)
+        if (data.pagination) {
+          setCurrentPage(data.pagination.page)
+          setTotalPages(data.pagination.total_pages)
+          setTotalParticipants(data.pagination.total)
+        }
       } else {
         setError('Competition not found')
       }
@@ -408,6 +416,39 @@ const CompetitionDetail = () => {
             ))}
           </div>
         </CardContent>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg">
+                  <div className="text-sm text-slate-400">
+                    Showing {((currentPage - 1) * 25) + 1} to {Math.min(currentPage * 25, totalParticipants)} of {totalParticipants} participants
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fetchCompetition(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="border-slate-600 text-slate-300 hover:bg-slate-700 disabled:opacity-50"
+                    >
+                      Previous
+                    </Button>
+                    <div className="text-sm text-slate-300">
+                      Page {currentPage} of {totalPages}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fetchCompetition(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="border-slate-600 text-slate-300 hover:bg-slate-700 disabled:opacity-50"
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+
       </Card>
     </div>
   )

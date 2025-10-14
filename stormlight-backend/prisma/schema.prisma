@@ -8,40 +8,40 @@ datasource db {
 }
 
 model User {
-  id                 String             @id @default(cuid())
-  discordId          String             @unique @map("discord_id")
-  username           String
-  discriminator      String?
-  avatar             String?
-  email              String?
-  roles              String[]           @default([])
-  preferences        Json?
-  createdAt          DateTime           @default(now()) @map("created_at")
-  updatedAt          DateTime           @updatedAt @map("updated_at")
-  competitionEntries CompetitionEntry[]
+  id            String   @id @default(cuid())
+  discordId     String   @unique @map("discord_id")
+  username      String
+  discriminator String?
+  avatar        String?
+  email         String?
+  roles         String[] @default([])
+  preferences   Json?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   @@map("users")
 }
 
 model ClanMember {
-  id            String    @id @default(cuid())
-  username      String    @unique
-  displayName   String?   @map("display_name")
-  clanRank      String    @map("clan_rank")
-  totalXp       BigInt    @map("total_xp")
-  totalLevel    Int       @map("total_level")
-  combatLevel   Int       @map("combat_level")
-  questPoints   Int       @default(0) @map("quest_points")
-  kills         Int       @default(0)
-  stats         Json?
-  questData     Json?     @map("quest_data")
-  lastUpdated   DateTime  @map("last_updated")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  discordId     String?   @unique @map("discord_id")
-  badges        Json?     @default("[]")
-  joinDate      DateTime? @map("join_date")
-  active        Boolean   @default(true)
-  lastSeenInApi DateTime? @map("last_seen_in_api")
+  id                 String             @id @default(cuid())
+  username           String             @unique
+  displayName        String?            @map("display_name")
+  clanRank           String             @map("clan_rank")
+  totalXp            BigInt             @map("total_xp")
+  totalLevel         Int                @map("total_level")
+  combatLevel        Int                @map("combat_level")
+  questPoints        Int                @default(0) @map("quest_points")
+  kills              Int                @default(0)
+  stats              Json?
+  questData          Json?              @map("quest_data")
+  lastUpdated        DateTime           @map("last_updated")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  discordId          String?            @unique @map("discord_id")
+  badges             Json?              @default("[]")
+  joinDate           DateTime?          @map("join_date")
+  active             Boolean            @default(true)
+  lastSeenInApi      DateTime?          @map("last_seen_in_api")
+  competitionEntries CompetitionEntry[]
 
   @@index([discordId], map: "idx_clan_members_discord_id")
   @@index([active])
@@ -75,7 +75,7 @@ model Competition {
 model CompetitionEntry {
   id              String      @id @default(cuid())
   competitionId   String      @map("competition_id")
-  userId          String      @map("user_id")
+  memberId        String      @map("member_id")
   username        String
   xpStart         BigInt      @map("xp_start")
   xpEnd           BigInt?     @map("xp_end")
@@ -86,9 +86,9 @@ model CompetitionEntry {
   createdAt       DateTime    @default(now()) @map("created_at")
   updatedAt       DateTime    @updatedAt @map("updated_at")
   competition     Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
-  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  member          ClanMember  @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
-  @@unique([competitionId, userId])
+  @@unique([competitionId, memberId])
   @@map("competition_entries")
 }
 
