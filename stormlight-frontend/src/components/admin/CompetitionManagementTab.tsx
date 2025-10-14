@@ -5,6 +5,7 @@ import { Input } from '../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Badge } from '../ui/badge'
 import { Trophy, Plus, Edit, Trash2, Users } from 'lucide-react'
+import { toast } from 'sonner'
 import { DropSearchModal } from './DropSearchModal'
 
 interface Competition {
@@ -59,6 +60,7 @@ export const CompetitionManagementTab = () => {
   const [selectedPosition, setSelectedPosition] = useState<number | null>(null)
   const [showDropModal, setShowDropModal] = useState(false)
   const [customBadges, setCustomBadges] = useState<any[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000'
 
@@ -111,6 +113,12 @@ export const CompetitionManagementTab = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (isSubmitting) {
+      return
+    }
+
+    setIsSubmitting(true)
+
     try {
       const token = localStorage.getItem('access_token')
       const url = editingCompetition
@@ -138,6 +146,8 @@ export const CompetitionManagementTab = () => {
         payload.drops_grid = gridItems
       }
 
+      console.log('Submitting competition:', payload)
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -148,7 +158,13 @@ export const CompetitionManagementTab = () => {
       })
 
       if (response.ok) {
+        const data = await response.json()
+        console.log('Competition saved successfully:', data)
+        
+        toast.success(editingCompetition ? 'Competition updated successfully!' : 'Competition created successfully!')
+        
         await fetchCompetitions()
+        
         setShowCreateForm(false)
         setEditingCompetition(null)
         setShowGridBuilder(false)
@@ -160,15 +176,22 @@ export const CompetitionManagementTab = () => {
           skill: '',
           boss: '',
           startDate: '',
-          endDate: ''
+          endDate: '',
+          reward_first_gp: '',
+          reward_second_gp: '',
+          reward_third_gp: '',
+          reward_badge_id: ''
         })
       } else {
         const error = await response.json()
-        alert(`Error: ${error.detail || 'Failed to save competition'}`)
+        console.error('Competition save error:', error)
+        toast.error(error.detail || 'Failed to save competition. Please try again.')
       }
     } catch (error) {
       console.error('Error saving competition:', error)
-      alert('Error saving competition')
+      toast.error('Network error. Please check your connection and try again.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -540,8 +563,14 @@ export const CompetitionManagementTab = () => {
               </div>
 
               <div className="flex space-x-2">
-                <Button type="submit" className="bg-green-600 hover:bg-green-700">
-                  {editingCompetition ? 'Update' : 'Create'} Competition
+                <Button 
+                  type="submit" 
+                  className="bg-green-600 hover:bg-green-700"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting 
+                    ? (editingCompetition ? 'Updating...' : 'Creating...') 
+                    : (editingCompetition ? 'Update' : 'Create') + ' Competition'}
                 </Button>
                 <Button
                   type="button"
@@ -556,7 +585,11 @@ export const CompetitionManagementTab = () => {
                       skill: '',
                       boss: '',
                       startDate: '',
-                      endDate: ''
+                      endDate: '',
+                      reward_first_gp: '',
+                      reward_second_gp: '',
+                      reward_third_gp: '',
+                      reward_badge_id: ''
                     })
                   }}
                 >
