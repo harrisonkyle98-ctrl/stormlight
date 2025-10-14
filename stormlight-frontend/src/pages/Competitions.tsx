@@ -14,10 +14,10 @@ interface Competition {
   skill?: string
   boardSize?: number
   dropsGrid?: any[]
-  start_date: string
-  end_date: string
-  created_by: string
-  created_at: string
+  startDate: string
+  endDate: string
+  createdBy: string
+  createdAt: string
   participants: string[]
   rewardFirstGp?: number
   rewardSecondGp?: number
@@ -133,7 +133,7 @@ const Competitions = () => {
         <div className="space-y-4">
           <div className="grid gap-6">
             {competitions.map((competition) => {
-              const { status, color } = getCompetitionStatus(competition.start_date, competition.end_date)
+              const { status, color } = getCompetitionStatus(competition.startDate, competition.endDate)
               
               return (
                 <Card key={competition.id} className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
@@ -174,7 +174,7 @@ const Competitions = () => {
                         <div>
                           <p className="text-sm text-slate-400">Start Date</p>
                           <p className="text-white font-medium">
-                            {formatDate(competition.start_date)}
+                            {formatDate(competition.startDate)}
                           </p>
                         </div>
                       </div>
@@ -183,7 +183,7 @@ const Competitions = () => {
                         <div>
                           <p className="text-sm text-slate-400">End Date</p>
                           <p className="text-white font-medium">
-                            {formatDate(competition.end_date)}
+                            {formatDate(competition.endDate)}
                           </p>
                         </div>
                       </div>

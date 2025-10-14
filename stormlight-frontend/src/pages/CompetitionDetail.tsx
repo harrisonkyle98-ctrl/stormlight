@@ -29,10 +29,10 @@ interface CompetitionDetail {
   skill?: string
   boardSize?: number
   dropsGrid?: any[]
-  start_date: string
-  end_date: string
-  created_by: string
-  created_at: string
+  startDate: string
+  endDate: string
+  createdBy: string
+  createdAt: string
   leaderboard: CompetitionLeaderboard[]
   rewardFirstGp?: number
   rewardSecondGp?: number
@@ -130,7 +130,7 @@ const CompetitionDetail = () => {
     )
   }
 
-  const { status, color } = getCompetitionStatus(competition.start_date, competition.end_date)
+  const { status, color } = getCompetitionStatus(competition.startDate, competition.endDate)
 
   const leaderboardData = competition.leaderboard || []
 
@@ -181,7 +181,7 @@ const CompetitionDetail = () => {
               <div>
                 <p className="text-sm text-slate-400">Start Date</p>
                 <p className="text-white font-medium">
-                  {formatDate(competition.start_date)}
+                  {formatDate(competition.startDate)}
                 </p>
               </div>
             </div>
@@ -190,7 +190,7 @@ const CompetitionDetail = () => {
               <div>
                 <p className="text-sm text-slate-400">End Date</p>
                 <p className="text-white font-medium">
-                  {formatDate(competition.end_date)}
+                  {formatDate(competition.endDate)}
                 </p>
               </div>
             </div>
