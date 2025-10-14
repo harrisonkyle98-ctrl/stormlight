@@ -2091,10 +2091,12 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
             start_idx = (page - 1) * per_page
             end_idx = start_idx + per_page
             total_participants = len(leaderboard)
+            top_10 = leaderboard[:10] if len(leaderboard) >= 10 else leaderboard
             
             return {
                 **competition.dict(),
                 "leaderboard": leaderboard[start_idx:end_idx],
+                "top_10": top_10,
                 "pagination": {
                     "page": page,
                     "per_page": per_page,

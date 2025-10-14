@@ -34,6 +34,7 @@ interface CompetitionDetail {
   createdBy: string
   createdAt: string
   leaderboard: CompetitionLeaderboard[]
+  top_10?: CompetitionLeaderboard[]
   rewardFirstGp?: number
   rewardSecondGp?: number
   rewardThirdGp?: number
@@ -49,6 +50,7 @@ const CompetitionDetail = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalParticipants, setTotalParticipants] = useState(0)
+  const [top10Data, setTop10Data] = useState<CompetitionLeaderboard[]>([])
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -70,6 +72,11 @@ const CompetitionDetail = () => {
       if (response.ok) {
         const data = await response.json()
         setCompetition(data)
+        
+        if (data.top_10) {
+          setTop10Data(data.top_10)
+        }
+        
         if (data.pagination) {
           setCurrentPage(data.pagination.page)
           setTotalPages(data.pagination.total_pages)
@@ -264,7 +271,7 @@ const CompetitionDetail = () => {
         </Card>
       )}
 
-      {competition.type === 'XP_GAIN' && leaderboardData.length > 0 && (
+      {competition.type === 'XP_GAIN' && top10Data.length > 0 && (
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader>
             <CardTitle className="text-white flex items-center space-x-2">
@@ -274,7 +281,7 @@ const CompetitionDetail = () => {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={leaderboardData.slice(0, 10)} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+              <BarChart data={top10Data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis 
                   dataKey="username" 
@@ -297,7 +304,7 @@ const CompetitionDetail = () => {
                   formatter={(value: any) => [formatNumber(value), 'XP Gained']}
                 />
                 <Bar dataKey="xp_gain" radius={[8, 8, 0, 0]}>
-                  {leaderboardData.slice(0, 10).map((_entry, index) => (
+                  {top10Data.map((_entry, index) => (
                     <Cell key={`cell-${index}`} fill={index === 0 ? '#fbbf24' : index === 1 ? '#9ca3af' : index === 2 ? '#f59e0b' : '#10b981'} />
                   ))}
                 </Bar>
@@ -335,15 +342,15 @@ const CompetitionDetail = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {leaderboardData.map((player, index) => (
+            {leaderboardData.map((player) => (
               <div
                 key={player.username}
                 className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
-                  index === 0 
+                  player.rank === 1
                     ? 'bg-gradient-to-r from-yellow-600/20 to-yellow-800/20 border border-yellow-600/30' 
-                    : index === 1
+                    : player.rank === 2
                     ? 'bg-gradient-to-r from-gray-400/20 to-gray-600/20 border border-gray-400/30'
-                    : index === 2
+                    : player.rank === 3
                     ? 'bg-gradient-to-r from-amber-600/20 to-amber-800/20 border border-amber-600/30'
                     : 'bg-slate-700/50 hover:bg-slate-700/70'
                 }`}
@@ -353,20 +360,20 @@ const CompetitionDetail = () => {
                     <Badge 
                       variant="outline" 
                       className={
-                        index === 0 
+                        player.rank === 1
                           ? 'text-yellow-400 border-yellow-400' 
-                          : index === 1
+                          : player.rank === 2
                           ? 'text-gray-300 border-gray-300'
-                          : index === 2
+                          : player.rank === 3
                           ? 'text-amber-400 border-amber-400'
                           : 'text-slate-400 border-slate-400'
                       }
                     >
-                      #{index + 1}
+                      #{player.rank || '—'}
                     </Badge>
-                    {index < 3 && (
+                    {player.rank && player.rank <= 3 && (
                       <span className="text-lg">
-                        {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                        {player.rank === 1 ? '🥇' : player.rank === 2 ? '🥈' : '🥉'}
                       </span>
                     )}
                   </div>
