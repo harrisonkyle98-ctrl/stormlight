@@ -1,0 +1,56 @@
+# Python cache and compiled files
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.Python
+
+# Virtual environments
+**/.venv/
+**/venv/
+**/ENV/
+**/env/
+
+# Prisma generated files (will be regenerated in Docker)
+**/.prisma/
+**/prisma/generated/
+
+# IDE and editor files
+**/.vscode/
+**/.idea/
+**/*.swp
+**/*.swo
+**/*~
+
+# OS files
+**/.DS_Store
+**/Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Node modules (frontend has its own build stage)
+**/node_modules/
+
+# Build artifacts
+**/dist/
+**/build/
+**/*.egg-info/
+
+# Logs
+**/*.log
+
+# Test files
+**/test_*.py
+**/check_*.py
+**/*_test.py
+**/tests/
+
+# Environment files
+**/.env
+**/.env.local
+
+# Deployment scripts (not needed in container)
+deploy-*.sh
+*.md

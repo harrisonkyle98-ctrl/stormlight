@@ -26,7 +26,7 @@ ARG CACHE_BUST=unknown
 RUN echo "=== Cache bust timestamp: $CACHE_BUST ===" && \
     echo "=== Generating Prisma client with recursive_type_depth=-1 ==="
 ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
-RUN poetry run prisma generate --skip-generate || poetry run prisma generate
+RUN poetry run prisma generate
 # Verify generated Prisma client can be imported
 RUN python -c "import sys; sys.path.insert(0, '/usr/local/lib/python3.12/site-packages'); from prisma import Prisma; print('=== Prisma client import successful ===')"
 # Copy backend app code
