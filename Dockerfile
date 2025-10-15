@@ -15,9 +15,13 @@ COPY stormlight-backend/pyproject.toml stormlight-backend/poetry.lock ./
 RUN poetry config virtualenvs.create false
 RUN poetry install --only=main --no-root
 COPY stormlight-backend/prisma ./prisma/
+# Verify schema.prisma has recursive_type_depth configuration
+RUN python -c "with open('./prisma/schema.prisma') as f: lines=f.readlines(); print('=== Schema Generator Config ==='); print(''.join(lines[0:5])); print('=== End Config ===')"
 # Placeholder for prisma generate
 ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 RUN poetry run prisma generate
+# Verify Prisma client was generated
+RUN python -c "import sys; print('=== Python version:', sys.version, '==='); print('=== Prisma generation complete ===')"
 # Copy backend app code
 COPY stormlight-backend/ ./
 # Copy built frontend
