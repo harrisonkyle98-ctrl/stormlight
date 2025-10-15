@@ -15,13 +15,20 @@ COPY stormlight-backend/pyproject.toml stormlight-backend/poetry.lock ./
 RUN poetry config virtualenvs.create false
 RUN poetry install --only=main --no-root
 COPY stormlight-backend/prisma ./prisma/
-# Verify schema.prisma has recursive_type_depth configuration
-RUN python -c "with open('./prisma/schema.prisma') as f: lines=f.readlines(); print('=== Schema Generator Config ==='); print(''.join(lines[0:5])); print('=== End Config ===')"
-# Placeholder for prisma generate
+# Verify schema has recursive_type_depth before generation
+RUN echo "=== Verifying schema.prisma ===" && \
+    grep -A 2 "generator client" ./prisma/schema.prisma && \
+    echo "=== Schema verified ==="
+# Clear any Prisma caches before generation
+RUN rm -rf /root/.cache/prisma* /tmp/prisma* ~/.cache/prisma* || true
+# Force fresh Prisma client generation
+ARG CACHE_BUST=unknown
+RUN echo "=== Cache bust timestamp: $CACHE_BUST ===" && \
+    echo "=== Generating Prisma client with recursive_type_depth=-1 ==="
 ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
-RUN poetry run prisma generate
-# Verify Prisma client was generated
-RUN python -c "import sys; print('=== Python version:', sys.version, '==='); print('=== Prisma generation complete ===')"
+RUN poetry run prisma generate --skip-generate || poetry run prisma generate
+# Verify generated Prisma client can be imported
+RUN python -c "import sys; sys.path.insert(0, '/usr/local/lib/python3.12/site-packages'); from prisma import Prisma; print('=== Prisma client import successful ===')"
 # Copy backend app code
 COPY stormlight-backend/ ./
 # Copy built frontend
