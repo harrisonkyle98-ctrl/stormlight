@@ -27,8 +27,8 @@ RUN echo "=== Cache bust timestamp: $CACHE_BUST ===" && \
     echo "=== Generating Prisma client with recursive_type_depth=-1 ==="
 ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 RUN poetry run prisma generate
-# Verify generated Prisma client can be imported
-RUN python -c "import sys; sys.path.insert(0, '/usr/local/lib/python3.12/site-packages'); from prisma import Prisma; print('=== Prisma client import successful ===')"
+# Verify generated Prisma client has the correct fields
+RUN python -c "from prisma.models import Competition; fields = list(Competition.model_fields.keys()); print('=== Competition model fields:', fields); assert 'rewardBadge' in fields or 'rewardBadgeId' in fields, 'rewardBadgeId/rewardBadge field missing!'; assert 'dropsGrid' in fields, 'dropsGrid field missing!'; print('=== Prisma client verification PASSED ===')"
 # Copy backend app code
 COPY stormlight-backend/ ./
 # Copy built frontend
