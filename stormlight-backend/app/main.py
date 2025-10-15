@@ -3508,12 +3508,14 @@ async def create_admin_competition(
         traceback.print_exc()
         
         error_msg = str(e)
-        if "dropsGrid" in error_msg or "drops_grid" in error_msg:
-            error_msg = "Invalid Bingo grid configuration. Please ensure all grid cells are filled."
-        elif "skill" in error_msg:
-            error_msg = "Invalid skill selection. Please select a valid skill."
+        if "required" in error_msg.lower() and "drops" in error_msg.lower():
+            error_msg = "Missing required Bingo grid data. Please ensure you have selected a grid size and filled all squares."
+        elif "skill" in error_msg.lower() and "required" in error_msg.lower():
+            error_msg = "Missing required skill selection for XP competition."
         elif "start_date" in error_msg or "end_date" in error_msg:
             error_msg = "Invalid competition dates. Dates must be at midnight UTC."
+        else:
+            error_msg = f"Failed to create competition: {error_msg}"
         
         raise HTTPException(status_code=400, detail=error_msg)
 

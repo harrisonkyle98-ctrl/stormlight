@@ -119,6 +119,15 @@ export const CompetitionManagementTab = () => {
 
     setIsSubmitting(true)
 
+    if (formData.type === 'DROPS') {
+      const requiredSquares = gridSize * gridSize
+      if (gridItems.length < requiredSquares) {
+        toast.error(`Please fill all ${requiredSquares} grid squares before creating the competition. Currently filled: ${gridItems.length}/${requiredSquares}`)
+        setIsSubmitting(false)
+        return
+      }
+    }
+
     try {
       const token = localStorage.getItem('access_token')
       const url = editingCompetition
@@ -446,9 +455,14 @@ export const CompetitionManagementTab = () => {
                             })}
                           </div>
                           
-                          <div className="flex justify-between">
-                            <span className="text-slate-300 text-sm">
+                          <div className="flex justify-between items-center">
+                            <span className={`text-sm ${
+                              gridItems.length === gridSize * gridSize 
+                                ? 'text-green-400 font-semibold' 
+                                : 'text-slate-300'
+                            }`}>
                               {gridItems.length} / {gridSize * gridSize} squares filled
+                              {gridItems.length === gridSize * gridSize && ' ✓'}
                             </span>
                             <Button
                               type="button"
