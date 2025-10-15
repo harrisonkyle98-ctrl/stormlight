@@ -28,7 +28,7 @@ RUN echo "=== Cache bust timestamp: $CACHE_BUST ===" && \
 ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 RUN poetry run prisma generate
 # Verify generated Prisma client has the correct fields
-RUN python -c "from prisma.models import Competition; fields = list(Competition.model_fields.keys()); print('=== Competition model fields:', fields); assert 'rewardBadge' in fields or 'rewardBadgeId' in fields, 'rewardBadgeId/rewardBadge field missing!'; assert 'dropsGrid' in fields, 'dropsGrid field missing!'; print('=== Prisma client verification PASSED ===')"
+RUN python -c "from prisma.models import Competition; fields = list(Competition.model_fields.keys()); print('=== Competition model fields:', fields); assert 'rewardBadgeId' in fields, 'rewardBadgeId field missing!'; assert 'dropsGrid' in fields, 'dropsGrid field missing!'; print('=== Prisma client verification PASSED ===')"
 # Copy backend app code
 COPY stormlight-backend/ ./
 # Copy built frontend
