@@ -1891,10 +1891,15 @@ async def get_competitions(status: Optional[str] = None):
                     comp_status = 'active'
                 
                 if status is None or comp_status == status:
-                    comp_dict = comp.dict()
-                    comp_dict['status'] = comp_status
-                    comp_dict['participantCount'] = len(comp.entries) if comp.entries else 0
-                    competition_list.append(comp_dict)
+                    try:
+                        comp_dict = comp.dict()
+                        comp_dict['status'] = comp_status
+                        comp_dict['participantCount'] = len(comp.entries) if comp.entries else 0
+                        competition_list.append(comp_dict)
+                    except Exception as e:
+                        print(f"Error serializing competition {comp.id}: {e}")
+                        import traceback
+                        traceback.print_exc()
             
             return {"competitions": competition_list}
         else:
