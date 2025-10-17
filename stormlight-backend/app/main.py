@@ -2029,6 +2029,11 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                 if not competition.dropsGrid:
                     return {**competition.dict(), "leaderboard": []}
                 
+                try:
+                    from .database import get_db_connection
+                except ImportError:
+                    from database import get_db_connection
+                
                 drops_grid = competition.dropsGrid
                 conn = await get_db_connection()
                 
