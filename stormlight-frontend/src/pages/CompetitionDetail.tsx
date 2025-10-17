@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
-import { ArrowLeft, Trophy, Calendar, Users, TrendingUp } from 'lucide-react'
+import { ArrowLeft, Trophy, Calendar, Users, TrendingUp, BarChart3 } from 'lucide-react'
 import { getSkillIcon } from '../utils/skillIcons'
 import { fetchClanMembers, getGradientStyle } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
@@ -190,7 +190,7 @@ const CompetitionDetail = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
             <div className="flex items-center space-x-3">
               <Calendar className="w-5 h-5 text-blue-400" />
               <div>
@@ -210,23 +210,42 @@ const CompetitionDetail = () => {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <Users className="w-5 h-5 text-green-400" />
-              <div>
-                <p className="text-sm text-slate-400">Participants</p>
-                <p className="text-white font-medium">
-                  {leaderboardData.length} members
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
               <TrendingUp className="w-5 h-5 text-purple-400" />
               <div>
                 <p className="text-sm text-slate-400">Type</p>
                 <p className="text-white font-medium">
                   {competition.type === 'XP_GAIN' ? 'Skilling' : 'PvM'}
-                  {competition.type === 'XP_GAIN' && competition.skill && (
-                    <span className="text-slate-400 text-sm ml-1">({competition.skill})</span>
-                  )}
+                </p>
+              </div>
+            </div>
+            {competition.type === 'XP_GAIN' && competition.skill && (
+              <div className="flex items-center space-x-3">
+                <BarChart3 className="w-5 h-5 text-slate-400" />
+                <div>
+                  <p className="text-sm text-slate-400">Skill</p>
+                  <p className="text-white font-medium capitalize">
+                    {competition.skill}
+                  </p>
+                </div>
+              </div>
+            )}
+            {competition.type === 'BOSS_KILLS' && competition.boardSize && (
+              <div className="flex items-center space-x-3">
+                <Trophy className="w-5 h-5 text-slate-400" />
+                <div>
+                  <p className="text-sm text-slate-400">Grid Size</p>
+                  <p className="text-white font-medium">
+                    {competition.boardSize}×{competition.boardSize}
+                  </p>
+                </div>
+              </div>
+            )}
+            <div className="flex items-center space-x-3">
+              <Users className="w-5 h-5 text-green-400" />
+              <div>
+                <p className="text-sm text-slate-400">Participants</p>
+                <p className="text-white font-medium">
+                  {totalParticipants}
                 </p>
               </div>
             </div>
@@ -248,7 +267,7 @@ const CompetitionDetail = () => {
                 <div className="p-4 bg-gradient-to-br from-yellow-600/20 to-yellow-800/20 border border-yellow-600/30 rounded-lg">
                   <div className="text-2xl mb-2">🥇</div>
                   <div className="text-sm text-slate-400">1st Place</div>
-                  <div className="text-2xl font-bold text-yellow-400">{(competition.rewardFirstGp / 1000000).toFixed(0)}M GP</div>
+                  <div className="text-2xl font-bold text-green-400">{(competition.rewardFirstGp / 1000000).toFixed(0)}M GP</div>
                   {competition.rewardBadgeId && <div className="text-xs text-yellow-300 mt-1">+ Competition Badge</div>}
                 </div>
               )}
@@ -256,14 +275,14 @@ const CompetitionDetail = () => {
                 <div className="p-4 bg-gradient-to-br from-gray-400/20 to-gray-600/20 border border-gray-400/30 rounded-lg">
                   <div className="text-2xl mb-2">🥈</div>
                   <div className="text-sm text-slate-400">2nd Place</div>
-                  <div className="text-2xl font-bold text-gray-300">{(competition.rewardSecondGp / 1000000).toFixed(0)}M GP</div>
+                  <div className="text-2xl font-bold text-green-400">{(competition.rewardSecondGp / 1000000).toFixed(0)}M GP</div>
                 </div>
               )}
               {competition.rewardThirdGp && (
                 <div className="p-4 bg-gradient-to-br from-amber-600/20 to-amber-800/20 border border-amber-600/30 rounded-lg">
                   <div className="text-2xl mb-2">🥉</div>
                   <div className="text-sm text-slate-400">3rd Place</div>
-                  <div className="text-2xl font-bold text-amber-400">{(competition.rewardThirdGp / 1000000).toFixed(0)}M GP</div>
+                  <div className="text-2xl font-bold text-green-400">{(competition.rewardThirdGp / 1000000).toFixed(0)}M GP</div>
                 </div>
               )}
             </div>
@@ -356,27 +375,20 @@ const CompetitionDetail = () => {
                 }`}
               >
                 <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
-                    <Badge 
-                      variant="outline" 
-                      className={
-                        player.rank === 1
-                          ? 'text-yellow-400 border-yellow-400' 
-                          : player.rank === 2
-                          ? 'text-gray-300 border-gray-300'
-                          : player.rank === 3
-                          ? 'text-amber-400 border-amber-400'
-                          : 'text-slate-400 border-slate-400'
-                      }
-                    >
-                      #{player.rank || '—'}
-                    </Badge>
-                    {player.rank && player.rank <= 3 && (
-                      <span className="text-lg">
-                        {player.rank === 1 ? '🥇' : player.rank === 2 ? '🥈' : '🥉'}
-                      </span>
-                    )}
-                  </div>
+                  <Badge 
+                    variant="outline" 
+                    className={
+                      player.rank === 1
+                        ? 'text-yellow-400 border-yellow-400' 
+                        : player.rank === 2
+                        ? 'text-gray-300 border-gray-300'
+                        : player.rank === 3
+                        ? 'text-amber-400 border-amber-400'
+                        : 'text-slate-400 border-slate-400'
+                    }
+                  >
+                    #{player.rank || '—'}
+                  </Badge>
                   <Link 
                     to={`/clan-member/${usernameToUrl(player.username)}`}
                     className="text-lg font-semibold hover:text-blue-400 transition-colors"
@@ -384,6 +396,11 @@ const CompetitionDetail = () => {
                   >
                     {player.username}
                   </Link>
+                  {player.rank && player.rank <= 3 && (
+                    <span className="text-lg">
+                      {player.rank === 1 ? '🥇' : player.rank === 2 ? '🥈' : '🥉'}
+                    </span>
+                  )}
                 </div>
                 
                 <div className="flex items-center space-x-6">
