@@ -3535,8 +3535,7 @@ async def create_admin_competition(
                             'memberId': member.id,
                             'username': member.username,
                             'xpStart': 0,
-                            'xpEnd': None,
-                            'dropsCompleted': []
+                            'xpEnd': None
                         })
                     except Exception as e:
                         print(f"Warning: Failed to create entry for {member.username}: {e}")
