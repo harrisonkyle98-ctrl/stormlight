@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
-import { Trophy, Calendar, Users, ChartNoAxesColumn } from 'lucide-react'
+import { Trophy, Calendar, Users, BarChart3 } from 'lucide-react'
 import { getSkillIcon } from '../utils/skillIcons'
 
 interface Competition {
@@ -199,7 +199,7 @@ const Competitions = () => {
                       </div>
                       {competition.type === 'XP_GAIN' && competition.skill && (
                         <div className="flex items-center space-x-2">
-                          <ChartNoAxesColumn className="w-4 h-4 text-slate-400" />
+                          <BarChart3 className="w-4 h-4 text-slate-400" />
                           <div>
                             <p className="text-sm text-slate-400">Skill</p>
                             <p className="text-white font-medium capitalize">
