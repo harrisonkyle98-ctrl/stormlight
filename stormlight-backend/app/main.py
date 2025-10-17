@@ -1892,9 +1892,27 @@ async def get_competitions(status: Optional[str] = None):
                 
                 if status is None or comp_status == status:
                     try:
-                        comp_dict = comp.dict()
-                        comp_dict['status'] = comp_status
-                        comp_dict['participantCount'] = len(comp.entries) if comp.entries else 0
+                        comp_dict = {
+                            'id': comp.id,
+                            'name': comp.name,
+                            'description': comp.description,
+                            'type': comp.type,
+                            'skill': comp.skill,
+                            'boardSize': comp.boardSize,
+                            'dropsGrid': comp.dropsGrid,
+                            'startDate': comp.startDate.isoformat() if comp.startDate else None,
+                            'endDate': comp.endDate.isoformat() if comp.endDate else None,
+                            'isActive': comp.isActive,
+                            'createdBy': comp.createdBy,
+                            'rewardFirstGp': comp.rewardFirstGp,
+                            'rewardSecondGp': comp.rewardSecondGp,
+                            'rewardThirdGp': comp.rewardThirdGp,
+                            'rewardBadgeId': comp.rewardBadgeId,
+                            'createdAt': comp.createdAt.isoformat() if comp.createdAt else None,
+                            'updatedAt': comp.updatedAt.isoformat() if comp.updatedAt else None,
+                            'status': comp_status,
+                            'participantCount': len(comp.entries) if comp.entries else 0
+                        }
                         competition_list.append(comp_dict)
                     except Exception as e:
                         print(f"Error serializing competition {comp.id}: {e}")
@@ -2099,7 +2117,23 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
             top_10 = leaderboard[:10] if len(leaderboard) >= 10 else leaderboard
             
             return {
-                **competition.dict(),
+                "id": competition.id,
+                "name": competition.name,
+                "description": competition.description,
+                "type": competition.type,
+                "skill": competition.skill,
+                "boardSize": competition.boardSize,
+                "dropsGrid": competition.dropsGrid,
+                "startDate": competition.startDate.isoformat() if competition.startDate else None,
+                "endDate": competition.endDate.isoformat() if competition.endDate else None,
+                "isActive": competition.isActive,
+                "createdBy": competition.createdBy,
+                "rewardFirstGp": competition.rewardFirstGp,
+                "rewardSecondGp": competition.rewardSecondGp,
+                "rewardThirdGp": competition.rewardThirdGp,
+                "rewardBadgeId": competition.rewardBadgeId,
+                "createdAt": competition.createdAt.isoformat() if competition.createdAt else None,
+                "updatedAt": competition.updatedAt.isoformat() if competition.updatedAt else None,
                 "leaderboard": leaderboard[start_idx:end_idx],
                 "top_10": top_10,
                 "pagination": {
