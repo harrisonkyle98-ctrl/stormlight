@@ -3426,9 +3426,12 @@ async def create_admin_competition(
                 'createdBy': admin_id,
                 'rewardFirstGp': competition_data.get('reward_first_gp'),
                 'rewardSecondGp': competition_data.get('reward_second_gp'),
-                'rewardThirdGp': competition_data.get('reward_third_gp'),
-                'rewardBadgeId': competition_data.get('reward_badge_id')
+                'rewardThirdGp': competition_data.get('reward_third_gp')
             }
+            
+            reward_badge_id = competition_data.get('reward_badge_id')
+            if reward_badge_id:
+                create_data['rewardBadge'] = {'connect': {'id': reward_badge_id}}
             
             if competition_data.get('skill'):
                 create_data['skill'] = competition_data['skill']
