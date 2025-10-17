@@ -106,24 +106,24 @@ const Competitions = () => {
       <div className="flex items-center space-x-4 p-4 bg-slate-700/30 rounded-lg justify-center">
         <Button
           onClick={() => setActiveTab('active')}
-          variant={activeTab === 'active' ? 'default' : 'outline'}
-          className={activeTab === 'active' ? 'bg-green-600 hover:bg-green-700' : 'text-white border-slate-600'}
+          variant="default"
+          className={activeTab === 'active' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600/60 hover:bg-blue-600/80'}
         >
           <Trophy className="w-4 h-4 mr-2" />
           Active
         </Button>
         <Button
           onClick={() => setActiveTab('upcoming')}
-          variant={activeTab === 'upcoming' ? 'default' : 'outline'}
-          className={activeTab === 'upcoming' ? 'bg-blue-600 hover:bg-blue-700' : 'text-white border-slate-600'}
+          variant="default"
+          className={activeTab === 'upcoming' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600/60 hover:bg-blue-600/80'}
         >
           <Calendar className="w-4 h-4 mr-2" />
           Upcoming
         </Button>
         <Button
           onClick={() => setActiveTab('ended')}
-          variant={activeTab === 'ended' ? 'default' : 'outline'}
-          className={activeTab === 'ended' ? 'bg-gray-600 hover:bg-gray-700' : 'text-white border-slate-600'}
+          variant="default"
+          className={activeTab === 'ended' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600/60 hover:bg-blue-600/80'}
         >
           <Users className="w-4 h-4 mr-2" />
           Completed
@@ -169,7 +169,7 @@ const Competitions = () => {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                       <div className="flex items-center space-x-2">
                         <Calendar className="w-4 h-4 text-slate-400" />
                         <div>
@@ -197,55 +197,96 @@ const Competitions = () => {
                           </p>
                         </div>
                       </div>
+                      {competition.type === 'XP_GAIN' && competition.skill && (
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-4">
+                            {getSkillIcon(competition.skill) ? (
+                              <img 
+                                src={getSkillIcon(competition.skill)!} 
+                                alt={competition.skill}
+                                className="w-4 h-4"
+                              />
+                            ) : (
+                              <span className="text-slate-400">📊</span>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm text-slate-400">Skill</p>
+                            <p className="text-white font-medium capitalize">
+                              {competition.skill}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {competition.type === 'BOSS_KILLS' && competition.boardSize && (
+                        <div className="flex items-center space-x-2">
+                          <Trophy className="w-4 h-4 text-slate-400" />
+                          <div>
+                            <p className="text-sm text-slate-400">Grid Size</p>
+                            <p className="text-white font-medium">
+                              {competition.boardSize}×{competition.boardSize}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex items-center space-x-2">
+                        <Users className="w-4 h-4 text-slate-400" />
+                        <div>
+                          <p className="text-sm text-slate-400">Participants</p>
+                          <p className="text-white font-medium">
+                            {competition.participantCount || 0}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                     
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-700">
-                      <div className="flex flex-col space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <Users className="w-4 h-4 text-slate-400" />
-                          <span className="text-sm text-slate-400">Participants:</span>
-                          <span className="text-white font-medium">
-                            {competition.participantCount || 0}
-                          </span>
+                    {(competition.rewardFirstGp || competition.rewardSecondGp || competition.rewardThirdGp) && (
+                      <div className="flex items-center justify-between pt-4 border-t border-slate-700">
+                        <div className="flex items-center space-x-3 bg-blue-600 px-3 py-2 rounded-md">
+                          <span className="text-sm text-white">Rewards:</span>
+                          <div className="flex space-x-3 text-white text-sm">
+                            {competition.rewardFirstGp && (
+                              <div className="flex items-center space-x-1">
+                                <span className="text-yellow-400 text-base">🥇</span>
+                                <span className="text-green-400 font-bold">
+                                  {(competition.rewardFirstGp / 1000000).toFixed(0)}M GP
+                                </span>
+                              </div>
+                            )}
+                            {competition.rewardSecondGp && (
+                              <div className="flex items-center space-x-1">
+                                <span className="text-gray-300 text-base">🥈</span>
+                                <span className="text-green-400 font-bold">
+                                  {(competition.rewardSecondGp / 1000000).toFixed(0)}M GP
+                                </span>
+                              </div>
+                            )}
+                            {competition.rewardThirdGp && (
+                              <div className="flex items-center space-x-1">
+                                <span className="text-amber-400 text-base">🥉</span>
+                                <span className="text-green-400 font-bold">
+                                  {(competition.rewardThirdGp / 1000000).toFixed(0)}M GP
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        {competition.type === 'BOSS_KILLS' && competition.boardSize && (
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm text-slate-400">Grid Size:</span>
-                            <span className="text-white font-medium">
-                              {competition.boardSize}x{competition.boardSize}
-                            </span>
-                          </div>
-                        )}
-                        {(competition.rewardFirstGp || competition.rewardSecondGp || competition.rewardThirdGp) && (
-                          <div className="flex items-center space-x-2">
-                            <Trophy className="w-4 h-4 text-yellow-400" />
-                            <span className="text-sm text-slate-400">Rewards:</span>
-                            <div className="flex space-x-3 text-white text-sm">
-                              {competition.rewardFirstGp && (
-                                <span className="text-yellow-400 font-bold">
-                                  1st: {(competition.rewardFirstGp / 1000000).toFixed(0)}M GP
-                                </span>
-                              )}
-                              {competition.rewardSecondGp && (
-                                <span className="text-gray-300">
-                                  2nd: {(competition.rewardSecondGp / 1000000).toFixed(0)}M GP
-                                </span>
-                              )}
-                              {competition.rewardThirdGp && (
-                                <span className="text-amber-600">
-                                  3rd: {(competition.rewardThirdGp / 1000000).toFixed(0)}M GP
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
+                        <Button asChild variant="default" className="bg-blue-600 hover:bg-blue-700">
+                          <Link to={`/competitions/${competition.id}`}>
+                            View Leaderboard
+                          </Link>
+                        </Button>
                       </div>
-                      <Button asChild variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
-                        <Link to={`/competitions/${competition.id}`}>
-                          View Leaderboard
-                        </Link>
-                      </Button>
-                    </div>
+                    )}
+                    {!(competition.rewardFirstGp || competition.rewardSecondGp || competition.rewardThirdGp) && (
+                      <div className="flex justify-end pt-4 border-t border-slate-700">
+                        <Button asChild variant="default" className="bg-blue-600 hover:bg-blue-700">
+                          <Link to={`/competitions/${competition.id}`}>
+                            View Leaderboard
+                          </Link>
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )
