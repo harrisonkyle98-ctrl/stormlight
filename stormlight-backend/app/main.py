@@ -3440,8 +3440,12 @@ async def create_admin_competition(
             if competition_data.get('drops_grid'):
                 drops_grid = competition_data['drops_grid']
                 if isinstance(drops_grid, str):
-                    drops_grid = json.loads(drops_grid)
-                create_data['dropsGrid'] = drops_grid
+                    try:
+                        drops_grid = json.loads(drops_grid)
+                    except:
+                        pass
+                from prisma import Json
+                create_data['dropsGrid'] = Json(drops_grid)
             
             competition = await prisma.competition.create(create_data)
             
