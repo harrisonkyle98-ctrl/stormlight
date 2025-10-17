@@ -45,18 +45,21 @@ const CompetitionDetail = () => {
   const { id } = useParams<{ id: string }>()
   const [competition, setCompetition] = useState<CompetitionDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [paginationLoading, setPaginationLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [clanMembers, setClanMembers] = useState<any[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalParticipants, setTotalParticipants] = useState(0)
   const [top10Data, setTop10Data] = useState<CompetitionLeaderboard[]>([])
+  const [leaderboardData, setLeaderboardData] = useState<CompetitionLeaderboard[]>([])
+  const [firstPlaceData, setFirstPlaceData] = useState<CompetitionLeaderboard | null>(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
   useEffect(() => {
     if (id) {
-      fetchCompetition(1)
+      fetchCompetitionInitial()
       loadClanMembers()
     }
   }, [id])
@@ -66,15 +69,25 @@ const CompetitionDetail = () => {
     setClanMembers(members)
   }
 
-  const fetchCompetition = async (page: number = 1) => {
+  const fetchCompetitionInitial = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/competitions/${id}?page=${page}&per_page=25`)
+      setLoading(true)
+      const response = await fetch(`${API_URL}/api/competitions/${id}?page=1&per_page=25`)
       if (response.ok) {
         const data = await response.json()
         setCompetition(data)
+        setLeaderboardData(data.leaderboard || [])
         
         if (data.top_10) {
           setTop10Data(data.top_10)
+        }
+        
+        // Store first place player data for BingoBoard
+        if (data.leaderboard && data.leaderboard.length > 0) {
+          const firstPlace = data.leaderboard.find((p: CompetitionLeaderboard) => p.rank === 1)
+          if (firstPlace) {
+            setFirstPlaceData(firstPlace)
+          }
         }
         
         if (data.pagination) {
@@ -90,6 +103,27 @@ const CompetitionDetail = () => {
       setError('Failed to load competition')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchLeaderboardPage = async (page: number) => {
+    try {
+      setPaginationLoading(true)
+      const response = await fetch(`${API_URL}/api/competitions/${id}?page=${page}&per_page=25`)
+      if (response.ok) {
+        const data = await response.json()
+        setLeaderboardData(data.leaderboard || [])
+        
+        if (data.pagination) {
+          setCurrentPage(data.pagination.page)
+          setTotalPages(data.pagination.total_pages)
+          setTotalParticipants(data.pagination.total)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching leaderboard page:', error)
+    } finally {
+      setPaginationLoading(false)
     }
   }
 
@@ -146,8 +180,6 @@ const CompetitionDetail = () => {
   }
 
   const { status, color } = getCompetitionStatus(competition.startDate, competition.endDate)
-
-  const leaderboardData = competition.leaderboard || []
 
   return (
     <div className="space-y-6">
@@ -346,7 +378,7 @@ const CompetitionDetail = () => {
               competitionId={competition.id}
               gridSize={competition.boardSize}
               dropsGrid={competition.dropsGrid}
-              completedPositions={leaderboardData[0]?.completed_positions || []}
+              completedPositions={firstPlaceData?.completed_positions || []}
             />
           </CardContent>
         </Card>
@@ -451,11 +483,11 @@ const CompetitionDetail = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => fetchCompetition(currentPage - 1)}
-                      disabled={currentPage === 1}
+                      onClick={() => fetchLeaderboardPage(currentPage - 1)}
+                      disabled={currentPage === 1 || paginationLoading}
                       className="border-slate-600 text-slate-300 hover:bg-slate-700 disabled:opacity-50"
                     >
-                      Previous
+                      {paginationLoading && currentPage > 1 ? 'Loading...' : 'Previous'}
                     </Button>
                     <div className="text-sm text-slate-300">
                       Page {currentPage} of {totalPages}
@@ -463,11 +495,11 @@ const CompetitionDetail = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => fetchCompetition(currentPage + 1)}
-                      disabled={currentPage === totalPages}
+                      onClick={() => fetchLeaderboardPage(currentPage + 1)}
+                      disabled={currentPage === totalPages || paginationLoading}
                       className="border-slate-600 text-slate-300 hover:bg-slate-700 disabled:opacity-50"
                     >
-                      Next
+                      {paginationLoading && currentPage < totalPages ? 'Loading...' : 'Next'}
                     </Button>
                   </div>
                 </div>
