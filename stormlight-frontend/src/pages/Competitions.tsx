@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
-import { Trophy, Calendar, Users } from 'lucide-react'
+import { Trophy, Calendar, Users, ChartNoAxesColumn } from 'lucide-react'
 import { getSkillIcon } from '../utils/skillIcons'
 
 interface Competition {
@@ -199,17 +199,7 @@ const Competitions = () => {
                       </div>
                       {competition.type === 'XP_GAIN' && competition.skill && (
                         <div className="flex items-center space-x-2">
-                          <div className="w-4 h-4">
-                            {getSkillIcon(competition.skill) ? (
-                              <img 
-                                src={getSkillIcon(competition.skill)!} 
-                                alt={competition.skill}
-                                className="w-4 h-4"
-                              />
-                            ) : (
-                              <span className="text-slate-400">📊</span>
-                            )}
-                          </div>
+                          <ChartNoAxesColumn className="w-4 h-4 text-slate-400" />
                           <div>
                             <p className="text-sm text-slate-400">Skill</p>
                             <p className="text-white font-medium capitalize">
@@ -242,34 +232,31 @@ const Competitions = () => {
                     
                     {(competition.rewardFirstGp || competition.rewardSecondGp || competition.rewardThirdGp) && (
                       <div className="flex items-center justify-between pt-4 border-t border-slate-700">
-                        <div className="flex items-center space-x-3 bg-blue-600 px-3 py-2 rounded-md">
-                          <span className="text-sm text-white">Rewards:</span>
-                          <div className="flex space-x-3 text-white text-sm">
-                            {competition.rewardFirstGp && (
-                              <div className="flex items-center space-x-1">
-                                <span className="text-yellow-400 text-base">🥇</span>
-                                <span className="text-green-400 font-bold">
-                                  {(competition.rewardFirstGp / 1000000).toFixed(0)}M GP
-                                </span>
-                              </div>
-                            )}
-                            {competition.rewardSecondGp && (
-                              <div className="flex items-center space-x-1">
-                                <span className="text-gray-300 text-base">🥈</span>
-                                <span className="text-green-400 font-bold">
-                                  {(competition.rewardSecondGp / 1000000).toFixed(0)}M GP
-                                </span>
-                              </div>
-                            )}
-                            {competition.rewardThirdGp && (
-                              <div className="flex items-center space-x-1">
-                                <span className="text-amber-400 text-base">🥉</span>
-                                <span className="text-green-400 font-bold">
-                                  {(competition.rewardThirdGp / 1000000).toFixed(0)}M GP
-                                </span>
-                              </div>
-                            )}
-                          </div>
+                        <div className="flex space-x-3">
+                          {competition.rewardFirstGp && (
+                            <div className="flex items-center space-x-2 bg-slate-700/30 px-3 py-2 rounded-md">
+                              <span className="text-yellow-400 text-base">🥇</span>
+                              <span className="text-green-400 font-bold text-sm">
+                                {(competition.rewardFirstGp / 1000000).toFixed(0)}M GP
+                              </span>
+                            </div>
+                          )}
+                          {competition.rewardSecondGp && (
+                            <div className="flex items-center space-x-2 bg-slate-700/30 px-3 py-2 rounded-md">
+                              <span className="text-gray-300 text-base">🥈</span>
+                              <span className="text-green-400 font-bold text-sm">
+                                {(competition.rewardSecondGp / 1000000).toFixed(0)}M GP
+                              </span>
+                            </div>
+                          )}
+                          {competition.rewardThirdGp && (
+                            <div className="flex items-center space-x-2 bg-slate-700/30 px-3 py-2 rounded-md">
+                              <span className="text-amber-400 text-base">🥉</span>
+                              <span className="text-green-400 font-bold text-sm">
+                                {(competition.rewardThirdGp / 1000000).toFixed(0)}M GP
+                              </span>
+                            </div>
+                          )}
                         </div>
                         <Button asChild variant="default" className="bg-blue-600 hover:bg-blue-700">
                           <Link to={`/competitions/${competition.id}`}>
