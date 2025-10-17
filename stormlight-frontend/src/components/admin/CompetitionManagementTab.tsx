@@ -402,7 +402,7 @@ export const CompetitionManagementTab = () => {
                             <Select
                               value={gridSize.toString()}
                               onValueChange={(value) => {
-                                const size = parseInt(value) as 5 | 7 | 9 | 11
+                                const size = parseInt(value) as 3 | 5 | 7 | 9 | 11
                                 setGridSize(size)
                                 setGridItems([])
                               }}
@@ -411,6 +411,7 @@ export const CompetitionManagementTab = () => {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
+                                <SelectItem value="3">3x3 (9 squares)</SelectItem>
                                 <SelectItem value="5">5x5 (25 squares)</SelectItem>
                                 <SelectItem value="7">7x7 (49 squares)</SelectItem>
                                 <SelectItem value="9">9x9 (81 squares)</SelectItem>
