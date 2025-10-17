@@ -50,7 +50,7 @@ export const CompetitionManagementTab = () => {
     endDate: ''
   })
   const [showGridBuilder, setShowGridBuilder] = useState(false)
-  const [gridSize, setGridSize] = useState<5 | 7 | 9 | 11>(5)
+  const [gridSize, setGridSize] = useState<3 | 5 | 7 | 9 | 11>(5)
   const [gridItems, setGridItems] = useState<Array<{
     position: number
     itemName: string
