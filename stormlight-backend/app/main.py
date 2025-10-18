@@ -2263,7 +2263,8 @@ async def get_competition_drop_stats(competition_id: str, position: Optional[int
                     key = (grid_item['itemName'], grid_item['bossName'])
                     if key in drop_data and any(p['username'] == entry.username for p in drop_data[key]):
                         filled_count += 1
-                player_stats[entry.username] = filled_count
+                if filled_count > 0:
+                    player_stats[entry.username] = filled_count
             
             ranked_players = sorted(
                 [{'username': k, 'filled_slots': v} for k, v in player_stats.items()],

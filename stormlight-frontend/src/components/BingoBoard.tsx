@@ -221,7 +221,7 @@ export const BingoBoard = ({
                   </div>
                 )}
               </div>
-            ) : dropStats && dropStats.ranked_players ? (
+            ) : dropStats && dropStats.ranked_players && dropStats.ranked_players.length > 0 ? (
               <div className="space-y-4">
                 <div className="text-slate-300 text-sm">
                   <span className="font-medium">Total Slots:</span> {dropStats.total_slots}
@@ -271,7 +271,11 @@ export const BingoBoard = ({
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : dropStats && dropStats.ranked_players && dropStats.ranked_players.length === 0 ? (
+              <div className="text-slate-400 text-center py-8 text-sm">
+                No participants have obtained any drops yet
+              </div>
+            ): (
               <div className="text-slate-400 text-center py-8 text-sm">
                 Click on a grid item to view drop details
               </div>
