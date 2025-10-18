@@ -165,7 +165,7 @@ const CompetitionDetail = () => {
   if (error || !competition) {
     return (
       <div className="space-y-6">
-        <Button asChild variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+        <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
           <Link to="/competitions">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Competitions
@@ -184,7 +184,7 @@ const CompetitionDetail = () => {
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+      <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
         <Link to="/competitions">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Competitions
@@ -491,11 +491,10 @@ const CompetitionDetail = () => {
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button
-                      variant="outline"
                       size="sm"
                       onClick={() => fetchLeaderboardPage(currentPage - 1)}
                       disabled={currentPage === 1 || paginationLoading}
-                      className="border-slate-600 text-slate-300 hover:bg-slate-700 disabled:opacity-50"
+                      className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:bg-blue-600/50"
                     >
                       {paginationLoading && currentPage > 1 ? 'Loading...' : 'Previous'}
                     </Button>
@@ -503,11 +502,10 @@ const CompetitionDetail = () => {
                       Page {currentPage} of {totalPages}
                     </div>
                     <Button
-                      variant="outline"
                       size="sm"
                       onClick={() => fetchLeaderboardPage(currentPage + 1)}
                       disabled={currentPage === totalPages || paginationLoading}
-                      className="border-slate-600 text-slate-300 hover:bg-slate-700 disabled:opacity-50"
+                      className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:bg-blue-600/50"
                     >
                       {paginationLoading && currentPage < totalPages ? 'Loading...' : 'Next'}
                     </Button>
