@@ -154,11 +154,11 @@ const Competitions = () => {
                         ) : (
                           <div className="text-2xl">💀</div>
                         )}
-                        <div>
-                          <CardTitle className="text-white text-xl">
+                        <div className="text-left">
+                          <CardTitle className="text-white text-xl text-left">
                             {competition.name}
                           </CardTitle>
-                          <CardDescription className="text-slate-400 mt-1">
+                          <CardDescription className="text-slate-400 mt-1 text-left">
                             {competition.description}
                           </CardDescription>
                         </div>

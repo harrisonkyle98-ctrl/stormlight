@@ -208,11 +208,11 @@ const CompetitionDetail = () => {
               ) : (
                 <div className="text-4xl">💀</div>
               )}
-              <div>
-                <CardTitle className="text-2xl text-white mb-2">
+              <div className="text-left">
+                <CardTitle className="text-2xl text-white mb-2 text-left">
                   {competition.name}
                 </CardTitle>
-                <p className="text-slate-400">
+                <p className="text-slate-400 text-left">
                   {competition.description || `Compete for the ${competition.type === 'XP_GAIN' ? 'highest XP gains' : 'most boss drops'}!`}
                 </p>
               </div>
