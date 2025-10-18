@@ -111,7 +111,7 @@ export const BingoBoard = ({
           </CardHeader>
           <CardContent>
             <div
-              className="grid gap-0.5 md:gap-1"
+              className="grid gap-0.5 md:gap-1 mx-auto"
               style={{
                 gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
                 maxWidth: gridSize <= 7 ? '600px' : '800px'
@@ -185,13 +185,13 @@ export const BingoBoard = ({
               <div className="text-slate-400 text-center py-8">Loading...</div>
             ) : selectedPosition !== null && dropStats?.item ? (
               <div className="space-y-4">
-                <div className="flex items-center space-x-3 pb-3 border-b border-slate-600">
+                <div className="flex flex-col items-center space-y-2 pb-3 border-b border-slate-600">
                   <img 
                     src={`https://stormlight.fly.dev${dropStats.item.imageUrl}`}
                     alt={dropStats.item.name}
-                    className="w-12 h-12"
+                    style={{ width: '32px', height: '32px' }}
                   />
-                  <div>
+                  <div className="text-center">
                     <div className="text-white font-semibold">{dropStats.item.name}</div>
                     <div className="text-slate-400 text-sm">{dropStats.item.boss}</div>
                   </div>
