@@ -143,13 +143,16 @@ export const BingoBoard = ({
                   >
                     {item && (
                       <>
-                        <img
-                          src={`https://stormlight.fly.dev${item.imageUrl}`}
-                          alt={item.itemName}
-                          className={`w-full h-full object-contain transition-all ${
-                            isCompleted ? '' : 'opacity-50'
-                          }`}
-                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <img
+                            src={`https://stormlight.fly.dev${item.imageUrl}`}
+                            alt={item.itemName}
+                            className={`transition-all ${
+                              isCompleted ? '' : 'opacity-50'
+                            }`}
+                            style={{ width: '32px', height: '32px' }}
+                          />
+                        </div>
                         <div className="absolute top-0 left-0 right-0 bg-slate-900/95 text-white text-xs p-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 rounded">
                           {item.itemName}
                         </div>
