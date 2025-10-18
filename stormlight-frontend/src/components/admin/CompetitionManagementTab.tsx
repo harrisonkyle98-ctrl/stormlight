@@ -433,19 +433,21 @@ export const CompetitionManagementTab = () => {
                               return (
                                 <div
                                   key={index}
-                                  className="aspect-square border border-slate-600 rounded bg-slate-700/50 hover:bg-slate-700 cursor-pointer p-0.5"
+                                  className="aspect-square border border-slate-600 rounded bg-slate-700/50 hover:bg-slate-700 cursor-pointer p-0.5 relative"
                                   onClick={() => {
                                     setSelectedPosition(index)
                                     setShowDropModal(true)
                                   }}
                                 >
                                   {item ? (
-                                    <img
-                                      src={item.imageUrl}
-                                      alt={item.itemName}
-                                      className="w-full h-full object-contain"
-                                      title={`${item.itemName} - ${item.bossName}`}
-                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <img
+                                        src={item.imageUrl}
+                                        alt={item.itemName}
+                                        style={{ width: '32px', height: '32px' }}
+                                        title={`${item.itemName} - ${item.bossName}`}
+                                      />
+                                    </div>
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">
                                       +
