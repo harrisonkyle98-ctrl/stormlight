@@ -301,7 +301,7 @@ const CompetitionDetail = () => {
                   <div className="text-2xl mb-2">🥇</div>
                   <div className="text-sm text-slate-400">1st Place</div>
                   <div className="text-2xl font-bold text-green-400">{(competition.rewardFirstGp / 1000000).toFixed(0)}M GP</div>
-                  {competition.rewardBadgeId && <div className="text-xs text-yellow-300 mt-1">+ Competition Badge</div>}
+                  {competition.rewardBadgeId && <div className="text-xs text-green-400 mt-1">+ Competition Badge</div>}
                 </div>
               )}
               {competition.rewardSecondGp && (
@@ -344,6 +344,7 @@ const CompetitionDetail = () => {
                 />
                 <YAxis 
                   stroke="#9ca3af"
+                  tickCount={10}
                   tickFormatter={(value) => {
                     if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
                     if (value >= 1000) return `${(value / 1000).toFixed(0)}K`
