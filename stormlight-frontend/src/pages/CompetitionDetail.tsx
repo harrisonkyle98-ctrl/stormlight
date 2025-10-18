@@ -17,6 +17,7 @@ interface CompetitionLeaderboard {
   total_squares?: number
   completion_percentage?: number
   completed_positions?: number[]
+  bingos?: number
   skill?: string
   rank?: number | null
 }
@@ -465,6 +466,14 @@ const CompetitionDetail = () => {
                           {player.completion_percentage || 0}%
                         </p>
                       </div>
+                      {player.bingos !== undefined && player.bingos > 0 && (
+                        <div className="text-right">
+                          <p className="text-sm text-slate-400">Bingos</p>
+                          <p className="text-lg font-bold text-yellow-400">
+                            {player.bingos}
+                          </p>
+                        </div>
+                      )}
                     </>
                   )}
                 </div>

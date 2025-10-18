@@ -2035,7 +2035,32 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                     from database import get_db_connection
                 
                 drops_grid = competition.dropsGrid
+                board_size = competition.boardSize or 5
                 conn = await get_db_connection()
+                
+                def detect_bingos(completed_positions, grid_size):
+                    completed_set = set(completed_positions)
+                    bingo_count = 0
+                    
+                    for row in range(grid_size):
+                        row_complete = all(row * grid_size + col in completed_set for col in range(grid_size))
+                        if row_complete:
+                            bingo_count += 1
+                    
+                    for col in range(grid_size):
+                        col_complete = all(row * grid_size + col in completed_set for row in range(grid_size))
+                        if col_complete:
+                            bingo_count += 1
+                    
+                    main_diag_complete = all(i * grid_size + i in completed_set for i in range(grid_size))
+                    if main_diag_complete:
+                        bingo_count += 1
+                    
+                    anti_diag_complete = all(i * grid_size + (grid_size - 1 - i) in completed_set for i in range(grid_size))
+                    if anti_diag_complete:
+                        bingo_count += 1
+                    
+                    return bingo_count
                 
                 async with conn:
                     for entry in competition.entries:
@@ -2065,12 +2090,15 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                             completed_count = 0
                             completed_positions = []
                         
+                        bingo_count = detect_bingos(completed_positions, board_size)
+                        
                         leaderboard.append({
                             'username': entry.username,
                             'squares_completed': completed_count,
                             'total_squares': len(drops_grid),
                             'completion_percentage': round((completed_count / len(drops_grid) * 100), 1) if drops_grid else 0,
-                            'completed_positions': completed_positions
+                            'completed_positions': completed_positions,
+                            'bingos': bingo_count
                         })
                 
                 leaderboard.sort(key=lambda x: x['squares_completed'], reverse=True)
@@ -2152,6 +2180,105 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
             raise HTTPException(status_code=503, detail="Database not available")
     except Exception as e:
         print(f"Error fetching competition: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/competitions/{competition_id}/drop-stats")
+async def get_competition_drop_stats(competition_id: str, position: Optional[int] = None):
+    """Get drop statistics for a PvM competition"""
+    try:
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            competition = await prisma.competition.find_unique(
+                where={'id': competition_id},
+                include={'entries': True}
+            )
+            
+            if not competition:
+                raise HTTPException(status_code=404, detail="Competition not found")
+            
+            if competition.type != 'BOSS_KILLS' or not competition.dropsGrid:
+                raise HTTPException(status_code=400, detail="Not a PvM competition")
+            
+            try:
+                from .database import get_db_connection
+            except ImportError:
+                from database import get_db_connection
+            
+            drops_grid = competition.dropsGrid
+            conn = await get_db_connection()
+            
+            drop_data = {}
+            
+            async with conn:
+                for entry in competition.entries:
+                    try:
+                        cursor = await conn.execute("""
+                            SELECT item_name, boss_name, COUNT(*) as count
+                            FROM clan_drops
+                            WHERE username = $1
+                              AND activity_timestamp BETWEEN $2 AND $3
+                            GROUP BY item_name, boss_name
+                        """, 
+                            entry.username,
+                            int(competition.startDate.timestamp()),
+                            int(competition.endDate.timestamp())
+                        )
+                        
+                        member_drops = await cursor.fetchall()
+                        
+                        for drop in member_drops:
+                            key = (drop['item_name'], drop['boss_name'])
+                            if key not in drop_data:
+                                drop_data[key] = []
+                            drop_data[key].append({
+                                'username': entry.username,
+                                'count': drop['count']
+                            })
+                    except Exception as e:
+                        print(f"Error fetching drops for {entry.username}: {e}")
+            
+            if position is not None:
+                grid_item = next((item for item in drops_grid if item['position'] == position), None)
+                if not grid_item:
+                    return {'item': None, 'players': []}
+                
+                key = (grid_item['itemName'], grid_item['bossName'])
+                players_with_drop = drop_data.get(key, [])
+                
+                return {
+                    'item': {
+                        'name': grid_item['itemName'],
+                        'boss': grid_item['bossName'],
+                        'imageUrl': grid_item['imageUrl'],
+                        'position': grid_item['position']
+                    },
+                    'players': sorted(players_with_drop, key=lambda x: x['count'], reverse=True)
+                }
+            
+            player_stats = {}
+            for entry in competition.entries:
+                filled_count = 0
+                for grid_item in drops_grid:
+                    key = (grid_item['itemName'], grid_item['bossName'])
+                    if key in drop_data and any(p['username'] == entry.username for p in drop_data[key]):
+                        filled_count += 1
+                player_stats[entry.username] = filled_count
+            
+            ranked_players = sorted(
+                [{'username': k, 'filled_slots': v} for k, v in player_stats.items()],
+                key=lambda x: x['filled_slots'],
+                reverse=True
+            )
+            
+            return {
+                'total_slots': len(drops_grid),
+                'ranked_players': ranked_players
+            }
+        else:
+            raise HTTPException(status_code=503, detail="Database not available")
+    except Exception as e:
+        print(f"Error fetching drop stats: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
