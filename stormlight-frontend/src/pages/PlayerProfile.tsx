@@ -593,55 +593,57 @@ const PlayerProfile = () => {
           
           <Card className="bg-slate-800/50 border-slate-700">
             <CardContent className="p-6">
-              <div className="flex flex-col items-center space-y-4 mb-6">
-                <Avatar className="w-20 h-20">
-                  <AvatarImage
-                    src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(urlToUsername(username || ''))}/chat.png`}
-                    alt={urlToUsername(username || '')}
-                  />
-                  <AvatarFallback className="bg-blue-600 text-white">
-                    <User className="w-10 h-10" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="text-center">
-                  <h1 className={`text-2xl font-bold ${playerData.is_verified ? 'flex items-center gap-2 justify-center' : 'text-center'}`}>
-                    <span 
-                      style={getGradientStyle(urlToUsername(username || ''), playerData.clan_rank)}
-                    >
-                      {urlToUsername(username || '')}
-                    </span>
-                    {playerData.is_verified && (
-                      <span className="text-green-400" title="Discord account verified">
-                        ✅
+              <div className="bg-slate-700/30 rounded-lg p-6 mb-6">
+                <div className="flex flex-col items-center space-y-4">
+                  <Avatar className="w-20 h-20">
+                    <AvatarImage
+                      src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(urlToUsername(username || ''))}/chat.png`}
+                      alt={urlToUsername(username || '')}
+                    />
+                    <AvatarFallback className="bg-blue-600 text-white">
+                      <User className="w-10 h-10" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="text-center">
+                    <h1 className={`text-2xl font-bold ${playerData.is_verified ? 'flex items-center gap-2 justify-center' : 'text-center'}`}>
+                      <span 
+                        style={getGradientStyle(urlToUsername(username || ''), playerData.clan_rank)}
+                      >
+                        {urlToUsername(username || '')}
                       </span>
-                    )}
-                  </h1>
-                  <p className="text-slate-400 text-sm">
-                    Last updated: {new Date(playerData.last_updated).toLocaleDateString()}
-                  </p>
-                  
-                  {/* Rank Badge */}
-                  {playerData.stats && (() => {
-                    const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''), playerData.league_points)
-                    const rankBadge = allBadges.find(badge => badge.id.startsWith('rank-'))
-                    return rankBadge ? (
-                      <div className="mt-3">
-                        <div
-                          className="inline-flex items-center space-x-2 px-3 py-1 text-sm font-semibold rounded-md text-white"
-                          style={{
-                            background: rankBadge.gradientBackground || rankBadge.backgroundColor
-                          }}
-                        >
-                          <img
-                            src={rankBadge.icon}
-                            alt={rankBadge.name}
-                            className="w-4 h-4"
-                          />
-                          <span>{rankBadge.name}</span>
+                      {playerData.is_verified && (
+                        <span className="text-green-400" title="Discord account verified">
+                          ✅
+                        </span>
+                      )}
+                    </h1>
+                    <p className="text-slate-400 text-sm">
+                      Last updated: {new Date(playerData.last_updated).toLocaleDateString()}
+                    </p>
+                    
+                    {/* Rank Badge */}
+                    {playerData.stats && (() => {
+                      const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''), playerData.league_points)
+                      const rankBadge = allBadges.find(badge => badge.id.startsWith('rank-'))
+                      return rankBadge ? (
+                        <div className="mt-3">
+                          <div
+                            className="inline-flex items-center space-x-2 px-3 py-1 text-sm font-semibold rounded-md text-white"
+                            style={{
+                              background: rankBadge.gradientBackground || rankBadge.backgroundColor
+                            }}
+                          >
+                            <img
+                              src={rankBadge.icon}
+                              alt={rankBadge.name}
+                              className="w-4 h-4"
+                            />
+                            <span>{rankBadge.name}</span>
+                          </div>
                         </div>
-                      </div>
-                    ) : null
-                  })()}
+                      ) : null
+                    })()}
+                  </div>
                 </div>
               </div>
 
