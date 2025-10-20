@@ -665,24 +665,6 @@ const PlayerProfile = () => {
                     </div>
                   </Tooltip>
 
-                  {/* Quest Points */}
-                  <Tooltip content="Quest Points">
-                    <div className="flex items-stretch overflow-hidden rounded-lg">
-                      <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
-                        <img 
-                          src="/assets/icons/quest_points.png" 
-                          alt="Quest Points"
-                          className="w-5 h-5"
-                        />
-                      </div>
-                      <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
-                        <span className="text-lg font-bold text-white">
-                          {playerData.quest_points || 0}
-                        </span>
-                      </div>
-                    </div>
-                  </Tooltip>
-
                   {/* Total Level */}
                   <Tooltip content="Total Level">
                     <div className="flex items-stretch overflow-hidden rounded-lg">
@@ -696,6 +678,24 @@ const PlayerProfile = () => {
                       <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
                         <span className="text-lg font-bold text-white">
                           {overallStats.level}
+                        </span>
+                      </div>
+                    </div>
+                  </Tooltip>
+
+                  {/* Quest Points */}
+                  <Tooltip content="Quest Points">
+                    <div className="flex items-stretch overflow-hidden rounded-lg">
+                      <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
+                        <img 
+                          src="/assets/icons/quest_points.png" 
+                          alt="Quest Points"
+                          className="w-5 h-5"
+                        />
+                      </div>
+                      <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
+                        <span className="text-lg font-bold text-white">
+                          {playerData.quest_points || 0}
                         </span>
                       </div>
                     </div>
@@ -760,24 +760,14 @@ const PlayerProfile = () => {
                   )}
 
                   {/* XP and Rank Stats */}
-                  <div className="pt-4 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                  <div className="pt-2 flex flex-col gap-2">
+                    <div className="grid grid-cols-2 gap-4 bg-slate-700/30 rounded-lg px-4 py-3">
                       <div className="text-center">
                         <p className="text-xs text-slate-400 mb-1">Total XP</p>
                         <p className="text-xl font-bold text-green-400">
                           {overallStats.xp.toLocaleString()}
                         </p>
                       </div>
-                      {playerData.clan_xp !== undefined && playerData.clan_xp !== null && (
-                        <div className="text-center">
-                          <p className="text-xs text-slate-400 mb-1">Clan XP</p>
-                          <p className="text-xl font-bold text-green-400">
-                            {playerData.clan_xp.toLocaleString()}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
                       {overallStats.rank && (
                         <div className="text-center">
                           <p className="text-xs text-slate-400 mb-1">Overall Rank</p>
@@ -786,15 +776,27 @@ const PlayerProfile = () => {
                           </p>
                         </div>
                       )}
-                      {playerData.clan_rank_number && (
-                        <div className="text-center">
-                          <p className="text-xs text-slate-400 mb-1">Clan Rank</p>
-                          <p className="text-xl font-bold text-blue-400">
-                            #{playerData.clan_rank_number.toLocaleString()}
-                          </p>
-                        </div>
-                      )}
                     </div>
+                    {(playerData.clan_xp !== undefined && playerData.clan_xp !== null) || playerData.clan_rank_number ? (
+                      <div className="grid grid-cols-2 gap-4 bg-slate-700/30 rounded-lg px-4 py-3">
+                        {playerData.clan_xp !== undefined && playerData.clan_xp !== null && (
+                          <div className="text-center">
+                            <p className="text-xs text-slate-400 mb-1">Clan XP</p>
+                            <p className="text-xl font-bold text-green-400">
+                              {playerData.clan_xp.toLocaleString()}
+                            </p>
+                          </div>
+                        )}
+                        {playerData.clan_rank_number && (
+                          <div className="text-center">
+                            <p className="text-xs text-slate-400 mb-1">Clan Rank</p>
+                            <p className="text-xl font-bold text-blue-400">
+                              #{playerData.clan_rank_number.toLocaleString()}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               )}
