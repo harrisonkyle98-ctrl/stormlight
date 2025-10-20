@@ -593,7 +593,7 @@ const PlayerProfile = () => {
           
           <Card className="bg-slate-800/50 border-slate-700">
             <CardContent className="p-6">
-              <div className="bg-slate-700/30 rounded-lg p-6 mb-6">
+              <div className="bg-slate-700/30 rounded-lg p-6 mb-4">
                 <div className="flex flex-col items-center space-y-4">
                   <Avatar className="w-20 h-20">
                     <AvatarImage
@@ -768,7 +768,7 @@ const PlayerProfile = () => {
                   )}
 
                   {/* XP and Rank Stats */}
-                  <div className="mt-4 flex flex-col gap-2">
+                  <div className="mt-3 flex flex-col gap-2">
                     <div className="grid grid-cols-2 gap-4 bg-slate-700/30 rounded-lg px-4 py-3">
                       <div className="text-center">
                         <p className="text-xs text-slate-400 mb-1">Total XP</p>
