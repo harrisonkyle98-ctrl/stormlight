@@ -1794,6 +1794,40 @@ async def get_player_activities(
         raise HTTPException(status_code=500, detail=f"Failed to fetch activities: {str(e)}")
 
 
+@api_router.get("/player/{username}/citadel-caps")
+async def get_player_citadel_caps(username: str):
+    """Get the total count of citadel caps for a specific player"""
+    from urllib.parse import unquote
+    decoded_username = unquote(username).replace('-', ' ')
+    
+    print(f"=== API REQUEST: get_player_citadel_caps for {decoded_username} ===")
+    
+    try:
+        if not prisma or not prisma.is_connected():
+            print(f"❌ Prisma not available for citadel caps count")
+            raise HTTPException(status_code=503, detail="Database connection unavailable")
+        
+        caps_count = await prisma.clanactivity.count(
+            where={
+                'username': decoded_username,
+                'text': 'Capped at my Clan Citadel.'
+            }
+        )
+        
+        print(f"Found {caps_count} citadel caps for {decoded_username}")
+        
+        return {
+            "username": decoded_username,
+            "total_caps": caps_count
+        }
+        
+    except Exception as e:
+        print(f"❌ Error fetching citadel caps for {decoded_username}: {e}")
+        import traceback
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Failed to fetch citadel caps: {str(e)}")
+
+
 @api_router.get("/hiscores")
 async def get_global_hiscores(
     skill: str = 'overall',

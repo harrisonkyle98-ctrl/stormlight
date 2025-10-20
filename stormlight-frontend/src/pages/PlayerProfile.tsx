@@ -93,6 +93,7 @@ const PlayerProfile = () => {
   const [badgeModalLoading, setBadgeModalLoading] = useState(false)
   const [badgeModalError, setBadgeModalError] = useState<string | null>(null)
   const [modalCustomBadges, setModalCustomBadges] = useState<CustomBadge[]>([])
+  const [citadelCaps, setCitadelCaps] = useState<number | null>(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -100,6 +101,7 @@ const PlayerProfile = () => {
     if (username) {
       fetchPlayerStats()
       fetchQuestData()
+      fetchCitadelCaps()
       if (user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank)) {
         fetchCustomBadges()
       }
@@ -159,6 +161,19 @@ const PlayerProfile = () => {
       }
     } catch (error) {
       console.error('Error fetching quest data for badges:', error)
+    }
+  }
+
+  const fetchCitadelCaps = async () => {
+    try {
+      const decodedUsername = urlToUsername(username || '')
+      const response = await fetch(`${API_URL}/api/player/${encodeURIComponent(decodedUsername)}/citadel-caps`)
+      if (response.ok) {
+        const data = await response.json()
+        setCitadelCaps(data.total_caps)
+      }
+    } catch (error) {
+      console.error('Error fetching citadel caps:', error)
     }
   }
 
@@ -720,6 +735,26 @@ const PlayerProfile = () => {
                       </div>
                     </div>
                   </Tooltip>
+
+                  {/* Total Caps - only show if value exists */}
+                  {citadelCaps !== null && citadelCaps > 0 && (
+                    <Tooltip content="Total Caps">
+                      <div className="flex items-stretch overflow-hidden rounded-lg">
+                        <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
+                          <img 
+                            src="/assets/icons/clan_citadel.png" 
+                            alt="Total Caps"
+                            className="w-5 h-5"
+                          />
+                        </div>
+                        <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
+                          <span className="text-lg font-bold text-white">
+                            {citadelCaps.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </Tooltip>
+                  )}
 
                   {/* League Points - only show if value exists */}
                   {playerData.league_points !== null && playerData.league_points !== undefined && (() => {
