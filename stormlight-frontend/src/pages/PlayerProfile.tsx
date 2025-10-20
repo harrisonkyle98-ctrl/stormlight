@@ -768,7 +768,7 @@ const PlayerProfile = () => {
                   )}
 
                   {/* XP and Rank Stats */}
-                  <div className="pt-2 flex flex-col gap-2">
+                  <div className="mt-4 flex flex-col gap-2">
                     <div className="grid grid-cols-2 gap-4 bg-slate-700/30 rounded-lg px-4 py-3">
                       <div className="text-center">
                         <p className="text-xs text-slate-400 mb-1">Total XP</p>
