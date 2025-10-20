@@ -646,42 +646,109 @@ const PlayerProfile = () => {
               </div>
 
               {overallStats && (
-                <div>
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div className="text-center">
-                      <p className="text-xs text-slate-400 mb-1">Combat Level</p>
-                      <p className="text-xl font-bold text-white">{overallStats.combatlevel}</p>
+                <div className="space-y-3">
+                  {/* Combat Level */}
+                  <Tooltip content="Combat Level">
+                    <div className="flex items-center justify-between px-4 py-2 bg-slate-700/30 rounded-lg">
+                      <div className="bg-slate-800/70 p-2 rounded">
+                        <img 
+                          src="/assets/icons/combat_level.png" 
+                          alt="Combat Level"
+                          className="w-5 h-5"
+                        />
+                      </div>
+                      <span className="text-lg font-bold text-white">
+                        {overallStats.combatlevel}
+                      </span>
                     </div>
-                    <div className="text-center">
-                      <p className="text-xs text-slate-400 mb-1">Quest Points</p>
-                      <p className="text-xl font-bold text-white">{playerData.quest_points || 0}</p>
+                  </Tooltip>
+
+                  {/* Quest Points */}
+                  <Tooltip content="Quest Points">
+                    <div className="flex items-center justify-between px-4 py-2 bg-slate-700/30 rounded-lg">
+                      <div className="bg-slate-800/70 p-2 rounded">
+                        <img 
+                          src="/assets/icons/quest_points.png" 
+                          alt="Quest Points"
+                          className="w-5 h-5"
+                        />
+                      </div>
+                      <span className="text-lg font-bold text-white">
+                        {playerData.quest_points || 0}
+                      </span>
                     </div>
-                    <div className="text-center">
-                      <p className="text-xs text-slate-400 mb-1">Total Level</p>
-                      <p className="text-xl font-bold text-white">{overallStats.level}</p>
+                  </Tooltip>
+
+                  {/* Total Level */}
+                  <Tooltip content="Total Level">
+                    <div className="flex items-center justify-between px-4 py-2 bg-slate-700/30 rounded-lg">
+                      <div className="bg-slate-800/70 p-2 rounded">
+                        <img 
+                          src="/assets/icons/total_level.png" 
+                          alt="Total Level"
+                          className="w-5 h-5"
+                        />
+                      </div>
+                      <span className="text-lg font-bold text-white">
+                        {overallStats.level}
+                      </span>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div className="text-center">
-                      <p className="text-xs text-slate-400 mb-1">RuneScore</p>
-                      <p className="text-xl font-bold text-white">
+                  </Tooltip>
+
+                  {/* RuneScore */}
+                  <Tooltip content="RuneScore">
+                    <div className="flex items-center justify-between px-4 py-2 bg-slate-700/30 rounded-lg">
+                      <div className="bg-slate-800/70 p-2 rounded">
+                        <img 
+                          src="/assets/icons/runescore.png" 
+                          alt="RuneScore"
+                          className="w-5 h-5"
+                        />
+                      </div>
+                      <span className="text-lg font-bold text-white">
                         {playerData.runescore?.toLocaleString() || '—'}
-                      </p>
+                      </span>
                     </div>
-                    <div className="text-center">
-                      <p className="text-xs text-slate-400 mb-1">League Points</p>
-                      <p className="text-xl font-bold text-white">
-                        {playerData.league_points?.toLocaleString() || '—'}
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-xs text-slate-400 mb-1">League Rank</p>
-                      <p className="text-xl font-bold text-white">
-                        {playerData.league_rank ? `#${playerData.league_rank.toLocaleString()}` : '—'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
+                  </Tooltip>
+
+                  {/* League Points - only show if value exists */}
+                  {playerData.league_points !== null && playerData.league_points !== undefined && (
+                    <Tooltip content="League Points">
+                      <div className="flex items-center justify-between px-4 py-2 bg-slate-700/30 rounded-lg">
+                        <div className="bg-slate-800/70 p-2 rounded">
+                          <img 
+                            src="/assets/icons/league_points.png" 
+                            alt="League Points"
+                            className="w-5 h-5"
+                          />
+                        </div>
+                        <span className="text-lg font-bold text-white">
+                          {playerData.league_points.toLocaleString()}
+                        </span>
+                      </div>
+                    </Tooltip>
+                  )}
+
+                  {/* League Rank - only show if value exists */}
+                  {playerData.league_rank !== null && playerData.league_rank !== undefined && (
+                    <Tooltip content="League Rank">
+                      <div className="flex items-center justify-between px-4 py-2 bg-slate-700/30 rounded-lg">
+                        <div className="bg-slate-800/70 p-2 rounded">
+                          <img 
+                            src="/assets/icons/league_rank.png" 
+                            alt="League Rank"
+                            className="w-5 h-5"
+                          />
+                        </div>
+                        <span className="text-lg font-bold text-white">
+                          #{playerData.league_rank.toLocaleString()}
+                        </span>
+                      </div>
+                    </Tooltip>
+                  )}
+
+                  {/* XP and Rank Stats */}
+                  <div className="pt-4 space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="text-center">
                         <p className="text-xs text-slate-400 mb-1">Total XP</p>
