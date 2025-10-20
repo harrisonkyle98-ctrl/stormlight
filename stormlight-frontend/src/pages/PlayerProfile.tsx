@@ -720,24 +720,30 @@ const PlayerProfile = () => {
                   </Tooltip>
 
                   {/* League Points - only show if value exists */}
-                  {playerData.league_points !== null && playerData.league_points !== undefined && (
-                    <Tooltip content="League Points">
-                      <div className="flex items-stretch overflow-hidden rounded-lg">
-                        <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
-                          <img 
-                            src="/assets/icons/league_points.png" 
-                            alt="League Points"
-                            className="w-5 h-5"
-                          />
+                  {playerData.league_points !== null && playerData.league_points !== undefined && (() => {
+                    const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''), playerData.league_points)
+                    const leagueBadge = allBadges.find(badge => badge.id.startsWith('league-'))
+                    const leagueIcon = leagueBadge?.icon || '/assets/icons/league_points.png'
+                    
+                    return (
+                      <Tooltip content="League Points">
+                        <div className="flex items-stretch overflow-hidden rounded-lg">
+                          <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
+                            <img 
+                              src={leagueIcon} 
+                              alt="League Points"
+                              className="w-5 h-5"
+                            />
+                          </div>
+                          <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
+                            <span className="text-lg font-bold text-white">
+                              {playerData.league_points.toLocaleString()}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
-                          <span className="text-lg font-bold text-white">
-                            {playerData.league_points.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    </Tooltip>
-                  )}
+                      </Tooltip>
+                    )
+                  })()}
 
                   {/* League Rank - only show if value exists */}
                   {playerData.league_rank !== null && playerData.league_rank !== undefined && (
