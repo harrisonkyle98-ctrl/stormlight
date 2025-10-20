@@ -646,85 +646,95 @@ const PlayerProfile = () => {
               </div>
 
               {overallStats && (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {/* Combat Level */}
                   <Tooltip content="Combat Level">
-                    <div className="flex items-center justify-between px-4 py-2 bg-slate-700/30 rounded-lg">
-                      <div className="bg-slate-800/70 p-2 rounded">
+                    <div className="flex items-stretch overflow-hidden rounded-lg">
+                      <div className="bg-slate-800/70 flex items-center justify-center px-3 py-3">
                         <img 
                           src="/assets/icons/combat_level.png" 
                           alt="Combat Level"
                           className="w-5 h-5"
                         />
                       </div>
-                      <span className="text-lg font-bold text-white">
-                        {overallStats.combatlevel}
-                      </span>
+                      <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-3">
+                        <span className="text-lg font-bold text-white">
+                          {overallStats.combatlevel}
+                        </span>
+                      </div>
                     </div>
                   </Tooltip>
 
                   {/* Quest Points */}
                   <Tooltip content="Quest Points">
-                    <div className="flex items-center justify-between px-4 py-2 bg-slate-700/30 rounded-lg">
-                      <div className="bg-slate-800/70 p-2 rounded">
+                    <div className="flex items-stretch overflow-hidden rounded-lg">
+                      <div className="bg-slate-800/70 flex items-center justify-center px-3 py-3">
                         <img 
                           src="/assets/icons/quest_points.png" 
                           alt="Quest Points"
                           className="w-5 h-5"
                         />
                       </div>
-                      <span className="text-lg font-bold text-white">
-                        {playerData.quest_points || 0}
-                      </span>
+                      <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-3">
+                        <span className="text-lg font-bold text-white">
+                          {playerData.quest_points || 0}
+                        </span>
+                      </div>
                     </div>
                   </Tooltip>
 
                   {/* Total Level */}
                   <Tooltip content="Total Level">
-                    <div className="flex items-center justify-between px-4 py-2 bg-slate-700/30 rounded-lg">
-                      <div className="bg-slate-800/70 p-2 rounded">
+                    <div className="flex items-stretch overflow-hidden rounded-lg">
+                      <div className="bg-slate-800/70 flex items-center justify-center px-3 py-3">
                         <img 
                           src="/assets/icons/total_level.png" 
                           alt="Total Level"
                           className="w-5 h-5"
                         />
                       </div>
-                      <span className="text-lg font-bold text-white">
-                        {overallStats.level}
-                      </span>
+                      <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-3">
+                        <span className="text-lg font-bold text-white">
+                          {overallStats.level}
+                        </span>
+                      </div>
                     </div>
                   </Tooltip>
 
                   {/* RuneScore */}
                   <Tooltip content="RuneScore">
-                    <div className="flex items-center justify-between px-4 py-2 bg-slate-700/30 rounded-lg">
-                      <div className="bg-slate-800/70 p-2 rounded">
+                    <div className="flex items-stretch overflow-hidden rounded-lg">
+                      <div className="bg-slate-800/70 flex items-center justify-center px-3 py-3">
                         <img 
                           src="/assets/icons/runescore.png" 
                           alt="RuneScore"
                           className="w-5 h-5"
                         />
                       </div>
-                      <span className="text-lg font-bold text-white">
-                        {playerData.runescore?.toLocaleString() || '—'}
-                      </span>
+                      <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-3">
+                        <span className="text-lg font-bold text-white">
+                          {playerData.runescore?.toLocaleString() || '—'}
+                        </span>
+                      </div>
                     </div>
                   </Tooltip>
 
                   {/* League Points - only show if value exists */}
                   {playerData.league_points !== null && playerData.league_points !== undefined && (
                     <Tooltip content="League Points">
-                      <div className="flex items-center justify-between px-4 py-2 bg-slate-700/30 rounded-lg">
-                        <div className="bg-slate-800/70 p-2 rounded">
+                      <div className="flex items-stretch overflow-hidden rounded-lg">
+                        <div className="bg-slate-800/70 flex items-center justify-center px-3 py-3">
                           <img 
                             src="/assets/icons/league_points.png" 
                             alt="League Points"
                             className="w-5 h-5"
                           />
                         </div>
-                        <span className="text-lg font-bold text-white">
-                          {playerData.league_points.toLocaleString()}
-                        </span>
+                        <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-3">
+                          <span className="text-lg font-bold text-white">
+                            {playerData.league_points.toLocaleString()}
+                          </span>
+                        </div>
                       </div>
                     </Tooltip>
                   )}
@@ -732,17 +742,19 @@ const PlayerProfile = () => {
                   {/* League Rank - only show if value exists */}
                   {playerData.league_rank !== null && playerData.league_rank !== undefined && (
                     <Tooltip content="League Rank">
-                      <div className="flex items-center justify-between px-4 py-2 bg-slate-700/30 rounded-lg">
-                        <div className="bg-slate-800/70 p-2 rounded">
+                      <div className="flex items-stretch overflow-hidden rounded-lg">
+                        <div className="bg-slate-800/70 flex items-center justify-center px-3 py-3">
                           <img 
                             src="/assets/icons/league_rank.png" 
                             alt="League Rank"
                             className="w-5 h-5"
                           />
                         </div>
-                        <span className="text-lg font-bold text-white">
-                          #{playerData.league_rank.toLocaleString()}
-                        </span>
+                        <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-3">
+                          <span className="text-lg font-bold text-white">
+                            #{playerData.league_rank.toLocaleString()}
+                          </span>
+                        </div>
                       </div>
                     </Tooltip>
                   )}
