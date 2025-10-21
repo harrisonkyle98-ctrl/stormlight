@@ -2328,14 +2328,22 @@ async def get_player_competitions(username: str):
     
     try:
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
-            all_entries = await prisma.competitionentry.find_many(
+            member = await prisma.clanmember.find_unique(
+                where={'username': decoded_username}
+            )
+            
+            if not member:
+                print(f"❌ No clan member found for username: {decoded_username}")
+                return {"competitions": []}
+            
+            print(f"✅ Found clan member: {member.username} (ID: {member.id})")
+            
+            player_entries = await prisma.competitionentry.find_many(
+                where={'memberId': member.id},
                 include={'competition': True}
             )
             
-            player_entries = [
-                entry for entry in all_entries 
-                if entry.username.lower() == decoded_username.lower()
-            ]
+            print(f"✅ Found {len(player_entries)} competition entries for {member.username}")
             
             competitions = [entry.competition for entry in player_entries if entry.competition]
             competitions.sort(key=lambda c: c.startDate, reverse=True)
