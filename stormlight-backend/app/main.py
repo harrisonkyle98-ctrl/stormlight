@@ -2326,29 +2326,79 @@ async def get_player_competitions(username: str):
     
     player_competitions = []
     
-    for comp_id, competition in competitions_db.items():
-        # Get full competition with leaderboard
-        comp_with_leaderboard = await get_competition(str(comp_id))
-        
-        # Check if player is in the leaderboard
-        player_entry = next((entry for entry in comp_with_leaderboard['leaderboard'] 
-                           if entry['username'].lower() == decoded_username.lower()), None)
-        
-        if player_entry:
-            # Player is in this competition
-            placement = next((i+1 for i, entry in enumerate(comp_with_leaderboard['leaderboard']) 
-                            if entry['username'].lower() == decoded_username.lower()), None)
+    try:
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            competitions = await prisma.competition.find_many(
+                where={
+                    'entries': {
+                        'some': {
+                            'username': {
+                                'equals': decoded_username,
+                                'mode': 'insensitive'
+                            }
+                        }
+                    }
+                },
+                include={'entries': True},
+                order={'startDate': 'desc'}
+            )
             
-            if competition['type'] == 'xp':
-                contribution = player_entry.get('xp_gain', 0)
-            else:  # drops
-                contribution = player_entry.get('drop_count', 0)
+            from datetime import timezone
             
-            player_competitions.append({
-                **competition,
-                'placement': placement,
-                'contribution': contribution
-            })
+            for comp in competitions:
+                # Get full competition with leaderboard to calculate placement
+                comp_with_leaderboard = await get_competition(comp.id)
+                
+                # Find player's entry in leaderboard
+                placement = None
+                contribution = 0
+                for i, entry in enumerate(comp_with_leaderboard['leaderboard']):
+                    if entry['username'].lower() == decoded_username.lower():
+                        placement = i + 1
+                        if comp.type == 'XP_GAIN':
+                            contribution = entry.get('xp_gain', 0)
+                        else:  # BOSS_KILLS
+                            contribution = entry.get('drop_count', 0)
+                        break
+                
+                now = datetime.now(timezone.utc)
+                if now < comp.startDate:
+                    status = 'upcoming'
+                elif now > comp.endDate:
+                    status = 'ended'
+                else:
+                    status = 'active'
+                
+                player_competitions.append({
+                    'id': comp.id,
+                    'name': comp.name,
+                    'description': comp.description,
+                    'type': comp.type,
+                    'skill': comp.skill,
+                    'boardSize': comp.boardSize,
+                    'start_date': comp.startDate.isoformat() if comp.startDate else None,
+                    'end_date': comp.endDate.isoformat() if comp.endDate else None,
+                    'status': status,
+                    'placement': placement,
+                    'contribution': contribution,
+                    'rewardFirstGp': comp.rewardFirstGp,
+                    'rewardSecondGp': comp.rewardSecondGp,
+                    'rewardThirdGp': comp.rewardThirdGp,
+                    'rewardBadgeId': comp.rewardBadgeId
+                })
+        else:
+            # Fallback to in-memory competitions_db (for development/testing)
+            for comp_id, competition in competitions_db.items():
+                player_competitions.append({
+                    **competition,
+                    'placement': None,
+                    'contribution': 0
+                })
+    
+    except Exception as e:
+        print(f"Error fetching player competitions: {e}")
+        import traceback
+        traceback.print_exc()
     
     return {"competitions": player_competitions}
 
