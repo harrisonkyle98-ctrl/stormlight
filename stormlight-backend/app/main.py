@@ -2328,22 +2328,41 @@ async def get_player_competitions(username: str):
     
     try:
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            print(f"🔍 Looking for member with username: {repr(decoded_username)}")
             member = await prisma.clanmember.find_unique(
                 where={'username': decoded_username}
             )
             
             if not member:
                 print(f"❌ No clan member found for username: {decoded_username}")
+                all_kyles = await prisma.clanmember.find_many(
+                    where={'username': {'contains': 'Kyle', 'mode': 'insensitive'}}
+                )
+                print(f"🔍 Found {len(all_kyles)} members with 'Kyle' in username:")
+                for k in all_kyles[:5]:
+                    print(f"  - {repr(k.username)} (ID: {k.id})")
                 return {"competitions": []}
             
             print(f"✅ Found clan member: {member.username} (ID: {member.id})")
+            
+            total_entries = await prisma.competitionentry.count()
+            print(f"🔍 Total competition entries in database: {total_entries}")
             
             player_entries = await prisma.competitionentry.find_many(
                 where={'memberId': member.id},
                 include={'competition': True}
             )
             
-            print(f"✅ Found {len(player_entries)} competition entries for {member.username}")
+            print(f"✅ Found {len(player_entries)} competition entries for {member.username} (memberId: {member.id})")
+            
+            if len(player_entries) == 0:
+                sample_entries = await prisma.competitionentry.find_many(
+                    take=5,
+                    include={'member': True}
+                )
+                print(f"🔍 Sample entries from database:")
+                for entry in sample_entries:
+                    print(f"  - Entry for {entry.username} (memberId: {entry.memberId}, member exists: {entry.member is not None})")
             
             competitions = [entry.competition for entry in player_entries if entry.competition]
             competitions.sort(key=lambda c: c.startDate, reverse=True)
