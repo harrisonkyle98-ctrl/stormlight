@@ -16,9 +16,9 @@ interface Competition {
   id: number;
   name: string;
   description: string;
-  type: 'xp' | 'drops';
+  type: 'XP_GAIN' | 'BOSS_KILLS';
   skill?: string;
-  boss?: string;
+  boardSize?: number;
   start_date: string;
   end_date: string;
   placement?: number;
@@ -174,7 +174,7 @@ export const CompetitionsTab = ({ username, playerData: _playerData, API_URL }: 
             className="block bg-slate-700/30 hover:bg-slate-700/50 p-5 rounded-lg transition-colors"
           >
             <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
+              <div className="flex-1 text-left">
                 <h3 className="text-white font-semibold text-lg mb-1">{competition.name}</h3>
                 {competition.description && (
                   <p className="text-slate-400 text-sm">{competition.description}</p>
@@ -188,36 +188,33 @@ export const CompetitionsTab = ({ username, playerData: _playerData, API_URL }: 
               </div>
             </div>
             
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
               <div>
                 <span className="text-slate-500">Type</span>
                 <p className="text-white font-medium capitalize">
-                  {competition.type === 'xp' ? 'Skilling' : 'PvM'}
+                  {competition.type === 'XP_GAIN' ? 'Skilling' : 'PvM'}
                 </p>
               </div>
               <div>
                 <span className="text-slate-500">
-                  {competition.type === 'xp' ? 'XP Gained' : 'Drops Obtained'}
+                  {competition.type === 'XP_GAIN' ? 'XP Gained' : 'Drops Obtained'}
                 </span>
                 <p className="text-white font-medium">
-                  {competition.type === 'xp' 
-                    ? `${competition.contribution?.toLocaleString()} XP`
-                    : `${competition.contribution} drop${competition.contribution !== 1 ? 's' : ''}`
+                  {competition.type === 'XP_GAIN' 
+                    ? `${competition.contribution?.toLocaleString() || 0} XP`
+                    : `${competition.contribution || 0} drop${competition.contribution !== 1 ? 's' : ''}`
                   }
                 </p>
               </div>
               <div>
-                <span className="text-slate-500">Duration</span>
-                <p className="text-white font-medium text-xs">
-                  {formatDate(competition.start_date)} - {formatDate(competition.end_date)}
-                </p>
-              </div>
-              <div>
                 <span className="text-slate-500">
-                  {competition.type === 'xp' ? 'Skill' : 'Grid Size'}
+                  {competition.type === 'XP_GAIN' ? 'Skill' : 'Duration'}
                 </span>
-                <p className="text-white font-medium capitalize">
-                  {competition.type === 'xp' ? competition.skill : competition.boss || 'N/A'}
+                <p className="text-white font-medium text-xs capitalize">
+                  {competition.type === 'XP_GAIN' 
+                    ? competition.skill 
+                    : `${formatDate(competition.start_date)} - ${formatDate(competition.end_date)}`
+                  }
                 </p>
               </div>
             </div>

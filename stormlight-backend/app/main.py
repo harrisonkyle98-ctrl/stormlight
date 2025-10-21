@@ -2346,20 +2346,102 @@ async def get_player_competitions(username: str):
             from datetime import timezone
             
             for comp in competitions:
-                # Get full competition with leaderboard to calculate placement
-                comp_with_leaderboard = await get_competition(comp.id)
-                
-                # Find player's entry in leaderboard
-                placement = None
                 contribution = 0
-                for i, entry in enumerate(comp_with_leaderboard['leaderboard']):
-                    if entry['username'].lower() == decoded_username.lower():
-                        placement = i + 1
-                        if comp.type == 'XP_GAIN':
-                            contribution = entry.get('xp_gain', 0)
-                        else:  # BOSS_KILLS
-                            contribution = entry.get('drop_count', 0)
-                        break
+                placement = None
+                
+                if comp.type == 'XP_GAIN':
+                    try:
+                        from .database import get_db_connection, get_snapshot_json_on_or_before
+                    except ImportError:
+                        from database import get_db_connection, get_snapshot_json_on_or_before
+                    
+                    conn = await get_db_connection()
+                    async with conn:
+                        player_entry = next((e for e in comp.entries if e.username.lower() == decoded_username.lower()), None)
+                        if player_entry:
+                            end_snapshot = await get_snapshot_json_on_or_before(
+                                conn, decoded_username, comp.endDate.date()
+                            )
+                            
+                            if end_snapshot:
+                                skill = comp.skill or 'overall'
+                                if skill and skill.lower() == 'overall':
+                                    xp_end = sum(s.get('xp', 0) for s in end_snapshot.values() if isinstance(s, dict))
+                                else:
+                                    xp_end = end_snapshot.get(skill, {}).get('xp', 0)
+                                
+                                contribution = max(0, xp_end - player_entry.xpStart)
+                        
+                        leaderboard_entries = []
+                        for entry in comp.entries:
+                            xp_gain = 0
+                            try:
+                                end_snapshot = await get_snapshot_json_on_or_before(
+                                    conn, entry.username, comp.endDate.date()
+                                )
+                                
+                                if end_snapshot:
+                                    skill = comp.skill or 'overall'
+                                    if skill and skill.lower() == 'overall':
+                                        xp_end = sum(s.get('xp', 0) for s in end_snapshot.values() if isinstance(s, dict))
+                                    else:
+                                        xp_end = end_snapshot.get(skill, {}).get('xp', 0)
+                                    
+                                    xp_gain = max(0, xp_end - entry.xpStart)
+                            except:
+                                xp_gain = 0
+                            
+                            leaderboard_entries.append((entry.username, xp_gain))
+                        
+                        leaderboard_entries.sort(key=lambda x: x[1], reverse=True)
+                        placement = next((i+1 for i, (u, _) in enumerate(leaderboard_entries) 
+                                        if u.lower() == decoded_username.lower()), None)
+                
+                else:
+                    try:
+                        from .database import get_db_connection
+                    except ImportError:
+                        from database import get_db_connection
+                    
+                    conn = await get_db_connection()
+                    async with conn:
+                        player_drops = 0
+                        
+                        rows = await conn.fetch(
+                            "SELECT username, activity FROM player_activity_logs WHERE LOWER(username) = LOWER($1) AND timestamp >= $2 AND timestamp <= $3",
+                            decoded_username, comp.startDate, comp.endDate
+                        )
+                        
+                        if comp.dropsGrid:
+                            drops_grid = comp.dropsGrid
+                            for row in rows:
+                                text = row['activity']
+                                for drop_item in drops_grid:
+                                    if drop_item and drop_item.lower() in text.lower():
+                                        player_drops += 1
+                        
+                        contribution = player_drops
+                        
+                        all_entries_drops = []
+                        for entry in comp.entries:
+                            member_drops = 0
+                            rows = await conn.fetch(
+                                "SELECT activity FROM player_activity_logs WHERE LOWER(username) = LOWER($1) AND timestamp >= $2 AND timestamp <= $3",
+                                entry.username, comp.startDate, comp.endDate
+                            )
+                            
+                            if comp.dropsGrid:
+                                for row in rows:
+                                    text = row['activity']
+                                    for drop_item in drops_grid:
+                                        if drop_item and drop_item.lower() in text.lower():
+                                            member_drops += 1
+                            
+                            all_entries_drops.append((entry.username, member_drops))
+                        
+                        all_entries_drops.sort(key=lambda x: x[1], reverse=True)
+                        placement = next((i+1 for i, (u, _) in enumerate(all_entries_drops) 
+                                        if u.lower() == decoded_username.lower()), None)
                 
                 now = datetime.now(timezone.utc)
                 if now < comp.startDate:
