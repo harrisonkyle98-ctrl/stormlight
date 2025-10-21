@@ -2450,39 +2450,42 @@ async def get_player_competitions(username: str):
                     
                     conn = await get_db_connection()
                     async with conn:
-                        player_drops = 0
-                        
-                        rows = await conn.fetch(
-                            "SELECT username, activity FROM player_activity_logs WHERE LOWER(username) = LOWER($1) AND timestamp >= $2 AND timestamp <= $3",
-                            decoded_username, comp.startDate, comp.endDate
-                        )
-                        
-                        if comp.dropsGrid:
-                            drops_grid = comp.dropsGrid
-                            for row in rows:
-                                text = row['activity']
-                                for drop_item in drops_grid:
-                                    if drop_item and drop_item.lower() in text.lower():
-                                        player_drops += 1
-                        
-                        contribution = player_drops
-                        
-                        all_entries_drops = []
-                        for entry in comp_with_entries.entries:
-                            member_drops = 0
-                            rows = await conn.fetch(
-                                "SELECT activity FROM player_activity_logs WHERE LOWER(username) = LOWER($1) AND timestamp >= $2 AND timestamp <= $3",
-                                entry.username, comp.startDate, comp.endDate
+                        async with conn.cursor() as cursor:
+                            player_drops = 0
+                            
+                            await cursor.execute(
+                                "SELECT username, activity FROM player_activity_logs WHERE LOWER(username) = LOWER(%s) AND timestamp >= %s AND timestamp <= %s",
+                                (decoded_username, comp.startDate, comp.endDate)
                             )
+                            rows = await cursor.fetchall()
                             
                             if comp.dropsGrid:
+                                drops_grid = comp.dropsGrid
                                 for row in rows:
-                                    text = row['activity']
+                                    text = row[1]
                                     for drop_item in drops_grid:
                                         if drop_item and drop_item.lower() in text.lower():
-                                            member_drops += 1
+                                            player_drops += 1
                             
-                            all_entries_drops.append((entry.username, member_drops))
+                            contribution = player_drops
+                            
+                            all_entries_drops = []
+                            for entry in comp_with_entries.entries:
+                                member_drops = 0
+                                await cursor.execute(
+                                    "SELECT activity FROM player_activity_logs WHERE LOWER(username) = LOWER(%s) AND timestamp >= %s AND timestamp <= %s",
+                                    (entry.username, comp.startDate, comp.endDate)
+                                )
+                                rows = await cursor.fetchall()
+                            
+                                if comp.dropsGrid:
+                                    for row in rows:
+                                        text = row[0]
+                                        for drop_item in drops_grid:
+                                            if drop_item and drop_item.lower() in text.lower():
+                                                member_drops += 1
+                                
+                                all_entries_drops.append((entry.username, member_drops))
                         
                         all_entries_drops.sort(key=lambda x: x[1], reverse=True)
                         placement = next((i+1 for i, (u, _) in enumerate(all_entries_drops) 
