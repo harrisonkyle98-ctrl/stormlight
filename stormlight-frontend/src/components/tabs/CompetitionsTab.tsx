@@ -171,51 +171,90 @@ export const CompetitionsTab = ({ username, playerData: _playerData, API_URL }: 
           <Link 
             key={competition.id} 
             to={`/competitions/${competition.id}`}
-            className="block bg-slate-700/30 hover:bg-slate-700/50 p-5 rounded-lg transition-colors"
+            className="block bg-slate-700/30 hover:bg-slate-700/50 rounded-lg transition-colors overflow-hidden"
           >
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1 text-left">
-                <h3 className="text-white font-semibold text-lg mb-1">{competition.name}</h3>
-                {competition.description && (
-                  <p className="text-slate-400 text-sm">{competition.description}</p>
+            <div className="flex">
+              {/* Placement Column - Dark Background, Full Height */}
+              <div className="bg-slate-800/70 flex items-center justify-center px-6 py-5 min-w-[80px]">
+                {competition.placement ? (
+                  <span className="text-white font-bold text-2xl">
+                    {competition.placement === 1 ? '1st' : 
+                     competition.placement === 2 ? '2nd' : 
+                     competition.placement === 3 ? '3rd' : 
+                     `${competition.placement}th`}
+                  </span>
+                ) : (
+                  <span className="text-slate-600 font-bold text-xl">—</span>
                 )}
               </div>
-              <div className="flex flex-col items-end gap-2 ml-4">
-                {renderPlacementBadge(competition.placement)}
-                <Badge className={`${color} text-white capitalize`}>
-                  {status}
-                </Badge>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-              <div>
-                <span className="text-slate-500">Type</span>
-                <p className="text-white font-medium capitalize">
-                  {competition.type === 'XP_GAIN' ? 'Skilling' : 'PvM'}
-                </p>
-              </div>
-              <div>
-                <span className="text-slate-500">
-                  {competition.type === 'XP_GAIN' ? 'XP Gained' : 'Drops Obtained'}
-                </span>
-                <p className="text-white font-medium">
-                  {competition.type === 'XP_GAIN' 
-                    ? `${competition.contribution?.toLocaleString() || 0} XP`
-                    : `${competition.contribution || 0} drop${competition.contribution !== 1 ? 's' : ''}`
-                  }
-                </p>
-              </div>
-              <div>
-                <span className="text-slate-500">
-                  {competition.type === 'XP_GAIN' ? 'Skill' : 'Duration'}
-                </span>
-                <p className="text-white font-medium text-xs capitalize">
-                  {competition.type === 'XP_GAIN' 
-                    ? competition.skill 
-                    : `${formatDate(competition.start_date)} - ${formatDate(competition.end_date)}`
-                  }
-                </p>
+
+              {/* Main Content */}
+              <div className="flex-1 p-5">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 text-left">
+                    <h3 className="text-white font-semibold text-lg mb-1">{competition.name}</h3>
+                    {competition.description && (
+                      <p className="text-slate-400 text-sm">{competition.description}</p>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-2 ml-4">
+                    <Badge className={`${color} text-white capitalize`}>
+                      {status}
+                    </Badge>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                  <div>
+                    <span className="text-slate-500">Type</span>
+                    <p className="text-white font-medium capitalize">
+                      {competition.type === 'XP_GAIN' ? 'Skilling' : 'PvM'}
+                    </p>
+                  </div>
+                  {competition.type === 'XP_GAIN' ? (
+                    <>
+                      <div>
+                        <span className="text-slate-500">Skill</span>
+                        <p className="text-white font-medium capitalize">
+                          {competition.skill || 'Overall'}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Duration</span>
+                        <p className="text-white font-medium text-xs">
+                          {formatDate(competition.start_date)} – {formatDate(competition.end_date)}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">XP Gained</span>
+                        <p className="text-white font-medium">
+                          {competition.contribution?.toLocaleString() || 0} XP
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <span className="text-slate-500">Grid Size</span>
+                        <p className="text-white font-medium">
+                          {competition.boardSize ? `${competition.boardSize}×${competition.boardSize}` : 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Drops Obtained</span>
+                        <p className="text-white font-medium">
+                          {competition.contribution || 0} drop{competition.contribution !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Duration</span>
+                        <p className="text-white font-medium text-xs">
+                          {formatDate(competition.start_date)} – {formatDate(competition.end_date)}
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </Link>
