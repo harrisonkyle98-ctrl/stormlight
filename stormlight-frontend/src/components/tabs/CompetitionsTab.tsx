@@ -113,35 +113,6 @@ export const CompetitionsTab = ({ username, playerData: _playerData, API_URL }: 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedCompetitions = sortedCompetitions.slice(startIndex, startIndex + itemsPerPage);
 
-  const renderPlacementBadge = (placement: number | undefined) => {
-    if (!placement) return null;
-
-    if (placement === 1) {
-      return (
-        <div className="flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-yellow-400" />
-          <span className="text-yellow-400 font-semibold">1st</span>
-        </div>
-      );
-    } else if (placement === 2) {
-      return (
-        <div className="flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-gray-400" />
-          <span className="text-gray-400 font-semibold">2nd</span>
-        </div>
-      );
-    } else if (placement === 3) {
-      return (
-        <div className="flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-amber-600" />
-          <span className="text-amber-600 font-semibold">3rd</span>
-        </div>
-      );
-    } else {
-      return <span className="text-slate-400 font-semibold">#{placement}</span>;
-    }
-  };
-
   return (
     <div className="space-y-4">
       {/* Sorting Controls */}
