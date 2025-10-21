@@ -680,8 +680,59 @@ const PlayerProfile = () => {
                 </div>
               </div>
 
+              {/* Badges Section - Directly Above Combat Level */}
+              {playerData.stats && playerData.custom_badges !== undefined && (() => {
+                const milestoneBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''), playerData.league_points)
+                const nonRankBadges = milestoneBadges.filter(badge => !badge.id.startsWith('rank-'))
+                
+                const customBadges = (playerData.custom_badges || []).map((badge: CustomBadge) => ({
+                  id: `custom-${badge.id}`,
+                  name: badge.name,
+                  backgroundColor: badge.backgroundColor || '#6b7280',
+                  gradientBackground: badge.gradientColors ? 
+                    `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})` : 
+                    undefined,
+                  icon: badge.imageUrl
+                }))
+                
+                const allBadges = [...nonRankBadges, ...customBadges]
+                return allBadges.length > 0 ? (
+                  <div className="mt-4 flex flex-col gap-2">
+                    {allBadges.map((badge) => (
+                        <Tooltip
+                          key={badge.id}
+                          content={
+                            <div>
+                              <div className="font-semibold text-white">{badge.name}</div>
+                              {badge.id.startsWith('league-') && playerData.league_points && (
+                                <div className="text-blue-400 text-sm mt-1">
+                                  League Points: {playerData.league_points.toLocaleString()}
+                                </div>
+                              )}
+                            </div>
+                          }
+                        >
+                          <div
+                            className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white relative group cursor-help"
+                            style={{
+                              background: badge.gradientBackground || badge.backgroundColor
+                            }}
+                          >
+                          <img
+                            src={badge.icon}
+                            alt={badge.name}
+                            className="w-4 h-4"
+                          />
+                          <span>{badge.name}</span>
+                          </div>
+                        </Tooltip>
+                    ))}
+                  </div>
+                ) : null
+              })()}
+
               {overallStats && (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 mt-4">
                   {/* Combat Level */}
                   <Tooltip content="Combat Level">
                     <div className="flex items-stretch overflow-hidden rounded-lg">
@@ -863,57 +914,6 @@ const PlayerProfile = () => {
               )}
             </CardContent>
           </Card>
-
-          {/* Badges Section - Directly Under Profile Header */}
-          {playerData.stats && playerData.custom_badges !== undefined && (() => {
-            const milestoneBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''), playerData.league_points)
-            const nonRankBadges = milestoneBadges.filter(badge => !badge.id.startsWith('rank-'))
-            
-            const customBadges = (playerData.custom_badges || []).map((badge: CustomBadge) => ({
-              id: `custom-${badge.id}`,
-              name: badge.name,
-              backgroundColor: badge.backgroundColor || '#6b7280',
-              gradientBackground: badge.gradientColors ? 
-                `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})` : 
-                undefined,
-              icon: badge.imageUrl
-            }))
-            
-            const allBadges = [...nonRankBadges, ...customBadges]
-            return allBadges.length > 0 ? (
-              <div className="flex flex-col gap-2">
-                {allBadges.map((badge) => (
-                    <Tooltip
-                      key={badge.id}
-                      content={
-                        <div>
-                          <div className="font-semibold text-white">{badge.name}</div>
-                          {badge.id.startsWith('league-') && playerData.league_points && (
-                            <div className="text-blue-400 text-sm mt-1">
-                              League Points: {playerData.league_points.toLocaleString()}
-                            </div>
-                          )}
-                        </div>
-                      }
-                    >
-                      <div
-                        className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white relative group cursor-help"
-                        style={{
-                          background: badge.gradientBackground || badge.backgroundColor
-                        }}
-                      >
-                      <img
-                        src={badge.icon}
-                        alt={badge.name}
-                        className="w-4 h-4"
-                      />
-                      <span>{badge.name}</span>
-                      </div>
-                    </Tooltip>
-                ))}
-              </div>
-            ) : null
-          })()}
 
           {/* Clue Scrolls Card */}
           {playerData.clue_scrolls && Object.values(playerData.clue_scrolls).some(count => count !== null && count !== undefined) && (
