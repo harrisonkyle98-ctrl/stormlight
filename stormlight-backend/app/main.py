@@ -2328,29 +2328,27 @@ async def get_player_competitions(username: str):
     
     try:
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
-            all_competitions = await prisma.competition.find_many(
-                include={'entries': True},
-                order={'startDate': 'desc'}
+            player_entries = await prisma.competitionentry.find_many(
+                where={
+                    'username': {
+                        'equals': decoded_username,
+                        'mode': 'insensitive'
+                    }
+                },
+                include={'competition': True}
             )
             
-            print(f"DEBUG: Total competitions: {len(all_competitions)}")
-            print(f"DEBUG: Looking for username: {decoded_username}")
-            for comp in all_competitions:
-                print(f"DEBUG: Competition {comp.id} has {len(comp.entries) if comp.entries else 0} entries")
-                if comp.entries:
-                    matching = [e.username for e in comp.entries if e.username.lower() == decoded_username.lower()]
-                    print(f"DEBUG: Matching entries: {matching}")
-            
-            competitions = [
-                comp for comp in all_competitions 
-                if any(e.username.lower() == decoded_username.lower() for e in comp.entries)
-            ]
-            
-            print(f"DEBUG: Filtered competitions: {len(competitions)}")
+            competitions = [entry.competition for entry in player_entries if entry.competition]
+            competitions.sort(key=lambda c: c.startDate, reverse=True)
             
             from datetime import timezone
             
             for comp in competitions:
+                comp_with_entries = await prisma.competition.find_unique(
+                    where={'id': comp.id},
+                    include={'entries': True}
+                )
+                
                 contribution = 0
                 placement = None
                 
@@ -2362,7 +2360,7 @@ async def get_player_competitions(username: str):
                     
                     conn = await get_db_connection()
                     async with conn:
-                        player_entry = next((e for e in comp.entries if e.username.lower() == decoded_username.lower()), None)
+                        player_entry = next((e for e in comp_with_entries.entries if e.username.lower() == decoded_username.lower()), None)
                         if player_entry:
                             end_snapshot = await get_snapshot_json_on_or_before(
                                 conn, decoded_username, comp.endDate.date()
@@ -2378,7 +2376,7 @@ async def get_player_competitions(username: str):
                                 contribution = max(0, xp_end - player_entry.xpStart)
                         
                         leaderboard_entries = []
-                        for entry in comp.entries:
+                        for entry in comp_with_entries.entries:
                             xp_gain = 0
                             try:
                                 end_snapshot = await get_snapshot_json_on_or_before(
@@ -2428,7 +2426,7 @@ async def get_player_competitions(username: str):
                         contribution = player_drops
                         
                         all_entries_drops = []
-                        for entry in comp.entries:
+                        for entry in comp_with_entries.entries:
                             member_drops = 0
                             rows = await conn.fetch(
                                 "SELECT activity FROM player_activity_logs WHERE LOWER(username) = LOWER($1) AND timestamp >= $2 AND timestamp <= $3",
