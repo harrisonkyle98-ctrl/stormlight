@@ -2325,10 +2325,13 @@ async def get_player_competitions(username: str):
     decoded_username = unquote(username).replace('-', ' ')
     
     player_competitions = []
+    debug_info = {}
     
     try:
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
             print(f"🔍 Looking for member with username: {repr(decoded_username)}")
+            debug_info['decoded_username'] = decoded_username
+            
             member = await prisma.clanmember.find_unique(
                 where={'username': decoded_username}
             )
@@ -2339,14 +2342,20 @@ async def get_player_competitions(username: str):
                     where={'username': {'contains': 'Kyle', 'mode': 'insensitive'}}
                 )
                 print(f"🔍 Found {len(all_kyles)} members with 'Kyle' in username:")
+                debug_info['member_found'] = False
+                debug_info['similar_usernames'] = [k.username for k in all_kyles[:5]]
                 for k in all_kyles[:5]:
                     print(f"  - {repr(k.username)} (ID: {k.id})")
-                return {"competitions": []}
+                return {"competitions": [], "debug": debug_info}
             
             print(f"✅ Found clan member: {member.username} (ID: {member.id})")
+            debug_info['member_found'] = True
+            debug_info['member_id'] = member.id
+            debug_info['member_username'] = member.username
             
             total_entries = await prisma.competitionentry.count()
             print(f"🔍 Total competition entries in database: {total_entries}")
+            debug_info['total_entries_in_db'] = total_entries
             
             player_entries = await prisma.competitionentry.find_many(
                 where={'memberId': member.id},
@@ -2354,6 +2363,7 @@ async def get_player_competitions(username: str):
             )
             
             print(f"✅ Found {len(player_entries)} competition entries for {member.username} (memberId: {member.id})")
+            debug_info['player_entries_count'] = len(player_entries)
             
             if len(player_entries) == 0:
                 sample_entries = await prisma.competitionentry.find_many(
@@ -2361,8 +2371,14 @@ async def get_player_competitions(username: str):
                     include={'member': True}
                 )
                 print(f"🔍 Sample entries from database:")
+                debug_info['sample_entries'] = []
                 for entry in sample_entries:
                     print(f"  - Entry for {entry.username} (memberId: {entry.memberId}, member exists: {entry.member is not None})")
+                    debug_info['sample_entries'].append({
+                        'username': entry.username,
+                        'memberId': entry.memberId,
+                        'member_exists': entry.member is not None
+                    })
             
             competitions = [entry.competition for entry in player_entries if entry.competition]
             competitions.sort(key=lambda c: c.startDate, reverse=True)
@@ -2510,8 +2526,9 @@ async def get_player_competitions(username: str):
         print(f"Error fetching player competitions: {e}")
         import traceback
         traceback.print_exc()
+        debug_info['error'] = str(e)
     
-    return {"competitions": player_competitions}
+    return {"competitions": player_competitions, "debug": debug_info}
 
 async def fetch_clan_members() -> List[Dict[str, Any]]:
     """Fetch clan members from RuneScape Clan API"""
