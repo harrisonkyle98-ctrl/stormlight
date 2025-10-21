@@ -2328,7 +2328,7 @@ async def get_player_competitions(username: str):
     
     for comp_id, competition in competitions_db.items():
         # Get full competition with leaderboard
-        comp_with_leaderboard = await get_competition(comp_id)
+        comp_with_leaderboard = await get_competition(str(comp_id))
         
         # Check if player is in the leaderboard
         player_entry = next((entry for entry in comp_with_leaderboard['leaderboard'] 
