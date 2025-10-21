@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { ArrowLeft, User, Award, Scroll, Trophy, Package, Activity, BarChart3, Compass, BarChart2, FileText, RefreshCw, Plus, CircleCheck } from 'lucide-react'
+import { ArrowLeft, User, Award, Scroll, Trophy, Package, Activity, BarChart3, Compass, BarChart2, FileText, RefreshCw, Plus, CircleCheck, CircleHelp } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { getSkillIcon } from '../utils/skillIcons'
 import { getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
@@ -609,6 +609,15 @@ const PlayerProfile = () => {
           <Card className="bg-slate-800/50 border-slate-700">
             <CardContent className="p-6">
               <div className="bg-slate-700/30 rounded-lg p-6 mb-4 relative">
+                {/* Last Updated Icon - Top Left */}
+                <Tooltip content={`Last updated: ${new Date(playerData.last_updated).toLocaleDateString()}`}>
+                  <div className="absolute top-4 left-4">
+                    <CircleHelp 
+                      className="w-5 h-5 text-gray-500"
+                    />
+                  </div>
+                </Tooltip>
+                
                 {/* Discord Verification Indicator - Top Right */}
                 <Tooltip content={playerData.is_verified ? "Verified" : "Unverified"}>
                   <div className="absolute top-4 right-4">
@@ -636,9 +645,6 @@ const PlayerProfile = () => {
                         {urlToUsername(username || '')}
                       </span>
                     </h1>
-                    <p className="text-slate-400 text-sm">
-                      Last updated: {new Date(playerData.last_updated).toLocaleDateString()}
-                    </p>
                     
                     {/* Rank Badge */}
                     {playerData.stats && (() => {
