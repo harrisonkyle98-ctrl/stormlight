@@ -2328,20 +2328,15 @@ async def get_player_competitions(username: str):
     
     try:
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
-            competitions = await prisma.competition.find_many(
-                where={
-                    'entries': {
-                        'some': {
-                            'username': {
-                                'equals': decoded_username,
-                                'mode': 'insensitive'
-                            }
-                        }
-                    }
-                },
+            all_competitions = await prisma.competition.find_many(
                 include={'entries': True},
                 order={'startDate': 'desc'}
             )
+            
+            competitions = [
+                comp for comp in all_competitions 
+                if any(e.username.lower() == decoded_username.lower() for e in comp.entries)
+            ]
             
             from datetime import timezone
             
