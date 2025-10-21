@@ -2467,7 +2467,7 @@ async def verify_admin_access(user_id: str = Depends(verify_token)):
                 rank_priority = get_rank_priority(clan_rank)
                 if rank_priority <= 3:  # Owner=1, Deputy Owner=2, Overseer=3
                     print(f"✅ ADMIN ACCESS: User {user_id} has admin access with rank {clan_rank}")
-                    return user_id
+                    return {'admin_id': user_id, 'username': linked_member.username}
                 else:
                     print(f"❌ ADMIN ACCESS: User {user_id} has insufficient rank: {clan_rank} (priority {rank_priority})")
                     raise HTTPException(status_code=403, detail=f"Admin access required. Your rank: {clan_rank}. Required: Owner, Deputy Owner, or Overseer.")
@@ -2487,7 +2487,7 @@ async def verify_admin_access(user_id: str = Depends(verify_token)):
                             rank_priority = get_rank_priority(clan_rank)
                             if rank_priority <= 3:  # Owner=1, Deputy Owner=2, Overseer=3
                                 print(f"✅ ADMIN ACCESS: User {user_id} has admin access with rank {clan_rank}")
-                                return user_id
+                                return {'admin_id': user_id, 'username': linked_member.username}
                             else:
                                 print(f"❌ ADMIN ACCESS: User {user_id} has insufficient rank: {clan_rank} (priority {rank_priority})")
                                 raise HTTPException(status_code=403, detail=f"Admin access required. Your rank: {clan_rank}. Required: Owner, Deputy Owner, or Overseer.")
@@ -2514,7 +2514,7 @@ async def verify_admin_access(user_id: str = Depends(verify_token)):
                             rank_priority = get_rank_priority(clan_rank)
                             if rank_priority <= 3:  # Owner=1, Deputy Owner=2, Overseer=3
                                 print(f"✅ ADMIN ACCESS: User {user_id} has admin access with rank {clan_rank}")
-                                return user_id
+                                return {'admin_id': user_id, 'username': kyle_member.username}
                             else:
                                 print(f"❌ ADMIN ACCESS: User {user_id} has insufficient rank: {clan_rank} (priority {rank_priority})")
                                 raise HTTPException(status_code=403, detail=f"Admin access required. Your rank: {clan_rank}. Required: Owner, Deputy Owner, or Overseer.")
@@ -3262,9 +3262,11 @@ async def create_custom_badge(
     gradient_color1: str = Form(None),
     gradient_color2: str = Form(None),
     badge_file: UploadFile = File(...),
-    admin_id: str = Depends(verify_admin_access)
+    admin_info: dict = Depends(verify_admin_access)
 ):
     """Create a new custom badge with file upload and color options"""
+    admin_id = admin_info['admin_id']
+    admin_username = admin_info['username']
     try:
         if badge_file.content_type not in ["image/png", "image/jpeg", "image/svg+xml"]:
             raise HTTPException(status_code=400, detail="Invalid file type. Only PNG, JPG, SVG allowed.")
@@ -3300,7 +3302,7 @@ async def create_custom_badge(
             
             await log_admin_action(
                 admin_id, 
-                "system", 
+                admin_username, 
                 "create_badge", 
                 f"Created custom badge: {name}",
                 prisma_client=prisma,
@@ -3324,9 +3326,11 @@ async def update_custom_badge(
     gradient_color1: str = Form(None),
     gradient_color2: str = Form(None),
     badge_file: UploadFile = File(None),
-    admin_id: str = Depends(verify_admin_access)
+    admin_info: dict = Depends(verify_admin_access)
 ):
     """Update an existing custom badge"""
+    admin_id = admin_info['admin_id']
+    admin_username = admin_info['username']
     try:
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
             existing_badge = await prisma.custombadge.find_unique(where={'id': badge_id})
@@ -3376,7 +3380,7 @@ async def update_custom_badge(
             
             await log_admin_action(
                 admin_id,
-                "system",
+                admin_username,
                 "update_badge",
                 f"Updated custom badge: {name}",
                 prisma_client=prisma,
@@ -3399,9 +3403,11 @@ async def update_custom_badge(
 @api_router.post("/admin/assign-badge")
 async def assign_badge_to_member(
     request: dict,
-    admin_id: str = Depends(verify_admin_access)
+    admin_info: dict = Depends(verify_admin_access)
 ):
     """Assign a custom badge to a clan member"""
+    admin_id = admin_info['admin_id']
+    admin_username = admin_info['username']
     try:
         print(f"🎯 BADGE ASSIGN: Starting badge assignment for admin {admin_id}")
         print(f"🎯 BADGE ASSIGN: Request data: {request}")
@@ -3459,7 +3465,7 @@ async def assign_badge_to_member(
                     print(f"🎯 BADGE ASSIGN: Logging admin action")
                     await log_admin_action(
                         admin_id,
-                        "system",
+                        admin_username,
                         "assign_badge",
                         f"Assigned badge '{badge.name}' to {username}",
                         prisma_client=prisma,
@@ -3489,9 +3495,11 @@ async def assign_badge_to_member(
 @api_router.post("/admin/remove-badge")
 async def remove_badge_from_member(
     request: dict,
-    admin_id: str = Depends(verify_admin_access)
+    admin_info: dict = Depends(verify_admin_access)
 ):
     """Remove a custom badge from a clan member"""
+    admin_id = admin_info['admin_id']
+    admin_username = admin_info['username']
     try:
         
         username = request.get('username')
@@ -3522,7 +3530,7 @@ async def remove_badge_from_member(
                 
                 await log_admin_action(
                     admin_id,
-                    "system", 
+                    admin_username, 
                     "remove_badge",
                     f"Removed badge from {username}",
                     prisma_client=prisma,
@@ -3541,9 +3549,11 @@ async def remove_badge_from_member(
 @api_router.delete("/admin/badges/{badge_id}")
 async def delete_custom_badge(
     badge_id: str,
-    admin_id: str = Depends(verify_admin_access)
+    admin_info: dict = Depends(verify_admin_access)
 ):
     """Delete a custom badge"""
+    admin_id = admin_info['admin_id']
+    admin_username = admin_info['username']
     try:
         
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
@@ -3569,7 +3579,7 @@ async def delete_custom_badge(
             
             await log_admin_action(
                 admin_id,
-                "system",
+                admin_username,
                 "delete_badge",
                 f"Deleted custom badge: {badge.name}",
                 prisma_client=prisma,
@@ -3603,9 +3613,11 @@ async def get_admin_competitions(admin_id: str = Depends(verify_admin_access)):
 @api_router.post("/admin/competitions")
 async def create_admin_competition(
     competition_data: dict,
-    admin_id: str = Depends(verify_admin_access)
+    admin_info: dict = Depends(verify_admin_access)
 ):
     """Create a new competition with automatic member enrollment at start time"""
+    admin_id = admin_info['admin_id']
+    admin_username = admin_info['username']
     try:
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
             start_date = datetime.fromisoformat(competition_data['start_date'].replace('Z', '+00:00'))
@@ -3705,7 +3717,7 @@ async def create_admin_competition(
             
             await log_admin_action(
                 admin_id,
-                "system",
+                admin_username,
                 "create_competition",
                 f"Created competition: {competition.name}",
                 prisma_client=prisma,
@@ -3738,9 +3750,11 @@ async def create_admin_competition(
 async def update_admin_competition(
     competition_id: str,
     competition_data: dict,
-    admin_id: str = Depends(verify_admin_access)
+    admin_info: dict = Depends(verify_admin_access)
 ):
     """Update an existing competition (only metadata, not participants)"""
+    admin_id = admin_info['admin_id']
+    admin_username = admin_info['username']
     try:
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
             competition = await prisma.competition.find_unique(
@@ -3801,7 +3815,7 @@ async def update_admin_competition(
             
             await log_admin_action(
                 admin_id,
-                "system",
+                admin_username,
                 "update_competition",
                 f"Updated competition: {updated_competition.name}",
                 prisma_client=prisma,
@@ -3822,9 +3836,11 @@ async def update_admin_competition(
 @api_router.delete("/admin/competitions/{competition_id}")
 async def delete_admin_competition(
     competition_id: str,
-    admin_id: str = Depends(verify_admin_access)
+    admin_info: dict = Depends(verify_admin_access)
 ):
     """Delete a competition and all associated entries"""
+    admin_id = admin_info['admin_id']
+    admin_username = admin_info['username']
     try:
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
             competition = await prisma.competition.find_unique(
@@ -3840,7 +3856,7 @@ async def delete_admin_competition(
             
             await log_admin_action(
                 admin_id,
-                "system",
+                admin_username,
                 "delete_competition",
                 f"Deleted competition: {competition.name}",
                 prisma_client=prisma,
@@ -3961,9 +3977,11 @@ async def normalize_activities(request: Request):
 async def update_member_join_date(
     username: str,
     join_date_data: dict,
-    admin_id: str = Depends(verify_admin_access)
+    admin_info: dict = Depends(verify_admin_access)
 ):
     """Update member join date"""
+    admin_id = admin_info['admin_id']
+    admin_username = admin_info['username']
     try:
         
         if PRISMA_AVAILABLE and prisma and prisma.is_connected():
@@ -3976,9 +3994,11 @@ async def update_member_join_date(
             
             await log_admin_action(
                 admin_id,
-                username,
+                admin_username,
                 "update_join_date",
-                f"Updated join date to {join_date.strftime('%Y-%m-%d')}"
+                f"Updated join date for {username} to {join_date.strftime('%Y-%m-%d')}",
+                prisma_client=prisma,
+                prisma_available=PRISMA_AVAILABLE
             )
             
             return {"success": True, "member": member}
