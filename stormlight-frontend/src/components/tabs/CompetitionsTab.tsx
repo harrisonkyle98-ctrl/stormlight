@@ -191,15 +191,15 @@ export const CompetitionsTab = ({ username, playerData: _playerData, API_URL }: 
                         </p>
                       </div>
                       <div>
-                        <span className="text-slate-500">Duration</span>
-                        <p className="text-white font-medium text-xs">
-                          {formatDate(competition.start_date)} – {formatDate(competition.end_date)}
-                        </p>
-                      </div>
-                      <div>
                         <span className="text-slate-500">XP Gained</span>
                         <p className="text-white font-medium">
                           {competition.contribution?.toLocaleString() || 0} XP
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Duration</span>
+                        <p className="text-white font-medium text-xs">
+                          {formatDate(competition.start_date)} – {formatDate(competition.end_date)}
                         </p>
                       </div>
                     </>
