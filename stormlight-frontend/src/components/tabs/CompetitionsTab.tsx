@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Swords } from 'lucide-react'
+import { Trophy, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Badge } from '../ui/badge'
+import { Button } from '../ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { usernameToUrl } from '../../utils/urlUtils'
+import { Link } from 'react-router-dom'
 
 interface TabProps {
   username: string;
@@ -26,6 +29,9 @@ export const CompetitionsTab = ({ username, playerData: _playerData, API_URL }: 
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState<'date' | 'placement'>('date');
+  const itemsPerPage = 10;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -69,7 +75,7 @@ export const CompetitionsTab = ({ username, playerData: _playerData, API_URL }: 
   if (loading) {
     return (
       <div className="text-center py-12">
-        <Swords className="w-16 h-16 text-slate-400 mx-auto mb-4 animate-spin" />
+        <Trophy className="w-16 h-16 text-slate-400 mx-auto mb-4 animate-spin" />
         <p className="text-slate-400 text-lg">Loading competitions...</p>
       </div>
     );
@@ -78,7 +84,7 @@ export const CompetitionsTab = ({ username, playerData: _playerData, API_URL }: 
   if (error) {
     return (
       <div className="text-center py-12">
-        <Swords className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+        <Trophy className="w-16 h-16 text-slate-400 mx-auto mb-4" />
         <p className="text-red-400 text-lg">{error}</p>
       </div>
     );
@@ -87,66 +93,162 @@ export const CompetitionsTab = ({ username, playerData: _playerData, API_URL }: 
   if (competitions.length === 0) {
     return (
       <div className="text-center py-12">
-        <Swords className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-        <p className="text-slate-400 text-lg">No competition history</p>
-        <p className="text-slate-500 text-sm mt-2">This player hasn't participated in any competitions yet</p>
+        <Trophy className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+        <p className="text-slate-400 text-lg">This player has not participated in any competitions yet.</p>
       </div>
     );
   }
 
+  const sortedCompetitions = [...competitions].sort((a, b) => {
+    if (sortBy === 'date') {
+      return new Date(b.end_date).getTime() - new Date(a.end_date).getTime();
+    } else {
+      if (!a.placement) return 1;
+      if (!b.placement) return -1;
+      return a.placement - b.placement;
+    }
+  });
+
+  const totalPages = Math.ceil(sortedCompetitions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedCompetitions = sortedCompetitions.slice(startIndex, startIndex + itemsPerPage);
+
+  const renderPlacementBadge = (placement: number | undefined) => {
+    if (!placement) return null;
+
+    if (placement === 1) {
+      return (
+        <div className="flex items-center gap-2">
+          <Trophy className="w-5 h-5 text-yellow-400" />
+          <span className="text-yellow-400 font-semibold">1st</span>
+        </div>
+      );
+    } else if (placement === 2) {
+      return (
+        <div className="flex items-center gap-2">
+          <Trophy className="w-5 h-5 text-gray-400" />
+          <span className="text-gray-400 font-semibold">2nd</span>
+        </div>
+      );
+    } else if (placement === 3) {
+      return (
+        <div className="flex items-center gap-2">
+          <Trophy className="w-5 h-5 text-amber-600" />
+          <span className="text-amber-600 font-semibold">3rd</span>
+        </div>
+      );
+    } else {
+      return <span className="text-slate-400 font-semibold">#{placement}</span>;
+    }
+  };
+
   return (
     <div className="space-y-4">
-      {competitions.map((competition) => {
+      {/* Sorting Controls */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-slate-400 text-sm">Sort by:</span>
+          <Select value={sortBy} onValueChange={(value: 'date' | 'placement') => { setSortBy(value); setCurrentPage(1); }}>
+            <SelectTrigger className="w-[180px] bg-slate-700/50 border-slate-600">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="date">Date (Newest)</SelectItem>
+              <SelectItem value="placement">Placement (Best)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <span className="text-slate-400 text-sm">
+          {sortedCompetitions.length} competition{sortedCompetitions.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+
+      {/* Competitions List */}
+      {paginatedCompetitions.map((competition) => {
         const { status, color } = getCompetitionStatus(competition.start_date, competition.end_date);
         
         return (
-          <div key={competition.id} className="bg-slate-700/30 p-4 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-white font-semibold">{competition.name}</h3>
-              <div className="flex items-center space-x-2">
-                {competition.placement && (
-                  <Badge className="bg-yellow-600 text-white">
-                    #{competition.placement}
-                  </Badge>
+          <Link 
+            key={competition.id} 
+            to={`/competitions/${competition.id}`}
+            className="block bg-slate-700/30 hover:bg-slate-700/50 p-5 rounded-lg transition-colors"
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <h3 className="text-white font-semibold text-lg mb-1">{competition.name}</h3>
+                {competition.description && (
+                  <p className="text-slate-400 text-sm">{competition.description}</p>
                 )}
+              </div>
+              <div className="flex flex-col items-end gap-2 ml-4">
+                {renderPlacementBadge(competition.placement)}
                 <Badge className={`${color} text-white capitalize`}>
                   {status}
                 </Badge>
               </div>
             </div>
-            <p className="text-slate-400 text-sm mb-2">{competition.description}</p>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
               <div>
-                <span className="text-slate-400">Type: </span>
-                <span className="text-white capitalize">{competition.type}</span>
+                <span className="text-slate-500">Type</span>
+                <p className="text-white font-medium capitalize">
+                  {competition.type === 'xp' ? 'Skilling' : 'PvM'}
+                </p>
               </div>
               <div>
-                <span className="text-slate-400">Contribution: </span>
-                <span className="text-white">
+                <span className="text-slate-500">
+                  {competition.type === 'xp' ? 'XP Gained' : 'Drops Obtained'}
+                </span>
+                <p className="text-white font-medium">
                   {competition.type === 'xp' 
                     ? `${competition.contribution?.toLocaleString()} XP`
-                    : `${competition.contribution} drops`
+                    : `${competition.contribution} drop${competition.contribution !== 1 ? 's' : ''}`
                   }
-                </span>
+                </p>
               </div>
               <div>
-                <span className="text-slate-400">Duration: </span>
-                <span className="text-white">
+                <span className="text-slate-500">Duration</span>
+                <p className="text-white font-medium text-xs">
                   {formatDate(competition.start_date)} - {formatDate(competition.end_date)}
-                </span>
+                </p>
               </div>
               <div>
-                <span className="text-slate-400">
-                  {competition.type === 'xp' ? 'Skill' : 'Boss'}: 
+                <span className="text-slate-500">
+                  {competition.type === 'xp' ? 'Skill' : 'Grid Size'}
                 </span>
-                <span className="text-white capitalize ml-1">
-                  {competition.type === 'xp' ? competition.skill : competition.boss || 'All'}
-                </span>
+                <p className="text-white font-medium capitalize">
+                  {competition.type === 'xp' ? competition.skill : competition.boss || 'N/A'}
+                </p>
               </div>
             </div>
-          </div>
+          </Link>
         );
       })}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-6">
+          <Button
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:bg-blue-800"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <span className="text-slate-400 text-sm">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:bg-blue-800"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
