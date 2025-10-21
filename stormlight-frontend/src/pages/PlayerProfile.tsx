@@ -592,14 +592,25 @@ const PlayerProfile = () => {
             Back to Members
           </Link>
         </Button>
-        <Button
-          onClick={handleRefresh}
-          disabled={refreshing || (lastRefresh ? Date.now() - lastRefresh < 300000 : false)}
-          size="sm"
-          className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:bg-blue-800"
-        >
-          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-        </Button>
+        <div className="flex items-center gap-2">
+          {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
+            <Button
+              onClick={handleOpenBadgeModal}
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
+          )}
+          <Button
+            onClick={handleRefresh}
+            disabled={refreshing || (lastRefresh ? Date.now() - lastRefresh < 300000 : false)}
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:bg-blue-800"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[30%_70%] gap-6">
@@ -853,9 +864,8 @@ const PlayerProfile = () => {
             </CardContent>
           </Card>
 
+          {/* Badges Section - Directly Under Profile Header */}
           {playerData.stats && playerData.custom_badges !== undefined && (() => {
-            console.log('🎯 RENDER START: playerData.clan_xp =', playerData.clan_xp, 'playerData.clan_rank_number =', playerData.clan_rank_number)
-            console.log('🎯 BADGE RENDER: Rendering badges, custom_badges =', playerData.custom_badges)
             const milestoneBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''), playerData.league_points)
             const nonRankBadges = milestoneBadges.filter(badge => !badge.id.startsWith('rank-'))
             
@@ -869,64 +879,39 @@ const PlayerProfile = () => {
               icon: badge.imageUrl
             }))
             
-            console.log('🎯 BADGE RENDER: Custom badges mapped:', customBadges)
             const allBadges = [...nonRankBadges, ...customBadges]
-            console.log('🎯 BADGE RENDER: Total badges to display:', allBadges.length)
             return allBadges.length > 0 ? (
-              <Card className="bg-slate-800/50 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Award className="w-5 h-5 text-yellow-400" />
-                      <span>Badges</span>
-                    </div>
-                    {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          onClick={handleOpenBadgeModal}
-                          size="sm"
-                          className="w-8 h-8 p-0 bg-blue-600 hover:bg-blue-700 border-blue-600"
-                        >
-                          <Plus className="w-4 h-4 text-white" />
-                        </Button>
-                      </div>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col gap-2">
-                    {allBadges.map((badge) => (
-                        <Tooltip
-                          key={badge.id}
-                          content={
-                            <div>
-                              <div className="font-semibold text-white">{badge.name}</div>
-                              {badge.id.startsWith('league-') && playerData.league_points && (
-                                <div className="text-blue-400 text-sm mt-1">
-                                  League Points: {playerData.league_points.toLocaleString()}
-                                </div>
-                              )}
+              <div className="flex flex-col gap-2">
+                {allBadges.map((badge) => (
+                    <Tooltip
+                      key={badge.id}
+                      content={
+                        <div>
+                          <div className="font-semibold text-white">{badge.name}</div>
+                          {badge.id.startsWith('league-') && playerData.league_points && (
+                            <div className="text-blue-400 text-sm mt-1">
+                              League Points: {playerData.league_points.toLocaleString()}
                             </div>
-                          }
-                        >
-                          <div
-                            className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white relative group cursor-help"
-                            style={{
-                              background: badge.gradientBackground || badge.backgroundColor
-                            }}
-                          >
-                          <img
-                            src={badge.icon}
-                            alt={badge.name}
-                            className="w-4 h-4"
-                          />
-                          <span>{badge.name}</span>
-                          </div>
-                        </Tooltip>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                          )}
+                        </div>
+                      }
+                    >
+                      <div
+                        className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white relative group cursor-help"
+                        style={{
+                          background: badge.gradientBackground || badge.backgroundColor
+                        }}
+                      >
+                      <img
+                        src={badge.icon}
+                        alt={badge.name}
+                        className="w-4 h-4"
+                      />
+                      <span>{badge.name}</span>
+                      </div>
+                    </Tooltip>
+                ))}
+              </div>
             ) : null
           })()}
 
