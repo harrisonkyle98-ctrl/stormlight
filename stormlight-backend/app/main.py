@@ -2327,55 +2327,28 @@ async def get_player_competitions(username: str):
     player_competitions = []
     
     for comp_id, competition in competitions_db.items():
-        if competition['type'] == 'xp':
-            try:
-                from .database import get_db_connection, get_snapshot_json_on_or_before
-            except ImportError:
-                from database import get_db_connection, get_snapshot_json_on_or_before
-            
-            conn = await get_db_connection()
-            async with conn:
-                start_snapshot = await get_snapshot_json_on_or_before(
-                    conn, decoded_username, competition['start_date'].date()
-                )
-                end_snapshot = await get_snapshot_json_on_or_before(
-                    conn, decoded_username, competition['end_date'].date()
-                )
-                
-                if start_snapshot and end_snapshot:
-                    skill = competition['skill']
-                    if skill == 'overall':
-                        start_xp = sum(s.get('xp', 0) for s in start_snapshot.values())
-                        end_xp = sum(s.get('xp', 0) for s in end_snapshot.values())
-                    else:
-                        start_xp = start_snapshot.get(skill, {}).get('xp', 0)
-                        end_xp = end_snapshot.get(skill, {}).get('xp', 0)
-                    
-                    xp_gain = max(0, end_xp - start_xp)
-                    
-                    if xp_gain > 0:
-                        comp_with_leaderboard = await get_competition(comp_id)
-                        placement = next((i+1 for i, entry in enumerate(comp_with_leaderboard['leaderboard']) 
-                                        if entry['username'] == decoded_username), None)
-                        
-                        player_competitions.append({
-                            **competition,
-                            'placement': placement,
-                            'contribution': xp_gain
-                        })
+        # Get full competition with leaderboard
+        comp_with_leaderboard = await get_competition(comp_id)
         
-        elif competition['type'] == 'drops':
-            drop_leaderboard = await calculate_drop_leaderboard(competition, [decoded_username])
-            if drop_leaderboard and drop_leaderboard[0]['drop_count'] > 0:
-                comp_with_leaderboard = await get_competition(comp_id)
-                placement = next((i+1 for i, entry in enumerate(comp_with_leaderboard['leaderboard']) 
-                                if entry['username'] == decoded_username), None)
-                
-                player_competitions.append({
-                    **competition,
-                    'placement': placement,
-                    'contribution': drop_leaderboard[0]['drop_count']
-                })
+        # Check if player is in the leaderboard
+        player_entry = next((entry for entry in comp_with_leaderboard['leaderboard'] 
+                           if entry['username'].lower() == decoded_username.lower()), None)
+        
+        if player_entry:
+            # Player is in this competition
+            placement = next((i+1 for i, entry in enumerate(comp_with_leaderboard['leaderboard']) 
+                            if entry['username'].lower() == decoded_username.lower()), None)
+            
+            if competition['type'] == 'xp':
+                contribution = player_entry.get('xp_gain', 0)
+            else:  # drops
+                contribution = player_entry.get('drop_count', 0)
+            
+            player_competitions.append({
+                **competition,
+                'placement': placement,
+                'contribution': contribution
+            })
     
     return {"competitions": player_competitions}
 
