@@ -2333,10 +2333,20 @@ async def get_player_competitions(username: str):
                 order={'startDate': 'desc'}
             )
             
+            print(f"DEBUG: Total competitions: {len(all_competitions)}")
+            print(f"DEBUG: Looking for username: {decoded_username}")
+            for comp in all_competitions:
+                print(f"DEBUG: Competition {comp.id} has {len(comp.entries) if comp.entries else 0} entries")
+                if comp.entries:
+                    matching = [e.username for e in comp.entries if e.username.lower() == decoded_username.lower()]
+                    print(f"DEBUG: Matching entries: {matching}")
+            
             competitions = [
                 comp for comp in all_competitions 
                 if any(e.username.lower() == decoded_username.lower() for e in comp.entries)
             ]
+            
+            print(f"DEBUG: Filtered competitions: {len(competitions)}")
             
             from datetime import timezone
             
