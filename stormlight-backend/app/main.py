@@ -2394,11 +2394,12 @@ async def get_player_competitions(username: str):
                 contribution = 0
                 placement = None
                 
-                if comp.type == 'XP_GAIN':
-                    try:
-                        from .database import get_db_connection, get_snapshot_json_on_or_before
-                    except ImportError:
-                        from database import get_db_connection, get_snapshot_json_on_or_before
+                try:
+                    if comp.type == 'XP_GAIN':
+                        try:
+                            from .database import get_db_connection, get_snapshot_json_on_or_before
+                        except ImportError:
+                            from database import get_db_connection, get_snapshot_json_on_or_before
                     
                     conn = await get_db_connection()
                     async with conn:
@@ -2487,9 +2488,13 @@ async def get_player_competitions(username: str):
                                 
                                 all_entries_drops.append((entry.username, member_drops))
                         
-                        all_entries_drops.sort(key=lambda x: x[1], reverse=True)
-                        placement = next((i+1 for i, (u, _) in enumerate(all_entries_drops) 
-                                        if u.lower() == decoded_username.lower()), None)
+                            all_entries_drops.sort(key=lambda x: x[1], reverse=True)
+                            placement = next((i+1 for i, (u, _) in enumerate(all_entries_drops) 
+                                            if u.lower() == decoded_username.lower()), None)
+                except Exception as calc_error:
+                    print(f"⚠️ Error calculating placement/contribution for competition {comp.name}: {calc_error}")
+                    contribution = 0
+                    placement = None
                 
                 now = datetime.now(timezone.utc)
                 if now < comp.startDate:
@@ -2531,7 +2536,7 @@ async def get_player_competitions(username: str):
         traceback.print_exc()
         debug_info['error'] = str(e)
     
-    return {"competitions": player_competitions, "debug": debug_info}
+    return {"competitions": player_competitions}
 
 async def fetch_clan_members() -> List[Dict[str, Any]]:
     """Fetch clan members from RuneScape Clan API"""
