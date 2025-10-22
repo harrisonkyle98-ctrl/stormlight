@@ -135,6 +135,10 @@ const CompetitionDetail = () => {
     return num.toString()
   }
 
+  const formatFullNumber = (num: number) => {
+    return num.toLocaleString()
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'long',
@@ -449,7 +453,7 @@ const CompetitionDetail = () => {
                       <div className="text-right">
                         <p className="text-sm text-slate-400">XP Gained</p>
                         <p className="text-lg font-bold text-green-400">
-                          {formatNumber(player.xp_gain || 0)}
+                          {formatFullNumber(player.xp_gain || 0)} XP
                         </p>
                       </div>
                     </>
