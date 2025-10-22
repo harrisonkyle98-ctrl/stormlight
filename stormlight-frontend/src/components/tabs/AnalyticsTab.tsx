@@ -50,7 +50,7 @@ const OverallTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload || !payload.length) return null
   const entries = payload
     .filter((p: any) => p && p.dataKey && p.value > 0)
-    .sort((a: any, b: any) => SKILL_ORDER.indexOf(a.dataKey) - SKILL_ORDER.indexOf(b.dataKey))
+    .sort((a: any, b: any) => (Number(b.value) || 0) - (Number(a.value) || 0))
   
   const totalXP = entries.reduce((sum: number, e: any) => sum + (Number(e.value) || 0), 0)
   
@@ -63,7 +63,7 @@ const OverallTooltip = ({ active, payload, label }: any) => {
       </div>
       {entries.map((e: any) => (
         <div key={e.dataKey} className="flex justify-between gap-4">
-          <span className="capitalize">{e.dataKey}</span>
+          <span className="capitalize">{e.dataKey}:</span>
           <span>{Number(e.value).toLocaleString()}</span>
         </div>
       ))}
