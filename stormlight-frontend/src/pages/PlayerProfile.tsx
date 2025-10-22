@@ -423,6 +423,24 @@ const PlayerProfile = () => {
 
   const overallStats = playerData.stats.overall
   
+  const getLevelBadgeStyle = (skill: string, level: number, xp: number) => {
+    if (skill === 'overall') {
+      if (xp >= 5800000000) {
+        return 'text-purple-400 border-purple-400'
+      }
+      if (level >= 3510) {
+        return 'text-yellow-400 border-yellow-400'
+      }
+    } else {
+      if (xp >= 200000000) {
+        return 'text-purple-400 border-purple-400'
+      }
+      if (level >= 120) {
+        return 'text-yellow-400 border-yellow-400'
+      }
+    }
+    return 'text-blue-400 border-blue-400'
+  }
 
   const tabs = [
     { id: 'skills', label: 'Skill Breakdown', icon: BarChart2 },
@@ -511,7 +529,7 @@ const PlayerProfile = () => {
                     </TableCell>
                     <TableCell className="py-3">
                       <div className="flex items-center space-x-2">
-                        <Badge variant="outline" className="text-blue-400 border-blue-400">
+                        <Badge variant="outline" className={getLevelBadgeStyle(skill, data.level, data.xp)}>
                           {data.level}
                         </Badge>
                         <span className="text-sm">
