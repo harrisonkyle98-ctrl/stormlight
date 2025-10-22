@@ -197,11 +197,11 @@ const Home = () => {
     try {
       setProfileLoading(true)
       setProfileError(null)
-      const urlUsername = usernameToUrl(user.username)
-      const fullUrl = `${API_URL}/api/clan/member/${urlUsername}`
+      const encodedUsername = encodeURIComponent(user.username)
+      const fullUrl = `${API_URL}/api/player/${encodedUsername}/stats`
       console.log('🔄 Fetching player profile data:', {
         originalUsername: user.username,
-        urlEncodedUsername: urlUsername,
+        encodedUsername: encodedUsername,
         fullUrl: fullUrl,
         API_URL: API_URL
       })
@@ -247,7 +247,8 @@ const Home = () => {
   const fetchQuestData = async () => {
     if (!user?.username) return
     try {
-      const response = await fetch(`${API_URL}/api/clan/member/${usernameToUrl(user.username)}/quests`)
+      const encodedUsername = encodeURIComponent(user.username)
+      const response = await fetch(`${API_URL}/api/player/${encodedUsername}/quests`)
       if (response.ok) {
         const data = await response.json()
         setQuestData(data)
@@ -260,7 +261,8 @@ const Home = () => {
   const fetchCitadelCaps = async () => {
     if (!user?.username) return
     try {
-      const response = await fetch(`${API_URL}/api/clan/member/${usernameToUrl(user.username)}/citadel-caps`)
+      const encodedUsername = encodeURIComponent(user.username)
+      const response = await fetch(`${API_URL}/api/player/${encodedUsername}/citadel-caps`)
       if (response.ok) {
         const data = await response.json()
         setCitadelCaps(data.total_caps)
