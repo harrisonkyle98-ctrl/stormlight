@@ -144,14 +144,33 @@ const Home = () => {
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
   useEffect(() => {
+    console.log('🔍 Home useEffect triggered - User state:', {
+      hasUser: !!user,
+      username: user?.username,
+      isLinked: user?.isLinked,
+      requiresLinking: user?.requiresLinking
+    })
+    
     fetchClanStats()
     fetchActivities()
     fetchClanLog()
     loadClanMembers()
-    if (user?.username) {
+    
+    if (user?.username && user?.isLinked) {
+      console.log('✅ User is linked, fetching profile data')
       fetchPlayerStats()
       fetchQuestData()
       fetchCitadelCaps()
+    } else if (user) {
+      console.log('⚠️ User exists but not linked or no username:', {
+        username: user.username,
+        isLinked: user.isLinked
+      })
+      setProfileLoading(false)
+      setProfileError(user.requiresLinking ? 'Please link your RuneScape account' : 'Account not linked to clan member')
+    } else {
+      console.log('ℹ️ No user logged in')
+      setProfileLoading(false)
     }
 
     const statsInterval = setInterval(() => {
@@ -162,7 +181,7 @@ const Home = () => {
     return () => {
       clearInterval(statsInterval)
     }
-  }, [user?.username])
+  }, [user?.username, user?.isLinked])
 
   const loadClanMembers = async () => {
     const members = await fetchClanMembers()
@@ -375,7 +394,7 @@ const Home = () => {
   return (
     <div className="space-y-8">
       {/* Personal Profile Card */}
-      {user?.username ? (
+      {user?.username && user?.isLinked ? (
         profileLoading ? (
           <Card className="bg-slate-800/50 border-slate-700">
             <CardContent className="p-6">
@@ -400,12 +419,14 @@ const Home = () => {
             <CardContent className="p-6">
               <div className="text-center py-8">
                 <p className="text-red-400 mb-4">{profileError}</p>
-                <Button 
-                  onClick={fetchPlayerStats}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  Retry
-                </Button>
+                {!user?.requiresLinking && (
+                  <Button 
+                    onClick={fetchPlayerStats}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    Retry
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
