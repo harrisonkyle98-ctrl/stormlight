@@ -71,6 +71,21 @@ const OverallTooltip = ({ active, payload, label }: any) => {
   )
 }
 
+const SkillTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload || !payload.length) return null
+  const xpValue = payload[0]?.value || 0
+  
+  return (
+    <div className="p-2 rounded border" style={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#e2e8f0' }}>
+      <div className="font-semibold mb-1">{label}</div>
+      <div className="flex justify-between gap-4">
+        <span className="font-bold text-green-400">Total XP:</span>
+        <span className="font-bold text-green-400">{Number(xpValue).toLocaleString()}</span>
+      </div>
+    </div>
+  )
+}
+
 export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
   const [skill, setSkill] = useState<string>('overall')
   const [view, setView] = useState<ViewRange>('day')
@@ -313,10 +328,7 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
                 <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
                 <XAxis dataKey="label" tick={{ fill: '#94a3b8' }} />
                 <YAxis tick={{ fill: '#94a3b8' }} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#e2e8f0' }}
-                  formatter={(v: any) => [`${Number(v).toLocaleString()} XP gained for this period`, '']}
-                />
+                <Tooltip content={<SkillTooltip />} />
                 <Bar dataKey="gain" fill={SKILL_COLORS[skill] || '#22c55e'} />
               </BarChart>
             ) : (
@@ -324,10 +336,7 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
                 <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
                 <XAxis dataKey="label" tick={{ fill: '#94a3b8' }} />
                 <YAxis tick={{ fill: '#94a3b8' }} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#e2e8f0' }}
-                  formatter={(v: any) => [`${Number(v).toLocaleString()} XP gained for this period`, '']}
-                />
+                <Tooltip content={<SkillTooltip />} />
                 <Line type="monotone" dataKey="gain" stroke={SKILL_COLORS[skill] || '#22c55e'} dot={false} strokeWidth={2} />
               </LineChart>
             )
