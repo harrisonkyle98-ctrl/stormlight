@@ -4,10 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { Trophy, Users, Swords, TrendingUp } from 'lucide-react'
-import { fetchClanMembers, getGradientStyle } from '../utils/gradientUtils'
+import { Trophy, Users, Swords, TrendingUp, User, CircleCheck } from 'lucide-react'
+import { fetchClanMembers, getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
-import { usernameToUrl } from '../utils/urlUtils'
+import { usernameToUrl, urlToUsername } from '../utils/urlUtils'
+import { Tooltip } from '../components/ui/tooltip'
 
 const getRankIcon = (rank: string): string => {
   const rankImageMap: { [key: string]: string } = {
@@ -27,6 +28,49 @@ const getRankIcon = (rank: string): string => {
 
   const imageName = rankImageMap[rank]
   return imageName ? `/assets/ranks/${imageName}` : ''
+}
+
+interface CustomBadge {
+  id: string
+  name: string
+  imageUrl: string
+  backgroundColor?: string
+  gradientColors?: string[]
+}
+
+interface PlayerStats {
+  badges?: Array<{ id: string; name: string; imageUrl: string; type: string }>
+  custom_badges?: CustomBadge[]
+  username: string
+  clan_xp?: number
+  clan_rank_number?: number
+  runescore?: number
+  clue_scrolls?: {
+    easy?: number
+    medium?: number
+    hard?: number
+    elite?: number
+    master?: number
+  }
+  league_points?: number
+  league_rank?: number
+  stats: {
+    overall: {
+      rank: number | null
+      level: number
+      xp: number
+      combatlevel: number
+    }
+    [skill: string]: {
+      rank: number | null
+      level: number
+      xp: number
+    }
+  }
+  quest_points?: number
+  last_updated: string
+  clan_rank?: string
+  is_verified?: boolean
 }
 
 interface ClanStats {
@@ -91,6 +135,9 @@ const Home = () => {
   const [loadingStatus, setLoadingStatus] = useState<{is_complete: boolean, processed_members: number, total_members: number} | null>(null)
   const [clanLogEntries, setClanLogEntries] = useState<ClanLogEntry[]>([])
   const [clanLogLoading, setClanLogLoading] = useState(true)
+  const [playerData, setPlayerData] = useState<PlayerStats | null>(null)
+  const [questData, setQuestData] = useState<any>(null)
+  const [citadelCaps, setCitadelCaps] = useState<number | null>(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -99,6 +146,11 @@ const Home = () => {
     fetchActivities()
     fetchClanLog()
     loadClanMembers()
+    if (user?.username) {
+      fetchPlayerStats()
+      fetchQuestData()
+      fetchCitadelCaps()
+    }
 
     const statsInterval = setInterval(() => {
       console.log('🔄 Refreshing Total XP data (hourly)')
@@ -108,11 +160,50 @@ const Home = () => {
     return () => {
       clearInterval(statsInterval)
     }
-  }, [])
+  }, [user?.username])
 
   const loadClanMembers = async () => {
     const members = await fetchClanMembers()
     setClanMembers(members)
+  }
+
+  const fetchPlayerStats = async () => {
+    if (!user?.username) return
+    try {
+      const response = await fetch(`${API_URL}/api/clan/member/${usernameToUrl(user.username)}`)
+      if (response.ok) {
+        const data = await response.json()
+        setPlayerData(data)
+      }
+    } catch (error) {
+      console.error('Error fetching player stats:', error)
+    }
+  }
+
+  const fetchQuestData = async () => {
+    if (!user?.username) return
+    try {
+      const response = await fetch(`${API_URL}/api/clan/member/${usernameToUrl(user.username)}/quests`)
+      if (response.ok) {
+        const data = await response.json()
+        setQuestData(data)
+      }
+    } catch (error) {
+      console.error('Error fetching quest data:', error)
+    }
+  }
+
+  const fetchCitadelCaps = async () => {
+    if (!user?.username) return
+    try {
+      const response = await fetch(`${API_URL}/api/clan/member/${usernameToUrl(user.username)}/citadel-caps`)
+      if (response.ok) {
+        const data = await response.json()
+        setCitadelCaps(data.total_caps)
+      }
+    } catch (error) {
+      console.error('Error fetching citadel caps:', error)
+    }
   }
 
   const fetchClanStats = async () => {
@@ -264,27 +355,302 @@ const Home = () => {
     return num.toString()
   }
 
+  const overallStats = playerData?.stats?.overall
+
   return (
     <div className="space-y-8">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold text-white mb-4">
-          Welcome back, {user?.username ? (
-            <Link
-              to={`/clan-member/${usernameToUrl(user.username)}`}
-              className="text-blue-400 hover:text-blue-300 transition-colors"
-            >
-              {user.username}
-            </Link>
-          ) : (
-            <span className="text-blue-400">Guest</span>
-          )}
-        </h1>
-        <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-          Track your progress, compete with fellow members, and climb the hiscores.
-        </p>
-      </div>
+      {/* Personal Profile Card */}
+      {playerData && user?.username && (
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardContent className="p-6">
+            <div className="bg-slate-700/30 rounded-lg p-6 mb-4 relative">
+              <Tooltip content={
+                <>
+                  {playerData.is_verified ? "Verified" : "Unverified"}
+                  <br />
+                  Last updated: {new Date(playerData.last_updated).toLocaleDateString()}
+                </>
+              }>
+                <div className="absolute top-4 right-4">
+                  <CircleCheck 
+                    className={`w-5 h-5 ${playerData.is_verified ? 'text-green-500' : 'text-gray-500'}`}
+                  />
+                </div>
+              </Tooltip>
+              
+              <div className="flex flex-col items-center space-y-4">
+                <Avatar className="w-20 h-20">
+                  <AvatarImage
+                    src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(user.username)}/chat.png`}
+                    alt={user.username}
+                  />
+                  <AvatarFallback className="bg-blue-600 text-white">
+                    <User className="w-10 h-10" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="text-center">
+                  <h1 className="text-2xl font-bold text-center">
+                    <span 
+                      style={getGradientStyle(user.username, playerData.clan_rank)}
+                    >
+                      {user.username}
+                    </span>
+                  </h1>
+                  
+                  {playerData.stats && (() => {
+                    const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, user.username, playerData.league_points)
+                    const rankBadge = allBadges.find(badge => badge.id.startsWith('rank-'))
+                    return rankBadge ? (
+                      <div className="mt-3">
+                        <div
+                          className="inline-flex items-center space-x-2 px-3 py-1 text-sm font-semibold rounded-md text-white"
+                          style={{
+                            background: rankBadge.gradientBackground || rankBadge.backgroundColor
+                          }}
+                        >
+                          <img
+                            src={rankBadge.icon}
+                            alt={rankBadge.name}
+                            className="w-4 h-4"
+                          />
+                          <span>{rankBadge.name}</span>
+                        </div>
+                      </div>
+                    ) : null
+                  })()}
+                </div>
+              </div>
+            </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {playerData.stats && playerData.custom_badges !== undefined && (() => {
+              const milestoneBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, user.username, playerData.league_points)
+              const nonRankBadges = milestoneBadges.filter(badge => !badge.id.startsWith('rank-'))
+              
+              const customBadges = (playerData.custom_badges || []).map((badge: CustomBadge) => ({
+                id: `custom-${badge.id}`,
+                name: badge.name,
+                backgroundColor: badge.backgroundColor || '#6b7280',
+                gradientBackground: badge.gradientColors ? 
+                  `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})` : 
+                  undefined,
+                icon: badge.imageUrl
+              }))
+              
+              const allBadges = [...nonRankBadges, ...customBadges]
+              return allBadges.length > 0 ? (
+                <div className="mt-4 flex flex-col gap-2">
+                  {allBadges.map((badge) => (
+                      <Tooltip
+                        key={badge.id}
+                        content={
+                          <div>
+                            <div className="font-semibold text-white">{badge.name}</div>
+                            {badge.id.startsWith('league-') && playerData.league_points && (
+                              <div className="text-blue-400 text-sm mt-1">
+                                League Points: {playerData.league_points.toLocaleString()}
+                              </div>
+                            )}
+                          </div>
+                        }
+                      >
+                        <div
+                          className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white relative group cursor-help"
+                          style={{
+                            background: badge.gradientBackground || badge.backgroundColor
+                          }}
+                        >
+                        <img
+                          src={badge.icon}
+                          alt={badge.name}
+                          className="w-4 h-4"
+                        />
+                        <span>{badge.name}</span>
+                        </div>
+                      </Tooltip>
+                  ))}
+                </div>
+              ) : null
+            })()}
+
+            {overallStats && (
+              <div className="flex flex-col gap-2 mt-4">
+                <Tooltip content="Combat Level">
+                  <div className="flex items-stretch overflow-hidden rounded-lg">
+                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
+                      <img 
+                        src="/assets/icons/combat_level.png" 
+                        alt="Combat Level"
+                        className="w-5 h-5"
+                      />
+                    </div>
+                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
+                      <span className="text-lg font-bold text-white">
+                        {overallStats.combatlevel}
+                      </span>
+                    </div>
+                  </div>
+                </Tooltip>
+
+                <Tooltip content="Total Level">
+                  <div className="flex items-stretch overflow-hidden rounded-lg">
+                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
+                      <img 
+                        src="/assets/icons/total_level.png" 
+                        alt="Total Level"
+                        className="w-5 h-5"
+                      />
+                    </div>
+                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
+                      <span className="text-lg font-bold text-white">
+                        {overallStats.level}
+                      </span>
+                    </div>
+                  </div>
+                </Tooltip>
+
+                <Tooltip content="Quest Points">
+                  <div className="flex items-stretch overflow-hidden rounded-lg">
+                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
+                      <img 
+                        src="/assets/icons/quest_points.png" 
+                        alt="Quest Points"
+                        className="w-5 h-5"
+                      />
+                    </div>
+                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
+                      <span className="text-lg font-bold text-white">
+                        {playerData.quest_points || 0}
+                      </span>
+                    </div>
+                  </div>
+                </Tooltip>
+
+                <Tooltip content="RuneScore">
+                  <div className="flex items-stretch overflow-hidden rounded-lg">
+                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
+                      <img 
+                        src="/assets/icons/runescore.png" 
+                        alt="RuneScore"
+                        className="w-5 h-5"
+                      />
+                    </div>
+                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
+                      <span className="text-lg font-bold text-white">
+                        {playerData.runescore?.toLocaleString() || '—'}
+                      </span>
+                    </div>
+                  </div>
+                </Tooltip>
+
+                {citadelCaps !== null && citadelCaps > 0 && (
+                  <Tooltip content="Total Caps">
+                    <div className="flex items-stretch overflow-hidden rounded-lg">
+                      <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
+                        <img 
+                          src="/assets/icons/clan_citadel.png" 
+                          alt="Total Caps"
+                          className="w-5 h-5"
+                        />
+                      </div>
+                      <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
+                        <span className="text-lg font-bold text-white">
+                          {citadelCaps.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </Tooltip>
+                )}
+
+                {playerData.league_points !== null && playerData.league_points !== undefined && (() => {
+                  const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, user.username, playerData.league_points)
+                  const leagueBadge = allBadges.find(badge => badge.id.startsWith('league-'))
+                  const leagueIcon = leagueBadge?.icon || '/assets/icons/league_points.png'
+                  
+                  return (
+                    <Tooltip content="League Points">
+                      <div className="flex items-stretch overflow-hidden rounded-lg">
+                        <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
+                          <img 
+                            src={leagueIcon} 
+                            alt="League Points"
+                            className="w-5 h-5"
+                          />
+                        </div>
+                        <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
+                          <span className="text-lg font-bold text-white">
+                            {playerData.league_points.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </Tooltip>
+                  )
+                })()}
+
+                {playerData.league_rank !== null && playerData.league_rank !== undefined && (
+                  <Tooltip content="League Rank">
+                    <div className="flex items-stretch overflow-hidden rounded-lg">
+                      <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
+                        <img 
+                          src="/assets/icons/league_rank.png" 
+                          alt="League Rank"
+                          className="w-5 h-5"
+                        />
+                      </div>
+                      <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
+                        <span className="text-lg font-bold text-white">
+                          #{playerData.league_rank.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </Tooltip>
+                )}
+
+                <div className="mt-3 flex flex-col gap-2">
+                  <div className="grid grid-cols-2 gap-4 bg-slate-700/30 rounded-lg px-4 py-3">
+                    {overallStats.rank && (
+                      <div className="text-center">
+                        <p className="text-xs text-slate-400 mb-1">Overall Rank</p>
+                        <p className="text-xl font-bold text-blue-400">
+                          #{overallStats.rank.toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                    <div className="text-center">
+                      <p className="text-xs text-slate-400 mb-1">Total XP</p>
+                      <p className="text-xl font-bold text-green-400">
+                        {overallStats.xp.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  {(playerData.clan_xp !== undefined && playerData.clan_xp !== null) || playerData.clan_rank_number ? (
+                    <div className="grid grid-cols-2 gap-4 bg-slate-700/30 rounded-lg px-4 py-3">
+                      {playerData.clan_rank_number && (
+                        <div className="text-center">
+                          <p className="text-xs text-slate-400 mb-1">Clan Rank</p>
+                          <p className="text-xl font-bold text-blue-400">
+                            #{playerData.clan_rank_number.toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                      {playerData.clan_xp !== undefined && playerData.clan_xp !== null && (
+                        <div className="text-center">
+                          <p className="text-xs text-slate-400 mb-1">Clan XP</p>
+                          <p className="text-xl font-bold text-green-400">
+                            {playerData.clan_xp.toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Stats Cards Grid - 2 rows x 3 columns */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-300">Total Members</CardTitle>
@@ -325,13 +691,35 @@ const Home = () => {
         <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-300">Clan Rank</CardTitle>
-            <Trophy className="h-4 w-4 text-yellow-400" />
+            <Trophy className="h-4 h-4 text-yellow-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
               {loading ? '...' : (user?.isLinked && user?.clanRank) ? user.clanRank : user ? 'Not a member' : 'Unknown'}
             </div>
             <p className="text-xs text-slate-400">{user?.isLinked ? 'Your clan rank' : 'Clan membership'}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-300">Placeholder</CardTitle>
+            <Trophy className="h-4 w-4 text-slate-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-white">—</div>
+            <p className="text-xs text-slate-400">Coming soon</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-300">Placeholder</CardTitle>
+            <Trophy className="h-4 w-4 text-slate-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-white">—</div>
+            <p className="text-xs text-slate-400">Coming soon</p>
           </CardContent>
         </Card>
       </div>
