@@ -138,6 +138,8 @@ const Home = () => {
   const [playerData, setPlayerData] = useState<PlayerStats | null>(null)
   const [questData, setQuestData] = useState<any>(null)
   const [citadelCaps, setCitadelCaps] = useState<number | null>(null)
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [profileError, setProfileError] = useState<string | null>(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -168,15 +170,28 @@ const Home = () => {
   }
 
   const fetchPlayerStats = async () => {
-    if (!user?.username) return
+    if (!user?.username) {
+      setProfileLoading(false)
+      return
+    }
     try {
+      setProfileLoading(true)
+      setProfileError(null)
+      console.log('🔄 Fetching player profile data for:', user.username)
       const response = await fetch(`${API_URL}/api/clan/member/${usernameToUrl(user.username)}`)
       if (response.ok) {
         const data = await response.json()
+        console.log('✅ Player profile data loaded:', data.username)
         setPlayerData(data)
+      } else {
+        console.error('❌ Failed to fetch player stats:', response.status)
+        setProfileError('Failed to load profile data')
       }
     } catch (error) {
-      console.error('Error fetching player stats:', error)
+      console.error('❌ Error fetching player stats:', error)
+      setProfileError('Error loading profile data')
+    } finally {
+      setProfileLoading(false)
     }
   }
 
@@ -360,7 +375,41 @@ const Home = () => {
   return (
     <div className="space-y-8">
       {/* Personal Profile Card */}
-      {playerData && user?.username && (
+      {user?.username ? (
+        profileLoading ? (
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardContent className="p-6">
+              <div className="bg-slate-700/30 rounded-lg p-6 mb-4">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="w-20 h-20 rounded-full bg-slate-600 animate-pulse"></div>
+                  <div className="space-y-2 w-full">
+                    <div className="h-8 bg-slate-600 rounded animate-pulse w-48 mx-auto"></div>
+                    <div className="h-6 bg-slate-600 rounded animate-pulse w-32 mx-auto"></div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="h-10 bg-slate-700/30 rounded-lg animate-pulse"></div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ) : profileError ? (
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardContent className="p-6">
+              <div className="text-center py-8">
+                <p className="text-red-400 mb-4">{profileError}</p>
+                <Button 
+                  onClick={fetchPlayerStats}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Retry
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : playerData ? (
         <Card className="bg-slate-800/50 border-slate-700">
           <CardContent className="p-6">
             <div className="bg-slate-700/30 rounded-lg p-6 mb-4 relative">
@@ -647,7 +696,8 @@ const Home = () => {
             )}
           </CardContent>
         </Card>
-      )}
+        ) : null
+      ) : null}
 
       {/* Stats Cards Grid - 2 rows x 3 columns */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
