@@ -7,7 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { Trophy, Users, Swords, TrendingUp, User, CircleCheck } from 'lucide-react'
 import { fetchClanMembers, getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
-import { usernameToUrl, urlToUsername } from '../utils/urlUtils'
+import { usernameToUrl } from '../utils/urlUtils'
 import { Tooltip } from '../components/ui/tooltip'
 
 const getRankIcon = (rank: string): string => {
