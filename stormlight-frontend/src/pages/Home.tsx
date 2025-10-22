@@ -338,49 +338,6 @@ const Home = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center space-x-2">
-              <Users className="h-5 w-5 text-blue-400" />
-              <span>Clan Members</span>
-            </CardTitle>
-            <CardDescription className="text-slate-400">
-              Browse our clan roster and member profiles
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-slate-300">
-              Explore our clan member directory to see who's in Stormlight, their clan ranks,
-              total XP, and view detailed player profiles with real data.
-            </p>
-            <Button asChild className="w-full bg-blue-600 hover:bg-blue-700">
-              <Link to="/members">View Members</Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center space-x-2">
-              <Swords className="h-5 w-5 text-green-400" />
-              <span>Competitions</span>
-            </CardTitle>
-            <CardDescription className="text-slate-400">
-              Join XP competitions and climb the leaderboards
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-slate-300">
-              Participate in skill-based competitions, track your XP gains, and compete
-              with clan members for the top spots on our leaderboards.
-            </p>
-            <Button asChild className="w-full bg-green-600 hover:bg-green-700">
-              <Link to="/competitions">View Competitions</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader>
           <CardTitle className="text-white">Clan Log</CardTitle>
           <CardDescription className="text-slate-400">
@@ -448,9 +405,9 @@ const Home = () => {
         </CardContent>
       </Card>
 
-      <Card className="bg-slate-800/50 border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-white">Recent Activity</CardTitle>
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white">Recent Activity</CardTitle>
           <CardDescription className="text-slate-400">
             Latest clan member activity
           </CardDescription>
@@ -507,7 +464,8 @@ const Home = () => {
             )}
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   )
 }
