@@ -728,7 +728,7 @@
     ]
   },
   {
-    "item_name": "Devourer's Guard",
+    "item_name": "Devourer's armguard",
     "file": "/assets/drops/devourer_s_guard.png",
     "bosses": [
       "Amascut, the Devourer"
@@ -1351,7 +1351,7 @@
     ]
   },
   {
-    "item_name": "Kerapac's wrist wraps",
+    "item_name": "Kerapac's wristwraps",
     "file": "/assets/drops/kerapac_s_wrist_wraps.png",
     "bosses": [
       "Kerapac, the Bound"
