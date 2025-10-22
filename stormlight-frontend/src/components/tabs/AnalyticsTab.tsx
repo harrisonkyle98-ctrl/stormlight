@@ -71,7 +71,7 @@ const OverallTooltip = ({ active, payload, label }: any) => {
   )
 }
 
-const SkillTooltip = ({ active, payload, label }: any) => {
+const SkillTooltip = ({ active, payload, label, skillColor }: any) => {
   if (!active || !payload || !payload.length) return null
   const xpValue = payload[0]?.value || 0
   
@@ -79,8 +79,8 @@ const SkillTooltip = ({ active, payload, label }: any) => {
     <div className="p-2 rounded border" style={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#e2e8f0' }}>
       <div className="font-semibold mb-1">{label}</div>
       <div className="flex justify-between gap-4">
-        <span className="font-bold text-green-400">Total XP:</span>
-        <span className="font-bold text-green-400">{Number(xpValue).toLocaleString()}</span>
+        <span className="font-bold" style={{ color: '#e2e8f0' }}>Total XP:</span>
+        <span className="font-bold" style={{ color: skillColor || '#22c55e' }}>{Number(xpValue).toLocaleString()}</span>
       </div>
     </div>
   )
@@ -328,7 +328,7 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
                 <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
                 <XAxis dataKey="label" tick={{ fill: '#94a3b8' }} />
                 <YAxis tick={{ fill: '#94a3b8' }} />
-                <Tooltip content={<SkillTooltip />} />
+                <Tooltip content={<SkillTooltip skillColor={SKILL_COLORS[skill] || '#22c55e'} />} />
                 <Bar dataKey="gain" fill={SKILL_COLORS[skill] || '#22c55e'} />
               </BarChart>
             ) : (
@@ -336,7 +336,7 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
                 <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
                 <XAxis dataKey="label" tick={{ fill: '#94a3b8' }} />
                 <YAxis tick={{ fill: '#94a3b8' }} />
-                <Tooltip content={<SkillTooltip />} />
+                <Tooltip content={<SkillTooltip skillColor={SKILL_COLORS[skill] || '#22c55e'} />} />
                 <Line type="monotone" dataKey="gain" stroke={SKILL_COLORS[skill] || '#22c55e'} dot={false} strokeWidth={2} />
               </LineChart>
             )
