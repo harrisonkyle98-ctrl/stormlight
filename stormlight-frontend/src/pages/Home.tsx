@@ -190,24 +190,54 @@ const Home = () => {
 
   const fetchPlayerStats = async () => {
     if (!user?.username) {
+      console.log('❌ fetchPlayerStats: No username available')
       setProfileLoading(false)
       return
     }
     try {
       setProfileLoading(true)
       setProfileError(null)
-      console.log('🔄 Fetching player profile data for:', user.username)
-      const response = await fetch(`${API_URL}/api/clan/member/${usernameToUrl(user.username)}`)
+      const urlUsername = usernameToUrl(user.username)
+      const fullUrl = `${API_URL}/api/clan/member/${urlUsername}`
+      console.log('🔄 Fetching player profile data:', {
+        originalUsername: user.username,
+        urlEncodedUsername: urlUsername,
+        fullUrl: fullUrl,
+        API_URL: API_URL
+      })
+      
+      const response = await fetch(fullUrl)
+      console.log('📡 Response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
+      })
+      
       if (response.ok) {
         const data = await response.json()
-        console.log('✅ Player profile data loaded:', data.username)
+        console.log('✅ Player profile data loaded successfully:', {
+          username: data.username,
+          hasStats: !!data.stats,
+          hasClanRank: !!data.clan_rank,
+          dataKeys: Object.keys(data)
+        })
         setPlayerData(data)
       } else {
-        console.error('❌ Failed to fetch player stats:', response.status)
-        setProfileError('Failed to load profile data')
+        const errorText = await response.text()
+        console.error('❌ Failed to fetch player stats:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorBody: errorText
+        })
+        setProfileError(`Failed to load profile data (${response.status})`)
       }
     } catch (error) {
-      console.error('❌ Error fetching player stats:', error)
+      console.error('❌ Error fetching player stats:', {
+        error: error,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      })
       setProfileError('Error loading profile data')
     } finally {
       setProfileLoading(false)
