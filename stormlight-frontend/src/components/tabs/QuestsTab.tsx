@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Compass, MapPin } from 'lucide-react'
+import { Compass } from 'lucide-react'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/table'
 import { Badge } from '../ui/badge'
 import { usernameToUrl } from '../../utils/urlUtils'
@@ -127,7 +127,11 @@ export const QuestsTab = ({ username, playerData: _playerData, API_URL }: TabPro
               <TableRow key={index} className="border-slate-600 hover:bg-slate-800/50">
                 <TableCell className="py-3">
                   <div className="flex items-center space-x-3">
-                    <MapPin className="w-4 h-4 text-slate-400" />
+                    <img 
+                      src="/assets/icons/quest_points.png" 
+                      alt="Quest" 
+                      className="w-4 h-4"
+                    />
                     <span className="font-medium text-white">{quest.title}</span>
                   </div>
                 </TableCell>
