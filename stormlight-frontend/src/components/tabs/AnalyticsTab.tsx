@@ -14,14 +14,36 @@ type ViewRange = 'day' | 'month'
 const SKILL_ORDER = ['attack','defence','strength','constitution','ranged','prayer','magic','cooking','woodcutting','fletching','fishing','firemaking','crafting','smithing','mining','herblore','agility','thieving','slayer','farming','runecrafting','hunter','construction','summoning','dungeoneering','divination','invention','archaeology','necromancy']
 
 const SKILL_COLORS: Record<string, string> = {
-  attack: '#ef4444', defence: '#64748b', strength: '#f97316', constitution: '#dc2626',
-  ranged: '#22c55e', prayer: '#a78bfa', magic: '#60a5fa', cooking: '#f59e0b',
-  woodcutting: '#16a34a', fletching: '#84cc16', fishing: '#06b6d4', firemaking: '#fb923c',
-  crafting: '#eab308', smithing: '#9ca3af', mining: '#6b7280', herblore: '#10b981',
-  agility: '#0ea5e9', thieving: '#8b5cf6', slayer: '#000000', farming: '#22c55e',
-  runecrafting: '#7c3aed', hunter: '#65a30d', construction: '#b45309', summoning: '#60a5fa',
-  dungeoneering: '#7c2d12', divination: '#38bdf8', invention: '#f43f5e',
-  archaeology: '#06b6d4', necromancy: '#1f2937', overall: '#22c55e'
+  archaeology: '#131313',
+  agility: '#5859a8',
+  attack: '#b61d1d',
+  construction: '#f58701',
+  constitution: '#e42323',
+  cooking: '#7d0086',
+  crafting: '#9c7445',
+  defence: '#4e83c0',
+  dungeoneering: '#d4843d',
+  farming: '#c7ffba',
+  firemaking: '#da6601',
+  fishing: '#6c93b1',
+  fletching: '#26706c',
+  herblore: '#008807',
+  hunter: '#b6b099',
+  invention: '#ffe900',
+  magic: '#022ab9',
+  mining: '#16c0c3',
+  necromancy: '#883bdf',
+  prayer: '#ffdd00',
+  ranged: '#637c3e',
+  runecrafting: '#ff9c00',
+  slayer: '#a10000',
+  smithing: '#ffb800',
+  strength: '#58c37a',
+  summoning: '#bad3ff',
+  thieving: '#73467e',
+  woodcutting: '#235d1e',
+  divination: '#8c4eff',
+  overall: '#22c55e'
 }
 
 const OverallTooltip = ({ active, payload, label }: any) => {
@@ -29,13 +51,20 @@ const OverallTooltip = ({ active, payload, label }: any) => {
   const entries = payload
     .filter((p: any) => p && p.dataKey && p.value > 0)
     .sort((a: any, b: any) => SKILL_ORDER.indexOf(a.dataKey) - SKILL_ORDER.indexOf(b.dataKey))
+  
+  const totalXP = entries.reduce((sum: number, e: any) => sum + (Number(e.value) || 0), 0)
+  
   return (
     <div className="p-2 rounded border" style={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#e2e8f0' }}>
       <div className="font-semibold mb-1">{label}</div>
+      <div className="flex justify-between gap-4 mb-2 pb-2 border-b border-slate-600">
+        <span className="font-bold text-green-400">Total XP:</span>
+        <span className="font-bold text-green-400">{totalXP.toLocaleString()}</span>
+      </div>
       {entries.map((e: any) => (
         <div key={e.dataKey} className="flex justify-between gap-4">
           <span className="capitalize">{e.dataKey}</span>
-          <span>{Number(e.value).toLocaleString()} XP gained for this period</span>
+          <span>{Number(e.value).toLocaleString()}</span>
         </div>
       ))}
     </div>
