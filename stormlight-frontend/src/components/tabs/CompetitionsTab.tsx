@@ -146,16 +146,32 @@ export const CompetitionsTab = ({ username, playerData: _playerData, API_URL }: 
           >
             <div className="flex">
               {/* Placement Column - Dark Background, Full Height */}
-              <div className="bg-slate-800/70 flex items-center justify-center px-6 py-5 min-w-[80px]">
+              <div className="bg-slate-800/70 flex items-center justify-center px-6 py-5 min-w-[80px] relative">
                 {competition.placement ? (
-                  <span className="text-white font-bold text-2xl">
-                    {competition.placement === 1 ? '1st' : 
-                     competition.placement === 2 ? '2nd' : 
-                     competition.placement === 3 ? '3rd' : 
-                     `${competition.placement}th`}
-                  </span>
+                  <>
+                    {/* Faint Trophy Icon Behind Text */}
+                    <Trophy 
+                      className={`absolute w-12 h-12 opacity-20 ${
+                        competition.placement === 1 ? 'text-yellow-400' :
+                        competition.placement === 2 ? 'text-gray-400' :
+                        competition.placement === 3 ? 'text-amber-600' :
+                        'text-slate-500'
+                      }`}
+                    />
+                    {/* Placement Text */}
+                    <span className="text-white font-bold text-2xl relative z-10">
+                      {competition.placement === 1 ? '1st' : 
+                       competition.placement === 2 ? '2nd' : 
+                       competition.placement === 3 ? '3rd' : 
+                       `${competition.placement}th`}
+                    </span>
+                  </>
                 ) : (
-                  <span className="text-slate-600 font-bold text-xl">—</span>
+                  <>
+                    {/* Faint Trophy Icon for No Placement */}
+                    <Trophy className="absolute w-12 h-12 opacity-10 text-slate-600" />
+                    <span className="text-slate-600 font-bold text-xl relative z-10">—</span>
+                  </>
                 )}
               </div>
 
