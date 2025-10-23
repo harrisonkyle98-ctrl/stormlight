@@ -865,11 +865,11 @@ const Home = () => {
           <div className="space-y-4">
             {activities.length > 0 ? (
               activities.map((activity, index) => (
-                <div key={`${activity.username}-${activity.timestamp}-${index}`} className="py-2">
-                  <p className="text-slate-300 mb-1">
+                <div key={`${activity.username}-${activity.timestamp}-${index}`} className="p-3 bg-slate-700/50 rounded-lg">
+                  <p className="text-slate-300 text-center mb-1">
                     <Link
                       to={`/clan-member/${usernameToUrl(activity.username)}`}
-                      className="font-medium hover:text-blue-300 transition-colors"
+                      className="text-white font-medium hover:text-blue-300 transition-colors"
                       style={getGradientStyle(activity.username, clanMembers.find(m => m.username === activity.username)?.clan_rank)}
                     >
                       {activity.username}
@@ -877,7 +877,7 @@ const Home = () => {
                     {' '}
                     {activity.text}
                   </p>
-                  <p className="text-slate-400 text-xs">{formatTimeAgo(activity.timestamp)}</p>
+                  <p className="text-slate-400 text-xs text-center">{formatTimeAgo(activity.timestamp)}</p>
                 </div>
               ))
             ) : (
