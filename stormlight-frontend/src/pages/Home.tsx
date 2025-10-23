@@ -137,6 +137,7 @@ const Home = () => {
   const [playerData, setPlayerData] = useState<PlayerStats | null>(null)
   const [questData, setQuestData] = useState<any>(null)
   const [profileError, setProfileError] = useState<string | null>(null)
+  const [profileLoading, setProfileLoading] = useState(false)
   const [activeCompetitionsCount, setActiveCompetitionsCount] = useState<number>(0)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -158,12 +159,34 @@ const Home = () => {
         fetchActiveCompetitions()
       ]
 
+      await Promise.all(promises)
+    }
+
+    loadAllData()
+
+    const statsInterval = setInterval(() => {
+      console.log('🔄 Refreshing Total XP data (hourly)')
+      fetchClanStats()
+    }, 60 * 60 * 1000)
+
+    return () => {
+      clearInterval(statsInterval)
+    }
+  }, [])
+
+  useEffect(() => {
+    const loadProfileData = async () => {
       if (user?.username && user?.isLinked) {
-        console.log('✅ User is linked, fetching profile data')
-        promises.push(
-          fetchPlayerStats(),
-          fetchQuestData()
-        )
+        console.log('✅ User is linked, fetching profile data independently')
+        setProfileLoading(true)
+        try {
+          await Promise.all([
+            fetchPlayerStats(),
+            fetchQuestData()
+          ])
+        } finally {
+          setProfileLoading(false)
+        }
       } else if (user) {
         console.log('⚠️ User exists but not linked or no username:', {
           username: user.username,
@@ -173,20 +196,9 @@ const Home = () => {
       } else {
         console.log('ℹ️ No user logged in')
       }
-
-      await Promise.all(promises)
     }
 
-    loadAllData()
-
-    const statsInterval = setInterval(() => {
-      console.log('🔄 Refreshing Total XP data (hourly)')
-      fetchClanStats()
-    }, 60 * 60 * 1000) // 1 hour in milliseconds
-
-    return () => {
-      clearInterval(statsInterval)
-    }
+    loadProfileData()
   }, [user?.username, user?.isLinked])
 
   const loadClanMembers = async () => {
@@ -446,10 +458,19 @@ const Home = () => {
             <Users className="h-4 w-4 text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
-              {loading ? '...' : clanStats?.total_members || 0}
-            </div>
-            <p className="text-xs text-slate-400">Friends to play with</p>
+            {loading ? (
+              <div className="space-y-2 animate-pulse">
+                <div className="h-8 bg-slate-700/50 rounded w-20"></div>
+                <div className="h-3 bg-slate-700/30 rounded w-32"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-white">
+                  {clanStats?.total_members || 0}
+                </div>
+                <p className="text-xs text-slate-400">Friends to play with</p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -460,28 +481,46 @@ const Home = () => {
             <TrendingUp className="h-4 w-4 text-purple-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
-              {loading ? '...' : formatNumber(clanStats?.total_xp || 0)}
-            </div>
-            <p className="text-xs text-slate-400">Combined clan XP</p>
+            {loading ? (
+              <div className="space-y-2 animate-pulse">
+                <div className="h-8 bg-slate-700/50 rounded w-24"></div>
+                <div className="h-3 bg-slate-700/30 rounded w-28"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-white">
+                  {formatNumber(clanStats?.total_xp || 0)}
+                </div>
+                <p className="text-xs text-slate-400">Combined clan XP</p>
+              </>
+            )}
           </CardContent>
         </Card>
 
         {/* 3. Time Spent in Clan */}
-        {user?.username && user?.isLinked && playerData && (
+        {user?.username && user?.isLinked ? (
           <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-300">Time Spent in Clan</CardTitle>
               <Calendar className="h-4 w-4 text-cyan-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">
-                {calculateDaysInClan() !== null ? `${calculateDaysInClan()} days` : 'N/A'}
-              </div>
-              <p className="text-xs text-slate-400">Days as clan member</p>
+              {loading || !playerData ? (
+                <div className="space-y-2 animate-pulse">
+                  <div className="h-8 bg-slate-700/50 rounded w-28"></div>
+                  <div className="h-3 bg-slate-700/30 rounded w-32"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-white">
+                    {calculateDaysInClan() !== null ? `${calculateDaysInClan()} days` : 'N/A'}
+                  </div>
+                  <p className="text-xs text-slate-400">Days as clan member</p>
+                </>
+              )}
             </CardContent>
           </Card>
-        )}
+        ) : null}
 
         {/* 4. Competitions */}
         <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
@@ -490,10 +529,19 @@ const Home = () => {
             <Swords className="h-4 w-4 text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
-              {loading ? '...' : activeCompetitionsCount}
-            </div>
-            <p className="text-xs text-slate-400">Active competitions</p>
+            {loading ? (
+              <div className="space-y-2 animate-pulse">
+                <div className="h-8 bg-slate-700/50 rounded w-12"></div>
+                <div className="h-3 bg-slate-700/30 rounded w-36"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-white">
+                  {activeCompetitionsCount}
+                </div>
+                <p className="text-xs text-slate-400">Active competitions</p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -512,6 +560,34 @@ const Home = () => {
                     Retry
                   </Button>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+        ) : profileLoading || !playerData ? (
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardContent className="p-6">
+              <div className="flex flex-col lg:flex-row gap-6 animate-pulse">
+                {/* Left Column Skeleton */}
+                <div className="lg:w-1/3 flex-shrink-0">
+                  <div className="bg-slate-700/30 rounded-lg p-6">
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="w-20 h-20 bg-slate-700/50 rounded-full"></div>
+                      <div className="space-y-2 w-full">
+                        <div className="h-6 bg-slate-700/50 rounded w-3/4 mx-auto"></div>
+                        <div className="h-4 bg-slate-700/30 rounded w-1/2 mx-auto"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Right Column Skeleton */}
+                <div className="flex-1 space-y-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="flex items-stretch overflow-hidden rounded-lg">
+                      <div className="bg-slate-800/70 w-12 h-12"></div>
+                      <div className="flex-1 bg-slate-700/30 h-12"></div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>
