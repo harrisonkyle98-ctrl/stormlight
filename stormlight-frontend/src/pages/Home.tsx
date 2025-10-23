@@ -887,7 +887,7 @@ const Home = () => {
                   {/* Stats Grid */}
                   <div className="grid grid-cols-3 gap-4 mb-6">
                     <div className="bg-slate-700/30 rounded-lg p-3">
-                      <p className="text-xs text-slate-400 mb-1">24 Hours</p>
+                      <p className="text-xs text-slate-400 mb-1">Yesterday</p>
                       <p className="text-lg font-bold text-green-400">
                         {formatNumber(recentProgress.xp_24h)}
                       </p>
