@@ -535,17 +535,17 @@ const Home = () => {
 
               {/* Right Column: Stats Section */}
               {overallStats && (
-                <div className="flex-1 flex flex-col gap-2">
+                <div className="flex-1 flex flex-col gap-4">
                 <Tooltip content="Combat Level">
                   <div className="flex items-stretch overflow-hidden rounded-lg">
-                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
+                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-3">
                       <img 
                         src="/assets/icons/combat_level.png" 
                         alt="Combat Level"
                         className="w-5 h-5"
                       />
                     </div>
-                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
+                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-3">
                       <span className="text-lg font-bold text-white">
                         {overallStats.combatlevel}
                       </span>
@@ -555,14 +555,14 @@ const Home = () => {
 
                 <Tooltip content="Total Level">
                   <div className="flex items-stretch overflow-hidden rounded-lg">
-                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
+                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-3">
                       <img 
                         src="/assets/icons/total_level.png" 
                         alt="Total Level"
                         className="w-5 h-5"
                       />
                     </div>
-                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
+                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-3">
                       <span className="text-lg font-bold text-white">
                         {overallStats.level}
                       </span>
@@ -572,14 +572,14 @@ const Home = () => {
 
                 <Tooltip content="Quest Points">
                   <div className="flex items-stretch overflow-hidden rounded-lg">
-                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
+                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-3">
                       <img 
                         src="/assets/icons/quest_points.png" 
                         alt="Quest Points"
                         className="w-5 h-5"
                       />
                     </div>
-                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
+                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-3">
                       <span className="text-lg font-bold text-white">
                         {playerData.quest_points || 0}
                       </span>
@@ -589,14 +589,14 @@ const Home = () => {
 
                 <Tooltip content="RuneScore">
                   <div className="flex items-stretch overflow-hidden rounded-lg">
-                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
+                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-3">
                       <img 
                         src="/assets/icons/runescore.png" 
                         alt="RuneScore"
                         className="w-5 h-5"
                       />
                     </div>
-                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
+                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-3">
                       <span className="text-lg font-bold text-white">
                         {playerData.runescore?.toLocaleString() || '—'}
                       </span>
