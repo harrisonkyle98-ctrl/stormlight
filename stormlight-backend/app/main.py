@@ -6052,58 +6052,93 @@ async def get_player_recent_progress(username: str):
         from urllib.parse import unquote
         from datetime import datetime, timedelta, timezone
         
+        try:
+            from .database import get_db_connection
+        except ImportError:
+            from database import get_db_connection
+        
         decoded_username = unquote(username).replace('-', ' ')
         
-        if not PRISMA_AVAILABLE or not prisma:
-            return {"error": "Database not available"}
-        
-        now = datetime.now(timezone.utc).date()
-        
-        snapshot_today = await prisma.playerdailysnapshot.find_first(
-            where={'username': decoded_username, 'snapshotDate': now}
-        )
-        
-        snapshot_yesterday = await prisma.playerdailysnapshot.find_first(
-            where={'username': decoded_username, 'snapshotDate': now - timedelta(days=1)}
-        )
-        
-        snapshot_7d = await prisma.playerdailysnapshot.find_first(
-            where={'username': decoded_username, 'snapshotDate': now - timedelta(days=7)}
-        )
-        
-        snapshot_30d = await prisma.playerdailysnapshot.find_first(
-            where={'username': decoded_username, 'snapshotDate': now - timedelta(days=30)}
-        )
-        
-        snapshots_7d = await prisma.playerdailysnapshot.find_many(
-            where={
+        conn = await get_db_connection()
+        async with conn:
+            now = datetime.now(timezone.utc).date()
+            
+            cursor = await conn.execute("""
+                SELECT username, snapshot_date, total_xp
+                FROM player_daily_snapshots
+                WHERE username = %s
+                ORDER BY snapshot_date DESC
+                LIMIT 1
+            """, (decoded_username,))
+            latest_snapshot = await cursor.fetchone()
+            
+            if not latest_snapshot or not latest_snapshot[2]:
+                return {
+                    'username': decoded_username,
+                    'current_total_xp': 0,
+                    'xp_24h': 0,
+                    'xp_7d': 0,
+                    'xp_30d': 0,
+                    'sparkline': []
+                }
+            
+            current_xp = latest_snapshot[2]
+            latest_date = latest_snapshot[1]
+            
+            cursor = await conn.execute("""
+                SELECT total_xp
+                FROM player_daily_snapshots
+                WHERE username = %s AND snapshot_date <= %s
+                ORDER BY snapshot_date DESC
+                LIMIT 1
+            """, (decoded_username, latest_date - timedelta(days=1)))
+            snapshot_24h = await cursor.fetchone()
+            
+            cursor = await conn.execute("""
+                SELECT total_xp
+                FROM player_daily_snapshots
+                WHERE username = %s AND snapshot_date <= %s
+                ORDER BY snapshot_date DESC
+                LIMIT 1
+            """, (decoded_username, latest_date - timedelta(days=7)))
+            snapshot_7d = await cursor.fetchone()
+            
+            cursor = await conn.execute("""
+                SELECT total_xp
+                FROM player_daily_snapshots
+                WHERE username = %s AND snapshot_date <= %s
+                ORDER BY snapshot_date DESC
+                LIMIT 1
+            """, (decoded_username, latest_date - timedelta(days=30)))
+            snapshot_30d = await cursor.fetchone()
+            
+            cursor = await conn.execute("""
+                SELECT snapshot_date, total_xp
+                FROM player_daily_snapshots
+                WHERE username = %s AND snapshot_date >= %s
+                ORDER BY snapshot_date ASC
+            """, (decoded_username, latest_date - timedelta(days=7)))
+            snapshots_7d = await cursor.fetchall()
+            
+            xp_24h = current_xp - (snapshot_24h[0] if snapshot_24h and snapshot_24h[0] else current_xp)
+            xp_7d = current_xp - (snapshot_7d[0] if snapshot_7d and snapshot_7d[0] else current_xp)
+            xp_30d = current_xp - (snapshot_30d[0] if snapshot_30d and snapshot_30d[0] else current_xp)
+            
+            sparkline = []
+            for snap in snapshots_7d:
+                sparkline.append({
+                    'date': snap[0].isoformat(),
+                    'xp': int(snap[1]) if snap[1] else 0
+                })
+            
+            return {
                 'username': decoded_username,
-                'snapshotDate': {'gte': now - timedelta(days=7)}
-            },
-            order_by={'snapshotDate': 'asc'}
-        )
-        
-        # Calculate XP gains
-        current_xp = snapshot_today.totalXp if snapshot_today else 0
-        xp_24h = current_xp - (snapshot_yesterday.totalXp if snapshot_yesterday else current_xp)
-        xp_7d = current_xp - (snapshot_7d.totalXp if snapshot_7d else current_xp)
-        xp_30d = current_xp - (snapshot_30d.totalXp if snapshot_30d else current_xp)
-        
-        sparkline = []
-        for snap in snapshots_7d:
-            sparkline.append({
-                'date': snap.snapshotDate.isoformat(),
-                'xp': int(snap.totalXp) if snap.totalXp else 0
-            })
-        
-        return {
-            'username': decoded_username,
-            'current_total_xp': int(current_xp) if current_xp else 0,
-            'xp_24h': int(xp_24h) if xp_24h > 0 else 0,
-            'xp_7d': int(xp_7d) if xp_7d > 0 else 0,
-            'xp_30d': int(xp_30d) if xp_30d > 0 else 0,
-            'sparkline': sparkline
-        }
+                'current_total_xp': int(current_xp),
+                'xp_24h': int(xp_24h) if xp_24h > 0 else 0,
+                'xp_7d': int(xp_7d) if xp_7d > 0 else 0,
+                'xp_30d': int(xp_30d) if xp_30d > 0 else 0,
+                'sparkline': sparkline
+            }
         
     except Exception as e:
         print(f"Error fetching recent progress for {username}: {e}")
@@ -6124,42 +6159,53 @@ async def get_members_active_today():
     try:
         from datetime import datetime, timedelta, timezone
         
-        if not PRISMA_AVAILABLE or not prisma:
-            return {"active_members": [], "total_active": 0}
+        try:
+            from .database import get_db_connection
+        except ImportError:
+            from database import get_db_connection
         
-        now = datetime.now(timezone.utc).date()
-        yesterday = now - timedelta(days=1)
-        
-        snapshots_today = await prisma.playerdailysnapshot.find_many(
-            where={'snapshotDate': now}
-        )
-        
-        snapshots_yesterday = await prisma.playerdailysnapshot.find_many(
-            where={'snapshotDate': yesterday}
-        )
-        
-        yesterday_xp_map = {snap.username: snap.totalXp for snap in snapshots_yesterday if snap.totalXp}
-        
-        # Calculate XP gains for each member
-        active_members = []
-        for snap in snapshots_today:
-            if snap.totalXp:
-                yesterday_xp = yesterday_xp_map.get(snap.username, snap.totalXp)
-                xp_gained = snap.totalXp - yesterday_xp
-                
-                if xp_gained > 0:
-                    active_members.append({
-                        'username': snap.username,
-                        'xp_gained': int(xp_gained)
-                    })
-        
-        active_members.sort(key=lambda x: x['xp_gained'], reverse=True)
-        top_5 = active_members[:5]
-        
-        return {
-            'active_members': top_5,
-            'total_active': len(active_members)
-        }
+        conn = await get_db_connection()
+        async with conn:
+            now = datetime.now(timezone.utc).date()
+            date_24h_ago = now - timedelta(days=1)
+            
+            cursor = await conn.execute("""
+                SELECT username, snapshot_date, total_xp
+                FROM player_daily_snapshots
+                WHERE snapshot_date >= %s
+                ORDER BY username, snapshot_date DESC
+            """, (date_24h_ago,))
+            all_snapshots = await cursor.fetchall()
+            
+            latest_by_user = {}
+            previous_by_user = {}
+            
+            for snap in all_snapshots:
+                username = snap[0]
+                if username not in latest_by_user:
+                    latest_by_user[username] = snap
+                elif username not in previous_by_user:
+                    previous_by_user[username] = snap
+            
+            active_members = []
+            for username, latest_snap in latest_by_user.items():
+                if latest_snap[2]:
+                    previous_snap = previous_by_user.get(username)
+                    if previous_snap and previous_snap[2]:
+                        xp_gained = latest_snap[2] - previous_snap[2]
+                        if xp_gained > 0:
+                            active_members.append({
+                                'username': username,
+                                'xp_gained': int(xp_gained)
+                            })
+            
+            active_members.sort(key=lambda x: x['xp_gained'], reverse=True)
+            top_5 = active_members[:5]
+            
+            return {
+                'active_members': top_5,
+                'total_active': len(active_members)
+            }
         
     except Exception as e:
         print(f"Error fetching active members: {e}")
