@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { Users, Swords, TrendingUp, User, CircleCheck } from 'lucide-react'
+import { Users, Swords, TrendingUp, User, CircleCheck, Castle, Calendar } from 'lucide-react'
 import { fetchClanMembers, getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
 import { usernameToUrl } from '../utils/urlUtils'
@@ -71,6 +71,7 @@ interface PlayerStats {
   last_updated: string
   clan_rank?: string
   is_verified?: boolean
+  join_date?: string
 }
 
 interface ClanStats {
@@ -79,6 +80,7 @@ interface ClanStats {
   total_xp: number
   clan_rank: string
   total_members: number
+  citadel_tier?: number
 }
 
 interface Activity {
@@ -136,6 +138,7 @@ const Home = () => {
   const [playerData, setPlayerData] = useState<PlayerStats | null>(null)
   const [questData, setQuestData] = useState<any>(null)
   const [profileError, setProfileError] = useState<string | null>(null)
+  const [activeCompetitionsCount, setActiveCompetitionsCount] = useState<number>(0)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -152,7 +155,8 @@ const Home = () => {
         fetchClanStats(),
         fetchActivities(),
         fetchClanLog(),
-        loadClanMembers()
+        loadClanMembers(),
+        fetchActiveCompetitions()
       ]
 
       if (user?.username && user?.isLinked) {
@@ -391,6 +395,19 @@ const Home = () => {
     }
   }
 
+  const fetchActiveCompetitions = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/competitions`)
+      if (response.ok) {
+        const data = await response.json()
+        const activeCount = data.filter((comp: any) => comp.status === 'active').length
+        setActiveCompetitionsCount(activeCount)
+      }
+    } catch (error) {
+      console.error('Error fetching competitions:', error)
+    }
+  }
+
   const formatNumber = (num: number) => {
     if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B'
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
@@ -398,12 +415,22 @@ const Home = () => {
     return num.toString()
   }
 
+  const calculateDaysInClan = () => {
+    if (!playerData?.join_date) return null
+    const joinDate = new Date(playerData.join_date)
+    const now = new Date()
+    const diffTime = Math.abs(now.getTime() - joinDate.getTime())
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays
+  }
+
   const overallStats = playerData?.stats?.overall
 
   return (
     <div className="space-y-8">
       {/* Stats Cards Grid - Top Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+        {/* 1. Total Members */}
         <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-300">Total Members</CardTitle>
@@ -417,6 +444,7 @@ const Home = () => {
           </CardContent>
         </Card>
 
+        {/* 2. Total Clan XP */}
         <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-300">Total Clan XP</CardTitle>
@@ -430,13 +458,46 @@ const Home = () => {
           </CardContent>
         </Card>
 
+        {/* 3. Citadel Tier */}
+        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-300">Citadel Tier</CardTitle>
+            <Castle className="h-4 w-4 text-amber-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-white">
+              {loading ? '...' : clanStats?.citadel_tier ? `Tier ${clanStats.citadel_tier}` : 'N/A'}
+            </div>
+            <p className="text-xs text-slate-400">Current citadel level</p>
+          </CardContent>
+        </Card>
+
+        {/* 4. Time Spent in Clan */}
+        {user?.username && user?.isLinked && playerData && (
+          <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-slate-300">Time Spent in Clan</CardTitle>
+              <Calendar className="h-4 w-4 text-cyan-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">
+                {calculateDaysInClan() !== null ? `${calculateDaysInClan()} days` : 'N/A'}
+              </div>
+              <p className="text-xs text-slate-400">Days as clan member</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 5. Competitions */}
         <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-300">Competitions</CardTitle>
             <Swords className="h-4 w-4 text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">3</div>
+            <div className="text-2xl font-bold text-white">
+              {loading ? '...' : activeCompetitionsCount}
+            </div>
             <p className="text-xs text-slate-400">Active competitions</p>
           </CardContent>
         </Card>
