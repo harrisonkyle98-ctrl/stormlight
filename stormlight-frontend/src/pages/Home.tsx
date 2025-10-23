@@ -535,7 +535,7 @@ const Home = () => {
 
               {/* Right Column: Stats Section */}
               {overallStats && (
-                <div className="flex-1 flex flex-col gap-4">
+                <div className="flex-1 flex flex-col justify-between">
                 <Tooltip content="Combat Level">
                   <div className="flex items-stretch overflow-hidden rounded-lg">
                     <div className="bg-slate-800/70 flex items-center justify-center px-3 py-3">
