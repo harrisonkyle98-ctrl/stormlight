@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { Trophy, Users, Swords, TrendingUp, User, CircleCheck } from 'lucide-react'
+import { Users, Swords, TrendingUp, User, CircleCheck } from 'lucide-react'
 import { fetchClanMembers, getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
 import { usernameToUrl } from '../utils/urlUtils'
@@ -128,8 +128,6 @@ const Home = () => {
   const [clanStats, setClanStats] = useState<ClanStats | null>(null)
   const [activities, setActivities] = useState<Activity[]>([])
   const [activityLoading, setActivityLoading] = useState(true)
-  const [activityPage, setActivityPage] = useState(1)
-  const [hasMoreActivities, setHasMoreActivities] = useState(false)
   const [loading, setLoading] = useState(true)
   const [clanMembers, setClanMembers] = useState<any[]>([])
   const [loadingStatus, setLoadingStatus] = useState<{is_complete: boolean, processed_members: number, total_members: number} | null>(null)
@@ -330,8 +328,6 @@ const Home = () => {
             return unique.sort((a, b) => b.timestamp - a.timestamp)
           })
         }
-        setHasMoreActivities(data.pagination.has_next)
-        setActivityPage(page)
         setLoadingStatus(data.loading_status || null)
 
         if (data.loading_status && !data.loading_status.is_complete) {
@@ -347,12 +343,6 @@ const Home = () => {
       console.error('Error fetching activities:', error)
     } finally {
       setActivityLoading(false)
-    }
-  }
-
-  const loadMoreActivities = () => {
-    if (!activityLoading && hasMoreActivities) {
-      fetchActivities(activityPage + 1, true)
     }
   }
 
@@ -428,6 +418,46 @@ const Home = () => {
 
   return (
     <div className="space-y-8">
+      {/* Stats Cards Grid - Top Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-300">Total Members</CardTitle>
+            <Users className="h-4 w-4 text-blue-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-white">
+              {loading ? '...' : clanStats?.total_members || 0}
+            </div>
+            <p className="text-xs text-slate-400">Friends to play with</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-300">Total Clan XP</CardTitle>
+            <TrendingUp className="h-4 w-4 text-purple-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-white">
+              {loading ? '...' : formatNumber(clanStats?.total_xp || 0)}
+            </div>
+            <p className="text-xs text-slate-400">Combined clan XP</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-300">Competitions</CardTitle>
+            <Swords className="h-4 w-4 text-green-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-white">3</div>
+            <p className="text-xs text-slate-400">Active competitions</p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Personal Profile Card */}
       {user?.username && user?.isLinked && (profileError ? (
           <Card className="bg-slate-800/50 border-slate-700">
@@ -710,81 +740,6 @@ const Home = () => {
         </Card>
         ))}
 
-      {/* Stats Cards Grid - 2 rows x 3 columns */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Total Members</CardTitle>
-            <Users className="h-4 w-4 text-blue-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">
-              {loading ? '...' : clanStats?.total_members || 0}
-            </div>
-            <p className="text-xs text-slate-400">Friends to play with</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Total Clan XP</CardTitle>
-            <TrendingUp className="h-4 w-4 text-purple-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">
-              {loading ? '...' : formatNumber(clanStats?.total_xp || 0)}
-            </div>
-            <p className="text-xs text-slate-400">Combined clan XP</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Competitions</CardTitle>
-            <Swords className="h-4 w-4 text-green-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">3</div>
-            <p className="text-xs text-slate-400">Active competitions</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Clan Rank</CardTitle>
-            <Trophy className="h-4 h-4 text-yellow-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">
-              {loading ? '...' : (user?.isLinked && user?.clanRank) ? user.clanRank : user ? 'Not a member' : 'Unknown'}
-            </div>
-            <p className="text-xs text-slate-400">{user?.isLinked ? 'Your clan rank' : 'Clan membership'}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Placeholder</CardTitle>
-            <Trophy className="h-4 w-4 text-slate-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">—</div>
-            <p className="text-xs text-slate-400">Coming soon</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Placeholder</CardTitle>
-            <Trophy className="h-4 w-4 text-slate-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">—</div>
-            <p className="text-xs text-slate-400">Coming soon</p>
-          </CardContent>
-        </Card>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader>
@@ -889,18 +844,6 @@ const Home = () => {
                       'Loading activities...'
                   ) : 'No recent activities found'}
                 </p>
-              </div>
-            )}
-
-            {hasMoreActivities && (
-              <div className="text-center pt-4">
-                <Button
-                  onClick={loadMoreActivities}
-                  disabled={activityLoading}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {activityLoading ? 'Loading...' : 'See More'}
-                </Button>
               </div>
             )}
           </div>
