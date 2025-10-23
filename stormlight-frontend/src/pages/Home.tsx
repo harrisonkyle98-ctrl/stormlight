@@ -9,7 +9,7 @@ import { fetchClanMembers, getGradientStyle, checkPlayerMilestones } from '../ut
 import { useAuth } from '../contexts/AuthContext'
 import { usernameToUrl } from '../utils/urlUtils'
 import { Tooltip } from '../components/ui/tooltip'
-import { LineChart, Line, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts'
 
 const getRankIcon = (rank: string): string => {
   const rankImageMap: { [key: string]: string } = {
@@ -793,7 +793,7 @@ const Home = () => {
             <CardHeader>
               <CardTitle className="text-white">Your Recent Progress</CardTitle>
               <CardDescription className="text-slate-400">
-                Your personal XP growth over time
+                Your XP gains over the last 30 days
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -832,9 +832,27 @@ const Home = () => {
                   {/* Sparkline Chart */}
                   {recentProgress.sparkline && recentProgress.sparkline.length > 0 && (
                     <div className="mb-4">
-                      <p className="text-xs text-slate-400 mb-2">7-Day XP Trend</p>
-                      <ResponsiveContainer width="100%" height={80}>
+                      <p className="text-xs text-slate-400 mb-2">30-Day XP Trend</p>
+                      <ResponsiveContainer width="100%" height={120}>
                         <LineChart data={recentProgress.sparkline}>
+                          <XAxis
+                            dataKey="date"
+                            stroke="#94a3b8"
+                            style={{ fontSize: '10px' }}
+                            tickFormatter={(value) => {
+                              const date = new Date(value)
+                              return `${date.getMonth() + 1}/${date.getDate()}`
+                            }}
+                          />
+                          <YAxis
+                            stroke="#94a3b8"
+                            style={{ fontSize: '10px' }}
+                            tickFormatter={(value) => {
+                              if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
+                              if (value >= 1000) return `${(value / 1000).toFixed(0)}K`
+                              return value.toString()
+                            }}
+                          />
                           <Line
                             type="monotone"
                             dataKey="xp"
@@ -856,11 +874,11 @@ const Home = () => {
                     </div>
                   )}
 
-                  {/* Total XP */}
+                  {/* 30-Day XP Total */}
                   <div className="border-t border-slate-700 pt-3">
-                    <p className="text-sm text-slate-400">Current Total XP</p>
+                    <p className="text-sm text-slate-400">XP Gained (30 Days)</p>
                     <p className="text-xl font-bold text-white">
-                      {formatNumber(recentProgress.current_total_xp)}
+                      {formatNumber(recentProgress.xp_30d)}
                     </p>
                   </div>
                 </>
@@ -875,7 +893,7 @@ const Home = () => {
             <CardHeader>
               <CardTitle className="text-white">Members Active Today</CardTitle>
               <CardDescription className="text-slate-400">
-                Clanmates who trained today
+                Clanmates who gained XP today
               </CardDescription>
             </CardHeader>
             <CardContent>

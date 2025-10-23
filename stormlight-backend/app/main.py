@@ -6075,10 +6075,9 @@ async def get_player_recent_progress(username: str):
             if not latest_snapshot or not latest_snapshot[2]:
                 return {
                     'username': decoded_username,
-                    'current_total_xp': 0,
+                    'xp_30d': 0,
                     'xp_24h': 0,
                     'xp_7d': 0,
-                    'xp_30d': 0,
                     'sparkline': []
                 }
             
@@ -6133,10 +6132,9 @@ async def get_player_recent_progress(username: str):
             
             return {
                 'username': decoded_username,
-                'current_total_xp': int(current_xp),
+                'xp_30d': int(xp_30d) if xp_30d > 0 else 0,
                 'xp_24h': int(xp_24h) if xp_24h > 0 else 0,
                 'xp_7d': int(xp_7d) if xp_7d > 0 else 0,
-                'xp_30d': int(xp_30d) if xp_30d > 0 else 0,
                 'sparkline': sparkline
             }
         
@@ -6146,16 +6144,15 @@ async def get_player_recent_progress(username: str):
         traceback.print_exc()
         return {
             'username': username,
-            'current_total_xp': 0,
+            'xp_30d': 0,
             'xp_24h': 0,
             'xp_7d': 0,
-            'xp_30d': 0,
             'sparkline': []
         }
 
 @app.get("/api/members/active-today")
 async def get_members_active_today():
-    """Get clan members who gained XP in the last 24 hours"""
+    """Get active clan members who gained XP in the last 24 hours"""
     try:
         from datetime import datetime, timedelta, timezone
         
@@ -6170,6 +6167,11 @@ async def get_members_active_today():
             date_24h_ago = now - timedelta(days=1)
             
             cursor = await conn.execute("""
+                SELECT username FROM clan_members WHERE active = TRUE
+            """)
+            active_clan_members = {row[0] for row in await cursor.fetchall()}
+            
+            cursor = await conn.execute("""
                 SELECT username, snapshot_date, total_xp
                 FROM player_daily_snapshots
                 WHERE snapshot_date >= %s
@@ -6182,6 +6184,9 @@ async def get_members_active_today():
             
             for snap in all_snapshots:
                 username = snap[0]
+                if username not in active_clan_members:
+                    continue
+                    
                 if username not in latest_by_user:
                     latest_by_user[username] = snap
                 elif username not in previous_by_user:
