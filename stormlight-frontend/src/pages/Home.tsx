@@ -354,7 +354,7 @@ const Home = () => {
       setClanLogLoading(true)
       console.log('🔄 Fetching clan log...')
       const cacheBuster = Date.now()
-      const requestUrl = `${API_URL}/api/clan/log?page=1&limit=8&_t=${cacheBuster}`
+      const requestUrl = `${API_URL}/api/clan/log?page=1&limit=10&_t=${cacheBuster}`
       console.log('📡 Clan Log Request URL:', requestUrl)
       const response = await fetch(requestUrl, {
         cache: 'no-store',
@@ -380,7 +380,7 @@ const Home = () => {
           seen.add(key)
           return true
         })
-        setClanLogEntries(deduped)
+        setClanLogEntries(deduped.slice(0, 8))
       } else {
         console.error('❌ Clan log fetch failed:', response.status, response.statusText)
       }
