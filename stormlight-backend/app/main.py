@@ -6085,43 +6085,12 @@ async def get_player_recent_progress(username: str):
             latest_date = latest_snapshot[1]
             
             cursor = await conn.execute("""
-                SELECT total_xp
-                FROM player_daily_snapshots
-                WHERE username = %s AND snapshot_date <= %s
-                ORDER BY snapshot_date DESC
-                LIMIT 1
-            """, (decoded_username, latest_date - timedelta(days=1)))
-            snapshot_24h = await cursor.fetchone()
-            
-            cursor = await conn.execute("""
-                SELECT total_xp
-                FROM player_daily_snapshots
-                WHERE username = %s AND snapshot_date <= %s
-                ORDER BY snapshot_date DESC
-                LIMIT 1
-            """, (decoded_username, latest_date - timedelta(days=7)))
-            snapshot_7d = await cursor.fetchone()
-            
-            cursor = await conn.execute("""
-                SELECT total_xp
-                FROM player_daily_snapshots
-                WHERE username = %s AND snapshot_date <= %s
-                ORDER BY snapshot_date DESC
-                LIMIT 1
-            """, (decoded_username, latest_date - timedelta(days=30)))
-            snapshot_30d = await cursor.fetchone()
-            
-            cursor = await conn.execute("""
                 SELECT snapshot_date, total_xp
                 FROM player_daily_snapshots
                 WHERE username = %s AND snapshot_date >= %s
                 ORDER BY snapshot_date ASC
             """, (decoded_username, latest_date - timedelta(days=30)))
             snapshots_30d = await cursor.fetchall()
-            
-            xp_24h = current_xp - (snapshot_24h[0] if snapshot_24h and snapshot_24h[0] else current_xp)
-            xp_7d = current_xp - (snapshot_7d[0] if snapshot_7d and snapshot_7d[0] else current_xp)
-            xp_30d = current_xp - (snapshot_30d[0] if snapshot_30d and snapshot_30d[0] else current_xp)
             
             sparkline = []
             prev_xp = None
@@ -6139,11 +6108,15 @@ async def get_player_recent_progress(username: str):
                     })
                 prev_xp = snap[1] if snap[1] else prev_xp
             
+            xp_24h = sum(item['xp'] for item in sparkline[-1:]) if len(sparkline) >= 1 else 0
+            xp_7d = sum(item['xp'] for item in sparkline[-7:]) if len(sparkline) >= 7 else sum(item['xp'] for item in sparkline)
+            xp_30d = sum(item['xp'] for item in sparkline)
+            
             return {
                 'username': decoded_username,
-                'xp_30d': int(xp_30d) if xp_30d > 0 else 0,
-                'xp_24h': int(xp_24h) if xp_24h > 0 else 0,
-                'xp_7d': int(xp_7d) if xp_7d > 0 else 0,
+                'xp_30d': int(xp_30d),
+                'xp_24h': int(xp_24h),
+                'xp_7d': int(xp_7d),
                 'sparkline': sparkline
             }
         
