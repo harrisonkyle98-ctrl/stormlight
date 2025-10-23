@@ -144,6 +144,8 @@ const Home = () => {
   const [recentProgressLoading, setRecentProgressLoading] = useState(false)
   const [activeMembers, setActiveMembers] = useState<any>(null)
   const [activeMembersLoading, setActiveMembersLoading] = useState(false)
+  const [highestPlacement, setHighestPlacement] = useState<any>(null)
+  const [highestPlacementLoading, setHighestPlacementLoading] = useState(false)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -188,7 +190,8 @@ const Home = () => {
           await Promise.all([
             fetchPlayerStats(),
             fetchQuestData(),
-            fetchRecentProgress()
+            fetchRecentProgress(),
+            fetchHighestPlacement()
           ])
         } finally {
           setProfileLoading(false)
@@ -488,6 +491,24 @@ const Home = () => {
     }
   }
 
+  const fetchHighestPlacement = async () => {
+    if (!user?.username) return
+
+    setHighestPlacementLoading(true)
+    try {
+      const encodedUsername = encodeURIComponent(user.username)
+      const response = await fetch(`${API_URL}/api/player/${encodedUsername}/highest-placement`)
+      if (response.ok) {
+        const data = await response.json()
+        setHighestPlacement(data)
+      }
+    } catch (error) {
+      console.error('Error fetching highest placement:', error)
+    } finally {
+      setHighestPlacementLoading(false)
+    }
+  }
+
   const overallStats = playerData?.stats?.overall
 
   return (
@@ -637,11 +658,11 @@ const Home = () => {
         ) : playerData && (
         <Card className="bg-slate-800/50 border-slate-700">
           <CardContent className="p-6">
-            {/* Horizontal layout with responsive stacking */}
+            {/* Horizontal layout with responsive stacking - Three columns */}
             <div className="flex flex-col lg:flex-row gap-6">
 
-              {/* Left Column: Avatar + Badges stacked vertically */}
-              <div className="lg:w-1/3 flex-shrink-0 flex flex-col gap-6">
+              {/* Left Column: Avatar (30% width) */}
+              <div className="lg:w-[30%] flex-shrink-0 flex flex-col gap-6">
                 {/* Avatar Section */}
                 <div className="bg-slate-700/30 rounded-lg p-6 relative">
                   <Tooltip content={
@@ -708,9 +729,9 @@ const Home = () => {
                 </div>
               </div>
 
-              {/* Right Column: Stats Section */}
+              {/* Middle Column: Stats Section (40% width) */}
               {overallStats && (
-                <div className="flex-1 flex flex-col justify-between">
+                <div className="lg:w-[40%] flex-shrink-0 flex flex-col justify-between">
                 <Tooltip content="Combat Level">
                   <div className="flex items-stretch overflow-hidden rounded-lg">
                     <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
@@ -780,6 +801,55 @@ const Home = () => {
                 </Tooltip>
                 </div>
               )}
+
+              {/* Right Column: Highest Competition Placement (30% width) */}
+              <div className="lg:w-[30%] flex-shrink-0 flex flex-col justify-center">
+                {highestPlacementLoading ? (
+                  <div className="bg-slate-700/30 rounded-lg p-6 h-full flex items-center justify-center">
+                    <div className="animate-pulse text-slate-400">Loading...</div>
+                  </div>
+                ) : (
+                  <Tooltip content={highestPlacement?.has_placement ? highestPlacement.competition_name : "No competition history yet."}>
+                    <div
+                      className={`bg-slate-700/30 rounded-lg p-6 h-full flex items-center justify-center relative overflow-hidden ${
+                        highestPlacement?.has_placement ? 'cursor-pointer hover:bg-slate-700/50 transition-colors' : ''
+                      }`}
+                      onClick={() => {
+                        if (highestPlacement?.has_placement && highestPlacement.competition_id) {
+                          window.location.href = `/competitions/${highestPlacement.competition_id}`
+                        }
+                      }}
+                    >
+                      {/* Faint Trophy Icon Background */}
+                      <div className="absolute inset-0 flex items-center justify-center opacity-10">
+                        <Trophy 
+                          className={`w-32 h-32 ${
+                            !highestPlacement?.has_placement ? 'text-slate-500' :
+                            highestPlacement.placement === 1 ? 'text-yellow-400' :
+                            highestPlacement.placement === 2 ? 'text-slate-300' :
+                            highestPlacement.placement === 3 ? 'text-amber-600' :
+                            'text-slate-500'
+                          }`}
+                        />
+                      </div>
+                      
+                      {/* Placement Number or --- */}
+                      <div className="relative z-10 text-center">
+                        <p className="text-xs text-slate-400 mb-2">Highest Placement</p>
+                        <p className={`text-4xl font-bold ${
+                          !highestPlacement?.has_placement ? 'text-slate-400' :
+                          highestPlacement.placement === 1 ? 'text-yellow-400' :
+                          highestPlacement.placement === 2 ? 'text-slate-300' :
+                          highestPlacement.placement === 3 ? 'text-amber-600' :
+                          'text-white'
+                        }`}>
+                          {highestPlacement?.has_placement ? `#${highestPlacement.placement}` : '---'}
+                        </p>
+                      </div>
+                    </div>
+                  </Tooltip>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

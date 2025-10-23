@@ -2549,6 +2549,163 @@ async def get_player_competitions(username: str):
     
     return {"competitions": player_competitions}
 
+@api_router.get("/player/{username}/highest-placement")
+async def get_highest_placement(username: str):
+    """Get the player's highest (best/lowest number) competition placement"""
+    from urllib.parse import unquote
+    decoded_username = unquote(username).replace('-', ' ')
+    
+    try:
+        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            member = await prisma.clanmember.find_unique(
+                where={'username': decoded_username}
+            )
+            
+            if not member:
+                return {
+                    'has_placement': False,
+                    'placement': None,
+                    'competition_id': None,
+                    'competition_name': None
+                }
+            
+            player_entries = await prisma.competitionentry.find_many(
+                where={'memberId': member.id},
+                include={'competition': True}
+            )
+            
+            if not player_entries:
+                return {
+                    'has_placement': False,
+                    'placement': None,
+                    'competition_id': None,
+                    'competition_name': None
+                }
+            
+            best_placement = None
+            best_comp_id = None
+            best_comp_name = None
+            
+            for entry in player_entries:
+                comp = entry.competition
+                if not comp:
+                    continue
+                
+                comp_with_entries = await prisma.competition.find_unique(
+                    where={'id': comp.id},
+                    include={'entries': True}
+                )
+                
+                placement = None
+                
+                try:
+                    if comp.type == 'XP_GAIN':
+                        try:
+                            from .database import get_db_connection, get_snapshot_json_on_or_before
+                        except ImportError:
+                            from database import get_db_connection, get_snapshot_json_on_or_before
+                        
+                        conn = await get_db_connection()
+                        async with conn:
+                            leaderboard_entries = []
+                            for e in comp_with_entries.entries:
+                                xp_gain = 0
+                                try:
+                                    end_snapshot = await get_snapshot_json_on_or_before(
+                                        conn, e.username, comp.endDate.date()
+                                    )
+                                    
+                                    if end_snapshot:
+                                        skill = comp.skill or 'overall'
+                                        if skill and skill.lower() == 'overall':
+                                            xp_end = sum(s.get('xp', 0) for s in end_snapshot.values() if isinstance(s, dict))
+                                        else:
+                                            xp_end = end_snapshot.get(skill, {}).get('xp', 0)
+                                        
+                                        xp_gain = max(0, xp_end - e.xpStart)
+                                except:
+                                    xp_gain = 0
+                                
+                                leaderboard_entries.append((e.username, xp_gain))
+                            
+                            leaderboard_entries.sort(key=lambda x: x[1], reverse=True)
+                            placement = next((i+1 for i, (u, _) in enumerate(leaderboard_entries) 
+                                            if u.lower() == decoded_username.lower()), None)
+                    
+                    else:
+                        try:
+                            from .database import get_db_connection
+                        except ImportError:
+                            from database import get_db_connection
+                        
+                        conn = await get_db_connection()
+                        async with conn:
+                            async with conn.cursor() as cursor:
+                                drops_grid = comp.dropsGrid
+                                all_entries_drops = []
+                                
+                                for e in comp_with_entries.entries:
+                                    member_drops = 0
+                                    await cursor.execute(
+                                        "SELECT activity FROM player_activity_logs WHERE LOWER(username) = LOWER(%s) AND timestamp >= %s AND timestamp <= %s",
+                                        (e.username, comp.startDate, comp.endDate)
+                                    )
+                                    rows = await cursor.fetchall()
+                                
+                                    if drops_grid:
+                                        for row in rows:
+                                            text = row[0]
+                                            for drop_item in drops_grid:
+                                                if drop_item and drop_item.lower() in text.lower():
+                                                    member_drops += 1
+                                    
+                                    all_entries_drops.append((e.username, member_drops))
+                            
+                                all_entries_drops.sort(key=lambda x: x[1], reverse=True)
+                                placement = next((i+1 for i, (u, _) in enumerate(all_entries_drops) 
+                                                if u.lower() == decoded_username.lower()), None)
+                except Exception as e:
+                    print(f"Error calculating placement for competition {comp.name}: {e}")
+                    placement = None
+                
+                if placement is not None:
+                    if best_placement is None or placement < best_placement:
+                        best_placement = placement
+                        best_comp_id = comp.id
+                        best_comp_name = comp.name
+            
+            if best_placement is not None:
+                return {
+                    'has_placement': True,
+                    'placement': best_placement,
+                    'competition_id': best_comp_id,
+                    'competition_name': best_comp_name
+                }
+            else:
+                return {
+                    'has_placement': False,
+                    'placement': None,
+                    'competition_id': None,
+                    'competition_name': None
+                }
+        else:
+            return {
+                'has_placement': False,
+                'placement': None,
+                'competition_id': None,
+                'competition_name': None
+            }
+    except Exception as e:
+        print(f"Error fetching highest placement for {username}: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            'has_placement': False,
+            'placement': None,
+            'competition_id': None,
+            'competition_name': None
+        }
+
 async def fetch_clan_members() -> List[Dict[str, Any]]:
     """Fetch clan members from RuneScape Clan API"""
     try:
