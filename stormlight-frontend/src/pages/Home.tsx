@@ -135,7 +135,6 @@ const Home = () => {
   const [clanLogLoading, setClanLogLoading] = useState(true)
   const [playerData, setPlayerData] = useState<PlayerStats | null>(null)
   const [questData, setQuestData] = useState<any>(null)
-  const [citadelCaps, setCitadelCaps] = useState<number | null>(null)
   const [profileError, setProfileError] = useState<string | null>(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -160,8 +159,7 @@ const Home = () => {
         console.log('✅ User is linked, fetching profile data')
         promises.push(
           fetchPlayerStats(),
-          fetchQuestData(),
-          fetchCitadelCaps()
+          fetchQuestData()
         )
       } else if (user) {
         console.log('⚠️ User exists but not linked or no username:', {
@@ -256,20 +254,6 @@ const Home = () => {
       }
     } catch (error) {
       console.error('Error fetching quest data:', error)
-    }
-  }
-
-  const fetchCitadelCaps = async () => {
-    if (!user?.username) return
-    try {
-      const encodedUsername = encodeURIComponent(user.username)
-      const response = await fetch(`${API_URL}/api/player/${encodedUsername}/citadel-caps`)
-      if (response.ok) {
-        const data = await response.json()
-        setCitadelCaps(data.total_caps)
-      }
-    } catch (error) {
-      console.error('Error fetching citadel caps:', error)
     }
   }
 
@@ -547,57 +531,6 @@ const Home = () => {
                     </div>
                   </div>
                 </div>
-
-                {/* Badges Section */}
-                {playerData.stats && playerData.custom_badges !== undefined && (() => {
-                  const milestoneBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, user.username, playerData.league_points)
-                  const nonRankBadges = milestoneBadges.filter(badge => !badge.id.startsWith('rank-'))
-                  
-                  const customBadges = (playerData.custom_badges || []).map((badge: CustomBadge) => ({
-                    id: `custom-${badge.id}`,
-                    name: badge.name,
-                    backgroundColor: badge.backgroundColor || '#6b7280',
-                    gradientBackground: badge.gradientColors ? 
-                      `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})` : 
-                      undefined,
-                    icon: badge.imageUrl
-                  }))
-                  
-                  const allBadges = [...nonRankBadges, ...customBadges]
-                  return allBadges.length > 0 ? (
-                    <div className="flex flex-col gap-2">
-                      {allBadges.map((badge) => (
-                          <Tooltip
-                            key={badge.id}
-                            content={
-                              <div>
-                                <div className="font-semibold text-white">{badge.name}</div>
-                                {badge.id.startsWith('league-') && playerData.league_points && (
-                                  <div className="text-blue-400 text-sm mt-1">
-                                    League Points: {playerData.league_points.toLocaleString()}
-                                  </div>
-                                )}
-                              </div>
-                            }
-                          >
-                            <div
-                              className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white relative group cursor-help"
-                              style={{
-                                background: badge.gradientBackground || badge.backgroundColor
-                              }}
-                            >
-                            <img
-                              src={badge.icon}
-                              alt={badge.name}
-                              className="w-4 h-4"
-                            />
-                            <span>{badge.name}</span>
-                            </div>
-                          </Tooltip>
-                      ))}
-                    </div>
-                  ) : null
-                })()}
               </div>
 
               {/* Right Column: Stats Section */}
@@ -670,69 +603,6 @@ const Home = () => {
                     </div>
                   </div>
                 </Tooltip>
-
-                {citadelCaps !== null && citadelCaps > 0 && (
-                  <Tooltip content="Total Caps">
-                    <div className="flex items-stretch overflow-hidden rounded-lg">
-                      <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
-                        <img 
-                          src="/assets/icons/clan_citadel.png" 
-                          alt="Total Caps"
-                          className="w-5 h-5"
-                        />
-                      </div>
-                      <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
-                        <span className="text-lg font-bold text-white">
-                          {citadelCaps.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  </Tooltip>
-                )}
-
-                {playerData.league_points !== null && playerData.league_points !== undefined && (() => {
-                  const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, user.username, playerData.league_points)
-                  const leagueBadge = allBadges.find(badge => badge.id.startsWith('league-'))
-                  const leagueIcon = leagueBadge?.icon || '/assets/icons/league_points.png'
-                  
-                  return (
-                    <Tooltip content="League Points">
-                      <div className="flex items-stretch overflow-hidden rounded-lg">
-                        <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
-                          <img 
-                            src={leagueIcon} 
-                            alt="League Points"
-                            className="w-5 h-5"
-                          />
-                        </div>
-                        <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
-                          <span className="text-lg font-bold text-white">
-                            {playerData.league_points.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    </Tooltip>
-                  )
-                })()}
-
-                {playerData.league_rank !== null && playerData.league_rank !== undefined && (
-                  <Tooltip content="League Rank">
-                    <div className="flex items-stretch overflow-hidden rounded-lg">
-                      <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
-                        <img 
-                          src="/assets/icons/league_rank.png" 
-                          alt="League Rank"
-                          className="w-5 h-5"
-                        />
-                      </div>
-                      <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
-                        <span className="text-lg font-bold text-white">
-                          #{playerData.league_rank.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  </Tooltip>
-                )}
                 </div>
               )}
             </div>
