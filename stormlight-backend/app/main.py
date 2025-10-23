@@ -6116,19 +6116,28 @@ async def get_player_recent_progress(username: str):
                 FROM player_daily_snapshots
                 WHERE username = %s AND snapshot_date >= %s
                 ORDER BY snapshot_date ASC
-            """, (decoded_username, latest_date - timedelta(days=7)))
-            snapshots_7d = await cursor.fetchall()
+            """, (decoded_username, latest_date - timedelta(days=30)))
+            snapshots_30d = await cursor.fetchall()
             
             xp_24h = current_xp - (snapshot_24h[0] if snapshot_24h and snapshot_24h[0] else current_xp)
             xp_7d = current_xp - (snapshot_7d[0] if snapshot_7d and snapshot_7d[0] else current_xp)
             xp_30d = current_xp - (snapshot_30d[0] if snapshot_30d and snapshot_30d[0] else current_xp)
             
             sparkline = []
-            for snap in snapshots_7d:
-                sparkline.append({
-                    'date': snap[0].isoformat(),
-                    'xp': int(snap[1]) if snap[1] else 0
-                })
+            prev_xp = None
+            for snap in snapshots_30d:
+                if prev_xp is not None and snap[1]:
+                    xp_gained = int(snap[1] - prev_xp) if snap[1] > prev_xp else 0
+                    sparkline.append({
+                        'date': snap[0].isoformat(),
+                        'xp': xp_gained
+                    })
+                elif prev_xp is None and snap[1]:
+                    sparkline.append({
+                        'date': snap[0].isoformat(),
+                        'xp': 0
+                    })
+                prev_xp = snap[1] if snap[1] else prev_xp
             
             return {
                 'username': decoded_username,

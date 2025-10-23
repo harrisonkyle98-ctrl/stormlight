@@ -830,9 +830,9 @@ const Home = () => {
                   </div>
 
                   {/* Sparkline Chart */}
-                  {recentProgress.sparkline && recentProgress.sparkline.length > 0 && (
+                  {recentProgress.sparkline && recentProgress.sparkline.length > 0 ? (
                     <div className="mb-4">
-                      <p className="text-xs text-slate-400 mb-2">30-Day XP Trend</p>
+                      <p className="text-xs text-slate-400 mb-2">30-Day XP Gains</p>
                       <ResponsiveContainer width="100%" height={120}>
                         <LineChart data={recentProgress.sparkline}>
                           <XAxis
@@ -856,8 +856,9 @@ const Home = () => {
                           <Line
                             type="monotone"
                             dataKey="xp"
-                            stroke="#3b82f6"
+                            stroke="#a855f7"
                             strokeWidth={2}
+                            strokeOpacity={0.9}
                             dot={false}
                           />
                           <RechartsTooltip
@@ -867,10 +868,18 @@ const Home = () => {
                               borderRadius: '0.375rem'
                             }}
                             labelStyle={{ color: '#94a3b8' }}
-                            formatter={(value: any) => [formatNumber(value), 'XP']}
+                            labelFormatter={(value) => {
+                              const date = new Date(value)
+                              return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`
+                            }}
+                            formatter={(value: any) => [formatNumber(value), 'XP Gained']}
                           />
                         </LineChart>
                       </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="mb-4 p-4 bg-slate-700/20 rounded-lg text-center">
+                      <p className="text-xs text-slate-400">No XP gain data available for the last 30 days</p>
                     </div>
                   )}
 
