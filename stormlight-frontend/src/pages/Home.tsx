@@ -481,11 +481,16 @@ const Home = () => {
                     </Avatar>
                     <div className="text-center">
                       <h1 className="text-2xl font-bold text-center">
-                        <span 
-                          style={getGradientStyle(user.username, playerData.clan_rank)}
+                        <Link
+                          to={`/clan-member/${usernameToUrl(user.username)}`}
+                          className="hover:opacity-80 transition-opacity"
                         >
-                          {user.username}
-                        </span>
+                          <span 
+                            style={getGradientStyle(user.username, playerData.clan_rank)}
+                          >
+                            {user.username}
+                          </span>
+                        </Link>
                       </h1>
                       
                       {playerData.stats && (() => {
