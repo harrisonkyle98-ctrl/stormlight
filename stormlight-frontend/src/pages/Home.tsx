@@ -138,7 +138,6 @@ const Home = () => {
   const [playerData, setPlayerData] = useState<PlayerStats | null>(null)
   const [questData, setQuestData] = useState<any>(null)
   const [citadelCaps, setCitadelCaps] = useState<number | null>(null)
-  const [profileLoading, setProfileLoading] = useState(true)
   const [profileError, setProfileError] = useState<string | null>(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -151,27 +150,35 @@ const Home = () => {
       requiresLinking: user?.requiresLinking
     })
     
-    fetchClanStats()
-    fetchActivities()
-    fetchClanLog()
-    loadClanMembers()
-    
-    if (user?.username && user?.isLinked) {
-      console.log('✅ User is linked, fetching profile data')
-      fetchPlayerStats()
-      fetchQuestData()
-      fetchCitadelCaps()
-    } else if (user) {
-      console.log('⚠️ User exists but not linked or no username:', {
-        username: user.username,
-        isLinked: user.isLinked
-      })
-      setProfileLoading(false)
-      setProfileError(user.requiresLinking ? 'Please link your RuneScape account' : 'Account not linked to clan member')
-    } else {
-      console.log('ℹ️ No user logged in')
-      setProfileLoading(false)
+    const loadAllData = async () => {
+      const promises = [
+        fetchClanStats(),
+        fetchActivities(),
+        fetchClanLog(),
+        loadClanMembers()
+      ]
+
+      if (user?.username && user?.isLinked) {
+        console.log('✅ User is linked, fetching profile data')
+        promises.push(
+          fetchPlayerStats(),
+          fetchQuestData(),
+          fetchCitadelCaps()
+        )
+      } else if (user) {
+        console.log('⚠️ User exists but not linked or no username:', {
+          username: user.username,
+          isLinked: user.isLinked
+        })
+        setProfileError(user.requiresLinking ? 'Please link your RuneScape account' : 'Account not linked to clan member')
+      } else {
+        console.log('ℹ️ No user logged in')
+      }
+
+      await Promise.all(promises)
     }
+
+    loadAllData()
 
     const statsInterval = setInterval(() => {
       console.log('🔄 Refreshing Total XP data (hourly)')
@@ -191,11 +198,9 @@ const Home = () => {
   const fetchPlayerStats = async () => {
     if (!user?.username) {
       console.log('❌ fetchPlayerStats: No username available')
-      setProfileLoading(false)
       return
     }
     try {
-      setProfileLoading(true)
       setProfileError(null)
       const encodedUsername = encodeURIComponent(user.username)
       const fullUrl = `${API_URL}/api/player/${encodedUsername}/stats`
@@ -239,8 +244,6 @@ const Home = () => {
         stack: error instanceof Error ? error.stack : undefined
       })
       setProfileError('Error loading profile data')
-    } finally {
-      setProfileLoading(false)
     }
   }
 
@@ -426,27 +429,7 @@ const Home = () => {
   return (
     <div className="space-y-8">
       {/* Personal Profile Card */}
-      {user?.username && user?.isLinked ? (
-        profileLoading ? (
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardContent className="p-6">
-              <div className="bg-slate-700/30 rounded-lg p-6 mb-4">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="w-20 h-20 rounded-full bg-slate-600 animate-pulse"></div>
-                  <div className="space-y-2 w-full">
-                    <div className="h-8 bg-slate-600 rounded animate-pulse w-48 mx-auto"></div>
-                    <div className="h-6 bg-slate-600 rounded animate-pulse w-32 mx-auto"></div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="h-10 bg-slate-700/30 rounded-lg animate-pulse"></div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ) : profileError ? (
+      {user?.username && user?.isLinked && (profileError ? (
           <Card className="bg-slate-800/50 border-slate-700">
             <CardContent className="p-6">
               <div className="text-center py-8">
@@ -462,7 +445,7 @@ const Home = () => {
               </div>
             </CardContent>
           </Card>
-        ) : playerData ? (
+        ) : playerData && (
         <Card className="bg-slate-800/50 border-slate-700">
           <CardContent className="p-6">
             {/* Horizontal layout with responsive stacking */}
@@ -720,8 +703,7 @@ const Home = () => {
             </div>
           </CardContent>
         </Card>
-        ) : null
-      ) : null}
+        ))}
 
       {/* Stats Cards Grid - 2 rows x 3 columns */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
