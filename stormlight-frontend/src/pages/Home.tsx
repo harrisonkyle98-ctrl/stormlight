@@ -276,7 +276,7 @@ const Home = () => {
       setActivityLoading(true)
       console.log('🔄 Fetching activities...', { page, append })
       const cacheBuster = Date.now()
-      const requestUrl = `${API_URL}/api/clan/activities?page=${page}&limit=10&_t=${cacheBuster}`
+      const requestUrl = `${API_URL}/api/clan/activities?page=${page}&limit=8&_t=${cacheBuster}`
       console.log('📡 Request URL:', requestUrl)
       const response = await fetch(requestUrl, {
         cache: 'no-cache',
@@ -354,7 +354,7 @@ const Home = () => {
       setClanLogLoading(true)
       console.log('🔄 Fetching clan log...')
       const cacheBuster = Date.now()
-      const requestUrl = `${API_URL}/api/clan/log?page=1&limit=10&_t=${cacheBuster}`
+      const requestUrl = `${API_URL}/api/clan/log?page=1&limit=8&_t=${cacheBuster}`
       console.log('📡 Clan Log Request URL:', requestUrl)
       const response = await fetch(requestUrl, {
         cache: 'no-store',
@@ -642,8 +642,8 @@ const Home = () => {
                         {entry.username}
                       </Link>
                       <span className="text-slate-300">
-                        {eventType === 'join' && `joined the clan as ${entry.new_rank}`}
-                        {eventType === 'leave' && `has left the clan`}
+                        {eventType === 'join' && `joined the clan`}
+                        {eventType === 'leave' && `left the clan`}
                         {eventType === 'rank_up' && (
                           <span className="flex items-center gap-1">
                             promoted from
