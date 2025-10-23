@@ -132,7 +132,6 @@ const Home = () => {
   const [activityLoading, setActivityLoading] = useState(true)
   const [loading, setLoading] = useState(true)
   const [clanMembers, setClanMembers] = useState<any[]>([])
-  const [loadingStatus, setLoadingStatus] = useState<{is_complete: boolean, processed_members: number, total_members: number} | null>(null)
   const [clanLogEntries, setClanLogEntries] = useState<ClanLogEntry[]>([])
   const [clanLogLoading, setClanLogLoading] = useState(true)
   const [playerData, setPlayerData] = useState<PlayerStats | null>(null)
@@ -340,7 +339,6 @@ const Home = () => {
             return unique.sort((a, b) => b.timestamp - a.timestamp)
           })
         }
-        setLoadingStatus(data.loading_status || null)
 
         if (data.loading_status && !data.loading_status.is_complete) {
           console.log('⏰ Scheduling next poll in 3 seconds...')
