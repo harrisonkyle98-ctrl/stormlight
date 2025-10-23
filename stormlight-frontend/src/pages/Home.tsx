@@ -146,7 +146,7 @@ const Home = () => {
       isLinked: user?.isLinked,
       requiresLinking: user?.requiresLinking
     })
-    
+
     const loadAllData = async () => {
       const promises = [
         fetchClanStats(),
@@ -206,7 +206,7 @@ const Home = () => {
         fullUrl: fullUrl,
         API_URL: API_URL
       })
-      
+
       const response = await fetch(fullUrl)
       console.log('📡 Response received:', {
         status: response.status,
@@ -214,7 +214,7 @@ const Home = () => {
         ok: response.ok,
         headers: Object.fromEntries(response.headers.entries())
       })
-      
+
       if (response.ok) {
         const data = await response.json()
         console.log('✅ Player profile data loaded successfully:', {
@@ -334,7 +334,7 @@ const Home = () => {
     if (!timestamp || timestamp <= 0) {
       return "Unknown time"
     }
-    
+
     const now = Date.now() / 1000
     const timestampInSeconds = timestamp > 1000000000000 ? timestamp / 1000 : timestamp
     const diff = now - timestampInSeconds
@@ -449,7 +449,7 @@ const Home = () => {
               <div className="text-center py-8">
                 <p className="text-red-400 mb-4">{profileError}</p>
                 {!user?.requiresLinking && (
-                  <Button 
+                  <Button
                     onClick={fetchPlayerStats}
                     className="bg-blue-600 hover:bg-blue-700"
                   >
@@ -464,7 +464,7 @@ const Home = () => {
           <CardContent className="p-6">
             {/* Horizontal layout with responsive stacking */}
             <div className="flex flex-col lg:flex-row gap-6">
-              
+
               {/* Left Column: Avatar + Badges stacked vertically */}
               <div className="lg:w-1/3 flex-shrink-0 flex flex-col gap-6">
                 {/* Avatar Section */}
@@ -477,12 +477,12 @@ const Home = () => {
                     </>
                   }>
                     <div className="absolute top-4 right-4">
-                      <CircleCheck 
+                      <CircleCheck
                         className={`w-5 h-5 ${playerData.is_verified ? 'text-green-500' : 'text-gray-500'}`}
                       />
                     </div>
                   </Tooltip>
-                  
+
                   <div className="flex flex-col items-center space-y-4">
                     <Avatar className="w-20 h-20">
                       <AvatarImage
@@ -499,14 +499,14 @@ const Home = () => {
                           to={`/clan-member/${usernameToUrl(user.username)}`}
                           className="hover:opacity-80 transition-opacity"
                         >
-                          <span 
+                          <span
                             style={getGradientStyle(user.username, playerData.clan_rank)}
                           >
                             {user.username}
                           </span>
                         </Link>
                       </h1>
-                      
+
                       {playerData.stats && (() => {
                         const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, user.username, playerData.league_points)
                         const rankBadge = allBadges.find(badge => badge.id.startsWith('rank-'))
@@ -538,14 +538,14 @@ const Home = () => {
                 <div className="flex-1 flex flex-col justify-between">
                 <Tooltip content="Combat Level">
                   <div className="flex items-stretch overflow-hidden rounded-lg">
-                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-3">
-                      <img 
-                        src="/assets/icons/combat_level.png" 
+                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
+                      <img
+                        src="/assets/icons/combat_level.png"
                         alt="Combat Level"
                         className="w-5 h-5"
                       />
                     </div>
-                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-3">
+                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
                       <span className="text-lg font-bold text-white">
                         {overallStats.combatlevel}
                       </span>
@@ -555,14 +555,14 @@ const Home = () => {
 
                 <Tooltip content="Total Level">
                   <div className="flex items-stretch overflow-hidden rounded-lg">
-                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-3">
-                      <img 
-                        src="/assets/icons/total_level.png" 
+                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
+                      <img
+                        src="/assets/icons/total_level.png"
                         alt="Total Level"
                         className="w-5 h-5"
                       />
                     </div>
-                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-3">
+                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
                       <span className="text-lg font-bold text-white">
                         {overallStats.level}
                       </span>
@@ -572,14 +572,14 @@ const Home = () => {
 
                 <Tooltip content="Quest Points">
                   <div className="flex items-stretch overflow-hidden rounded-lg">
-                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-3">
-                      <img 
-                        src="/assets/icons/quest_points.png" 
+                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
+                      <img
+                        src="/assets/icons/quest_points.png"
                         alt="Quest Points"
                         className="w-5 h-5"
                       />
                     </div>
-                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-3">
+                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
                       <span className="text-lg font-bold text-white">
                         {playerData.quest_points || 0}
                       </span>
@@ -589,14 +589,14 @@ const Home = () => {
 
                 <Tooltip content="RuneScore">
                   <div className="flex items-stretch overflow-hidden rounded-lg">
-                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-3">
-                      <img 
-                        src="/assets/icons/runescore.png" 
+                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
+                      <img
+                        src="/assets/icons/runescore.png"
                         alt="RuneScore"
                         className="w-5 h-5"
                       />
                     </div>
-                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-3">
+                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
                       <span className="text-lg font-bold text-white">
                         {playerData.runescore?.toLocaleString() || '—'}
                       </span>
@@ -623,7 +623,7 @@ const Home = () => {
             {clanLogEntries.length > 0 ? (
               clanLogEntries.map((entry) => {
                 const eventType = entry.event_type.toLowerCase()
-                
+
                 return (
                   <div key={entry.id} className="p-3 bg-slate-700/50 rounded-lg">
                     <div className="flex items-center justify-center space-x-2 mb-1">
