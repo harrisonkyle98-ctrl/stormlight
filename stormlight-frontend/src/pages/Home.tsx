@@ -468,8 +468,9 @@ const Home = () => {
             {/* Horizontal layout with responsive stacking */}
             <div className="flex flex-col lg:flex-row gap-6">
               
-              {/* Avatar Section */}
-              <div className="lg:w-1/4 flex-shrink-0">
+              {/* Left Column: Avatar + Badges stacked vertically */}
+              <div className="lg:w-1/3 flex-shrink-0 flex flex-col gap-6">
+                {/* Avatar Section */}
                 <div className="bg-slate-700/30 rounded-lg p-6 relative">
                   <Tooltip content={
                     <>
@@ -528,10 +529,8 @@ const Home = () => {
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Badges Section */}
-              <div className="lg:w-1/4 flex-shrink-0">
+                {/* Badges Section */}
                 {playerData.stats && playerData.custom_badges !== undefined && (() => {
                   const milestoneBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, user.username, playerData.league_points)
                   const nonRankBadges = milestoneBadges.filter(badge => !badge.id.startsWith('rank-'))
@@ -583,7 +582,7 @@ const Home = () => {
                 })()}
               </div>
 
-              {/* Stats Section */}
+              {/* Right Column: Stats Section */}
               {overallStats && (
                 <div className="flex-1 flex flex-col gap-2">
                 <Tooltip content="Combat Level">
