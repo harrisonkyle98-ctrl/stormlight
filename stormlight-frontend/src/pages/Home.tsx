@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { Users, Swords, TrendingUp, User, CircleCheck, Calendar, Activity } from 'lucide-react'
+import { Users, Trophy, TrendingUp, User, CircleCheck, Calendar, Activity } from 'lucide-react'
 import { fetchClanMembers, getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
 import { usernameToUrl } from '../utils/urlUtils'
@@ -440,24 +440,24 @@ const Home = () => {
     console.log('📅 calculateDaysInClan called')
     console.log('📅 playerData:', playerData)
     console.log('📅 playerData?.join_date:', playerData?.join_date)
-    
+
     if (!playerData?.join_date) {
       console.log('⚠️ No join_date found in playerData')
       return null
     }
-    
+
     const joinDate = new Date(playerData.join_date)
     const now = new Date()
     const diffTime = Math.abs(now.getTime() - joinDate.getTime())
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-    
+
     console.log(`✅ Calculated days in clan: ${diffDays} (join_date: ${playerData.join_date})`)
     return diffDays
   }
 
   const fetchRecentProgress = async () => {
     if (!user?.username) return
-    
+
     setRecentProgressLoading(true)
     try {
       const encodedUsername = encodeURIComponent(user.username)
@@ -569,7 +569,7 @@ const Home = () => {
         <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-300">Competitions</CardTitle>
-            <Swords className="h-4 w-4 text-green-400" />
+            <Trophy className="h-4 w-4 text-green-400" />
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -884,11 +884,14 @@ const Home = () => {
                   )}
 
                   {/* 30-Day XP Total */}
-                  <div className="border-t border-slate-700 pt-3">
-                    <p className="text-sm text-slate-400">XP Gained (30 Days)</p>
-                    <p className="text-xl font-bold text-white">
+                  <div className="border-t border-slate-700 pt-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-green-400" />
+                      <span className="text-sm text-slate-400">XP Gained (30 Days)</span>
+                    </div>
+                    <span className="text-lg font-bold text-white">
                       {formatNumber(recentProgress.xp_30d)}
-                    </p>
+                    </span>
                   </div>
                 </>
               ) : (
