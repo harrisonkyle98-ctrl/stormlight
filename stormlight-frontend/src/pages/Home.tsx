@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { Users, Swords, TrendingUp, User, CircleCheck, Castle, Calendar } from 'lucide-react'
+import { Users, Swords, TrendingUp, User, CircleCheck, Calendar } from 'lucide-react'
 import { fetchClanMembers, getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
 import { usernameToUrl } from '../utils/urlUtils'
@@ -80,7 +80,6 @@ interface ClanStats {
   total_xp: number
   clan_rank: string
   total_members: number
-  citadel_tier?: number
 }
 
 interface Activity {
@@ -416,11 +415,21 @@ const Home = () => {
   }
 
   const calculateDaysInClan = () => {
-    if (!playerData?.join_date) return null
+    console.log('📅 calculateDaysInClan called')
+    console.log('📅 playerData:', playerData)
+    console.log('📅 playerData?.join_date:', playerData?.join_date)
+    
+    if (!playerData?.join_date) {
+      console.log('⚠️ No join_date found in playerData')
+      return null
+    }
+    
     const joinDate = new Date(playerData.join_date)
     const now = new Date()
     const diffTime = Math.abs(now.getTime() - joinDate.getTime())
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+    
+    console.log(`✅ Calculated days in clan: ${diffDays} (join_date: ${playerData.join_date})`)
     return diffDays
   }
 
@@ -429,7 +438,7 @@ const Home = () => {
   return (
     <div className="space-y-8">
       {/* Stats Cards Grid - Top Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* 1. Total Members */}
         <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -458,21 +467,7 @@ const Home = () => {
           </CardContent>
         </Card>
 
-        {/* 3. Citadel Tier */}
-        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Citadel Tier</CardTitle>
-            <Castle className="h-4 w-4 text-amber-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">
-              {loading ? '...' : clanStats?.citadel_tier ? `Tier ${clanStats.citadel_tier}` : 'N/A'}
-            </div>
-            <p className="text-xs text-slate-400">Current citadel level</p>
-          </CardContent>
-        </Card>
-
-        {/* 4. Time Spent in Clan */}
+        {/* 3. Time Spent in Clan */}
         {user?.username && user?.isLinked && playerData && (
           <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -488,7 +483,7 @@ const Home = () => {
           </Card>
         )}
 
-        {/* 5. Competitions */}
+        {/* 4. Competitions */}
         <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-300">Competitions</CardTitle>
