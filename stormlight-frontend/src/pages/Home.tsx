@@ -4,11 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { Users, Swords, TrendingUp, User, CircleCheck, Calendar } from 'lucide-react'
+import { Users, Swords, TrendingUp, User, CircleCheck, Calendar, Activity } from 'lucide-react'
 import { fetchClanMembers, getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
 import { usernameToUrl } from '../utils/urlUtils'
 import { Tooltip } from '../components/ui/tooltip'
+import { LineChart, Line, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts'
 
 const getRankIcon = (rank: string): string => {
   const rankImageMap: { [key: string]: string } = {
@@ -139,6 +140,10 @@ const Home = () => {
   const [profileError, setProfileError] = useState<string | null>(null)
   const [profileLoading, setProfileLoading] = useState(false)
   const [activeCompetitionsCount, setActiveCompetitionsCount] = useState<number>(0)
+  const [recentProgress, setRecentProgress] = useState<any>(null)
+  const [recentProgressLoading, setRecentProgressLoading] = useState(false)
+  const [activeMembers, setActiveMembers] = useState<any>(null)
+  const [activeMembersLoading, setActiveMembersLoading] = useState(false)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -182,7 +187,8 @@ const Home = () => {
         try {
           await Promise.all([
             fetchPlayerStats(),
-            fetchQuestData()
+            fetchQuestData(),
+            fetchRecentProgress()
           ])
         } finally {
           setProfileLoading(false)
@@ -200,6 +206,10 @@ const Home = () => {
 
     loadProfileData()
   }, [user?.username, user?.isLinked])
+
+  useEffect(() => {
+    fetchActiveMembers()
+  }, [])
 
   const loadClanMembers = async () => {
     const members = await fetchClanMembers()
@@ -443,6 +453,39 @@ const Home = () => {
     
     console.log(`✅ Calculated days in clan: ${diffDays} (join_date: ${playerData.join_date})`)
     return diffDays
+  }
+
+  const fetchRecentProgress = async () => {
+    if (!user?.username) return
+    
+    setRecentProgressLoading(true)
+    try {
+      const encodedUsername = encodeURIComponent(user.username)
+      const response = await fetch(`${API_URL}/api/player/${encodedUsername}/recent-progress`)
+      if (response.ok) {
+        const data = await response.json()
+        setRecentProgress(data)
+      }
+    } catch (error) {
+      console.error('Error fetching recent progress:', error)
+    } finally {
+      setRecentProgressLoading(false)
+    }
+  }
+
+  const fetchActiveMembers = async () => {
+    setActiveMembersLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/api/members/active-today`)
+      if (response.ok) {
+        const data = await response.json()
+        setActiveMembers(data)
+      }
+    } catch (error) {
+      console.error('Error fetching active members:', error)
+    } finally {
+      setActiveMembersLoading(false)
+    }
   }
 
   const overallStats = playerData?.stats?.overall
@@ -741,6 +784,155 @@ const Home = () => {
           </CardContent>
         </Card>
         ))}
+
+      {/* Your Recent Progress & Members Active Today Cards */}
+      {user?.username && user?.isLinked && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Your Recent Progress Card */}
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white">Your Recent Progress</CardTitle>
+              <CardDescription className="text-slate-400">
+                Your personal XP growth over time
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {recentProgressLoading ? (
+                <div className="space-y-4 animate-pulse">
+                  <div className="h-32 bg-slate-700/50 rounded"></div>
+                  <div className="space-y-2">
+                    <div className="h-4 bg-slate-700/30 rounded w-3/4"></div>
+                    <div className="h-4 bg-slate-700/30 rounded w-1/2"></div>
+                  </div>
+                </div>
+              ) : recentProgress ? (
+                <>
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    <div className="bg-slate-700/30 rounded-lg p-3">
+                      <p className="text-xs text-slate-400 mb-1">24 Hours</p>
+                      <p className="text-lg font-bold text-green-400">
+                        {formatNumber(recentProgress.xp_24h)}
+                      </p>
+                    </div>
+                    <div className="bg-slate-700/30 rounded-lg p-3">
+                      <p className="text-xs text-slate-400 mb-1">7 Days</p>
+                      <p className="text-lg font-bold text-blue-400">
+                        {formatNumber(recentProgress.xp_7d)}
+                      </p>
+                    </div>
+                    <div className="bg-slate-700/30 rounded-lg p-3">
+                      <p className="text-xs text-slate-400 mb-1">30 Days</p>
+                      <p className="text-lg font-bold text-purple-400">
+                        {formatNumber(recentProgress.xp_30d)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Sparkline Chart */}
+                  {recentProgress.sparkline && recentProgress.sparkline.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs text-slate-400 mb-2">7-Day XP Trend</p>
+                      <ResponsiveContainer width="100%" height={80}>
+                        <LineChart data={recentProgress.sparkline}>
+                          <Line
+                            type="monotone"
+                            dataKey="xp"
+                            stroke="#3b82f6"
+                            strokeWidth={2}
+                            dot={false}
+                          />
+                          <RechartsTooltip
+                            contentStyle={{
+                              backgroundColor: '#1e293b',
+                              border: '1px solid #334155',
+                              borderRadius: '0.375rem'
+                            }}
+                            labelStyle={{ color: '#94a3b8' }}
+                            formatter={(value: any) => [formatNumber(value), 'XP']}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+
+                  {/* Total XP */}
+                  <div className="border-t border-slate-700 pt-3">
+                    <p className="text-sm text-slate-400">Current Total XP</p>
+                    <p className="text-xl font-bold text-white">
+                      {formatNumber(recentProgress.current_total_xp)}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <p className="text-center text-slate-400 py-8">No progress data available</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Members Active Today Card */}
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white">Members Active Today</CardTitle>
+              <CardDescription className="text-slate-400">
+                Clanmates who trained today
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {activeMembersLoading ? (
+                <div className="space-y-3 animate-pulse">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="flex justify-between items-center">
+                      <div className="h-4 bg-slate-700/50 rounded w-1/2"></div>
+                      <div className="h-4 bg-slate-700/30 rounded w-1/4"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : activeMembers && activeMembers.active_members.length > 0 ? (
+                <>
+                  <div className="space-y-3 mb-4">
+                    {activeMembers.active_members.map((member: any, index: number) => (
+                      <div
+                        key={member.username}
+                        className="flex justify-between items-center p-2 bg-slate-700/30 rounded-lg"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-400 font-mono text-sm w-6">
+                            #{index + 1}
+                          </span>
+                          <Link
+                            to={`/clan-member/${usernameToUrl(member.username)}`}
+                            className="text-white font-medium hover:text-blue-300 transition-colors"
+                            style={getGradientStyle(member.username, clanMembers.find(m => m.username === member.username)?.clan_rank)}
+                          >
+                            {member.username}
+                          </Link>
+                        </div>
+                        <span className="text-green-400 font-semibold">
+                          +{formatNumber(member.xp_gained)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Total Active Summary */}
+                  <div className="border-t border-slate-700 pt-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-green-400" />
+                      <span className="text-sm text-slate-400">Total active today</span>
+                    </div>
+                    <span className="text-lg font-bold text-white">
+                      {activeMembers.total_active}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <p className="text-center text-slate-400 py-8">No active members today</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="bg-slate-800/50 border-slate-700">
