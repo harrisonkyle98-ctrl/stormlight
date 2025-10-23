@@ -630,9 +630,9 @@ const Home = () => {
         ) : profileLoading || !playerData ? (
           <Card className="bg-slate-800/50 border-slate-700">
             <CardContent className="p-6">
-              <div className="flex flex-col lg:flex-row gap-6 animate-pulse">
-                {/* Left Column Skeleton */}
-                <div className="lg:w-1/3 flex-shrink-0">
+              <div className="flex flex-col lg:flex-row gap-4 animate-pulse">
+                {/* Left Column Skeleton (30%) */}
+                <div className="lg:w-[30%] flex-shrink-0">
                   <div className="bg-slate-700/30 rounded-lg p-6">
                     <div className="flex flex-col items-center space-y-4">
                       <div className="w-20 h-20 bg-slate-700/50 rounded-full"></div>
@@ -643,14 +643,23 @@ const Home = () => {
                     </div>
                   </div>
                 </div>
-                {/* Right Column Skeleton */}
-                <div className="flex-1 space-y-2">
+                {/* Middle Column Skeleton (40%) */}
+                <div className="flex-1 lg:max-w-[40%] space-y-2">
                   {[1, 2, 3, 4].map((i) => (
                     <div key={i} className="flex items-stretch overflow-hidden rounded-lg">
                       <div className="bg-slate-800/70 w-12 h-12"></div>
                       <div className="flex-1 bg-slate-700/30 h-12"></div>
                     </div>
                   ))}
+                </div>
+                {/* Right Column Skeleton (30%) */}
+                <div className="flex-1 lg:max-w-[30%]">
+                  <div className="bg-slate-700/30 rounded-lg p-6 h-full flex items-center justify-center">
+                    <div className="space-y-2 w-full">
+                      <div className="h-4 bg-slate-700/50 rounded w-3/4 mx-auto"></div>
+                      <div className="h-12 bg-slate-700/50 rounded w-full"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -659,7 +668,7 @@ const Home = () => {
         <Card className="bg-slate-800/50 border-slate-700">
           <CardContent className="p-6">
             {/* Horizontal layout with responsive stacking - Three columns */}
-            <div className="flex flex-col lg:flex-row gap-6">
+            <div className="flex flex-col lg:flex-row gap-4">
 
               {/* Left Column: Avatar (30% width) */}
               <div className="lg:w-[30%] flex-shrink-0 flex flex-col gap-6">
@@ -731,7 +740,7 @@ const Home = () => {
 
               {/* Middle Column: Stats Section (40% width) */}
               {overallStats && (
-                <div className="lg:w-[40%] flex-shrink-0 flex flex-col justify-between">
+                <div className="flex-1 lg:max-w-[40%] flex flex-col justify-between">
                 <Tooltip content="Combat Level">
                   <div className="flex items-stretch overflow-hidden rounded-lg">
                     <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
@@ -803,7 +812,7 @@ const Home = () => {
               )}
 
               {/* Right Column: Highest Competition Placement (30% width) */}
-              <div className="lg:w-[30%] flex-shrink-0 flex flex-col justify-center">
+              <div className="flex-1 lg:max-w-[30%] flex flex-col justify-center">
                 {highestPlacementLoading ? (
                   <div className="bg-slate-700/30 rounded-lg p-6 h-full flex items-center justify-center">
                     <div className="animate-pulse text-slate-400">Loading...</div>
@@ -1043,6 +1052,20 @@ const Home = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {clanLogLoading ? (
+            <div className="space-y-3 animate-pulse">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="p-3 bg-slate-700/30 rounded-lg">
+                  <div className="flex items-center justify-center space-x-2 mb-2">
+                    <div className="h-5 w-16 bg-slate-700/50 rounded"></div>
+                    <div className="h-4 w-24 bg-slate-700/50 rounded"></div>
+                    <div className="h-4 w-32 bg-slate-700/50 rounded"></div>
+                  </div>
+                  <div className="h-3 w-20 bg-slate-700/40 rounded mx-auto"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
           <div className="space-y-4">
             {clanLogEntries.length > 0 ? (
               clanLogEntries.map((entry) => {
@@ -1094,12 +1117,11 @@ const Home = () => {
               })
             ) : (
               <div className="text-center py-8">
-                <p className="text-slate-400">
-                  {clanLogLoading ? 'Loading clan events...' : 'No recent clan events'}
-                </p>
+                <p className="text-slate-400">No recent clan events</p>
               </div>
             )}
           </div>
+          )}
         </CardContent>
       </Card>
 
@@ -1111,6 +1133,19 @@ const Home = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {activityLoading ? (
+            <div className="space-y-3 animate-pulse">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="p-3 bg-slate-700/30 rounded-lg">
+                  <div className="flex items-center justify-center space-x-2 mb-2">
+                    <div className="h-4 w-24 bg-slate-700/50 rounded"></div>
+                    <div className="h-4 w-48 bg-slate-700/50 rounded"></div>
+                  </div>
+                  <div className="h-3 w-20 bg-slate-700/40 rounded mx-auto"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
           <div className="space-y-4">
             {activities.length > 0 ? (
               activities.map((activity, index) => (
@@ -1131,16 +1166,11 @@ const Home = () => {
               ))
             ) : (
               <div className="text-center py-8">
-                <p className="text-slate-400">
-                  {activityLoading ? (
-                    loadingStatus && !loadingStatus.is_complete ?
-                      `Loading activities... (${loadingStatus.processed_members}/${loadingStatus.total_members} members processed)` :
-                      'Loading activities...'
-                  ) : 'No recent activities found'}
-                </p>
+                <p className="text-slate-400">No recent activities found</p>
               </div>
             )}
           </div>
+          )}
         </CardContent>
         </Card>
       </div>
