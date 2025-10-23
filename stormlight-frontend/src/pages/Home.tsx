@@ -4,11 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { Users, Trophy, TrendingUp, User, CircleCheck, Calendar, Activity } from 'lucide-react'
+import { Users, Trophy, TrendingUp, User, Settings, Calendar, Activity } from 'lucide-react'
 import { fetchClanMembers, getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
 import { usernameToUrl } from '../utils/urlUtils'
 import { Tooltip } from '../components/ui/tooltip'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog'
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts'
 
 const getRankIcon = (rank: string): string => {
@@ -145,6 +146,7 @@ const Home = () => {
   const [activeMembersLoading, setActiveMembersLoading] = useState(false)
   const [highestPlacement, setHighestPlacement] = useState<any>(null)
   const [highestPlacementLoading, setHighestPlacementLoading] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -672,18 +674,13 @@ const Home = () => {
               <div className="lg:w-[30%] flex-shrink-0 flex flex-col gap-6">
                 {/* Avatar Section */}
                 <div className="bg-slate-700/30 rounded-lg p-6 relative">
-                  <Tooltip content={
-                    <>
-                      {playerData.is_verified ? "Verified" : "Unverified"}
-                      <br />
-                      Last updated: {new Date(playerData.last_updated).toLocaleDateString()}
-                    </>
-                  }>
-                    <div className="absolute top-4 right-4">
-                      <CircleCheck
-                        className={`w-5 h-5 ${playerData.is_verified ? 'text-green-500' : 'text-gray-500'}`}
-                      />
-                    </div>
+                  <Tooltip content="User Settings">
+                    <button
+                      onClick={() => setSettingsOpen(true)}
+                      className="absolute top-4 right-4 hover:opacity-70 transition-opacity cursor-pointer"
+                    >
+                      <Settings className="w-5 h-5 text-slate-400" />
+                    </button>
                   </Tooltip>
 
                   <div className="flex flex-col items-center space-y-4">
@@ -1172,6 +1169,44 @@ const Home = () => {
         </CardContent>
         </Card>
       </div>
+
+      {/* User Settings Modal */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl">User Settings</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Manage your account and preferences
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {/* Account Section - Placeholder */}
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-2">
+                Account
+              </h3>
+              <div className="bg-slate-700/30 rounded-lg p-4">
+                <p className="text-slate-300 text-sm">
+                  Account linking and management options will appear here.
+                </p>
+              </div>
+            </div>
+
+            {/* Appearance Section - Placeholder */}
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-2">
+                Appearance
+              </h3>
+              <div className="bg-slate-700/30 rounded-lg p-4">
+                <p className="text-slate-300 text-sm">
+                  Theme and display preferences will appear here.
+                </p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
