@@ -3942,34 +3942,44 @@ async def create_account_link_request(
 ):
     """Create a new account link request"""
     try:
+        print(f"[DEBUG] Received account link request: {request_data}")
+        
         if not authorization:
+            print("[DEBUG] No authorization header provided")
             raise HTTPException(status_code=401, detail="Not authenticated")
         
         token_data = await verify_token(authorization.replace("Bearer ", ""))
         discord_id = token_data.get("discord_id")
+        print(f"[DEBUG] Discord ID from token: {discord_id}")
         
         if not PRISMA_AVAILABLE or not prisma or not prisma.is_connected():
+            print("[DEBUG] Database not available")
             raise HTTPException(status_code=500, detail="Database not available")
         
         primary_member = await prisma.clanmember.find_first(
             where={'discordId': discord_id}
         )
+        print(f"[DEBUG] Primary member found: {primary_member.username if primary_member else None}")
         
         if not primary_member:
-            raise HTTPException(status_code=404, detail="Primary account not found")
+            raise HTTPException(status_code=404, detail="Primary account not found in clan. Please ensure your RuneScape account is linked to your Discord.")
         
         alternate_username = request_data.get("alternateUsername")
+        print(f"[DEBUG] Alternate username: {alternate_username}")
+        
         if not alternate_username:
             raise HTTPException(status_code=400, detail="Alternate username is required")
         
         alternate_member = await prisma.clanmember.find_unique(
             where={'username': alternate_username}
         )
+        print(f"[DEBUG] Alternate member found: {alternate_member is not None}")
         
         if not alternate_member:
-            raise HTTPException(status_code=404, detail="Alternate account not found in clan")
+            raise HTTPException(status_code=404, detail=f"Account '{alternate_username}' not found in clan. The account must be a clan member.")
         
         if alternate_member.discordId and alternate_member.discordId != discord_id:
+            print(f"[DEBUG] Account already linked to: {alternate_member.discordId}")
             raise HTTPException(status_code=400, detail="Account is already linked to another Discord user")
         
         existing_request = await prisma.accountlinkrequest.find_first(
@@ -3981,8 +3991,10 @@ async def create_account_link_request(
         )
         
         if existing_request:
+            print("[DEBUG] Pending request already exists")
             raise HTTPException(status_code=400, detail="A pending request already exists for this account")
         
+        print("[DEBUG] Creating link request...")
         link_request = await prisma.accountlinkrequest.create(
             data={
                 'primaryDiscordId': discord_id,
@@ -3991,14 +4003,17 @@ async def create_account_link_request(
                 'status': 'PENDING'
             }
         )
+        print(f"[DEBUG] Link request created: {link_request.id}")
         
         return {"success": True, "request": link_request.model_dump()}
     
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error creating account link request: {e}")
-        raise HTTPException(status_code=500, detail="Error creating account link request")
+        print(f"[ERROR] Error creating account link request: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error creating account link request: {str(e)}")
 
 @api_router.get("/account-link-requests/my-requests")
 async def get_my_account_link_requests(authorization: str = Header(None)):
