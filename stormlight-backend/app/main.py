@@ -4092,28 +4092,37 @@ async def approve_account_link_request(
     admin_info: dict = Depends(verify_admin_access)
 ):
     """Approve an account link request (admin only)"""
+    print(f"[APPROVE] Request ID: {request_id}, Admin: {admin_info}")
     admin_id = admin_info['admin_id']
     admin_username = admin_info['username']
     
     try:
-        if not PRISMA_AVAILABLE or not prisma or not prisma:
+        if not PRISMA_AVAILABLE or not prisma:
+            print(f"[APPROVE] Database not available")
             raise HTTPException(status_code=500, detail="Database not available")
         
+        print(f"[APPROVE] Looking for request with ID: {request_id}")
         link_request = await prisma.accountlinkrequest.find_unique(
             where={'id': request_id}
         )
+        print(f"[APPROVE] Found request: {link_request}")
         
         if not link_request:
+            print(f"[APPROVE] Request not found: {request_id}")
             raise HTTPException(status_code=404, detail="Request not found")
         
         if link_request.status != 'PENDING':
+            print(f"[APPROVE] Request already processed: {link_request.status}")
             raise HTTPException(status_code=400, detail="Request has already been processed")
         
+        print(f"[APPROVE] Updating clan member: {link_request.alternateUsername} with Discord ID: {link_request.primaryDiscordId}")
         await prisma.clanmember.update(
             where={'username': link_request.alternateUsername},
             data={'discordId': link_request.primaryDiscordId}
         )
+        print(f"[APPROVE] Clan member updated successfully")
         
+        print(f"[APPROVE] Updating request status to APPROVED")
         await prisma.accountlinkrequest.update(
             where={'id': request_id},
             data={
@@ -4122,6 +4131,7 @@ async def approve_account_link_request(
                 'reviewedBy': admin_username
             }
         )
+        print(f"[APPROVE] Request updated successfully")
         
         await log_admin_action(
             admin_id,
@@ -4131,14 +4141,17 @@ async def approve_account_link_request(
             prisma_client=prisma,
             prisma_available=PRISMA_AVAILABLE
         )
+        print(f"[APPROVE] Admin action logged")
         
         return {"success": True}
     
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error approving account link request: {e}")
-        raise HTTPException(status_code=500, detail="Error approving account link request")
+        print(f"[APPROVE] Error approving account link request: {e}")
+        import traceback
+        print(f"[APPROVE] Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error approving account link request: {str(e)}")
 
 @api_router.post("/admin/account-link-requests/{request_id}/reject")
 async def reject_account_link_request(
@@ -4146,23 +4159,30 @@ async def reject_account_link_request(
     admin_info: dict = Depends(verify_admin_access)
 ):
     """Reject an account link request (admin only)"""
+    print(f"[REJECT] Request ID: {request_id}, Admin: {admin_info}")
     admin_id = admin_info['admin_id']
     admin_username = admin_info['username']
     
     try:
-        if not PRISMA_AVAILABLE or not prisma or not prisma:
+        if not PRISMA_AVAILABLE or not prisma:
+            print(f"[REJECT] Database not available")
             raise HTTPException(status_code=500, detail="Database not available")
         
+        print(f"[REJECT] Looking for request with ID: {request_id}")
         link_request = await prisma.accountlinkrequest.find_unique(
             where={'id': request_id}
         )
+        print(f"[REJECT] Found request: {link_request}")
         
         if not link_request:
+            print(f"[REJECT] Request not found: {request_id}")
             raise HTTPException(status_code=404, detail="Request not found")
         
         if link_request.status != 'PENDING':
+            print(f"[REJECT] Request already processed: {link_request.status}")
             raise HTTPException(status_code=400, detail="Request has already been processed")
         
+        print(f"[REJECT] Updating request status to REJECTED")
         await prisma.accountlinkrequest.update(
             where={'id': request_id},
             data={
@@ -4171,6 +4191,7 @@ async def reject_account_link_request(
                 'reviewedBy': admin_username
             }
         )
+        print(f"[REJECT] Request updated successfully")
         
         await log_admin_action(
             admin_id,
@@ -4180,14 +4201,17 @@ async def reject_account_link_request(
             prisma_client=prisma,
             prisma_available=PRISMA_AVAILABLE
         )
+        print(f"[REJECT] Admin action logged")
         
         return {"success": True}
     
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error rejecting account link request: {e}")
-        raise HTTPException(status_code=500, detail="Error rejecting account link request")
+        print(f"[REJECT] Error rejecting account link request: {e}")
+        import traceback
+        print(f"[REJECT] Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error rejecting account link request: {str(e)}")
 
 @api_router.get("/admin/competitions")
 async def get_admin_competitions(admin_id: str = Depends(verify_admin_access)):
