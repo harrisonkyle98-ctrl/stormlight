@@ -1271,9 +1271,6 @@ const Home = () => {
               <div className="space-y-2">
                 {linkedAccounts.map((account, index) => {
                   const isPrimary = index === 0
-                  const linkRequest = accountLinkRequests.find(
-                    (req: any) => req.alternateUsername === account.username
-                  )
                   
                   return (
                     <div 
@@ -1286,22 +1283,14 @@ const Home = () => {
                           <span className="text-xs px-2 py-1 rounded bg-green-500/20 text-green-400 border border-green-500/30">
                             Linked (Primary)
                           </span>
-                        ) : linkRequest?.status === 'PENDING' ? (
-                          <span className="text-xs px-2 py-1 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
-                            Pending
-                          </span>
-                        ) : linkRequest?.status === 'APPROVED' ? (
+                        ) : (
                           <span className="text-xs px-2 py-1 rounded bg-green-500/20 text-green-400 border border-green-500/30">
-                            Approved
+                            Linked (Alternate)
                           </span>
-                        ) : linkRequest?.status === 'REJECTED' ? (
-                          <span className="text-xs px-2 py-1 rounded bg-red-500/20 text-red-400 border border-red-500/30">
-                            Rejected
-                          </span>
-                        ) : null}
+                        )}
                       </div>
                       
-                      {!isPrimary && linkRequest?.status === 'APPROVED' && (
+                      {!isPrimary && (
                         <Button
                           size="sm"
                           className="bg-blue-600 hover:bg-blue-700 text-white"
