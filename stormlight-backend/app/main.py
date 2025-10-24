@@ -3952,8 +3952,8 @@ async def create_account_link_request(
         discord_id = token_data.get("discord_id")
         print(f"[DEBUG] Discord ID from token: {discord_id}")
         
-        if not PRISMA_AVAILABLE or not prisma or not prisma.is_connected():
-            print("[DEBUG] Database not available")
+        if not PRISMA_AVAILABLE or not prisma:
+            print(f"[DEBUG] Database not available - PRISMA_AVAILABLE: {PRISMA_AVAILABLE}, prisma: {prisma}")
             raise HTTPException(status_code=500, detail="Database not available")
         
         primary_member = await prisma.clanmember.find_first(
