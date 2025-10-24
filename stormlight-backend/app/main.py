@@ -811,7 +811,7 @@ async def sync_clan_members_to_database_with_queue():
                 'failed_syncs': 0
             }
         
-        if not prisma.is_connected():
+        if not prisma:
             print("🔄 Connecting to database...")
             await prisma.connect()
             print("✅ Database connected successfully")
@@ -840,7 +840,7 @@ async def sync_clan_members_to_database_with_queue():
                     if i > 0:
                         await asyncio.sleep(0.5)  # Reduced delay for faster processing
                     
-                    if not prisma.is_connected():
+                    if not prisma:
                         print("⚠️ Database disconnected, reconnecting...")
                         await prisma.connect()
                     
@@ -1621,7 +1621,7 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
     is_verified = False
     print(f"Checking Discord verification for username: '{decoded_username}'")
     try:
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             print("Using Prisma query for Discord verification")
             linked_member = await prisma.clanmember.find_first(
                 where={'username': decoded_username}
@@ -1663,7 +1663,7 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
         stats['is_verified'] = is_verified
         
         try:
-            if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            if PRISMA_AVAILABLE and prisma:
                 member = await prisma.clanmember.find_unique(where={'username': decoded_username})
                 if member:
                     if member.badges:
@@ -1760,7 +1760,7 @@ async def get_player_activities(
     print(f"=== API REQUEST: get_player_activities for {decoded_username} with page={page}, limit={limit} ===")
     
     try:
-        if not prisma or not prisma.is_connected():
+        if not prisma:
             print(f"❌ Prisma not available for player activities")
             raise HTTPException(status_code=503, detail="Database connection unavailable")
         
@@ -1814,7 +1814,7 @@ async def get_player_citadel_caps(username: str):
     print(f"=== API REQUEST: get_player_citadel_caps for {decoded_username} ===")
     
     try:
-        if not prisma or not prisma.is_connected():
+        if not prisma:
             print(f"❌ Prisma not available for citadel caps count")
             raise HTTPException(status_code=503, detail="Database connection unavailable")
         
@@ -1917,7 +1917,7 @@ async def create_competition(
 async def get_competitions(status: Optional[str] = None):
     """Get all competitions with optional status filtering"""
     try:
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             competitions = await prisma.competition.find_many(
                 order={'startDate': 'desc'},
                 include={'entries': True}
@@ -2024,7 +2024,7 @@ async def calculate_drop_leaderboard(competition, members):
 async def get_competition(competition_id: str, page: int = 1, per_page: int = 25):
     """Get specific competition with leaderboard (on-demand calculation)"""
     try:
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             competition = await prisma.competition.find_unique(
                 where={'id': competition_id},
                 include={'entries': True}
@@ -2233,7 +2233,7 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
 async def get_competition_drop_stats(competition_id: str, position: Optional[int] = None):
     """Get drop statistics for a PvM competition"""
     try:
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             competition = await prisma.competition.find_unique(
                 where={'id': competition_id},
                 include={'entries': True}
@@ -2339,7 +2339,7 @@ async def get_player_competitions(username: str):
     debug_info = {}
     
     try:
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             print(f"🔍 Looking for member with username: {repr(decoded_username)}")
             debug_info['decoded_username'] = decoded_username
             
@@ -2556,7 +2556,7 @@ async def get_highest_placement(username: str):
     decoded_username = unquote(username).replace('-', ' ')
     
     try:
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             member = await prisma.clanmember.find_unique(
                 where={'username': decoded_username}
             )
@@ -2772,7 +2772,7 @@ async def verify_admin_access(user_id: str = Depends(verify_token)):
     print(f"🔐 ADMIN ACCESS: User ID type: {type(user_id)}")
     
     try:
-        if prisma and prisma.is_connected():
+        if prisma:
             print(f"🔐 ADMIN ACCESS: Checking Prisma for user: {user_id}")
             
             # Check all clan members with Discord IDs for debugging
@@ -3483,7 +3483,7 @@ async def get_admin_logs(
 ):
     """Get admin action logs"""
     try:
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             logs = await prisma.adminlog.find_many(
                 skip=(page - 1) * limit,
                 take=limit,
@@ -3502,7 +3502,7 @@ async def get_site_health(admin_id: str = Depends(verify_admin_access)):
         from .admin_utils import get_site_health_status
         health_data = get_site_health_status()
         
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             member_count = await prisma.clanmember.count()
             health_data['total_members'] = member_count
         
@@ -3518,7 +3518,7 @@ async def debug_auth_flow(token: str = Depends(verify_token)):
         print(f"🔍 DEBUG AUTH: Token received: {token}")
         print(f"🔍 DEBUG AUTH: Token type: {type(token)}")
         
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             kyle = await prisma.clanmember.find_first(
                 where={'username': 'lm Kyle'}
             )
@@ -3570,7 +3570,7 @@ async def debug_auth_flow(token: str = Depends(verify_token)):
 async def get_custom_badges(admin_id: str = Depends(verify_admin_access)):
     """Get custom badges"""
     try:
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             badges = await prisma.custombadge.find_many(
                 order={'createdAt': 'desc'},
                 include={'competitions': True}
@@ -3611,7 +3611,7 @@ async def create_custom_badge(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(badge_file.file, buffer)
         
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             badge_data = {
                 'name': name,
                 'description': description,
@@ -3659,7 +3659,7 @@ async def update_custom_badge(
     admin_id = admin_info['admin_id']
     admin_username = admin_info['username']
     try:
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             existing_badge = await prisma.custombadge.find_unique(where={'id': badge_id})
             if not existing_badge:
                 raise HTTPException(status_code=404, detail="Badge not found")
@@ -3748,7 +3748,7 @@ async def assign_badge_to_member(
             print(f"❌ BADGE ASSIGN: Missing required fields - username: {username}, badge_id: {badge_id}")
             raise HTTPException(status_code=400, detail="Username and badge ID required")
         
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             print(f"🎯 BADGE ASSIGN: Prisma available, finding member: {username}")
             member = await prisma.clanmember.find_unique(where={'username': username})
             if not member:
@@ -3835,7 +3835,7 @@ async def remove_badge_from_member(
         if not username or not badge_id:
             raise HTTPException(status_code=400, detail="Username and badge ID required")
         
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             member = await prisma.clanmember.find_unique(where={'username': username})
             if not member:
                 raise HTTPException(status_code=404, detail="Member not found")
@@ -3883,7 +3883,7 @@ async def delete_custom_badge(
     admin_username = admin_info['username']
     try:
         
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             badge = await prisma.custombadge.find_unique(
                 where={'id': badge_id},
                 include={'competitions': True}
@@ -4025,7 +4025,7 @@ async def get_my_account_link_requests(authorization: str = Header(None)):
         token_data = await verify_token(authorization.replace("Bearer ", ""))
         discord_id = token_data.get("discord_id")
         
-        if not PRISMA_AVAILABLE or not prisma or not prisma.is_connected():
+        if not PRISMA_AVAILABLE or not prisma or not prisma:
             raise HTTPException(status_code=500, detail="Database not available")
         
         requests = await prisma.accountlinkrequest.find_many(
@@ -4045,7 +4045,7 @@ async def get_my_account_link_requests(authorization: str = Header(None)):
 async def get_pending_account_link_requests(admin_info: dict = Depends(verify_admin_access)):
     """Get all pending account link requests (admin only)"""
     try:
-        if not PRISMA_AVAILABLE or not prisma or not prisma.is_connected():
+        if not PRISMA_AVAILABLE or not prisma or not prisma:
             raise HTTPException(status_code=500, detail="Database not available")
         
         requests = await prisma.accountlinkrequest.find_many(
@@ -4071,7 +4071,7 @@ async def approve_account_link_request(
     admin_username = admin_info['username']
     
     try:
-        if not PRISMA_AVAILABLE or not prisma or not prisma.is_connected():
+        if not PRISMA_AVAILABLE or not prisma or not prisma:
             raise HTTPException(status_code=500, detail="Database not available")
         
         link_request = await prisma.accountlinkrequest.find_unique(
@@ -4125,7 +4125,7 @@ async def reject_account_link_request(
     admin_username = admin_info['username']
     
     try:
-        if not PRISMA_AVAILABLE or not prisma or not prisma.is_connected():
+        if not PRISMA_AVAILABLE or not prisma or not prisma:
             raise HTTPException(status_code=500, detail="Database not available")
         
         link_request = await prisma.accountlinkrequest.find_unique(
@@ -4168,7 +4168,7 @@ async def reject_account_link_request(
 async def get_admin_competitions(admin_id: str = Depends(verify_admin_access)):
     """Get competitions for admin management"""
     try:
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             competitions = await prisma.competition.find_many(
                 order={'createdAt': 'desc'}
             )
@@ -4190,7 +4190,7 @@ async def create_admin_competition(
     admin_id = admin_info['admin_id']
     admin_username = admin_info['username']
     try:
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             start_date = datetime.fromisoformat(competition_data['start_date'].replace('Z', '+00:00'))
             end_date = datetime.fromisoformat(competition_data['end_date'].replace('Z', '+00:00'))
             
@@ -4327,7 +4327,7 @@ async def update_admin_competition(
     admin_id = admin_info['admin_id']
     admin_username = admin_info['username']
     try:
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             competition = await prisma.competition.find_unique(
                 where={'id': competition_id}
             )
@@ -4413,7 +4413,7 @@ async def delete_admin_competition(
     admin_id = admin_info['admin_id']
     admin_username = admin_info['username']
     try:
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             competition = await prisma.competition.find_unique(
                 where={'id': competition_id}
             )
@@ -4447,7 +4447,7 @@ async def delete_admin_competition(
 async def get_admin_members(admin_id: str = Depends(verify_admin_access)):
     """Get clan members for admin management"""
     try:
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             members = await prisma.clanmember.find_many(
                 order={'username': 'asc'}
             )
@@ -4465,7 +4465,7 @@ async def get_rank_tracking(admin_id: str = Depends(verify_admin_access)):
         
         LEADERSHIP_RANKS = ['Owner', 'Deputy Owner', 'Overseer']
         
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             members = await prisma.clanmember.find_many(
                 where={'active': True},
                 order={'username': 'asc'}
@@ -4555,7 +4555,7 @@ async def update_member_join_date(
     admin_username = admin_info['username']
     try:
         
-        if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+        if PRISMA_AVAILABLE and prisma:
             join_date = datetime.fromisoformat(join_date_data['join_date'])
             
             member = await prisma.clanmember.update(
@@ -5546,7 +5546,7 @@ async def get_player_stats_with_history(
             cached_data = profile_history_cache['data'][cache_key].copy()
             
             try:
-                if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+                if PRISMA_AVAILABLE and prisma:
                     member = await prisma.clanmember.find_unique(where={'username': decoded_username})
                     if member and member.badges:
                         import json
@@ -5603,7 +5603,7 @@ async def get_player_stats_with_history(
         is_verified = False
         print(f"Checking Discord verification for username in history endpoint: '{decoded_username}'")
         try:
-            if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            if PRISMA_AVAILABLE and prisma:
                 print("Using Prisma query for Discord verification in history endpoint")
                 linked_member = await prisma.clanmember.find_first(
                     where={'username': decoded_username}
@@ -5725,7 +5725,7 @@ async def get_player_stats_with_history(
         enhanced_stats['is_verified'] = is_verified
         
         try:
-            if PRISMA_AVAILABLE and prisma and prisma.is_connected():
+            if PRISMA_AVAILABLE and prisma:
                 member = await prisma.clanmember.find_unique(where={'username': decoded_username})
                 if member and member.badges:
                     import json
