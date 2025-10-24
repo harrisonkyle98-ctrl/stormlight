@@ -534,7 +534,7 @@ const Home = () => {
   }
 
   const fetchLinkedAccounts = async () => {
-    if (!user?.discordId) return
+    if (!user?.username || !user?.discordId) return
     
     try {
       const response = await fetch(`${API_URL}/api/clan/members`)
@@ -543,10 +543,32 @@ const Home = () => {
         const userAccounts = data.members.filter((member: any) => 
           member.discord_id === user.discordId
         )
-        setLinkedAccounts(userAccounts)
+        
+        const primaryAccount = userAccounts.find((acc: any) => acc.username === user.username)
+        const otherAccounts = userAccounts.filter((acc: any) => acc.username !== user.username)
+        
+        if (primaryAccount) {
+          setLinkedAccounts([primaryAccount, ...otherAccounts])
+        } else {
+          setLinkedAccounts([
+            {
+              username: user.username,
+              discord_id: user.discordId,
+              clan_rank: user.clanRank || 'Unknown'
+            },
+            ...userAccounts
+          ])
+        }
       }
     } catch (error) {
       console.error('Error fetching linked accounts:', error)
+      if (user?.username && user?.discordId) {
+        setLinkedAccounts([{
+          username: user.username,
+          discord_id: user.discordId,
+          clan_rank: user.clanRank || 'Unknown'
+        }])
+      }
     }
   }
 
@@ -570,6 +592,7 @@ const Home = () => {
       if (response.ok) {
         setNewUsername('')
         await fetchAccountLinkRequests()
+        await fetchLinkedAccounts()
         alert('Link request submitted successfully! An admin will review it.')
       } else {
         const error = await response.json()
