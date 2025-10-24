@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
-import { Activity, AlertCircle, CheckCircle, Clock } from 'lucide-react'
+import { Button } from '../ui/button'
+import { Activity, AlertCircle, CheckCircle, Clock, UserPlus } from 'lucide-react'
 
 interface AdminLog {
   id: number
@@ -21,6 +22,7 @@ interface SiteHealth {
 export const AdminHomeTab = () => {
   const [adminLogs, setAdminLogs] = useState<AdminLog[]>([])
   const [siteHealth, setSiteHealth] = useState<SiteHealth | null>(null)
+  const [accountLinkRequests, setAccountLinkRequests] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000'
@@ -32,11 +34,14 @@ export const AdminHomeTab = () => {
   const fetchAdminData = async () => {
     try {
       const token = localStorage.getItem('access_token')
-      const [logsResponse, healthResponse] = await Promise.all([
+      const [logsResponse, healthResponse, linkRequestsResponse] = await Promise.all([
         fetch(`${API_URL}/api/admin/logs`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
         fetch(`${API_URL}/api/admin/health`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_URL}/api/admin/account-link-requests`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ])
@@ -50,10 +55,57 @@ export const AdminHomeTab = () => {
         const healthData = await healthResponse.json()
         setSiteHealth(healthData)
       }
+
+      if (linkRequestsResponse.ok) {
+        const linkData = await linkRequestsResponse.json()
+        setAccountLinkRequests(linkData.requests || [])
+      }
     } catch (error) {
       console.error('Error fetching admin data:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleApproveRequest = async (requestId: string) => {
+    try {
+      const token = localStorage.getItem('access_token')
+      const response = await fetch(`${API_URL}/api/admin/account-link-requests/${requestId}/approve`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (response.ok) {
+        await fetchAdminData()
+        alert('Account link request approved successfully!')
+      } else {
+        const error = await response.json()
+        alert(error.detail || 'Failed to approve request')
+      }
+    } catch (error) {
+      console.error('Error approving request:', error)
+      alert('Failed to approve request')
+    }
+  }
+
+  const handleRejectRequest = async (requestId: string) => {
+    try {
+      const token = localStorage.getItem('access_token')
+      const response = await fetch(`${API_URL}/api/admin/account-link-requests/${requestId}/reject`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (response.ok) {
+        await fetchAdminData()
+        alert('Account link request rejected successfully!')
+      } else {
+        const error = await response.json()
+        alert(error.detail || 'Failed to reject request')
+      }
+    } catch (error) {
+      console.error('Error rejecting request:', error)
+      alert('Failed to reject request')
     }
   }
 
@@ -101,6 +153,59 @@ export const AdminHomeTab = () => {
               </div>
               <p className="text-white font-medium">{siteHealth?.total_members || 0}</p>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Account Link Requests */}
+      <Card className="bg-slate-700/30 border-slate-600">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center space-x-2">
+            <UserPlus className="w-5 h-5 text-blue-400" />
+            <span>Account Link Requests</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {accountLinkRequests.length === 0 ? (
+              <p className="text-slate-400 text-center py-4">No pending account link requests</p>
+            ) : (
+              accountLinkRequests.map((request) => (
+                <div key={request.id} className="p-4 bg-slate-600/30 rounded-lg space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-white font-medium">{request.primaryUsername}</span>
+                        <span className="text-slate-400">→</span>
+                        <span className="text-white font-medium">{request.alternateUsername}</span>
+                      </div>
+                      <p className="text-sm text-slate-400">
+                        Requested {new Date(request.requestedAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="text-xs bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                      Pending
+                    </Badge>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => handleApproveRequest(request.id)}
+                      className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                      size="sm"
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      onClick={() => handleRejectRequest(request.id)}
+                      className="bg-red-600 hover:bg-red-700 text-white flex-1"
+                      size="sm"
+                    >
+                      Reject
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

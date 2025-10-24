@@ -3920,6 +3920,235 @@ async def delete_custom_badge(
         print(f"Error deleting badge: {e}")
         raise HTTPException(status_code=500, detail="Error deleting badge")
 
+async def log_admin_action(admin_id: str, username: str, action: str, details: str, prisma_client=None, prisma_available=False):
+    """Log an admin action to the database"""
+    try:
+        if prisma_available and prisma_client and prisma_client.is_connected():
+            await prisma_client.adminlog.create(
+                data={
+                    'adminId': admin_id,
+                    'username': username,
+                    'action': action,
+                    'details': details
+                }
+            )
+    except Exception as e:
+        print(f"Error logging admin action: {e}")
+
+@api_router.post("/account-link-requests")
+async def create_account_link_request(
+    request_data: dict,
+    authorization: str = Header(None)
+):
+    """Create a new account link request"""
+    try:
+        if not authorization:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        
+        token_data = await verify_token(authorization.replace("Bearer ", ""))
+        discord_id = token_data.get("discord_id")
+        
+        if not PRISMA_AVAILABLE or not prisma or not prisma.is_connected():
+            raise HTTPException(status_code=500, detail="Database not available")
+        
+        primary_member = await prisma.clanmember.find_first(
+            where={'discordId': discord_id}
+        )
+        
+        if not primary_member:
+            raise HTTPException(status_code=404, detail="Primary account not found")
+        
+        alternate_username = request_data.get("alternateUsername")
+        if not alternate_username:
+            raise HTTPException(status_code=400, detail="Alternate username is required")
+        
+        alternate_member = await prisma.clanmember.find_unique(
+            where={'username': alternate_username}
+        )
+        
+        if not alternate_member:
+            raise HTTPException(status_code=404, detail="Alternate account not found in clan")
+        
+        if alternate_member.discordId and alternate_member.discordId != discord_id:
+            raise HTTPException(status_code=400, detail="Account is already linked to another Discord user")
+        
+        existing_request = await prisma.accountlinkrequest.find_first(
+            where={
+                'primaryDiscordId': discord_id,
+                'alternateUsername': alternate_username,
+                'status': 'PENDING'
+            }
+        )
+        
+        if existing_request:
+            raise HTTPException(status_code=400, detail="A pending request already exists for this account")
+        
+        link_request = await prisma.accountlinkrequest.create(
+            data={
+                'primaryDiscordId': discord_id,
+                'primaryUsername': primary_member.username,
+                'alternateUsername': alternate_username,
+                'status': 'PENDING'
+            }
+        )
+        
+        return {"success": True, "request": link_request.model_dump()}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error creating account link request: {e}")
+        raise HTTPException(status_code=500, detail="Error creating account link request")
+
+@api_router.get("/account-link-requests/my-requests")
+async def get_my_account_link_requests(authorization: str = Header(None)):
+    """Get all account link requests for the current user"""
+    try:
+        if not authorization:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        
+        token_data = await verify_token(authorization.replace("Bearer ", ""))
+        discord_id = token_data.get("discord_id")
+        
+        if not PRISMA_AVAILABLE or not prisma or not prisma.is_connected():
+            raise HTTPException(status_code=500, detail="Database not available")
+        
+        requests = await prisma.accountlinkrequest.find_many(
+            where={'primaryDiscordId': discord_id},
+            order={'requestedAt': 'desc'}
+        )
+        
+        return {"requests": [r.model_dump() for r in requests]}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching account link requests: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching account link requests")
+
+@api_router.get("/admin/account-link-requests")
+async def get_pending_account_link_requests(admin_info: dict = Depends(verify_admin_access)):
+    """Get all pending account link requests (admin only)"""
+    try:
+        if not PRISMA_AVAILABLE or not prisma or not prisma.is_connected():
+            raise HTTPException(status_code=500, detail="Database not available")
+        
+        requests = await prisma.accountlinkrequest.find_many(
+            where={'status': 'PENDING'},
+            order={'requestedAt': 'desc'}
+        )
+        
+        return {"requests": [r.model_dump() for r in requests]}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching pending requests: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching pending requests")
+
+@api_router.post("/admin/account-link-requests/{request_id}/approve")
+async def approve_account_link_request(
+    request_id: str,
+    admin_info: dict = Depends(verify_admin_access)
+):
+    """Approve an account link request (admin only)"""
+    admin_id = admin_info['admin_id']
+    admin_username = admin_info['username']
+    
+    try:
+        if not PRISMA_AVAILABLE or not prisma or not prisma.is_connected():
+            raise HTTPException(status_code=500, detail="Database not available")
+        
+        link_request = await prisma.accountlinkrequest.find_unique(
+            where={'id': request_id}
+        )
+        
+        if not link_request:
+            raise HTTPException(status_code=404, detail="Request not found")
+        
+        if link_request.status != 'PENDING':
+            raise HTTPException(status_code=400, detail="Request has already been processed")
+        
+        await prisma.clanmember.update(
+            where={'username': link_request.alternateUsername},
+            data={'discordId': link_request.primaryDiscordId}
+        )
+        
+        await prisma.accountlinkrequest.update(
+            where={'id': request_id},
+            data={
+                'status': 'APPROVED',
+                'reviewedAt': datetime.now(timezone.utc),
+                'reviewedBy': admin_username
+            }
+        )
+        
+        await log_admin_action(
+            admin_id,
+            admin_username,
+            "approve_account_link",
+            f"Approved account link: {link_request.primaryUsername} -> {link_request.alternateUsername}",
+            prisma_client=prisma,
+            prisma_available=PRISMA_AVAILABLE
+        )
+        
+        return {"success": True}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error approving account link request: {e}")
+        raise HTTPException(status_code=500, detail="Error approving account link request")
+
+@api_router.post("/admin/account-link-requests/{request_id}/reject")
+async def reject_account_link_request(
+    request_id: str,
+    admin_info: dict = Depends(verify_admin_access)
+):
+    """Reject an account link request (admin only)"""
+    admin_id = admin_info['admin_id']
+    admin_username = admin_info['username']
+    
+    try:
+        if not PRISMA_AVAILABLE or not prisma or not prisma.is_connected():
+            raise HTTPException(status_code=500, detail="Database not available")
+        
+        link_request = await prisma.accountlinkrequest.find_unique(
+            where={'id': request_id}
+        )
+        
+        if not link_request:
+            raise HTTPException(status_code=404, detail="Request not found")
+        
+        if link_request.status != 'PENDING':
+            raise HTTPException(status_code=400, detail="Request has already been processed")
+        
+        await prisma.accountlinkrequest.update(
+            where={'id': request_id},
+            data={
+                'status': 'REJECTED',
+                'reviewedAt': datetime.now(timezone.utc),
+                'reviewedBy': admin_username
+            }
+        )
+        
+        await log_admin_action(
+            admin_id,
+            admin_username,
+            "reject_account_link",
+            f"Rejected account link: {link_request.primaryUsername} -> {link_request.alternateUsername}",
+            prisma_client=prisma,
+            prisma_available=PRISMA_AVAILABLE
+        )
+        
+        return {"success": True}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error rejecting account link request: {e}")
+        raise HTTPException(status_code=500, detail="Error rejecting account link request")
+
 @api_router.get("/admin/competitions")
 async def get_admin_competitions(admin_id: str = Depends(verify_admin_access)):
     """Get competitions for admin management"""

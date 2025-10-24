@@ -218,9 +218,32 @@ model PlayerDailySnapshot {
   @@map("player_daily_snapshots")
 }
 
+model AccountLinkRequest {
+  id                   String              @id @default(cuid())
+  primaryDiscordId     String              @map("primary_discord_id")
+  primaryUsername      String              @map("primary_username")
+  alternateUsername    String              @map("alternate_username")
+  status               AccountLinkStatus   @default(PENDING)
+  requestedAt          DateTime            @default(now()) @map("requested_at")
+  reviewedAt           DateTime?           @map("reviewed_at")
+  reviewedBy           String?             @map("reviewed_by")
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+
+  @@index([primaryDiscordId])
+  @@index([status])
+  @@map("account_link_requests")
+}
+
 enum CompetitionType {
   XP_GAIN
   LEVEL_GAIN
   BOSS_KILLS
   CUSTOM
+}
+
+enum AccountLinkStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

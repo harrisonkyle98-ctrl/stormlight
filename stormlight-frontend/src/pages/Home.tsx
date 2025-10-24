@@ -147,6 +147,10 @@ const Home = () => {
   const [highestPlacement, setHighestPlacement] = useState<any>(null)
   const [highestPlacementLoading, setHighestPlacementLoading] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [accountLinkRequests, setAccountLinkRequests] = useState<any[]>([])
+  const [linkedAccounts, setLinkedAccounts] = useState<any[]>([])
+  const [newUsername, setNewUsername] = useState('')
+  const [linkRequestLoading, setLinkRequestLoading] = useState(false)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -508,6 +512,81 @@ const Home = () => {
       setHighestPlacementLoading(false)
     }
   }
+
+  const fetchAccountLinkRequests = async () => {
+    if (!user?.token) return
+    
+    try {
+      const response = await fetch(`${API_URL}/api/account-link-requests/my-requests`, {
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setAccountLinkRequests(data.requests || [])
+      }
+    } catch (error) {
+      console.error('Error fetching account link requests:', error)
+    }
+  }
+
+  const fetchLinkedAccounts = async () => {
+    if (!user?.discordId) return
+    
+    try {
+      const response = await fetch(`${API_URL}/api/clan/members`)
+      if (response.ok) {
+        const data = await response.json()
+        const userAccounts = data.members.filter((member: any) => 
+          member.discord_id === user.discordId
+        )
+        setLinkedAccounts(userAccounts)
+      }
+    } catch (error) {
+      console.error('Error fetching linked accounts:', error)
+    }
+  }
+
+  const handleSubmitLinkRequest = async () => {
+    if (!newUsername.trim() || !user?.token) return
+    
+    setLinkRequestLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/api/account-link-requests`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify({
+          alternateUsername: newUsername.trim()
+        })
+      })
+      
+      if (response.ok) {
+        setNewUsername('')
+        await fetchAccountLinkRequests()
+        alert('Link request submitted successfully! An admin will review it.')
+      } else {
+        const error = await response.json()
+        alert(error.detail || 'Failed to submit link request')
+      }
+    } catch (error) {
+      console.error('Error submitting link request:', error)
+      alert('Failed to submit link request')
+    } finally {
+      setLinkRequestLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (settingsOpen && user?.token) {
+      fetchAccountLinkRequests()
+      fetchLinkedAccounts()
+    }
+  }, [settingsOpen, user?.token])
 
   const overallStats = playerData?.stats?.overall
 
@@ -1181,15 +1260,102 @@ const Home = () => {
           </DialogHeader>
           
           <div className="space-y-6 py-4">
-            {/* Account Section - Placeholder */}
+            {/* Account Section */}
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-2">
                 Account
               </h3>
-              <div className="bg-slate-700/30 rounded-lg p-4">
-                <p className="text-slate-300 text-sm">
-                  Account linking and management options will appear here.
-                </p>
+              
+              <div className="space-y-2">
+                {linkedAccounts.map((account, index) => {
+                  const isPrimary = index === 0
+                  const linkRequest = accountLinkRequests.find(
+                    (req: any) => req.alternateUsername === account.username
+                  )
+                  
+                  return (
+                    <div 
+                      key={account.username}
+                      className="bg-slate-700/30 rounded-lg p-3 flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-white font-medium">{account.username}</span>
+                        {isPrimary ? (
+                          <span className="text-xs px-2 py-1 rounded bg-green-500/20 text-green-400 border border-green-500/30">
+                            Linked (Primary)
+                          </span>
+                        ) : linkRequest?.status === 'PENDING' ? (
+                          <span className="text-xs px-2 py-1 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                            Pending
+                          </span>
+                        ) : linkRequest?.status === 'APPROVED' ? (
+                          <span className="text-xs px-2 py-1 rounded bg-green-500/20 text-green-400 border border-green-500/30">
+                            Approved
+                          </span>
+                        ) : linkRequest?.status === 'REJECTED' ? (
+                          <span className="text-xs px-2 py-1 rounded bg-red-500/20 text-red-400 border border-red-500/30">
+                            Rejected
+                          </span>
+                        ) : null}
+                      </div>
+                      
+                      {!isPrimary && linkRequest?.status === 'APPROVED' && (
+                        <Button
+                          size="sm"
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                          onClick={() => {
+                            window.location.href = `/player/${account.username}`
+                          }}
+                        >
+                          View Profile
+                        </Button>
+                      )}
+                    </div>
+                  )
+                })}
+                
+                {accountLinkRequests.filter((req: any) => 
+                  !linkedAccounts.some((acc) => acc.username === req.alternateUsername)
+                ).map((request: any) => (
+                  <div 
+                    key={request.id}
+                    className="bg-slate-700/30 rounded-lg p-3 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-white font-medium">{request.alternateUsername}</span>
+                      {request.status === 'PENDING' && (
+                        <span className="text-xs px-2 py-1 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                          Pending
+                        </span>
+                      )}
+                      {request.status === 'REJECTED' && (
+                        <span className="text-xs px-2 py-1 rounded bg-red-500/20 text-red-400 border border-red-500/30">
+                          Rejected
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                
+                <div className="bg-slate-700/30 rounded-lg p-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                      placeholder="Enter RuneScape username"
+                      className="flex-1 bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={linkRequestLoading}
+                    />
+                    <Button
+                      onClick={handleSubmitLinkRequest}
+                      disabled={!newUsername.trim() || linkRequestLoading}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      {linkRequestLoading ? 'Submitting...' : '+ Add Another Account'}
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
 
