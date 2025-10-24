@@ -1078,6 +1078,27 @@ def create_access_token(data: dict):
     encoded_jwt = jwt.encode(to_encode, secret_key, algorithm=algorithm)
     return encoded_jwt
 
+async def verify_token_string(token: str):
+    """Verify a JWT token string directly (for manual token extraction)"""
+    try:
+        print(f"🔍 TOKEN VERIFY: Starting token verification")
+        print(f"🔍 TOKEN VERIFY: Token prefix: {token[:20] if len(token) > 20 else token}...")
+        
+        secret_key = os.getenv("JWT_SECRET_KEY", "fallback-secret")
+        algorithm = os.getenv("JWT_ALGORITHM", "HS256")
+        print(f"🔍 TOKEN VERIFY: Using secret key prefix: {secret_key[:10]}... and algorithm: {algorithm}")
+        
+        payload = jwt.decode(token, secret_key, algorithms=[algorithm])
+        print(f"🔍 TOKEN VERIFY: Decoded payload: {payload}")
+        
+        return payload
+    except jwt.PyJWTError as e:
+        print(f"❌ JWT decode error: {e}")
+        raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception as e:
+        print(f"❌ Unexpected error in token verification: {e}")
+        raise HTTPException(status_code=401, detail="Invalid token")
+
 def verify_token(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     access_token: str = Cookie(None)
@@ -3948,7 +3969,7 @@ async def create_account_link_request(
             print("[DEBUG] No authorization header provided")
             raise HTTPException(status_code=401, detail="Not authenticated")
         
-        token_data = await verify_token(authorization.replace("Bearer ", ""))
+        token_data = await verify_token_string(authorization.replace("Bearer ", ""))
         discord_id = token_data.get("discord_id")
         print(f"[DEBUG] Discord ID from token: {discord_id}")
         
@@ -4025,10 +4046,10 @@ async def get_my_account_link_requests(authorization: str = Header(None)):
         if not authorization:
             raise HTTPException(status_code=401, detail="Not authenticated")
         
-        token_data = await verify_token(authorization.replace("Bearer ", ""))
+        token_data = await verify_token_string(authorization.replace("Bearer ", ""))
         discord_id = token_data.get("discord_id")
         
-        if not PRISMA_AVAILABLE or not prisma or not prisma:
+        if not PRISMA_AVAILABLE or not prisma:
             raise HTTPException(status_code=500, detail="Database not available")
         
         requests = await prisma.accountlinkrequest.find_many(
