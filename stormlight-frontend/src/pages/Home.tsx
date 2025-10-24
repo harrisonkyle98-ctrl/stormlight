@@ -514,12 +514,13 @@ const Home = () => {
   }
 
   const fetchAccountLinkRequests = async () => {
-    if (!user?.token) return
+    const token = localStorage.getItem('access_token')
+    if (!token) return
     
     try {
       const response = await fetch(`${API_URL}/api/account-link-requests/my-requests`, {
         headers: {
-          'Authorization': `Bearer ${user.token}`
+          'Authorization': `Bearer ${token}`
         }
       })
       
@@ -550,7 +551,8 @@ const Home = () => {
   }
 
   const handleSubmitLinkRequest = async () => {
-    if (!newUsername.trim() || !user?.token) return
+    const token = localStorage.getItem('access_token')
+    if (!newUsername.trim() || !token) return
     
     setLinkRequestLoading(true)
     try {
@@ -558,7 +560,7 @@ const Home = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.token}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           alternateUsername: newUsername.trim()
@@ -582,11 +584,11 @@ const Home = () => {
   }
 
   useEffect(() => {
-    if (settingsOpen && user?.token) {
+    if (settingsOpen) {
       fetchAccountLinkRequests()
       fetchLinkedAccounts()
     }
-  }, [settingsOpen, user?.token])
+  }, [settingsOpen])
 
   const overallStats = playerData?.stats?.overall
 
