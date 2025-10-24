@@ -3923,7 +3923,7 @@ async def delete_custom_badge(
 async def log_admin_action(admin_id: str, username: str, action: str, details: str, prisma_client=None, prisma_available=False):
     """Log an admin action to the database"""
     try:
-        if prisma_available and prisma_client and prisma_client.is_connected():
+        if prisma_available and prisma_client:
             await prisma_client.adminlog.create(
                 data={
                     'adminId': admin_id,
@@ -3951,6 +3951,9 @@ async def create_account_link_request(
         token_data = await verify_token(authorization.replace("Bearer ", ""))
         discord_id = token_data.get("discord_id")
         print(f"[DEBUG] Discord ID from token: {discord_id}")
+        
+        print(f"[DEBUG] Prisma type check - type: {type(prisma)}, value: {prisma}, PRISMA_AVAILABLE: {PRISMA_AVAILABLE}")
+        print(f"[DEBUG] Prisma attributes: {dir(prisma) if prisma else 'None'}")
         
         if not PRISMA_AVAILABLE or not prisma:
             print(f"[DEBUG] Database not available - PRISMA_AVAILABLE: {PRISMA_AVAILABLE}, prisma: {prisma}")
