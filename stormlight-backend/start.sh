@@ -8,4 +8,4 @@ echo "🔧 Applying database schema changes..."
 poetry run prisma db push
 
 echo "🚀 Starting FastAPI server..."
-poetry run fastapi run app/main.py --host 0.0.0.0 --port ${PORT:-8000}
+poetry run uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
