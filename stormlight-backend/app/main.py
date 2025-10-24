@@ -3970,7 +3970,8 @@ async def create_account_link_request(
             raise HTTPException(status_code=401, detail="Not authenticated")
         
         token_data = await verify_token_string(authorization.replace("Bearer ", ""))
-        discord_id = token_data.get("discord_id")
+        discord_id = token_data.get("sub")  # JWT token uses "sub" for user ID
+        print(f"[DEBUG] Token payload: {token_data}")
         print(f"[DEBUG] Discord ID from token: {discord_id}")
         
         print(f"[DEBUG] Prisma type check - type: {type(prisma)}, value: {prisma}, PRISMA_AVAILABLE: {PRISMA_AVAILABLE}")
@@ -4047,7 +4048,7 @@ async def get_my_account_link_requests(authorization: str = Header(None)):
             raise HTTPException(status_code=401, detail="Not authenticated")
         
         token_data = await verify_token_string(authorization.replace("Bearer ", ""))
-        discord_id = token_data.get("discord_id")
+        discord_id = token_data.get("sub")  # JWT token uses "sub" for user ID
         
         if not PRISMA_AVAILABLE or not prisma:
             raise HTTPException(status_code=500, detail="Database not available")
