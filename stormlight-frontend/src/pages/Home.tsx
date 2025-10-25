@@ -11,6 +11,7 @@ import { usernameToUrl } from '../utils/urlUtils'
 import { Tooltip } from '../components/ui/tooltip'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog'
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts'
+import { themes, applyTheme, defaultTheme } from '../config/themes'
 
 const getRankIcon = (rank: string): string => {
   const rankImageMap: { [key: string]: string } = {
@@ -151,6 +152,8 @@ const Home = () => {
   const [linkedAccounts, setLinkedAccounts] = useState<any[]>([])
   const [newUsername, setNewUsername] = useState('')
   const [linkRequestLoading, setLinkRequestLoading] = useState(false)
+  const [selectedTheme, setSelectedTheme] = useState<string>(defaultTheme)
+  const [themeTooltip, setThemeTooltip] = useState<string | null>(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -689,6 +692,62 @@ const Home = () => {
       alert('Failed to switch account')
     }
   }
+
+  const handleThemeChange = async (themeId: string) => {
+    setSelectedTheme(themeId)
+    const theme = themes[themeId]
+    if (theme) {
+      applyTheme(theme)
+      localStorage.setItem('selectedTheme', themeId)
+      
+      const token = localStorage.getItem('access_token')
+      if (token && user?.username) {
+        try {
+          await fetch(`${API_URL}/api/user/theme`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ theme: themeId })
+          })
+        } catch (error) {
+          console.error('Error saving theme preference:', error)
+        }
+      }
+    }
+  }
+
+  useEffect(() => {
+    const loadUserTheme = async () => {
+      if (user?.username) {
+        const token = localStorage.getItem('access_token')
+        if (token) {
+          try {
+            const response = await fetch(`${API_URL}/api/clan/members/${encodeURIComponent(user.username)}`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            })
+            if (response.ok) {
+              const memberData = await response.json()
+              const userTheme = memberData.theme || defaultTheme
+              setSelectedTheme(userTheme)
+              applyTheme(themes[userTheme])
+            }
+          } catch (error) {
+            console.error('Error loading user theme:', error)
+          }
+        }
+      } else {
+        const savedTheme = localStorage.getItem('selectedTheme') || defaultTheme
+        setSelectedTheme(savedTheme)
+        applyTheme(themes[savedTheme])
+      }
+    }
+    
+    loadUserTheme()
+  }, [user])
 
   useEffect(() => {
     if (settingsOpen) {
@@ -1500,15 +1559,43 @@ const Home = () => {
               </div>
             </div>
 
-            {/* Appearance Section - Placeholder */}
+            {/* Appearance Section */}
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-2">
                 Appearance
               </h3>
               <div className="bg-slate-700/30 rounded-lg p-4">
-                <p className="text-slate-300 text-sm">
-                  Theme and display preferences will appear here.
-                </p>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-medium text-slate-300 mb-3">Color Theme</h4>
+                    <div className="flex flex-wrap gap-3">
+                      {Object.values(themes).map((theme) => (
+                        <div key={theme.id} className="relative">
+                          <button
+                            onClick={() => handleThemeChange(theme.id)}
+                            onMouseEnter={() => setThemeTooltip(theme.name)}
+                            onMouseLeave={() => setThemeTooltip(null)}
+                            className={`w-12 h-12 rounded-full transition-all ${
+                              selectedTheme === theme.id 
+                                ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-800 scale-110' 
+                                : 'hover:scale-105'
+                            }`}
+                            style={{ background: theme.gradient }}
+                            title={theme.name}
+                          />
+                          {themeTooltip === theme.name && (
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded whitespace-nowrap z-50">
+                              {theme.name}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-2">
+                    Select a color theme to customize the appearance of the site. Your preference will be saved and applied across all pages.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

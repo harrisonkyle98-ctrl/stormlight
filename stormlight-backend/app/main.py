@@ -1612,6 +1612,44 @@ async def get_current_user(
     return fallback_result
 
 
+@api_router.put("/user/theme")
+async def update_user_theme(
+    request: Request,
+    user_id: str = Depends(verify_token)
+):
+    """Update user's theme preference"""
+    try:
+        global prisma, PRISMA_AVAILABLE
+        if not PRISMA_AVAILABLE or not prisma:
+            raise HTTPException(status_code=503, detail="Database not available")
+        
+        body = await request.json()
+        theme = body.get('theme', 'blue')
+        
+        valid_themes = ['blue', 'crimson', 'emerald', 'obsidian', 'amethyst', 'sunset']
+        if theme not in valid_themes:
+            theme = 'blue'
+        
+        linked_member = await prisma.clanmember.find_first(
+            where={'discordId': user_id}
+        )
+        
+        if linked_member:
+            await prisma.clanmember.update(
+                where={'id': linked_member.id},
+                data={'theme': theme}
+            )
+            return {'success': True, 'theme': theme}
+        else:
+            raise HTTPException(status_code=404, detail="User not linked to a clan member")
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating theme: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update theme")
+
+
 @api_router.get("/player/{username}/stats")
 async def get_player_stats(username: str, refresh: bool = Query(False, description="Force refresh from API")):
     """Get player stats from RuneScape API with clan rank if available"""
@@ -3082,6 +3120,53 @@ async def get_clan_members_paginated(
         },
         "clan_name": "Stormlight"
     }
+
+@api_router.get("/clan/members/{username}")
+async def get_clan_member(username: str):
+    """Get a specific clan member's data including theme preference"""
+    try:
+        global prisma, PRISMA_AVAILABLE
+        if not PRISMA_AVAILABLE or not prisma:
+            raise HTTPException(status_code=503, detail="Database not available")
+        
+        from urllib.parse import unquote
+        decoded_username = unquote(username).replace('-', ' ')
+        
+        member = await prisma.clanmember.find_unique(
+            where={'username': decoded_username}
+        )
+        
+        if not member:
+            raise HTTPException(status_code=404, detail="Member not found")
+        
+        badges = []
+        if member.badges:
+            try:
+                badges = json.loads(member.badges) if isinstance(member.badges, str) else member.badges
+            except:
+                badges = []
+        
+        return {
+            'username': member.username,
+            'displayName': member.displayName,
+            'clanRank': member.clanRank,
+            'totalXp': int(member.totalXp),
+            'totalLevel': member.totalLevel,
+            'combatLevel': member.combatLevel,
+            'kills': member.kills,
+            'lastUpdated': member.lastUpdated.isoformat(),
+            'badges': badges,
+            'theme': member.theme or 'blue',
+            'joinDate': member.joinDate.isoformat() if member.joinDate else None,
+            'active': member.active,
+            'discordId': member.discordId
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching clan member: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch member data")
 
 @api_router.get("/clan/stats")
 async def get_clan_stats():

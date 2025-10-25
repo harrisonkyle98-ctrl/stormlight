@@ -1,0 +1,1 @@
+ALTER TABLE clan_members ADD COLUMN IF NOT EXISTS theme VARCHAR(50) DEFAULT 'blue';
