@@ -1761,6 +1761,13 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
                         print(f"✅ join_date found for {decoded_username}: {stats['join_date']}")
                     else:
                         print(f"⚠️  join_date is NULL for {decoded_username}")
+                    
+                    if clan_rank and member.clanRank != clan_rank:
+                        print(f"🔄 Updating clan rank for {decoded_username}: {member.clanRank} → {clan_rank}")
+                        await prisma.clanmember.update(
+                            where={'username': decoded_username},
+                            data={'clanRank': clan_rank, 'lastUpdated': datetime.now()}
+                        )
                 else:
                     stats['custom_badges'] = []
                     print(f"⚠️  Member not found in database for {decoded_username}")
