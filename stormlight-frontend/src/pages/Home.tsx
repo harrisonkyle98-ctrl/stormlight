@@ -643,7 +643,6 @@ const Home = () => {
       })
       
       if (response.ok) {
-        const result = await response.json()
         localStorage.removeItem('player_stats_cache')
         localStorage.removeItem('player_activities_cache')
         window.location.reload()
