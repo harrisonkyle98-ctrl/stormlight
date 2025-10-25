@@ -4233,6 +4233,63 @@ async def reject_account_link_request(
         print(f"[REJECT] Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error rejecting account link request: {str(e)}")
 
+@api_router.post("/admin/members/{username}/unlink-discord")
+async def unlink_discord_from_member(
+    username: str,
+    admin_info: dict = Depends(verify_admin_access)
+):
+    """Unlink Discord account from a clan member (admin only)"""
+    print(f"[UNLINK] Username: {username}, Admin: {admin_info}")
+    admin_id = admin_info['admin_id']
+    admin_username = admin_info['username']
+    
+    try:
+        if not PRISMA_AVAILABLE or not prisma:
+            print(f"[UNLINK] Database not available")
+            raise HTTPException(status_code=500, detail="Database not available")
+        
+        print(f"[UNLINK] Looking for clan member: {username}")
+        member = await prisma.clanmember.find_unique(
+            where={'username': username}
+        )
+        
+        if not member:
+            print(f"[UNLINK] Member not found: {username}")
+            raise HTTPException(status_code=404, detail=f"Clan member '{username}' not found")
+        
+        if not member.discordId:
+            print(f"[UNLINK] Member has no Discord ID linked: {username}")
+            raise HTTPException(status_code=400, detail=f"Member '{username}' has no Discord account linked")
+        
+        old_discord_id = member.discordId
+        print(f"[UNLINK] Unlinking Discord ID {old_discord_id} from {username}")
+        
+        await prisma.clanmember.update(
+            where={'username': username},
+            data={'discordId': None}
+        )
+        print(f"[UNLINK] Successfully unlinked Discord ID from {username}")
+        
+        await log_admin_action(
+            admin_id,
+            admin_username,
+            "unlink_discord",
+            f"Unlinked Discord account from {username}",
+            prisma_client=prisma,
+            prisma_available=PRISMA_AVAILABLE
+        )
+        print(f"[UNLINK] Admin action logged")
+        
+        return {"success": True, "message": f"Discord account unlinked from {username}"}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[UNLINK] Error unlinking Discord account: {e}")
+        import traceback
+        print(f"[UNLINK] Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error unlinking Discord account: {str(e)}")
+
 @api_router.get("/admin/competitions")
 async def get_admin_competitions(admin_id: str = Depends(verify_admin_access)):
     """Get competitions for admin management"""

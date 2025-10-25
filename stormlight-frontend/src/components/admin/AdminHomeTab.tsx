@@ -67,6 +67,35 @@ export const AdminHomeTab = () => {
     }
   }
 
+  const handleUnlinkDiscord = async (username: string) => {
+    if (!confirm(`Are you sure you want to unlink the Discord account from ${username}?`)) {
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('access_token')
+      console.log('[UNLINK] Username:', username)
+      
+      const response = await fetch(`${API_URL}/api/admin/members/${encodeURIComponent(username)}/unlink-discord`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        alert(result.message || 'Discord account unlinked successfully!')
+        await fetchAdminData()
+      } else {
+        const error = await response.json()
+        console.error('[UNLINK] Error response:', error)
+        alert(`Error unlinking Discord account: ${error.detail || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('[UNLINK] Exception:', error)
+      alert(`Error unlinking Discord account: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
   const handleApproveRequest = async (requestId: string) => {
     try {
       const token = localStorage.getItem('access_token')
@@ -87,7 +116,23 @@ export const AdminHomeTab = () => {
       } else {
         const error = await response.json()
         console.error('[APPROVE] Error response:', error)
-        alert(`Error approving account link request: ${error.detail || 'Unknown error'}`)
+        
+        if (error.detail && error.detail.includes('already linked to')) {
+          const match = error.detail.match(/already linked to '([^']+)'/)
+          if (match && match[1]) {
+            const linkedUsername = match[1]
+            const shouldUnlink = confirm(
+              `${error.detail}\n\nWould you like to unlink the Discord account from "${linkedUsername}" now?`
+            )
+            if (shouldUnlink) {
+              await handleUnlinkDiscord(linkedUsername)
+            }
+          } else {
+            alert(`Error approving account link request: ${error.detail}`)
+          }
+        } else {
+          alert(`Error approving account link request: ${error.detail || 'Unknown error'}`)
+        }
       }
     } catch (error) {
       console.error('[APPROVE] Exception:', error)
