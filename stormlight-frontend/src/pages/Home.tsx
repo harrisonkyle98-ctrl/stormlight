@@ -552,23 +552,13 @@ const Home = () => {
         const requestsData = requestsResponse.ok ? await requestsResponse.json() : { requests: [] }
         const requests = requestsData.requests || []
         
-        const accountsWithDiscordId = membersData.members.filter((member: any) => 
-          member.discord_id === user.discordId
-        )
-        
         const linkedUsernames = new Set<string>()
-        
-        accountsWithDiscordId.forEach((acc: any) => linkedUsernames.add(acc.username))
+        linkedUsernames.add(user.username)
         
         requests.forEach((req: any) => {
           if (req.status === 'APPROVED') {
             linkedUsernames.add(req.alternateUsername)
-            const primaryAccount = membersData.members.find((m: any) => 
-              m.discord_id === req.primaryDiscordId && m.discord_id !== user.discordId
-            )
-            if (primaryAccount) {
-              linkedUsernames.add(primaryAccount.username)
-            }
+            linkedUsernames.add(req.primaryUsername)
           }
         })
         
