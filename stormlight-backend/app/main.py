@@ -1648,7 +1648,26 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
                 where={'username': decoded_username}
             )
             print(f"Prisma result: {linked_member}")
-            is_verified = bool(linked_member and linked_member.discordId)
+            
+            if linked_member and linked_member.discordId:
+                is_verified = True
+                print(f"Direct Discord link found - is_verified: {is_verified}")
+            else:
+                print("No direct Discord link, checking for approved alternate account link")
+                approved_link = await prisma.accountlinkrequest.find_first(
+                    where={
+                        'alternateUsername': decoded_username,
+                        'status': 'APPROVED'
+                    }
+                )
+                
+                if approved_link:
+                    print(f"Found approved link request for {decoded_username} with primary Discord ID: {approved_link.primaryDiscordId}")
+                    is_verified = True
+                else:
+                    print(f"No approved account link found for {decoded_username}")
+                    is_verified = False
+            
             print(f"Prisma is_verified: {is_verified}")
         else:
             print("Falling back to direct database query for Discord verification")
@@ -1662,7 +1681,24 @@ async def get_player_stats(username: str, refresh: bool = Query(False, descripti
                     decoded_username
                 )
                 print(f"Direct query result: {result}")
-                is_verified = bool(result and result['discord_id'])
+                
+                if result and result['discord_id']:
+                    is_verified = True
+                    print(f"Direct Discord link found - is_verified: {is_verified}")
+                else:
+                    print("No direct Discord link, checking for approved alternate account link")
+                    link_result = await conn.fetchrow(
+                        "SELECT primary_discord_id FROM account_link_requests WHERE alternate_username = $1 AND status = 'APPROVED'",
+                        decoded_username
+                    )
+                    
+                    if link_result and link_result['primary_discord_id']:
+                        print(f"Found approved link request for {decoded_username} with primary Discord ID: {link_result['primary_discord_id']}")
+                        is_verified = True
+                    else:
+                        print(f"No approved account link found for {decoded_username}")
+                        is_verified = False
+                
                 print(f"Direct query is_verified: {is_verified}")
             finally:
                 await conn.close()
@@ -5855,7 +5891,26 @@ async def get_player_stats_with_history(
                     where={'username': decoded_username}
                 )
                 print(f"Prisma result in history endpoint: {linked_member}")
-                is_verified = bool(linked_member and linked_member.discordId)
+                
+                if linked_member and linked_member.discordId:
+                    is_verified = True
+                    print(f"Direct Discord link found - is_verified: {is_verified}")
+                else:
+                    print("No direct Discord link, checking for approved alternate account link")
+                    approved_link = await prisma.accountlinkrequest.find_first(
+                        where={
+                            'alternateUsername': decoded_username,
+                            'status': 'APPROVED'
+                        }
+                    )
+                    
+                    if approved_link:
+                        print(f"Found approved link request for {decoded_username} with primary Discord ID: {approved_link.primaryDiscordId}")
+                        is_verified = True
+                    else:
+                        print(f"No approved account link found for {decoded_username}")
+                        is_verified = False
+                
                 print(f"Prisma is_verified in history endpoint: {is_verified}")
             else:
                 print("Falling back to direct database query for Discord verification in history endpoint")
@@ -5869,7 +5924,24 @@ async def get_player_stats_with_history(
                         decoded_username
                     )
                     print(f"Direct query result in history endpoint: {result}")
-                    is_verified = bool(result and result['discord_id'])
+                    
+                    if result and result['discord_id']:
+                        is_verified = True
+                        print(f"Direct Discord link found - is_verified: {is_verified}")
+                    else:
+                        print("No direct Discord link, checking for approved alternate account link")
+                        link_result = await conn.fetchrow(
+                            "SELECT primary_discord_id FROM account_link_requests WHERE alternate_username = $1 AND status = 'APPROVED'",
+                            decoded_username
+                        )
+                        
+                        if link_result and link_result['primary_discord_id']:
+                            print(f"Found approved link request for {decoded_username} with primary Discord ID: {link_result['primary_discord_id']}")
+                            is_verified = True
+                        else:
+                            print(f"No approved account link found for {decoded_username}")
+                            is_verified = False
+                    
                     print(f"Direct query is_verified in history endpoint: {is_verified}")
                 finally:
                     await conn.close()

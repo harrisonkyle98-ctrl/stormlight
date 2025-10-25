@@ -1345,9 +1345,7 @@ const Home = () => {
                 {linkedAccounts.map((account, index) => {
                   const isActive = account.discord_id === user?.discordId
                   const isPrimary = index === 0
-                  const canSwitch = !isActive && accountLinkRequests.some((req: any) => 
-                    req.alternateUsername === account.username && req.status === 'APPROVED'
-                  )
+                  const canSwitch = !isActive
                   
                   return (
                     <div 
@@ -1385,7 +1383,30 @@ const Home = () => {
                 })}
                 
                 {accountLinkRequests.filter((req: any) => 
-                  !linkedAccounts.some((acc) => acc.username === req.alternateUsername)
+                  req.status === 'APPROVED' && !linkedAccounts.some((acc) => acc.username === req.alternateUsername)
+                ).map((request: any) => (
+                  <div 
+                    key={request.id}
+                    className="bg-slate-700/30 rounded-lg p-3 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-white font-medium">{request.alternateUsername}</span>
+                      <span className="text-xs px-2 py-1 rounded bg-green-500/20 text-green-400 border border-green-500/30">
+                        Linked (Alternate)
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => handleSwitchAccount(request.alternateUsername)}
+                    >
+                      Switch
+                    </Button>
+                  </div>
+                ))}
+                
+                {accountLinkRequests.filter((req: any) => 
+                  req.status !== 'APPROVED' && !linkedAccounts.some((acc) => acc.username === req.alternateUsername)
                 ).map((request: any) => (
                   <div 
                     key={request.id}
