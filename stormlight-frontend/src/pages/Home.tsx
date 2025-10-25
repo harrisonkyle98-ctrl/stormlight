@@ -1237,7 +1237,7 @@ const Home = () => {
         <CardContent>
           {clanLogLoading ? (
             <div className="space-y-3 animate-pulse">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                 <div key={i} className="p-3 bg-slate-700/30 rounded-lg">
                   <div className="flex items-center justify-center space-x-2 mb-2">
                     <div className="h-5 w-16 bg-slate-700/50 rounded"></div>

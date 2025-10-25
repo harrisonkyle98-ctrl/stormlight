@@ -877,6 +877,8 @@ async def sync_clan_members_to_database_with_queue():
                     )
                     is_new_member = existing_member is None
                     was_inactive = existing_member and not existing_member.active if existing_member else False
+                    had_rank_change = existing_member and existing_member.active and existing_member.clanRank != member_data['clan_rank'] if existing_member else False
+                    old_rank = existing_member.clanRank if existing_member else None
                     
                     result = await prisma.clanmember.upsert(
                         where={'username': member_data['username']},
@@ -898,6 +900,30 @@ async def sync_clan_members_to_database_with_queue():
                             print(f"🎉 {member_data['username']} joined the clan as {member_data['clan_rank']}")
                         else:
                             print(f"🔄 {member_data['username']} returned to the clan as {member_data['clan_rank']}")
+                    elif had_rank_change:
+                        rank_priority = {'Recruit': 1, 'Corporal': 2, 'Sergeant': 3, 'Lieutenant': 4, 'Captain': 5, 
+                                       'General': 6, 'Admin': 7, 'Organiser': 8, 'Coordinator': 9, 'Overseer': 10, 
+                                       'Deputy Owner': 11, 'Owner': 12}
+                        old_priority = rank_priority.get(old_rank, 0)
+                        new_priority = rank_priority.get(member_data['clan_rank'], 0)
+                        
+                        if new_priority > old_priority:
+                            event_type = 'Rank_Up'
+                            print(f"⬆️ {member_data['username']} promoted from {old_rank} to {member_data['clan_rank']}")
+                        elif new_priority < old_priority:
+                            event_type = 'Rank_Down'
+                            print(f"⬇️ {member_data['username']} demoted from {old_rank} to {member_data['clan_rank']}")
+                        else:
+                            event_type = 'Rank_Change'
+                            print(f"🔄 {member_data['username']} rank changed from {old_rank} to {member_data['clan_rank']}")
+                        
+                        await log_clan_event_if_new(
+                            username=member_data['username'],
+                            event_type=event_type,
+                            old_rank=old_rank,
+                            new_rank=member_data['clan_rank'],
+                            window_minutes=60
+                        )
                     
                     if result:
                         batch_successful += 1
