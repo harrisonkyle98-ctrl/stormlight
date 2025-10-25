@@ -536,19 +536,51 @@ const Home = () => {
   const fetchLinkedAccounts = async () => {
     if (!user?.username || !user?.discordId) return
     
+    const token = localStorage.getItem('access_token')
+    if (!token) return
+    
     try {
-      const response = await fetch(`${API_URL}/api/clan/members`)
-      if (response.ok) {
-        const data = await response.json()
-        const userAccounts = data.members.filter((member: any) => 
+      const [membersResponse, requestsResponse] = await Promise.all([
+        fetch(`${API_URL}/api/clan/members`),
+        fetch(`${API_URL}/api/account-link-requests/my-requests`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ])
+      
+      if (membersResponse.ok) {
+        const membersData = await membersResponse.json()
+        const requestsData = requestsResponse.ok ? await requestsResponse.json() : { requests: [] }
+        const requests = requestsData.requests || []
+        
+        const accountsWithDiscordId = membersData.members.filter((member: any) => 
           member.discord_id === user.discordId
         )
         
-        const primaryAccount = userAccounts.find((acc: any) => acc.username === user.username)
-        const otherAccounts = userAccounts.filter((acc: any) => acc.username !== user.username)
+        const linkedUsernames = new Set<string>()
         
-        if (primaryAccount) {
-          setLinkedAccounts([primaryAccount, ...otherAccounts])
+        accountsWithDiscordId.forEach((acc: any) => linkedUsernames.add(acc.username))
+        
+        requests.forEach((req: any) => {
+          if (req.status === 'APPROVED') {
+            linkedUsernames.add(req.alternateUsername)
+            const primaryAccount = membersData.members.find((m: any) => 
+              m.discord_id === req.primaryDiscordId && m.discord_id !== user.discordId
+            )
+            if (primaryAccount) {
+              linkedUsernames.add(primaryAccount.username)
+            }
+          }
+        })
+        
+        const allLinkedAccounts = membersData.members.filter((member: any) => 
+          linkedUsernames.has(member.username)
+        )
+        
+        const currentAccount = allLinkedAccounts.find((acc: any) => acc.username === user.username)
+        const otherAccounts = allLinkedAccounts.filter((acc: any) => acc.username !== user.username)
+        
+        if (currentAccount) {
+          setLinkedAccounts([currentAccount, ...otherAccounts])
         } else {
           setLinkedAccounts([
             {
@@ -556,7 +588,7 @@ const Home = () => {
               discord_id: user.discordId,
               clan_rank: user.clanRank || 'Unknown'
             },
-            ...userAccounts
+            ...otherAccounts
           ])
         }
       }
@@ -645,7 +677,19 @@ const Home = () => {
       if (response.ok) {
         localStorage.removeItem('player_stats_cache')
         localStorage.removeItem('player_activities_cache')
-        window.location.reload()
+        
+        const userResponse = await fetch(`${API_URL}/api/user/me?refresh=true`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        
+        if (userResponse.ok) {
+          const userData = await userResponse.json()
+          console.log('Updated user data after switch:', userData)
+        }
+        
+        window.location.href = '/'
       } else {
         const error = await response.json()
         alert(error.detail || 'Failed to switch account')
