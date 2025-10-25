@@ -4326,7 +4326,7 @@ async def unlink_account_link_request(
             raise HTTPException(status_code=404, detail="User not found")
         
         admin_ranks = ['Overseer', 'Deputy Owner', 'Owner']
-        if current_user.rank not in admin_ranks:
+        if current_user.clanRank not in admin_ranks:
             print(f"[UNLINK_REQUEST] User {current_user.username} is not an admin")
             raise HTTPException(status_code=403, detail="Admin access required")
         
