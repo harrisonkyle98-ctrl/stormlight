@@ -4078,7 +4078,7 @@ async def create_account_link_request(
 
 @api_router.get("/account-link-requests/my-requests")
 async def get_my_account_link_requests(authorization: str = Header(None)):
-    """Get all account link requests for the current user"""
+    """Get all account link requests for the current user (excludes unlinked)"""
     try:
         if not authorization:
             raise HTTPException(status_code=401, detail="Not authenticated")
@@ -4090,7 +4090,10 @@ async def get_my_account_link_requests(authorization: str = Header(None)):
             raise HTTPException(status_code=500, detail="Database not available")
         
         requests = await prisma.accountlinkrequest.find_many(
-            where={'primaryDiscordId': discord_id},
+            where={
+                'primaryDiscordId': discord_id,
+                'status': {'not': 'UNLINKED'}
+            },
             order={'requestedAt': 'desc'}
         )
         
