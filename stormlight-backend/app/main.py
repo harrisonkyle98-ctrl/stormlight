@@ -4354,7 +4354,16 @@ async def switch_to_alternate_account(
         )
         
         if not approved_link:
-            print(f"[SWITCH] No approved link found between {user_id} and {target_username}")
+            approved_link = await prisma.accountlinkrequest.find_first(
+                where={
+                    'primaryDiscordId': user_id,
+                    'primaryUsername': target_username,
+                    'status': 'APPROVED'
+                }
+            )
+        
+        if not approved_link:
+            print(f"[SWITCH] No approved link found in either direction between {user_id} and {target_username}")
             raise HTTPException(
                 status_code=403,
                 detail=f"No approved account link found for '{target_username}'. Please request approval first."
