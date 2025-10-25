@@ -4115,7 +4115,7 @@ async def approve_account_link_request(
             print(f"[APPROVE] Request already processed: {link_request.status}")
             raise HTTPException(status_code=400, detail="Request has already been processed")
         
-        print(f"[APPROVE] Looking for clan member: {link_request.alternateUsername}")
+        print(f"[APPROVE] Verifying alternate username exists: {link_request.alternateUsername}")
         alternate_member = await prisma.clanmember.find_unique(
             where={'username': link_request.alternateUsername}
         )
@@ -4124,23 +4124,14 @@ async def approve_account_link_request(
             print(f"[APPROVE] Alternate username not found in clan members: {link_request.alternateUsername}")
             raise HTTPException(status_code=404, detail=f"Clan member '{link_request.alternateUsername}' not found")
         
-        existing_discord_link = await prisma.clanmember.find_first(
-            where={'discordId': link_request.primaryDiscordId}
-        )
-        
-        if existing_discord_link and existing_discord_link.username != link_request.alternateUsername:
-            print(f"[APPROVE] Discord ID already linked to another member: {existing_discord_link.username}")
+        if alternate_member.discordId:
+            print(f"[APPROVE] Alternate account already has a Discord ID: {alternate_member.discordId}")
             raise HTTPException(
-                status_code=400, 
-                detail=f"This Discord account is already linked to '{existing_discord_link.username}'. Please unlink it first or reject this request."
+                status_code=400,
+                detail=f"Alternate account '{link_request.alternateUsername}' already has a Discord account linked. Alternate accounts should not have Discord IDs."
             )
         
-        print(f"[APPROVE] Updating clan member: {link_request.alternateUsername} with Discord ID: {link_request.primaryDiscordId}")
-        await prisma.clanmember.update(
-            where={'username': link_request.alternateUsername},
-            data={'discordId': link_request.primaryDiscordId}
-        )
-        print(f"[APPROVE] Clan member updated successfully")
+        print(f"[APPROVE] Alternate account validation passed. Account will be approved without assigning Discord ID.")
         
         print(f"[APPROVE] Updating request status to APPROVED")
         await prisma.accountlinkrequest.update(
@@ -4232,6 +4223,135 @@ async def reject_account_link_request(
         import traceback
         print(f"[REJECT] Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error rejecting account link request: {str(e)}")
+
+@api_router.delete("/account-link-requests/{request_id}")
+async def delete_account_link_request(
+    request_id: str,
+    user_id: str = Depends(verify_token)
+):
+    """Delete a rejected account link request (user can only delete their own rejected requests)"""
+    print(f"[DELETE_REQUEST] Request ID: {request_id}, User: {user_id}")
+    
+    try:
+        if not PRISMA_AVAILABLE or not prisma:
+            print(f"[DELETE_REQUEST] Database not available")
+            raise HTTPException(status_code=500, detail="Database not available")
+        
+        print(f"[DELETE_REQUEST] Looking for request with ID: {request_id}")
+        link_request = await prisma.accountlinkrequest.find_unique(
+            where={'id': request_id}
+        )
+        
+        if not link_request:
+            print(f"[DELETE_REQUEST] Request not found: {request_id}")
+            raise HTTPException(status_code=404, detail="Request not found")
+        
+        if link_request.primaryDiscordId != user_id:
+            print(f"[DELETE_REQUEST] User {user_id} does not own request {request_id}")
+            raise HTTPException(status_code=403, detail="You can only delete your own account link requests")
+        
+        if link_request.status != 'REJECTED':
+            print(f"[DELETE_REQUEST] Request is not rejected: {link_request.status}")
+            raise HTTPException(status_code=400, detail="Only rejected requests can be deleted")
+        
+        print(f"[DELETE_REQUEST] Deleting rejected request: {request_id}")
+        await prisma.accountlinkrequest.delete(
+            where={'id': request_id}
+        )
+        print(f"[DELETE_REQUEST] Request deleted successfully")
+        
+        return {"success": True, "message": "Rejected request removed"}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[DELETE_REQUEST] Error deleting account link request: {e}")
+        import traceback
+        print(f"[DELETE_REQUEST] Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error deleting account link request: {str(e)}")
+
+@api_router.post("/account-link-requests/switch/{target_username}")
+async def switch_to_alternate_account(
+    target_username: str,
+    user_id: str = Depends(verify_token)
+):
+    """Switch the active account by transferring Discord ID to an approved alternate account"""
+    print(f"[SWITCH] Target username: {target_username}, User Discord ID: {user_id}")
+    
+    try:
+        if not PRISMA_AVAILABLE or not prisma:
+            print(f"[SWITCH] Database not available")
+            raise HTTPException(status_code=500, detail="Database not available")
+        
+        print(f"[SWITCH] Looking for current active account with Discord ID: {user_id}")
+        current_account = await prisma.clanmember.find_first(
+            where={'discordId': user_id}
+        )
+        
+        if not current_account:
+            print(f"[SWITCH] No current active account found for Discord ID: {user_id}")
+            raise HTTPException(status_code=404, detail="Current account not found")
+        
+        print(f"[SWITCH] Current active account: {current_account.username}")
+        print(f"[SWITCH] Looking for target account: {target_username}")
+        target_account = await prisma.clanmember.find_unique(
+            where={'username': target_username}
+        )
+        
+        if not target_account:
+            print(f"[SWITCH] Target account not found: {target_username}")
+            raise HTTPException(status_code=404, detail=f"Target account '{target_username}' not found")
+        
+        if target_account.discordId:
+            print(f"[SWITCH] Target account already has a Discord ID: {target_account.discordId}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Target account '{target_username}' already has a Discord account linked"
+            )
+        
+        approved_link = await prisma.accountlinkrequest.find_first(
+            where={
+                'primaryDiscordId': user_id,
+                'alternateUsername': target_username,
+                'status': 'APPROVED'
+            }
+        )
+        
+        if not approved_link:
+            print(f"[SWITCH] No approved link found between {user_id} and {target_username}")
+            raise HTTPException(
+                status_code=403,
+                detail=f"No approved account link found for '{target_username}'. Please request approval first."
+            )
+        
+        print(f"[SWITCH] Removing Discord ID from current account: {current_account.username}")
+        await prisma.clanmember.update(
+            where={'username': current_account.username},
+            data={'discordId': None}
+        )
+        
+        print(f"[SWITCH] Assigning Discord ID to target account: {target_username}")
+        await prisma.clanmember.update(
+            where={'username': target_username},
+            data={'discordId': user_id}
+        )
+        
+        print(f"[SWITCH] Successfully switched from {current_account.username} to {target_username}")
+        
+        return {
+            "success": True,
+            "message": f"Switched to {target_username}",
+            "previousAccount": current_account.username,
+            "newAccount": target_username
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[SWITCH] Error switching accounts: {e}")
+        import traceback
+        print(f"[SWITCH] Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error switching accounts: {str(e)}")
 
 @api_router.post("/admin/members/{username}/unlink-discord")
 async def unlink_discord_from_member(

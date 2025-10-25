@@ -606,6 +606,57 @@ const Home = () => {
     }
   }
 
+  const handleDeleteRejectedRequest = async (requestId: string) => {
+    const token = localStorage.getItem('access_token')
+    if (!token) return
+    
+    try {
+      const response = await fetch(`${API_URL}/api/account-link-requests/${requestId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      if (response.ok) {
+        await fetchAccountLinkRequests()
+      } else {
+        const error = await response.json()
+        alert(error.detail || 'Failed to delete request')
+      }
+    } catch (error) {
+      console.error('Error deleting request:', error)
+      alert('Failed to delete request')
+    }
+  }
+
+  const handleSwitchAccount = async (targetUsername: string) => {
+    const token = localStorage.getItem('access_token')
+    if (!token) return
+    
+    try {
+      const response = await fetch(`${API_URL}/api/account-link-requests/switch/${encodeURIComponent(targetUsername)}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      if (response.ok) {
+        const result = await response.json()
+        localStorage.removeItem('player_stats_cache')
+        localStorage.removeItem('player_activities_cache')
+        window.location.reload()
+      } else {
+        const error = await response.json()
+        alert(error.detail || 'Failed to switch account')
+      }
+    } catch (error) {
+      console.error('Error switching account:', error)
+      alert('Failed to switch account')
+    }
+  }
+
   useEffect(() => {
     if (settingsOpen) {
       fetchAccountLinkRequests()
@@ -1293,7 +1344,11 @@ const Home = () => {
               
               <div className="space-y-2">
                 {linkedAccounts.map((account, index) => {
+                  const isActive = account.discord_id === user?.discordId
                   const isPrimary = index === 0
+                  const canSwitch = !isActive && accountLinkRequests.some((req: any) => 
+                    req.alternateUsername === account.username && req.status === 'APPROVED'
+                  )
                   
                   return (
                     <div 
@@ -1302,7 +1357,11 @@ const Home = () => {
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-white font-medium">{account.username}</span>
-                        {isPrimary ? (
+                        {isActive ? (
+                          <span className="text-xs px-2 py-1 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                            Active
+                          </span>
+                        ) : isPrimary ? (
                           <span className="text-xs px-2 py-1 rounded bg-green-500/20 text-green-400 border border-green-500/30">
                             Linked (Primary)
                           </span>
@@ -1313,15 +1372,13 @@ const Home = () => {
                         )}
                       </div>
                       
-                      {!isPrimary && (
+                      {canSwitch && (
                         <Button
                           size="sm"
                           className="bg-blue-600 hover:bg-blue-700 text-white"
-                          onClick={() => {
-                            window.location.href = `/player/${account.username}`
-                          }}
+                          onClick={() => handleSwitchAccount(account.username)}
                         >
-                          View Profile
+                          Switch
                         </Button>
                       )}
                     </div>
@@ -1348,6 +1405,15 @@ const Home = () => {
                         </span>
                       )}
                     </div>
+                    {request.status === 'REJECTED' && (
+                      <button
+                        onClick={() => handleDeleteRejectedRequest(request.id)}
+                        className="text-slate-400 hover:text-red-400 transition-colors"
+                        title="Remove rejected request"
+                      >
+                        ×
+                      </button>
+                    )}
                   </div>
                 ))}
                 
