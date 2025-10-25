@@ -11,7 +11,7 @@ import os
 from dotenv import load_dotenv
 from typing import Optional, List, Dict, Any
 import json
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 import jwt
 from authlib.integrations.starlette_client import OAuth
 from starlette.middleware.sessions import SessionMiddleware
@@ -4114,6 +4114,26 @@ async def approve_account_link_request(
         if link_request.status != 'PENDING':
             print(f"[APPROVE] Request already processed: {link_request.status}")
             raise HTTPException(status_code=400, detail="Request has already been processed")
+        
+        print(f"[APPROVE] Looking for clan member: {link_request.alternateUsername}")
+        alternate_member = await prisma.clanmember.find_unique(
+            where={'username': link_request.alternateUsername}
+        )
+        
+        if not alternate_member:
+            print(f"[APPROVE] Alternate username not found in clan members: {link_request.alternateUsername}")
+            raise HTTPException(status_code=404, detail=f"Clan member '{link_request.alternateUsername}' not found")
+        
+        existing_discord_link = await prisma.clanmember.find_first(
+            where={'discordId': link_request.primaryDiscordId}
+        )
+        
+        if existing_discord_link and existing_discord_link.username != link_request.alternateUsername:
+            print(f"[APPROVE] Discord ID already linked to another member: {existing_discord_link.username}")
+            raise HTTPException(
+                status_code=400, 
+                detail=f"This Discord account is already linked to '{existing_discord_link.username}'. Please unlink it first or reject this request."
+            )
         
         print(f"[APPROVE] Updating clan member: {link_request.alternateUsername} with Discord ID: {link_request.primaryDiscordId}")
         await prisma.clanmember.update(

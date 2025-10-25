@@ -37,5 +37,4 @@ COPY --from=frontend /frontend/dist ./static
 RUN mkdir -p /app/uploads/badges
 ENV PORT=8000
 EXPOSE 8000
-RUN chmod +x /app/start.sh
-CMD ["/app/start.sh"]
+CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
