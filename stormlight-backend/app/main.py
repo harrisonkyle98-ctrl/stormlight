@@ -4104,13 +4104,12 @@ async def get_my_account_link_requests(authorization: str = Header(None)):
 
 @api_router.get("/admin/account-link-requests")
 async def get_pending_account_link_requests(admin_info: dict = Depends(verify_admin_access)):
-    """Get all pending account link requests (admin only)"""
+    """Get all account link requests (admin only)"""
     try:
         if not PRISMA_AVAILABLE or not prisma or not prisma:
             raise HTTPException(status_code=500, detail="Database not available")
         
         requests = await prisma.accountlinkrequest.find_many(
-            where={'status': 'PENDING'},
             order={'requestedAt': 'desc'}
         )
         
@@ -4119,8 +4118,8 @@ async def get_pending_account_link_requests(admin_info: dict = Depends(verify_ad
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching pending requests: {e}")
-        raise HTTPException(status_code=500, detail="Error fetching pending requests")
+        print(f"Error fetching account link requests: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching account link requests")
 
 @api_router.post("/admin/account-link-requests/{request_id}/approve")
 async def approve_account_link_request(
@@ -4305,6 +4304,98 @@ async def delete_account_link_request(
         import traceback
         print(f"[DELETE_REQUEST] Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error deleting account link request: {str(e)}")
+
+@api_router.post("/admin/account-link-requests/{request_id}/unlink")
+async def unlink_account_link_request(
+    request_id: str,
+    user_id: str = Depends(verify_token)
+):
+    """Admin endpoint to unlink an approved account link"""
+    print(f"[UNLINK_REQUEST] Request ID: {request_id}, Admin: {user_id}")
+    
+    try:
+        if not PRISMA_AVAILABLE or not prisma:
+            print(f"[UNLINK_REQUEST] Database not available")
+            raise HTTPException(status_code=500, detail="Database not available")
+        
+        current_user = await prisma.clanmember.find_first(
+            where={'discordId': user_id}
+        )
+        
+        if not current_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        admin_ranks = ['Overseer', 'Deputy Owner', 'Owner']
+        if current_user.rank not in admin_ranks:
+            print(f"[UNLINK_REQUEST] User {current_user.username} is not an admin")
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        print(f"[UNLINK_REQUEST] Looking for request with ID: {request_id}")
+        link_request = await prisma.accountlinkrequest.find_unique(
+            where={'id': request_id}
+        )
+        
+        if not link_request:
+            print(f"[UNLINK_REQUEST] Request not found: {request_id}")
+            raise HTTPException(status_code=404, detail="Request not found")
+        
+        if link_request.status != 'APPROVED':
+            print(f"[UNLINK_REQUEST] Request is not approved: {link_request.status}")
+            raise HTTPException(status_code=400, detail="Only approved links can be unlinked")
+        
+        primary_account = await prisma.clanmember.find_first(
+            where={'username': link_request.primaryUsername}
+        )
+        
+        alternate_account = await prisma.clanmember.find_first(
+            where={'username': link_request.alternateUsername}
+        )
+        
+        if alternate_account and alternate_account.discordId == link_request.primaryDiscordId:
+            print(f"[UNLINK_REQUEST] Removing Discord ID from alternate account: {alternate_account.username}")
+            await prisma.clanmember.update(
+                where={'username': alternate_account.username},
+                data={'discordId': None}
+            )
+            
+            if primary_account:
+                print(f"[UNLINK_REQUEST] Restoring Discord ID to primary account: {primary_account.username}")
+                await prisma.clanmember.update(
+                    where={'username': primary_account.username},
+                    data={'discordId': link_request.primaryDiscordId}
+                )
+        
+        print(f"[UNLINK_REQUEST] Marking link request as UNLINKED: {request_id}")
+        await prisma.accountlinkrequest.update(
+            where={'id': request_id},
+            data={
+                'status': 'UNLINKED',
+                'reviewedAt': datetime.now(timezone.utc),
+                'reviewedBy': current_user.username
+            }
+        )
+        print(f"[UNLINK_REQUEST] Link request unlinked successfully")
+        
+        await log_admin_action(
+            prisma,
+            user_id,
+            current_user.username,
+            "unlinked_accounts",
+            f"Unlinked {link_request.primaryUsername} and {link_request.alternateUsername}"
+        )
+        
+        return {
+            "success": True,
+            "message": f"Successfully unlinked {link_request.primaryUsername} and {link_request.alternateUsername}"
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[UNLINK_REQUEST] Error unlinking account link request: {e}")
+        import traceback
+        print(f"[UNLINK_REQUEST] Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error unlinking account link request: {str(e)}")
 
 @api_router.post("/account-link-requests/switch/{target_username}")
 async def switch_to_alternate_account(

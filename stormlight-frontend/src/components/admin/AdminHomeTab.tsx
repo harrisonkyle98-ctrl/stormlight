@@ -168,6 +168,50 @@ export const AdminHomeTab = () => {
     }
   }
 
+  const handleUnlinkRequest = async (requestId: string) => {
+    if (!confirm('Are you sure you want to unlink these accounts? This will remove their link but not delete any accounts.')) {
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('access_token')
+      console.log('[UNLINK_REQUEST] Request ID:', requestId)
+      
+      const response = await fetch(`${API_URL}/api/admin/account-link-requests/${requestId}/unlink`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        alert(result.message || 'Accounts unlinked successfully!')
+        await fetchAdminData()
+      } else {
+        const error = await response.json()
+        console.error('[UNLINK_REQUEST] Error response:', error)
+        alert(`Error unlinking accounts: ${error.detail || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('[UNLINK_REQUEST] Exception:', error)
+      alert(`Error unlinking accounts: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'PENDING':
+        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+      case 'APPROVED':
+        return 'bg-green-500/20 text-green-400 border-green-500/30'
+      case 'REJECTED':
+        return 'bg-red-500/20 text-red-400 border-red-500/30'
+      case 'UNLINKED':
+        return 'bg-slate-500/20 text-slate-400 border-slate-500/30'
+      default:
+        return 'bg-slate-500/20 text-slate-400 border-slate-500/30'
+    }
+  }
+
   if (loading) {
     return <div className="text-center py-8 text-slate-400">Loading admin data...</div>
   }
@@ -227,7 +271,7 @@ export const AdminHomeTab = () => {
         <CardContent>
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {accountLinkRequests.length === 0 ? (
-              <p className="text-slate-400 text-center py-4">No pending account link requests</p>
+              <p className="text-slate-400 text-center py-4">No account link requests</p>
             ) : (
               accountLinkRequests.map((request) => (
                 <div key={request.id} className="p-4 bg-slate-600/30 rounded-lg space-y-3">
@@ -241,27 +285,55 @@ export const AdminHomeTab = () => {
                       <p className="text-sm text-slate-400">
                         Requested {new Date(request.requestedAt).toLocaleString()}
                       </p>
+                      {request.status === 'APPROVED' && request.reviewedBy && (
+                        <p className="text-xs text-green-400">
+                          Approved by {request.reviewedBy}
+                        </p>
+                      )}
+                      {request.status === 'REJECTED' && request.reviewedBy && (
+                        <p className="text-xs text-red-400">
+                          Rejected by {request.reviewedBy}
+                        </p>
+                      )}
+                      {request.status === 'UNLINKED' && request.reviewedBy && (
+                        <p className="text-xs text-slate-400">
+                          Unlinked by {request.reviewedBy}
+                        </p>
+                      )}
                     </div>
-                    <Badge variant="outline" className="text-xs bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                      Pending
+                    <Badge variant="outline" className={`text-xs ${getStatusColor(request.status)}`}>
+                      {request.status}
                     </Badge>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleApproveRequest(request.id)}
-                      className="bg-green-600 hover:bg-green-700 text-white flex-1"
-                      size="sm"
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      onClick={() => handleRejectRequest(request.id)}
-                      className="bg-red-600 hover:bg-red-700 text-white flex-1"
-                      size="sm"
-                    >
-                      Reject
-                    </Button>
-                  </div>
+                  {request.status === 'PENDING' && (
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleApproveRequest(request.id)}
+                        className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                        size="sm"
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        onClick={() => handleRejectRequest(request.id)}
+                        className="bg-red-600 hover:bg-red-700 text-white flex-1"
+                        size="sm"
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  )}
+                  {request.status === 'APPROVED' && (
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleUnlinkRequest(request.id)}
+                        className="bg-slate-600 hover:bg-slate-700 text-white w-full"
+                        size="sm"
+                      >
+                        Unlink
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))
             )}
