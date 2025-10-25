@@ -1379,7 +1379,14 @@ const Home = () => {
                 {linkedAccounts.map((account, index) => {
                   const isActive = account.discord_id === user?.discordId
                   const isPrimary = index === 0
-                  const canSwitch = !isActive
+
+                  const approvedUsernames = new Set(
+                    accountLinkRequests
+                      .filter((req: any) => req.status === 'APPROVED')
+                      .flatMap((req: any) => [req.primaryUsername, req.alternateUsername])
+                  )
+
+                  const canSwitch = !isActive && approvedUsernames.has(account.username) && !account.discord_id
                   
                   return (
                     <div 
