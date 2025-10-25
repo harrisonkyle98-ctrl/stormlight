@@ -70,42 +70,56 @@ export const AdminHomeTab = () => {
   const handleApproveRequest = async (requestId: string) => {
     try {
       const token = localStorage.getItem('access_token')
+      console.log('[APPROVE] Request ID:', requestId)
+      console.log('[APPROVE] Token:', token ? 'Present' : 'Missing')
+      
       const response = await fetch(`${API_URL}/api/admin/account-link-requests/${requestId}/approve`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       })
+
+      console.log('[APPROVE] Response status:', response.status)
+      console.log('[APPROVE] Response ok:', response.ok)
 
       if (response.ok) {
         await fetchAdminData()
         alert('Account link request approved successfully!')
       } else {
         const error = await response.json()
-        alert(error.detail || 'Failed to approve request')
+        console.error('[APPROVE] Error response:', error)
+        alert(`Error approving account link request: ${error.detail || 'Unknown error'}`)
       }
     } catch (error) {
-      console.error('Error approving request:', error)
-      alert('Failed to approve request')
+      console.error('[APPROVE] Exception:', error)
+      alert(`Error approving account link request: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
   const handleRejectRequest = async (requestId: string) => {
     try {
       const token = localStorage.getItem('access_token')
+      console.log('[REJECT] Request ID:', requestId)
+      console.log('[REJECT] Token:', token ? 'Present' : 'Missing')
+      
       const response = await fetch(`${API_URL}/api/admin/account-link-requests/${requestId}/reject`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       })
+
+      console.log('[REJECT] Response status:', response.status)
+      console.log('[REJECT] Response ok:', response.ok)
 
       if (response.ok) {
         await fetchAdminData()
         alert('Account link request rejected successfully!')
       } else {
         const error = await response.json()
-        alert(error.detail || 'Failed to reject request')
+        console.error('[REJECT] Error response:', error)
+        alert(`Error rejecting account link request: ${error.detail || 'Unknown error'}`)
       }
     } catch (error) {
-      console.error('Error rejecting request:', error)
-      alert('Failed to reject request')
+      console.error('[REJECT] Exception:', error)
+      alert(`Error rejecting account link request: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
