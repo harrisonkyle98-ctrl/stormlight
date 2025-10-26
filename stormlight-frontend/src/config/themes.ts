@@ -372,6 +372,8 @@ function hexToRgb(hex: string): string {
 export function applyTheme(theme: Theme) {
   const root = document.documentElement
   
+  document.body.setAttribute('data-theme', theme.id)
+  
   root.style.setProperty('--color-primary', theme.colors.primary)
   root.style.setProperty('--color-secondary', theme.colors.secondary)
   
@@ -428,7 +430,4 @@ export function applyTheme(theme: Theme) {
   
   root.style.setProperty('--gradient', theme.gradient)
   root.style.setProperty('--page-bg', theme.pageBg)
-  
-  document.body.style.background = theme.pageBg
-  document.body.style.backgroundAttachment = 'fixed'
 }

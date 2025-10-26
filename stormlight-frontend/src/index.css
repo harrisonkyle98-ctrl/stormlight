@@ -45,13 +45,16 @@
 }
 @layer base {
   body {
-    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    background: var(--background-gradient);
     background-attachment: fixed;
     min-height: 100vh;
+    transition: background 0.5s ease;
   }
   
   :root {
     --radius: 0.5rem;
+    
+    --background-gradient: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
     
     --color-primary: #1e3a8a;
     --color-secondary: #3b82f6;
@@ -128,6 +131,31 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+  
+  body[data-theme='blue'],
+  body[data-theme='sapphire'] {
+    --background-gradient: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  }
+  
+  body[data-theme='crimson'] {
+    --background-gradient: linear-gradient(180deg, #2d1212 0%, #1c0a0a 100%);
+  }
+  
+  body[data-theme='emerald'] {
+    --background-gradient: linear-gradient(180deg, #0f2e26 0%, #0a1f1a 100%);
+  }
+  
+  body[data-theme='obsidian'] {
+    --background-gradient: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+  }
+  
+  body[data-theme='amethyst'] {
+    --background-gradient: linear-gradient(180deg, #2e1e47 0%, #1e0a33 100%);
+  }
+  
+  body[data-theme='sunset'] {
+    --background-gradient: linear-gradient(180deg, #3a1c0d 0%, #1f0f06 100%);
   }
 }
 
