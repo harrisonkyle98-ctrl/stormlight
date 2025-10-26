@@ -237,7 +237,7 @@ export const AdminHomeTab = () => {
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center space-x-2">
-                <Clock className="w-4 h-4 text-blue-400" />
+                <Clock className="w-4 h-4 text-theme-accent-light" />
                 <span className="text-sm text-slate-400">Scheduler</span>
               </div>
               <p className="text-white font-medium">{siteHealth?.scheduler_status || 'Unknown'}</p>
@@ -264,7 +264,7 @@ export const AdminHomeTab = () => {
       <Card className="bg-slate-700/30 border-slate-600">
         <CardHeader>
           <CardTitle className="text-white flex items-center space-x-2">
-            <UserPlus className="w-5 h-5 text-blue-400" />
+            <UserPlus className="w-5 h-5 text-theme-accent-light" />
             <span>Account Link Requests</span>
           </CardTitle>
         </CardHeader>

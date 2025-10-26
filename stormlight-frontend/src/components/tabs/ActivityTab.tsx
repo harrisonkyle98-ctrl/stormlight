@@ -111,7 +111,7 @@ export const ActivityTab = ({ username, playerData: _playerData, API_URL }: TabP
               <button
                 onClick={loadMoreActivities}
                 disabled={loadingMore}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white rounded-lg transition-colors"
+                className="px-6 py-2 bg-theme-button hover:bg-theme-button-hover disabled:bg-theme-slate-700 text-white rounded-lg transition-colors"
               >
                 {loadingMore ? 'Loading...' : 'See More'}
               </button>

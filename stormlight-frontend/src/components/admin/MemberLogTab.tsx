@@ -143,7 +143,7 @@ export const MemberLogTab = () => {
       <Card className="bg-slate-700/30 border-slate-600">
         <CardHeader>
           <CardTitle className="text-white flex items-center space-x-2">
-            <Users className="w-5 h-5 text-blue-400" />
+            <Users className="w-5 h-5 text-theme-accent-light" />
             <span>Join & Leave Activity</span>
           </CardTitle>
         </CardHeader>

@@ -193,7 +193,7 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
         <p className="text-slate-500 text-sm mt-2">{error}</p>
         <button 
           onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="mt-4 px-4 py-2 bg-theme-button text-white rounded hover:bg-theme-button-hover"
         >
           Retry
         </button>
@@ -247,10 +247,10 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
               <div key={table.boss_name} className="space-y-2">
                 <button
                   onClick={() => toggleBoss(table.boss_name)}
-                  className="w-full bg-slate-600/50 px-4 py-3 rounded-lg border-l-4 border-blue-500 flex items-center justify-between hover:bg-slate-600/70 transition-colors"
+                  className="w-full bg-slate-600/50 px-4 py-3 rounded-lg border-l-4 border-theme-accent flex items-center justify-between hover:bg-slate-600/70 transition-colors"
                 >
                   <div className="flex items-center space-x-3">
-                    <Package className="w-5 h-5 text-blue-400" />
+                    <Package className="w-5 h-5 text-theme-accent-light" />
                     <h3 className="text-white font-semibold text-lg">{table.boss_name}</h3>
                     <p className="text-slate-300 text-sm">
                       ({ownedItems}/{totalItems} items)

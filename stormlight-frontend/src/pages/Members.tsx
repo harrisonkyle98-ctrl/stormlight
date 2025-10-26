@@ -113,7 +113,7 @@ const Members = () => {
     <div className="space-y-6">
       <div className="text-center">
         <h1 className="text-3xl font-bold text-white mb-2">
-          <Users className="inline-block w-8 h-8 mr-2 text-blue-400" />
+          <Users className="inline-block w-8 h-8 mr-2 text-theme-accent-light" />
           Stormlight Clan Members
         </h1>
         <p className="text-slate-300">
@@ -252,14 +252,14 @@ const Members = () => {
                           src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(member.username.replace(/\u00A0/g, ' '))}/chat.png`}
                           alt={member.username}
                         />
-                        <AvatarFallback className="bg-blue-600 text-white">
+                        <AvatarFallback className="bg-theme-button text-white">
                           <User className="w-5 h-5" />
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <Link
                           to={`/clan-member/${usernameToUrl(member.username)}`}
-                          className="text-lg font-semibold hover:text-blue-400 transition-colors block truncate"
+                          className="text-lg font-semibold hover:text-theme-accent-light transition-colors block truncate"
                           style={{
                             ...getGradientStyle(member.username, member.clan_rank),
                             textAlign: 'left',

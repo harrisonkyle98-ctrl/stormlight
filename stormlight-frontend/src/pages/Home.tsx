@@ -751,7 +751,7 @@ const Home = () => {
         <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-300">Total Members</CardTitle>
-            <Users className="h-4 w-4 text-blue-400" />
+            <Users className="h-4 w-4 text-theme-accent-light" />
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -851,7 +851,7 @@ const Home = () => {
                 {!user?.requiresLinking && (
                   <Button
                     onClick={fetchPlayerStats}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-theme-button hover:bg-theme-button-hover"
                   >
                     Retry
                   </Button>
@@ -921,7 +921,7 @@ const Home = () => {
                         src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(user.username)}/chat.png`}
                         alt={user.username}
                       />
-                      <AvatarFallback className="bg-blue-600 text-white">
+                      <AvatarFallback className="bg-theme-button text-white">
                         <User className="w-10 h-10" />
                       </AvatarFallback>
                     </Avatar>
@@ -1123,7 +1123,7 @@ const Home = () => {
                     </div>
                     <div className="bg-slate-700/30 rounded-lg p-3">
                       <p className="text-xs text-slate-400 mb-1">7 Days</p>
-                      <p className="text-lg font-bold text-blue-400">
+                      <p className="text-lg font-bold text-theme-accent-light">
                         {formatNumber(recentProgress.xp_7d)}
                       </p>
                     </div>
@@ -1440,7 +1440,7 @@ const Home = () => {
                       <div className="flex items-center gap-3">
                         <span className="text-white font-medium">{account.username}</span>
                         {isActive ? (
-                          <span className="text-xs px-2 py-1 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                          <span className="text-xs px-2 py-1 rounded bg-blue-500/20 text-theme-accent-light border border-theme-accent/30">
                             Active
                           </span>
                         ) : isPrimary ? (
@@ -1457,7 +1457,7 @@ const Home = () => {
                       {canSwitch && (
                         <Button
                           size="sm"
-                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                          className="bg-theme-button hover:bg-theme-button-hover text-white"
                           onClick={() => handleSwitchAccount(account.username)}
                         >
                           Switch
@@ -1482,7 +1482,7 @@ const Home = () => {
                     </div>
                     <Button
                       size="sm"
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      className="bg-theme-button hover:bg-theme-button-hover text-white"
                       onClick={() => handleSwitchAccount(request.alternateUsername)}
                     >
                       Switch
@@ -1535,7 +1535,7 @@ const Home = () => {
                     <Button
                       onClick={handleSubmitLinkRequest}
                       disabled={!newUsername.trim() || linkRequestLoading}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      className="bg-theme-button hover:bg-theme-button-hover text-white"
                     >
                       {linkRequestLoading ? 'Submitting...' : '+ Add Another Account'}
                     </Button>

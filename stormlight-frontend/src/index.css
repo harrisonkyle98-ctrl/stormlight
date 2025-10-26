@@ -1,10 +1,58 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  .bg-theme-primary {
+    background-color: var(--color-primary);
+  }
+  .bg-theme-secondary {
+    background-color: var(--color-secondary);
+  }
+  .bg-theme-card {
+    background-color: var(--color-card-bg);
+  }
+  .border-theme-card {
+    border-color: var(--color-card-border);
+  }
+  .text-theme-accent {
+    color: var(--color-accent);
+  }
+  .text-theme-accent-light {
+    color: var(--color-accent-light);
+  }
+  .bg-theme-button {
+    background-color: var(--color-button);
+  }
+  .hover\:bg-theme-button-hover:hover {
+    background-color: var(--color-button-hover);
+  }
+  .bg-gradient-theme {
+    background: var(--gradient);
+  }
+}
 @layer base {
   :root {
-    --radius: 0.5rem
-  ;
+    --radius: 0.5rem;
+    
+    /* Theme Colors - Default Sapphire */
+    --color-primary: #1e3a8a;
+    --color-secondary: #3b82f6;
+    --color-slate-800: #1e293b;
+    --color-slate-700: #334155;
+    --color-slate-600: #475569;
+    --color-slate-500: #64748b;
+    --color-slate-400: #94a3b8;
+    --color-slate-300: #cbd5e1;
+    --color-accent: #3b82f6;
+    --color-accent-hover: #2563eb;
+    --color-accent-light: #60a5fa;
+    --color-button: #2563eb;
+    --color-button-hover: #1d4ed8;
+    --color-card-bg: rgba(30, 41, 59, 0.5);
+    --color-card-border: #334155;
+    --gradient: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -12,7 +60,8 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%}
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
   .dark {
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
@@ -21,7 +70,7 @@
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 

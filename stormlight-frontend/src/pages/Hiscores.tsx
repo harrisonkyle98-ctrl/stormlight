@@ -217,14 +217,14 @@ const Hiscores = () => {
                       <Badge variant="outline" className="text-yellow-400 border-yellow-400">
                         #{globalRank}
                       </Badge>
-                      <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                      <div className="w-10 h-10 bg-theme-button rounded-full flex items-center justify-center">
                         <User className="w-5 h-5 text-white" />
                       </div>
                     </div>
                     <div>
                       <Link 
                         to={`/clan-member/${usernameToUrl(player.username)}`}
-                        className="text-lg font-semibold hover:text-blue-400 transition-colors"
+                        className="text-lg font-semibold hover:text-theme-accent-light transition-colors"
                         style={getGradientStyle(player.username, clanMembers.find(m => m.username === player.username)?.clan_rank)}
                       >
                         {player.username}
@@ -250,7 +250,7 @@ const Hiscores = () => {
                       {skillData.rank && (
                         <div>
                           <p className="text-sm text-slate-400">Rank</p>
-                          <p className="text-lg font-semibold text-blue-400">
+                          <p className="text-lg font-semibold text-theme-accent-light">
                             #{skillData.rank.toLocaleString()}
                           </p>
                         </div>

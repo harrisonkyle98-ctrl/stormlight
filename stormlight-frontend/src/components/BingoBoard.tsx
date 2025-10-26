@@ -207,7 +207,7 @@ export const BingoBoard = ({
                         <div key={player.username} className="flex items-center justify-between bg-slate-700/50 p-2 rounded">
                           <Link 
                             to={`/clan-member/${usernameToUrl(player.username)}`}
-                            className="text-blue-400 hover:text-blue-300 transition-colors"
+                            className="text-theme-accent-light hover:text-blue-300 transition-colors"
                           >
                             {player.username}
                           </Link>
@@ -256,7 +256,7 @@ export const BingoBoard = ({
                           </span>
                           <Link 
                             to={`/clan-member/${usernameToUrl(player.username)}`}
-                            className="text-blue-400 hover:text-blue-300 transition-colors"
+                            className="text-theme-accent-light hover:text-blue-300 transition-colors"
                           >
                             {player.username}
                           </Link>

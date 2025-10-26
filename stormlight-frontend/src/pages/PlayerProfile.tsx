@@ -362,7 +362,7 @@ const PlayerProfile = () => {
   if (error || !playerData) {
     return (
       <div className="space-y-6">
-        <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
+        <Button asChild className="bg-theme-button hover:bg-theme-button-hover text-white">
           <Link to="/members">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Members
@@ -439,7 +439,7 @@ const PlayerProfile = () => {
         return 'text-yellow-400 border-yellow-400'
       }
     }
-    return 'text-blue-400 border-blue-400'
+    return 'text-theme-accent-light border-blue-400'
   }
 
   const tabs = [
@@ -546,7 +546,7 @@ const PlayerProfile = () => {
                     <TableCell className="py-3">
                       <div className="flex items-center space-x-2">
                         {data.rank ? (
-                          <span className="text-blue-400 font-medium">
+                          <span className="text-theme-accent-light font-medium">
                             #{data.rank.toLocaleString()}
                           </span>
                         ) : (
@@ -604,7 +604,7 @@ const PlayerProfile = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
+        <Button asChild className="bg-theme-button hover:bg-theme-button-hover text-white">
           <Link to="/members">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Members
@@ -615,7 +615,7 @@ const PlayerProfile = () => {
             <Button
               onClick={handleOpenBadgeModal}
               size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-theme-button hover:bg-theme-button-hover text-white"
             >
               <Plus className="w-4 h-4" />
             </Button>
@@ -624,7 +624,7 @@ const PlayerProfile = () => {
             onClick={handleRefresh}
             disabled={refreshing || (lastRefresh ? Date.now() - lastRefresh < 300000 : false)}
             size="sm"
-            className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:bg-blue-800"
+            className="bg-theme-button hover:bg-theme-button-hover text-white disabled:opacity-50 disabled:bg-theme-slate-700"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           </Button>
@@ -659,7 +659,7 @@ const PlayerProfile = () => {
                       src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(urlToUsername(username || ''))}/chat.png`}
                       alt={urlToUsername(username || '')}
                     />
-                    <AvatarFallback className="bg-blue-600 text-white">
+                    <AvatarFallback className="bg-theme-button text-white">
                       <User className="w-10 h-10" />
                     </AvatarFallback>
                   </Avatar>
@@ -723,7 +723,7 @@ const PlayerProfile = () => {
                             <div>
                               <div className="font-semibold text-white">{badge.name}</div>
                               {badge.id.startsWith('league-') && playerData.league_points && (
-                                <div className="text-blue-400 text-sm mt-1">
+                                <div className="text-theme-accent-light text-sm mt-1">
                                   League Points: {playerData.league_points.toLocaleString()}
                                 </div>
                               )}
@@ -895,7 +895,7 @@ const PlayerProfile = () => {
                       {overallStats.rank && (
                         <div className="text-center">
                           <p className="text-xs text-slate-400 mb-1">Overall Rank</p>
-                          <p className="text-xl font-bold text-blue-400">
+                          <p className="text-xl font-bold text-theme-accent-light">
                             #{overallStats.rank.toLocaleString()}
                           </p>
                         </div>
@@ -912,7 +912,7 @@ const PlayerProfile = () => {
                         {playerData.clan_rank_number && (
                           <div className="text-center">
                             <p className="text-xs text-slate-400 mb-1">Clan Rank</p>
-                            <p className="text-xl font-bold text-blue-400">
+                            <p className="text-xl font-bold text-theme-accent-light">
                               #{playerData.clan_rank_number.toLocaleString()}
                             </p>
                           </div>
@@ -1007,7 +1007,7 @@ const PlayerProfile = () => {
                             <div className="text-green-400">
                               Level {playerData.stats[skill.name]?.level || 0}
                             </div>
-                            <div className="text-blue-400">
+                            <div className="text-theme-accent-light">
                               {(playerData.stats[skill.name]?.xp || 0).toLocaleString()} XP
                             </div>
                             <div className="text-yellow-400">
@@ -1070,7 +1070,7 @@ const PlayerProfile = () => {
                             <div className="text-green-400">
                               Level {playerData.stats[skill.name]?.level || 0}
                             </div>
-                            <div className="text-blue-400">
+                            <div className="text-theme-accent-light">
                               {(playerData.stats[skill.name]?.xp || 0).toLocaleString()} XP
                             </div>
                             <div className="text-yellow-400">
@@ -1133,7 +1133,7 @@ const PlayerProfile = () => {
                             <div className="text-green-400">
                               Level {playerData.stats[skill.name]?.level || 0}
                             </div>
-                            <div className="text-blue-400">
+                            <div className="text-theme-accent-light">
                               {(playerData.stats[skill.name]?.xp || 0).toLocaleString()} XP
                             </div>
                             <div className="text-yellow-400">
@@ -1172,7 +1172,7 @@ const PlayerProfile = () => {
                       onClick={() => setActiveTab(tab.id)}
                       className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
                         activeTab === tab.id
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-theme-button text-white'
                           : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700 hover:text-white'
                       }`}
                     >

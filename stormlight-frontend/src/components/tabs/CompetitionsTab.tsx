@@ -255,7 +255,7 @@ export const CompetitionsTab = ({ username, playerData: _playerData, API_URL }: 
             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
             disabled={currentPage === 1}
             size="sm"
-            className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:bg-blue-800"
+            className="bg-theme-button hover:bg-theme-button-hover text-white disabled:opacity-50 disabled:bg-theme-slate-700"
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
@@ -266,7 +266,7 @@ export const CompetitionsTab = ({ username, playerData: _playerData, API_URL }: 
             onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
             disabled={currentPage === totalPages}
             size="sm"
-            className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:bg-blue-800"
+            className="bg-theme-button hover:bg-theme-button-hover text-white disabled:opacity-50 disabled:bg-theme-slate-700"
           >
             <ChevronRight className="w-4 h-4" />
           </Button>

@@ -293,7 +293,7 @@ export const CompetitionManagementTab = () => {
         <h2 className="text-xl font-semibold text-white">Competition Management</h2>
         <Button
           onClick={() => setShowCreateForm(true)}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-theme-button hover:bg-theme-button-hover"
         >
           <Plus className="w-4 h-4 mr-2" />
           Create Competition
@@ -627,7 +627,7 @@ export const CompetitionManagementTab = () => {
       <Card className="bg-slate-700/30 border-slate-600">
         <CardHeader>
           <CardTitle className="text-white flex items-center space-x-2">
-            <Trophy className="w-5 h-5 text-blue-400" />
+            <Trophy className="w-5 h-5 text-theme-accent-light" />
             <span>Active Competitions</span>
           </CardTitle>
         </CardHeader>
@@ -647,7 +647,7 @@ export const CompetitionManagementTab = () => {
                         <Badge className={`${color} text-white capitalize`}>
                           {status}
                         </Badge>
-                        <Badge variant="outline" className="text-blue-400 border-blue-400">
+                        <Badge variant="outline" className="text-theme-accent-light border-blue-400">
                           {competition.type}
                         </Badge>
                       </div>

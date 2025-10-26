@@ -19,6 +19,23 @@ export default {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
+  			},
+  			theme: {
+  				primary: 'var(--color-primary)',
+  				secondary: 'var(--color-secondary)',
+  				accent: 'var(--color-accent)',
+  				'accent-hover': 'var(--color-accent-hover)',
+  				'accent-light': 'var(--color-accent-light)',
+  				button: 'var(--color-button)',
+  				'button-hover': 'var(--color-button-hover)',
+  				'card-bg': 'var(--color-card-bg)',
+  				'card-border': 'var(--color-card-border)',
+  				'slate-800': 'var(--color-slate-800)',
+  				'slate-700': 'var(--color-slate-700)',
+  				'slate-600': 'var(--color-slate-600)',
+  				'slate-500': 'var(--color-slate-500)',
+  				'slate-400': 'var(--color-slate-400)',
+  				'slate-300': 'var(--color-slate-300)'
   			}
   		},
   		keyframes: {

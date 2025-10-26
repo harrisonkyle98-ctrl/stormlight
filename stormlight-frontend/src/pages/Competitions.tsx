@@ -107,7 +107,7 @@ const Competitions = () => {
         <Button
           onClick={() => setActiveTab('active')}
           variant="default"
-          className={activeTab === 'active' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600/60 hover:bg-blue-600/80'}
+          className={activeTab === 'active' ? 'bg-theme-button hover:bg-theme-button-hover' : 'bg-theme-button/60 hover:bg-theme-button/80'}
         >
           <Trophy className="w-4 h-4 mr-2" />
           Active
@@ -115,7 +115,7 @@ const Competitions = () => {
         <Button
           onClick={() => setActiveTab('upcoming')}
           variant="default"
-          className={activeTab === 'upcoming' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600/60 hover:bg-blue-600/80'}
+          className={activeTab === 'upcoming' ? 'bg-theme-button hover:bg-theme-button-hover' : 'bg-theme-button/60 hover:bg-theme-button/80'}
         >
           <Calendar className="w-4 h-4 mr-2" />
           Upcoming
@@ -123,7 +123,7 @@ const Competitions = () => {
         <Button
           onClick={() => setActiveTab('ended')}
           variant="default"
-          className={activeTab === 'ended' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600/60 hover:bg-blue-600/80'}
+          className={activeTab === 'ended' ? 'bg-theme-button hover:bg-theme-button-hover' : 'bg-theme-button/60 hover:bg-theme-button/80'}
         >
           <Users className="w-4 h-4 mr-2" />
           Completed
@@ -258,7 +258,7 @@ const Competitions = () => {
                             </div>
                           )}
                         </div>
-                        <Button asChild variant="default" className="bg-blue-600 hover:bg-blue-700">
+                        <Button asChild variant="default" className="bg-theme-button hover:bg-theme-button-hover">
                           <Link to={`/competitions/${competition.id}`}>
                             View Leaderboard
                           </Link>
@@ -267,7 +267,7 @@ const Competitions = () => {
                     )}
                     {!(competition.rewardFirstGp || competition.rewardSecondGp || competition.rewardThirdGp) && (
                       <div className="flex justify-end pt-4 border-t border-slate-700">
-                        <Button asChild variant="default" className="bg-blue-600 hover:bg-blue-700">
+                        <Button asChild variant="default" className="bg-theme-button hover:bg-theme-button-hover">
                           <Link to={`/competitions/${competition.id}`}>
                             View Leaderboard
                           </Link>

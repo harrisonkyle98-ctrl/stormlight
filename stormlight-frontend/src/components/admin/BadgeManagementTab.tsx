@@ -166,7 +166,7 @@ export const BadgeManagementTab = () => {
         <h2 className="text-xl font-semibold text-white">Custom Badge Management</h2>
         <Button 
           onClick={() => setShowCreateForm(true)}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-theme-button hover:bg-theme-button-hover"
         >
           <Plus className="w-4 h-4 mr-2" />
           Create Badge

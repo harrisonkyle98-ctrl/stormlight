@@ -39,7 +39,7 @@ const Navbar = () => {
                   to={path}
                   className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive(path)
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-theme-button text-white'
                       : 'text-slate-300 hover:text-white hover:bg-slate-700'
                   }`}
                 >
@@ -54,7 +54,7 @@ const Navbar = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8 bg-blue-600">
+                  <Avatar className="h-8 w-8 bg-theme-button">
                     <AvatarImage 
                       src={
                         user?.isLinked && user?.username
@@ -66,7 +66,7 @@ const Navbar = () => {
                       alt={user?.username} 
                       className="relative z-10"
                     />
-                    <AvatarFallback className="bg-blue-600 text-white">
+                    <AvatarFallback className="bg-theme-button text-white">
                       {user?.username?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -113,7 +113,7 @@ const Navbar = () => {
                 to={path}
                 className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive(path)
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-theme-button text-white'
                     : 'text-slate-300 hover:text-white hover:bg-slate-700'
                 }`}
               >

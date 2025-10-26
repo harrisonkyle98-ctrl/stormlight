@@ -233,11 +233,11 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
           <div className="flex gap-2">
             <button
               onClick={() => setView('day')}
-              className={`px-3 py-1 rounded text-sm ${view==='day'?'bg-blue-600 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+              className={`px-3 py-1 rounded text-sm ${view==='day'?'bg-theme-button text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
             >Day</button>
             <button
               onClick={() => setView('month')}
-              className={`px-3 py-1 rounded text-sm ${view==='month'?'bg-blue-600 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+              className={`px-3 py-1 rounded text-sm ${view==='month'?'bg-theme-button text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
             >Month</button>
           </div>
         </div>
@@ -247,13 +247,13 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
           <div className="flex gap-2">
             <button
               onClick={() => setChartType('line')}
-              className={`px-3 py-1 rounded text-sm ${chartType==='line'?'bg-blue-600 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+              className={`px-3 py-1 rounded text-sm ${chartType==='line'?'bg-theme-button text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
             >
               Line
             </button>
             <button
               onClick={() => setChartType('bar')}
-              className={`px-3 py-1 rounded text-sm ${chartType==='bar'?'bg-blue-600 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+              className={`px-3 py-1 rounded text-sm ${chartType==='bar'?'bg-theme-button text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
             >
               Bar
             </button>

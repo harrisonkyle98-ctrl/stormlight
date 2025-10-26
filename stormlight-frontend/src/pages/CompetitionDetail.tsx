@@ -169,7 +169,7 @@ const CompetitionDetail = () => {
   if (error || !competition) {
     return (
       <div className="space-y-6">
-        <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
+        <Button asChild className="bg-theme-button hover:bg-theme-button-hover text-white">
           <Link to="/competitions">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Competitions
@@ -188,7 +188,7 @@ const CompetitionDetail = () => {
 
   return (
     <div className="space-y-6">
-      <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
+      <Button asChild className="bg-theme-button hover:bg-theme-button-hover text-white">
         <Link to="/competitions">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Competitions
@@ -229,7 +229,7 @@ const CompetitionDetail = () => {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
             <div className="flex items-center space-x-3">
-              <Calendar className="w-5 h-5 text-blue-400" />
+              <Calendar className="w-5 h-5 text-theme-accent-light" />
               <div>
                 <p className="text-sm text-slate-400">Start Date</p>
                 <p className="text-white font-medium">
@@ -429,7 +429,7 @@ const CompetitionDetail = () => {
                   </Badge>
                   <Link 
                     to={`/clan-member/${usernameToUrl(player.username)}`}
-                    className="text-lg font-semibold hover:text-blue-400 transition-colors"
+                    className="text-lg font-semibold hover:text-theme-accent-light transition-colors"
                     style={getGradientStyle(player.username, clanMembers.find(m => m.username === player.username)?.clan_rank)}
                   >
                     {player.username}
@@ -498,7 +498,7 @@ const CompetitionDetail = () => {
                       size="sm"
                       onClick={() => fetchLeaderboardPage(currentPage - 1)}
                       disabled={currentPage === 1 || paginationLoading}
-                      className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:bg-blue-600/50"
+                      className="bg-theme-button hover:bg-theme-button-hover text-white disabled:opacity-50 disabled:bg-theme-button/50"
                     >
                       {paginationLoading && currentPage > 1 ? 'Loading...' : 'Previous'}
                     </Button>
@@ -509,7 +509,7 @@ const CompetitionDetail = () => {
                       size="sm"
                       onClick={() => fetchLeaderboardPage(currentPage + 1)}
                       disabled={currentPage === totalPages || paginationLoading}
-                      className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:bg-blue-600/50"
+                      className="bg-theme-button hover:bg-theme-button-hover text-white disabled:opacity-50 disabled:bg-theme-button/50"
                     >
                       {paginationLoading && currentPage < totalPages ? 'Loading...' : 'Next'}
                     </Button>

@@ -84,7 +84,7 @@ const Login = () => {
                 href="https://discord.com/invite/stormlight"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300"
+                className="text-theme-accent-light hover:text-blue-300"
               >
                 Join our Discord server to get started!
               </a>
