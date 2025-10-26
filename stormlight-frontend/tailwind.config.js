@@ -11,15 +11,15 @@ export default {
   		},
   		colors: {
   			slate: {
-  				900: 'var(--color-slate-900)',
-  				800: 'var(--color-slate-800)',
-  				700: 'var(--color-slate-700)',
-  				600: 'var(--color-slate-600)',
-  				500: 'var(--color-slate-500)',
-  				400: 'var(--color-slate-400)',
-  				300: 'var(--color-slate-300)',
-  				200: 'var(--color-slate-200)',
-  				100: 'var(--color-slate-100)'
+  				900: ({ opacityValue }) => `rgb(var(--color-slate-900-rgb) / ${opacityValue !== undefined ? opacityValue : 1})`,
+  				800: ({ opacityValue }) => `rgb(var(--color-slate-800-rgb) / ${opacityValue !== undefined ? opacityValue : 1})`,
+  				700: ({ opacityValue }) => `rgb(var(--color-slate-700-rgb) / ${opacityValue !== undefined ? opacityValue : 1})`,
+  				600: ({ opacityValue }) => `rgb(var(--color-slate-600-rgb) / ${opacityValue !== undefined ? opacityValue : 1})`,
+  				500: ({ opacityValue }) => `rgb(var(--color-slate-500-rgb) / ${opacityValue !== undefined ? opacityValue : 1})`,
+  				400: ({ opacityValue }) => `rgb(var(--color-slate-400-rgb) / ${opacityValue !== undefined ? opacityValue : 1})`,
+  				300: ({ opacityValue }) => `rgb(var(--color-slate-300-rgb) / ${opacityValue !== undefined ? opacityValue : 1})`,
+  				200: ({ opacityValue }) => `rgb(var(--color-slate-200-rgb) / ${opacityValue !== undefined ? opacityValue : 1})`,
+  				100: ({ opacityValue }) => `rgb(var(--color-slate-100-rgb) / ${opacityValue !== undefined ? opacityValue : 1})`
   			},
   			blue: {
   				500: 'var(--color-primary)',

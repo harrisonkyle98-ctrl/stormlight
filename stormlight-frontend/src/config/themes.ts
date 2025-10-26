@@ -361,6 +361,14 @@ export const themes: Record<string, Theme> = {
 
 export const defaultTheme = 'blue'
 
+function hexToRgb(hex: string): string {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+  if (result) {
+    return `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}`
+  }
+  return '0 0 0'
+}
+
 export function applyTheme(theme: Theme) {
   const root = document.documentElement
   
@@ -376,6 +384,16 @@ export function applyTheme(theme: Theme) {
   root.style.setProperty('--color-slate-300', theme.colors.slate300)
   root.style.setProperty('--color-slate-200', theme.colors.slate200)
   root.style.setProperty('--color-slate-100', theme.colors.slate100)
+  
+  root.style.setProperty('--color-slate-900-rgb', hexToRgb(theme.colors.slate900))
+  root.style.setProperty('--color-slate-800-rgb', hexToRgb(theme.colors.slate800))
+  root.style.setProperty('--color-slate-700-rgb', hexToRgb(theme.colors.slate700))
+  root.style.setProperty('--color-slate-600-rgb', hexToRgb(theme.colors.slate600))
+  root.style.setProperty('--color-slate-500-rgb', hexToRgb(theme.colors.slate500))
+  root.style.setProperty('--color-slate-400-rgb', hexToRgb(theme.colors.slate400))
+  root.style.setProperty('--color-slate-300-rgb', hexToRgb(theme.colors.slate300))
+  root.style.setProperty('--color-slate-200-rgb', hexToRgb(theme.colors.slate200))
+  root.style.setProperty('--color-slate-100-rgb', hexToRgb(theme.colors.slate100))
   
   root.style.setProperty('--color-accent', theme.colors.accent)
   root.style.setProperty('--color-accent-hover', theme.colors.accentHover)

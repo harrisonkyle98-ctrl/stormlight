@@ -12,6 +12,15 @@
   .bg-theme-card {
     background-color: var(--color-card-bg);
   }
+  .bg-theme-card-50 {
+    background-color: color-mix(in srgb, var(--color-slate-800) 50%, transparent);
+  }
+  .bg-theme-card-70 {
+    background-color: color-mix(in srgb, var(--color-slate-800) 70%, transparent);
+  }
+  .bg-theme-card-80 {
+    background-color: color-mix(in srgb, var(--color-slate-800) 80%, transparent);
+  }
   .border-theme-card {
     border-color: var(--color-card-border);
   }
@@ -26,6 +35,9 @@
   }
   .hover\:bg-theme-button-hover:hover {
     background-color: var(--color-button-hover);
+  }
+  .hover\:bg-theme-card:hover {
+    background-color: var(--color-card-bg-hover);
   }
   .bg-gradient-theme {
     background: var(--gradient);
@@ -53,6 +65,16 @@
     --color-slate-300: #cbd5e1;
     --color-slate-200: #e2e8f0;
     --color-slate-100: #f1f5f9;
+    
+    --color-slate-900-rgb: 15 23 42;
+    --color-slate-800-rgb: 30 41 59;
+    --color-slate-700-rgb: 51 65 85;
+    --color-slate-600-rgb: 71 85 105;
+    --color-slate-500-rgb: 100 116 139;
+    --color-slate-400-rgb: 148 163 184;
+    --color-slate-300-rgb: 203 213 225;
+    --color-slate-200-rgb: 226 232 240;
+    --color-slate-100-rgb: 241 245 249;
     
     --color-accent: #3b82f6;
     --color-accent-hover: #2563eb;
