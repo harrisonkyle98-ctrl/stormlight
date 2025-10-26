@@ -45,13 +45,12 @@
 }
 @layer base {
   html, body {
-    height: 100%;
-    min-height: 100vh;
+    min-height: 100%;
     background: var(--background-gradient);
     background-size: cover;
     background-attachment: fixed;
     background-repeat: no-repeat;
-    background-position: center;
+    background-position: center top;
     transition: background 0.5s ease-in-out;
   }
   
@@ -137,9 +136,12 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   
-  body[data-theme='blue'],
-  body[data-theme='sapphire'] {
+  body[data-theme='blue'] {
     --background-gradient: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  }
+  
+  body[data-theme='sapphire'] {
+    --background-gradient: linear-gradient(180deg, #081d47 0%, #0b2c78 100%);
   }
   
   body[data-theme='crimson'] {
