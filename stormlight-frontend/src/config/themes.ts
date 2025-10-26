@@ -59,7 +59,7 @@ export const themes: Record<string, Theme> = {
       secondary: '#3b82f6',
       
       slate900: '#0f172a',
-      slate800: 'rgba(30, 41, 59, 0.8)',
+      slate800: '#1e293b',
       slate700: '#334155',
       slate600: '#475569',
       slate500: '#64748b',
@@ -110,7 +110,7 @@ export const themes: Record<string, Theme> = {
       secondary: '#dc2626',
       
       slate900: '#1c0a0a',
-      slate800: 'rgba(45, 18, 18, 0.8)',
+      slate800: '#2d1212',
       slate700: '#450a0a',
       slate600: '#7f1d1d',
       slate500: '#991b1b',
@@ -161,7 +161,7 @@ export const themes: Record<string, Theme> = {
       secondary: '#10b981',
       
       slate900: '#0a1f1a',
-      slate800: 'rgba(15, 46, 38, 0.8)',
+      slate800: '#0f2e26',
       slate700: '#064e3b',
       slate600: '#047857',
       slate500: '#059669',
@@ -212,7 +212,7 @@ export const themes: Record<string, Theme> = {
       secondary: '#475569',
       
       slate900: '#020617',
-      slate800: 'rgba(15, 23, 42, 0.8)',
+      slate800: '#0f172a',
       slate700: '#1e293b',
       slate600: '#334155',
       slate500: '#475569',
@@ -263,7 +263,7 @@ export const themes: Record<string, Theme> = {
       secondary: '#a855f7',
       
       slate900: '#1e0a33',
-      slate800: 'rgba(46, 30, 71, 0.8)',
+      slate800: '#2e1e47',
       slate700: '#581c87',
       slate600: '#6b21a8',
       slate500: '#7e22ce',
@@ -314,7 +314,7 @@ export const themes: Record<string, Theme> = {
       secondary: '#fb923c',
       
       slate900: '#1f0f06',
-      slate800: 'rgba(58, 28, 13, 0.8)',
+      slate800: '#3a1c0d',
       slate700: '#7c2d12',
       slate600: '#9a3412',
       slate500: '#c2410c',
