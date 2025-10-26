@@ -33,7 +33,7 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div>
       <Navbar />
       <main className="w-full px-6 py-4">
         <div className="max-w-7xl mx-auto">
