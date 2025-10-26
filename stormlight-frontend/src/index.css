@@ -32,6 +32,12 @@
   }
 }
 @layer base {
+  body {
+    background: var(--gradient);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  
   :root {
     --radius: 0.5rem;
     
