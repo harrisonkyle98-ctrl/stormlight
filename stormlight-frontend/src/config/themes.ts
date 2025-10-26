@@ -47,6 +47,7 @@ export interface Theme {
     error: string
   }
   gradient: string
+  pageBg: string
 }
 
 export const themes: Record<string, Theme> = {
@@ -58,7 +59,7 @@ export const themes: Record<string, Theme> = {
       secondary: '#3b82f6',
       
       slate900: '#0f172a',
-      slate800: '#1e293b',
+      slate800: 'rgba(30, 41, 59, 0.8)',
       slate700: '#334155',
       slate600: '#475569',
       slate500: '#64748b',
@@ -76,9 +77,9 @@ export const themes: Record<string, Theme> = {
       buttonHover: '#1d4ed8',
       buttonActive: '#1e40af',
       
-      cardBg: 'rgba(30, 41, 59, 0.5)',
-      cardBgHover: 'rgba(30, 41, 59, 0.7)',
-      cardBorder: '#334155',
+      cardBg: 'rgba(30, 41, 59, 0.8)',
+      cardBgHover: 'rgba(30, 41, 59, 0.95)',
+      cardBorder: 'rgba(51, 65, 85, 0.6)',
       cardBorderHover: '#475569',
       
       textPrimary: '#f1f5f9',
@@ -98,7 +99,8 @@ export const themes: Record<string, Theme> = {
       warning: '#f59e0b',
       error: '#ef4444'
     },
-    gradient: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)'
+    gradient: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+    pageBg: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)'
   },
   crimson: {
     id: 'crimson',
@@ -108,7 +110,7 @@ export const themes: Record<string, Theme> = {
       secondary: '#dc2626',
       
       slate900: '#1c0a0a',
-      slate800: '#2d1212',
+      slate800: 'rgba(45, 18, 18, 0.8)',
       slate700: '#450a0a',
       slate600: '#7f1d1d',
       slate500: '#991b1b',
@@ -126,9 +128,9 @@ export const themes: Record<string, Theme> = {
       buttonHover: '#b91c1c',
       buttonActive: '#991b1b',
       
-      cardBg: 'rgba(69, 10, 10, 0.4)',
-      cardBgHover: 'rgba(69, 10, 10, 0.6)',
-      cardBorder: '#7f1d1d',
+      cardBg: 'rgba(69, 10, 10, 0.8)',
+      cardBgHover: 'rgba(69, 10, 10, 0.95)',
+      cardBorder: 'rgba(127, 29, 29, 0.6)',
       cardBorderHover: '#991b1b',
       
       textPrimary: '#fef2f2',
@@ -148,7 +150,8 @@ export const themes: Record<string, Theme> = {
       warning: '#f59e0b',
       error: '#ef4444'
     },
-    gradient: 'linear-gradient(135deg, #7f1d1d 0%, #fbbf24 100%)'
+    gradient: 'linear-gradient(135deg, #7f1d1d 0%, #fbbf24 100%)',
+    pageBg: 'linear-gradient(180deg, #2d1212 0%, #1c0a0a 100%)'
   },
   emerald: {
     id: 'emerald',
@@ -158,7 +161,7 @@ export const themes: Record<string, Theme> = {
       secondary: '#10b981',
       
       slate900: '#0a1f1a',
-      slate800: '#0f2e26',
+      slate800: 'rgba(15, 46, 38, 0.8)',
       slate700: '#064e3b',
       slate600: '#047857',
       slate500: '#059669',
@@ -176,9 +179,9 @@ export const themes: Record<string, Theme> = {
       buttonHover: '#059669',
       buttonActive: '#047857',
       
-      cardBg: 'rgba(6, 78, 59, 0.4)',
-      cardBgHover: 'rgba(6, 78, 59, 0.6)',
-      cardBorder: '#047857',
+      cardBg: 'rgba(6, 78, 59, 0.8)',
+      cardBgHover: 'rgba(6, 78, 59, 0.95)',
+      cardBorder: 'rgba(4, 120, 87, 0.6)',
       cardBorderHover: '#059669',
       
       textPrimary: '#ecfdf5',
@@ -198,7 +201,8 @@ export const themes: Record<string, Theme> = {
       warning: '#f59e0b',
       error: '#ef4444'
     },
-    gradient: 'linear-gradient(135deg, #064e3b 0%, #10b981 100%)'
+    gradient: 'linear-gradient(135deg, #064e3b 0%, #10b981 100%)',
+    pageBg: 'linear-gradient(180deg, #0f2e26 0%, #0a1f1a 100%)'
   },
   obsidian: {
     id: 'obsidian',
@@ -208,7 +212,7 @@ export const themes: Record<string, Theme> = {
       secondary: '#475569',
       
       slate900: '#020617',
-      slate800: '#0f172a',
+      slate800: 'rgba(15, 23, 42, 0.8)',
       slate700: '#1e293b',
       slate600: '#334155',
       slate500: '#475569',
@@ -226,9 +230,9 @@ export const themes: Record<string, Theme> = {
       buttonHover: '#334155',
       buttonActive: '#1e293b',
       
-      cardBg: 'rgba(15, 23, 42, 0.6)',
-      cardBgHover: 'rgba(30, 41, 59, 0.7)',
-      cardBorder: '#334155',
+      cardBg: 'rgba(15, 23, 42, 0.8)',
+      cardBgHover: 'rgba(30, 41, 59, 0.95)',
+      cardBorder: 'rgba(51, 65, 85, 0.6)',
       cardBorderHover: '#475569',
       
       textPrimary: '#f1f5f9',
@@ -248,7 +252,8 @@ export const themes: Record<string, Theme> = {
       warning: '#f59e0b',
       error: '#ef4444'
     },
-    gradient: 'linear-gradient(135deg, #0f172a 0%, #475569 100%)'
+    gradient: 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+    pageBg: 'linear-gradient(180deg, #0f172a 0%, #020617 100%)'
   },
   amethyst: {
     id: 'amethyst',
@@ -258,7 +263,7 @@ export const themes: Record<string, Theme> = {
       secondary: '#a855f7',
       
       slate900: '#1e0a33',
-      slate800: '#2e1e47',
+      slate800: 'rgba(46, 30, 71, 0.8)',
       slate700: '#581c87',
       slate600: '#6b21a8',
       slate500: '#7e22ce',
@@ -276,9 +281,9 @@ export const themes: Record<string, Theme> = {
       buttonHover: '#7e22ce',
       buttonActive: '#6b21a8',
       
-      cardBg: 'rgba(88, 28, 135, 0.4)',
-      cardBgHover: 'rgba(88, 28, 135, 0.6)',
-      cardBorder: '#6b21a8',
+      cardBg: 'rgba(88, 28, 135, 0.8)',
+      cardBgHover: 'rgba(88, 28, 135, 0.95)',
+      cardBorder: 'rgba(107, 33, 168, 0.6)',
       cardBorderHover: '#7e22ce',
       
       textPrimary: '#faf5ff',
@@ -298,7 +303,8 @@ export const themes: Record<string, Theme> = {
       warning: '#f59e0b',
       error: '#ef4444'
     },
-    gradient: 'linear-gradient(135deg, #581c87 0%, #a855f7 100%)'
+    gradient: 'linear-gradient(135deg, #581c87 0%, #a855f7 100%)',
+    pageBg: 'linear-gradient(180deg, #2e1e47 0%, #1e0a33 100%)'
   },
   sunset: {
     id: 'sunset',
@@ -308,7 +314,7 @@ export const themes: Record<string, Theme> = {
       secondary: '#fb923c',
       
       slate900: '#1f0f06',
-      slate800: '#3a1c0d',
+      slate800: 'rgba(58, 28, 13, 0.8)',
       slate700: '#7c2d12',
       slate600: '#9a3412',
       slate500: '#c2410c',
@@ -326,9 +332,9 @@ export const themes: Record<string, Theme> = {
       buttonHover: '#c2410c',
       buttonActive: '#9a3412',
       
-      cardBg: 'rgba(124, 45, 18, 0.4)',
-      cardBgHover: 'rgba(124, 45, 18, 0.6)',
-      cardBorder: '#9a3412',
+      cardBg: 'rgba(124, 45, 18, 0.8)',
+      cardBgHover: 'rgba(124, 45, 18, 0.95)',
+      cardBorder: 'rgba(154, 52, 18, 0.6)',
       cardBorderHover: '#c2410c',
       
       textPrimary: '#ffedd5',
@@ -348,7 +354,8 @@ export const themes: Record<string, Theme> = {
       warning: '#f59e0b',
       error: '#ef4444'
     },
-    gradient: 'linear-gradient(135deg, #c2410c 0%, #fbbf24 100%)'
+    gradient: 'linear-gradient(135deg, #c2410c 0%, #fbbf24 100%)',
+    pageBg: 'linear-gradient(180deg, #3a1c0d 0%, #1f0f06 100%)'
   }
 }
 
@@ -402,4 +409,8 @@ export function applyTheme(theme: Theme) {
   root.style.setProperty('--color-error', theme.colors.error)
   
   root.style.setProperty('--gradient', theme.gradient)
+  root.style.setProperty('--page-bg', theme.pageBg)
+  
+  document.body.style.background = theme.pageBg
+  document.body.style.backgroundAttachment = 'fixed'
 }
