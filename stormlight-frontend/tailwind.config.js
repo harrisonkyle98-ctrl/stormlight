@@ -10,6 +10,22 @@ export default {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+  			slate: {
+  				900: 'var(--color-slate-900)',
+  				800: 'var(--color-slate-800)',
+  				700: 'var(--color-slate-700)',
+  				600: 'var(--color-slate-600)',
+  				500: 'var(--color-slate-500)',
+  				400: 'var(--color-slate-400)',
+  				300: 'var(--color-slate-300)',
+  				200: 'var(--color-slate-200)',
+  				100: 'var(--color-slate-100)'
+  			},
+  			blue: {
+  				500: 'var(--color-primary)',
+  				400: 'var(--color-accent)',
+  				300: 'var(--color-accent-light)'
+  			},
   			sidebar: {
   				DEFAULT: 'hsl(var(--sidebar-background))',
   				foreground: 'hsl(var(--sidebar-foreground))',
@@ -29,13 +45,7 @@ export default {
   				button: 'var(--color-button)',
   				'button-hover': 'var(--color-button-hover)',
   				'card-bg': 'var(--color-card-bg)',
-  				'card-border': 'var(--color-card-border)',
-  				'slate-800': 'var(--color-slate-800)',
-  				'slate-700': 'var(--color-slate-700)',
-  				'slate-600': 'var(--color-slate-600)',
-  				'slate-500': 'var(--color-slate-500)',
-  				'slate-400': 'var(--color-slate-400)',
-  				'slate-300': 'var(--color-slate-300)'
+  				'card-border': 'var(--color-card-border)'
   			}
   		},
   		keyframes: {
