@@ -1662,6 +1662,9 @@ async def update_user_theme(
             data={'preferences': preferences}
         )
         
+        if user_id in users_db:
+            users_db[user_id]['theme'] = theme
+        
         return {'success': True, 'theme': theme}
     
     except HTTPException:
