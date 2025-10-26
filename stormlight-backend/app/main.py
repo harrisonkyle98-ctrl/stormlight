@@ -1557,12 +1557,17 @@ async def get_current_user(
         conn = await get_db_connection()
         async with conn:
             user_cursor = await conn.execute(
-                "SELECT discord_id, username, discriminator, email, avatar FROM users WHERE discord_id = %s",
+                "SELECT discord_id, username, discriminator, email, avatar, preferences FROM users WHERE discord_id = %s",
                 (user_id,)
             )
             user_row = await user_cursor.fetchone()
             
             if user_row:
+                prefs = user_row[5] if len(user_row) > 5 else {}
+                if isinstance(prefs, str):
+                    prefs = json.loads(prefs) if prefs else {}
+                theme = prefs.get('theme', 'blue') if isinstance(prefs, dict) else 'blue'
+                
                 member_cursor = await conn.execute(
                     "SELECT username, display_name, clan_rank FROM clan_members WHERE discord_id = %s",
                     (user_id,)
@@ -1577,7 +1582,8 @@ async def get_current_user(
                         'clanRank': member_row[2],
                         'isLinked': True,
                         'requiresLinking': False,
-                        'discordId': user_id
+                        'discordId': user_id,
+                        'theme': theme
                     }
                     users_db[user_id] = result
                     return result
@@ -1590,7 +1596,8 @@ async def get_current_user(
                         'avatar': user_row[4],
                         'isLinked': False,
                         'requiresLinking': True,
-                        'discordId': user_id
+                        'discordId': user_id,
+                        'theme': theme
                     }
                     users_db[user_id] = result
                     return result

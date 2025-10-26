@@ -722,10 +722,12 @@ const Home = () => {
     const loadUserTheme = async () => {
       if (user) {
         const userTheme = (user as any).theme || defaultTheme
+        console.log('🎨 Loading user theme:', userTheme, 'from user object:', user)
         setSelectedTheme(userTheme)
         applyTheme(themes[userTheme])
       } else {
         const savedTheme = localStorage.getItem('selectedTheme') || defaultTheme
+        console.log('🎨 Loading guest theme from localStorage:', savedTheme)
         setSelectedTheme(savedTheme)
         applyTheme(themes[savedTheme])
       }
