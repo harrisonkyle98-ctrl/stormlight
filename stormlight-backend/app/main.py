@@ -1659,7 +1659,7 @@ async def update_user_theme(
         
         await prisma.user.update(
             where={'discordId': user_id},
-            data={'preferences': preferences}
+            data={'preferences': json.dumps(preferences)}
         )
         
         if user_id in users_db:
