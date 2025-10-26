@@ -720,25 +720,10 @@ const Home = () => {
 
   useEffect(() => {
     const loadUserTheme = async () => {
-      if (user?.username) {
-        const token = localStorage.getItem('access_token')
-        if (token) {
-          try {
-            const response = await fetch(`${API_URL}/api/clan/members/${encodeURIComponent(user.username)}`, {
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            })
-            if (response.ok) {
-              const memberData = await response.json()
-              const userTheme = memberData.theme || defaultTheme
-              setSelectedTheme(userTheme)
-              applyTheme(themes[userTheme])
-            }
-          } catch (error) {
-            console.error('Error loading user theme:', error)
-          }
-        }
+      if (user) {
+        const userTheme = (user as any).theme || defaultTheme
+        setSelectedTheme(userTheme)
+        applyTheme(themes[userTheme])
       } else {
         const savedTheme = localStorage.getItem('selectedTheme') || defaultTheme
         setSelectedTheme(savedTheme)

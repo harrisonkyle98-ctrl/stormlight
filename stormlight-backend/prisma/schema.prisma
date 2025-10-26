@@ -42,7 +42,6 @@ model ClanMember {
   joinDate           DateTime?          @map("join_date")
   active             Boolean            @default(true)
   lastSeenInApi      DateTime?          @map("last_seen_in_api")
-  theme              String?            @default("blue")
   competitionEntries CompetitionEntry[]
 
   @@index([discordId], map: "idx_clan_members_discord_id")

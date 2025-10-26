@@ -1507,10 +1507,15 @@ async def get_current_user(
     try:
         user = await prisma.user.find_unique(
             where={'discordId': user_id},
-            select={'discordId': True, 'username': True, 'discriminator': True, 'email': True, 'avatar': True}
+            select={'discordId': True, 'username': True, 'discriminator': True, 'email': True, 'avatar': True, 'preferences': True}
         )
         
         if user:
+            preferences = user.get('preferences', {}) or {}
+            if isinstance(preferences, str):
+                preferences = json.loads(preferences)
+            theme = preferences.get('theme', 'blue')
+            
             linked_member = await prisma.clanmember.find_first(
                 where={'discordId': user_id},
                 select={'username': True, 'displayName': True, 'clanRank': True}
@@ -1524,7 +1529,8 @@ async def get_current_user(
                     'clanRank': linked_member['clanRank'],
                     'isLinked': True,
                     'requiresLinking': False,
-                    'discordId': user_id
+                    'discordId': user_id,
+                    'theme': theme
                 }
                 users_db[user_id] = result
                 return result
@@ -1537,7 +1543,8 @@ async def get_current_user(
                     'avatar': user['avatar'],
                     'isLinked': False,
                     'requiresLinking': True,
-                    'discordId': user_id
+                    'discordId': user_id,
+                    'theme': theme
                 }
                 users_db[user_id] = result
                 return result
@@ -1630,18 +1637,25 @@ async def update_user_theme(
         if theme not in valid_themes:
             theme = 'blue'
         
-        linked_member = await prisma.clanmember.find_first(
+        user = await prisma.user.find_unique(
             where={'discordId': user_id}
         )
         
-        if linked_member:
-            await prisma.clanmember.update(
-                where={'id': linked_member.id},
-                data={'theme': theme}
-            )
-            return {'success': True, 'theme': theme}
-        else:
-            raise HTTPException(status_code=404, detail="User not linked to a clan member")
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        preferences = user.preferences if user.preferences else {}
+        if isinstance(preferences, str):
+            preferences = json.loads(preferences)
+        
+        preferences['theme'] = theme
+        
+        await prisma.user.update(
+            where={'discordId': user_id},
+            data={'preferences': preferences}
+        )
+        
+        return {'success': True, 'theme': theme}
     
     except HTTPException:
         raise
@@ -3120,53 +3134,6 @@ async def get_clan_members_paginated(
         },
         "clan_name": "Stormlight"
     }
-
-@api_router.get("/clan/members/{username}")
-async def get_clan_member(username: str):
-    """Get a specific clan member's data including theme preference"""
-    try:
-        global prisma, PRISMA_AVAILABLE
-        if not PRISMA_AVAILABLE or not prisma:
-            raise HTTPException(status_code=503, detail="Database not available")
-        
-        from urllib.parse import unquote
-        decoded_username = unquote(username).replace('-', ' ')
-        
-        member = await prisma.clanmember.find_unique(
-            where={'username': decoded_username}
-        )
-        
-        if not member:
-            raise HTTPException(status_code=404, detail="Member not found")
-        
-        badges = []
-        if member.badges:
-            try:
-                badges = json.loads(member.badges) if isinstance(member.badges, str) else member.badges
-            except:
-                badges = []
-        
-        return {
-            'username': member.username,
-            'displayName': member.displayName,
-            'clanRank': member.clanRank,
-            'totalXp': int(member.totalXp),
-            'totalLevel': member.totalLevel,
-            'combatLevel': member.combatLevel,
-            'kills': member.kills,
-            'lastUpdated': member.lastUpdated.isoformat(),
-            'badges': badges,
-            'theme': member.theme or 'blue',
-            'joinDate': member.joinDate.isoformat() if member.joinDate else None,
-            'active': member.active,
-            'discordId': member.discordId
-        }
-    
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Error fetching clan member: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch member data")
 
 @api_router.get("/clan/stats")
 async def get_clan_stats():
