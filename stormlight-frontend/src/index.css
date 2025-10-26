@@ -44,17 +44,12 @@
   }
 }
 @layer base {
-  html {
-    min-height: 100vh;
-    background: #000;
-  }
-  
-  body {
-    min-height: 100vh;
+  html, body {
+    height: 100%;
   }
   
   #root {
-    min-height: 100vh;
+    min-height: 100%;
     background: var(--background-gradient);
     background-repeat: no-repeat;
     background-size: 100% 100%;
