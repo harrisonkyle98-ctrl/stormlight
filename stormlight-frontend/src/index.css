@@ -46,19 +46,19 @@
 @layer base {
   html {
     min-height: 100vh;
+    background: #000;
   }
   
   body {
     min-height: 100vh;
-    height: auto;
-    background: var(--background-gradient);
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-    transition: background 0.5s ease-in-out;
   }
   
   #root {
     min-height: 100vh;
+    background: var(--background-gradient);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    transition: background 0.5s ease-in-out;
   }
   
   :root {
