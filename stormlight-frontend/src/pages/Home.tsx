@@ -694,16 +694,21 @@ const Home = () => {
   }
 
   const handleThemeChange = async (themeId: string) => {
+    console.log('🎨 Theme change requested:', themeId)
     setSelectedTheme(themeId)
     const theme = themes[themeId]
     if (theme) {
       applyTheme(theme)
       localStorage.setItem('selectedTheme', themeId)
+      console.log('✅ Theme applied and saved to localStorage:', themeId)
       
       const token = localStorage.getItem('access_token')
+      console.log('🔐 Token exists:', !!token, 'User exists:', !!user, 'Username:', user?.username)
+      
       if (token && user?.username) {
         try {
-          await fetch(`${API_URL}/api/user/theme`, {
+          console.log('📡 Calling API to save theme to backend:', themeId)
+          const response = await fetch(`${API_URL}/api/user/theme`, {
             method: 'PUT',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -711,9 +716,19 @@ const Home = () => {
             },
             body: JSON.stringify({ theme: themeId })
           })
+          
+          if (response.ok) {
+            const result = await response.json()
+            console.log('✅ Theme saved to backend successfully:', result)
+          } else {
+            const error = await response.json()
+            console.error('❌ Failed to save theme to backend:', response.status, error)
+          }
         } catch (error) {
-          console.error('Error saving theme preference:', error)
+          console.error('❌ Error saving theme preference:', error)
         }
+      } else {
+        console.warn('⚠️ Theme not saved to backend - no token or user')
       }
     }
   }
