@@ -61,6 +61,113 @@
     border-color: rgba(51, 65, 85, 0.6) !important;
     backdrop-filter: blur(6px);
   }
+  
+  /* Hard-lock modals for non-Obsidian themes */
+  body[data-theme='sapphire'] .modal-hardlock,
+  body[data-theme='crimson'] .modal-hardlock,
+  body[data-theme='emerald'] .modal-hardlock,
+  body[data-theme='amethyst'] .modal-hardlock,
+  body[data-theme='sunset'] .modal-hardlock {
+    background-color: rgba(30, 41, 59, 0.95) !important;
+    border-color: rgba(51, 65, 85, 0.8) !important;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.45) !important;
+    color: #f1f5f9 !important;
+  }
+  
+  body[data-theme='sapphire'] .modal-overlay-hardlock,
+  body[data-theme='crimson'] .modal-overlay-hardlock,
+  body[data-theme='emerald'] .modal-overlay-hardlock,
+  body[data-theme='amethyst'] .modal-overlay-hardlock,
+  body[data-theme='sunset'] .modal-overlay-hardlock {
+    background: rgba(0, 0, 0, 0.6) !important;
+  }
+  
+  /* Hard-lock subtext and timestamps for non-Obsidian themes */
+  body[data-theme='sapphire'] .card-hardlock time,
+  body[data-theme='crimson'] .card-hardlock time,
+  body[data-theme='emerald'] .card-hardlock time,
+  body[data-theme='amethyst'] .card-hardlock time,
+  body[data-theme='sunset'] .card-hardlock time,
+  body[data-theme='sapphire'] .card-hardlock .card-subtext,
+  body[data-theme='crimson'] .card-hardlock .card-subtext,
+  body[data-theme='emerald'] .card-hardlock .card-subtext,
+  body[data-theme='amethyst'] .card-hardlock .card-subtext,
+  body[data-theme='sunset'] .card-hardlock .card-subtext,
+  body[data-theme='sapphire'] .card-hardlock .timestamp,
+  body[data-theme='crimson'] .card-hardlock .timestamp,
+  body[data-theme='emerald'] .card-hardlock .timestamp,
+  body[data-theme='amethyst'] .card-hardlock .timestamp,
+  body[data-theme='sunset'] .card-hardlock .timestamp,
+  body[data-theme='sapphire'] .card-hardlock .text-slate-300,
+  body[data-theme='crimson'] .card-hardlock .text-slate-300,
+  body[data-theme='emerald'] .card-hardlock .text-slate-300,
+  body[data-theme='amethyst'] .card-hardlock .text-slate-300,
+  body[data-theme='sunset'] .card-hardlock .text-slate-300,
+  body[data-theme='sapphire'] .card-hardlock .text-slate-400,
+  body[data-theme='crimson'] .card-hardlock .text-slate-400,
+  body[data-theme='emerald'] .card-hardlock .text-slate-400,
+  body[data-theme='amethyst'] .card-hardlock .text-slate-400,
+  body[data-theme='sunset'] .card-hardlock .text-slate-400,
+  body[data-theme='sapphire'] .card-hardlock .text-slate-500,
+  body[data-theme='crimson'] .card-hardlock .text-slate-500,
+  body[data-theme='emerald'] .card-hardlock .text-slate-500,
+  body[data-theme='amethyst'] .card-hardlock .text-slate-500,
+  body[data-theme='sunset'] .card-hardlock .text-slate-500,
+  body[data-theme='sapphire'] .card-hardlock .text-zinc-400,
+  body[data-theme='crimson'] .card-hardlock .text-zinc-400,
+  body[data-theme='emerald'] .card-hardlock .text-zinc-400,
+  body[data-theme='amethyst'] .card-hardlock .text-zinc-400,
+  body[data-theme='sunset'] .card-hardlock .text-zinc-400,
+  body[data-theme='sapphire'] .card-hardlock .text-zinc-500,
+  body[data-theme='crimson'] .card-hardlock .text-zinc-500,
+  body[data-theme='emerald'] .card-hardlock .text-zinc-500,
+  body[data-theme='amethyst'] .card-hardlock .text-zinc-500,
+  body[data-theme='sunset'] .card-hardlock .text-zinc-500 {
+    color: #94a3b8 !important;
+  }
+  
+  body[data-theme='sapphire'] .modal-hardlock time,
+  body[data-theme='crimson'] .modal-hardlock time,
+  body[data-theme='emerald'] .modal-hardlock time,
+  body[data-theme='amethyst'] .modal-hardlock time,
+  body[data-theme='sunset'] .modal-hardlock time,
+  body[data-theme='sapphire'] .modal-hardlock .card-subtext,
+  body[data-theme='crimson'] .modal-hardlock .card-subtext,
+  body[data-theme='emerald'] .modal-hardlock .card-subtext,
+  body[data-theme='amethyst'] .modal-hardlock .card-subtext,
+  body[data-theme='sunset'] .modal-hardlock .card-subtext,
+  body[data-theme='sapphire'] .modal-hardlock .timestamp,
+  body[data-theme='crimson'] .modal-hardlock .timestamp,
+  body[data-theme='emerald'] .modal-hardlock .timestamp,
+  body[data-theme='amethyst'] .modal-hardlock .timestamp,
+  body[data-theme='sunset'] .modal-hardlock .timestamp,
+  body[data-theme='sapphire'] .modal-hardlock .text-slate-300,
+  body[data-theme='crimson'] .modal-hardlock .text-slate-300,
+  body[data-theme='emerald'] .modal-hardlock .text-slate-300,
+  body[data-theme='amethyst'] .modal-hardlock .text-slate-300,
+  body[data-theme='sunset'] .modal-hardlock .text-slate-300,
+  body[data-theme='sapphire'] .modal-hardlock .text-slate-400,
+  body[data-theme='crimson'] .modal-hardlock .text-slate-400,
+  body[data-theme='emerald'] .modal-hardlock .text-slate-400,
+  body[data-theme='amethyst'] .modal-hardlock .text-slate-400,
+  body[data-theme='sunset'] .modal-hardlock .text-slate-400,
+  body[data-theme='sapphire'] .modal-hardlock .text-slate-500,
+  body[data-theme='crimson'] .modal-hardlock .text-slate-500,
+  body[data-theme='emerald'] .modal-hardlock .text-slate-500,
+  body[data-theme='amethyst'] .modal-hardlock .text-slate-500,
+  body[data-theme='sunset'] .modal-hardlock .text-slate-500,
+  body[data-theme='sapphire'] .modal-hardlock .text-zinc-400,
+  body[data-theme='crimson'] .modal-hardlock .text-zinc-400,
+  body[data-theme='emerald'] .modal-hardlock .text-zinc-400,
+  body[data-theme='amethyst'] .modal-hardlock .text-zinc-400,
+  body[data-theme='sunset'] .modal-hardlock .text-zinc-400,
+  body[data-theme='sapphire'] .modal-hardlock .text-zinc-500,
+  body[data-theme='crimson'] .modal-hardlock .text-zinc-500,
+  body[data-theme='emerald'] .modal-hardlock .text-zinc-500,
+  body[data-theme='amethyst'] .modal-hardlock .text-zinc-500,
+  body[data-theme='sunset'] .modal-hardlock .text-zinc-500 {
+    color: #94a3b8 !important;
+  }
 }
 @layer base {
   #root {
