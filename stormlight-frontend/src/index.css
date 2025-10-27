@@ -135,7 +135,7 @@
   }
   
   body[data-theme='blue'] {
-    --background-gradient: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    --background-gradient: linear-gradient(180deg, #081d47 0%, #0b2c78 100%);
   }
   
   body[data-theme='sapphire'] {
