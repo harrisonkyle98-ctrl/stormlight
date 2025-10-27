@@ -378,12 +378,15 @@ export function applyTheme(theme: Theme) {
   const sapphireCardColors = themes.blue.colors
   const cardColors = theme.id === 'obsidian' ? theme.colors : sapphireCardColors
   
+  const sapphireSlate700 = themes.blue.colors.slate700
+  const slate700 = theme.id === 'obsidian' ? theme.colors.slate700 : sapphireSlate700
+  
   root.style.setProperty('--color-primary', theme.colors.primary)
   root.style.setProperty('--color-secondary', theme.colors.secondary)
   
   root.style.setProperty('--color-slate-900', theme.colors.slate900)
   root.style.setProperty('--color-slate-800', theme.colors.slate800)
-  root.style.setProperty('--color-slate-700', theme.colors.slate700)
+  root.style.setProperty('--color-slate-700', slate700)
   root.style.setProperty('--color-slate-600', theme.colors.slate600)
   root.style.setProperty('--color-slate-500', theme.colors.slate500)
   root.style.setProperty('--color-slate-400', theme.colors.slate400)
@@ -393,7 +396,7 @@ export function applyTheme(theme: Theme) {
   
   root.style.setProperty('--color-slate-900-rgb', hexToRgb(theme.colors.slate900))
   root.style.setProperty('--color-slate-800-rgb', hexToRgb(theme.colors.slate800))
-  root.style.setProperty('--color-slate-700-rgb', hexToRgb(theme.colors.slate700))
+  root.style.setProperty('--color-slate-700-rgb', hexToRgb(slate700))
   root.style.setProperty('--color-slate-600-rgb', hexToRgb(theme.colors.slate600))
   root.style.setProperty('--color-slate-500-rgb', hexToRgb(theme.colors.slate500))
   root.style.setProperty('--color-slate-400-rgb', hexToRgb(theme.colors.slate400))
