@@ -127,14 +127,14 @@ export const BingoBoard = ({
                   <div
                     key={index}
                     onClick={() => item && handleCellClick(index)}
-                    className={`aspect-square border rounded p-0.5 transition-all relative group ${
+                    className={`aspect-square border rounded p-0.5 transition-all relative group bingo-slot ${
                       isSelected
                         ? 'border-blue-400 bg-blue-500/30 scale-105 ring-2 ring-blue-400'
                         : isBingo && isCompleted
                         ? 'border-yellow-500 bg-yellow-500/20'
                         : isCompleted
                         ? 'border-green-500 bg-green-500/20'
-                        : 'border-slate-600 bg-slate-700/50'
+                        : 'border-[#475569] bg-slate-700/50'
                     } ${item ? 'cursor-pointer hover:scale-105' : ''}`}
                     style={{
                       minWidth: '0',

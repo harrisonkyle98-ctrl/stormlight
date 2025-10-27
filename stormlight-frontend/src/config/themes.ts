@@ -150,7 +150,7 @@ export const themes: Record<string, Theme> = {
       warning: '#f59e0b',
       error: '#ef4444'
     },
-    gradient: 'linear-gradient(135deg, #7f1d1d 0%, #fbbf24 100%)',
+    gradient: 'linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%)',
     pageBg: 'linear-gradient(180deg, #2d1212 0%, #1c0a0a 100%)'
   },
   emerald: {
@@ -354,7 +354,7 @@ export const themes: Record<string, Theme> = {
       warning: '#f59e0b',
       error: '#ef4444'
     },
-    gradient: 'linear-gradient(135deg, #c2410c 0%, #fbbf24 100%)',
+    gradient: 'linear-gradient(135deg, #ea580c 0%, #fbbf24 50%, #dc2626 100%)',
     pageBg: 'linear-gradient(180deg, #3a1c0d 0%, #1f0f06 100%)'
   }
 }
