@@ -80,7 +80,7 @@ export const themes: Record<string, Theme> = {
       cardBg: 'rgba(30, 41, 59, 0.8)',
       cardBgHover: 'rgba(30, 41, 59, 0.95)',
       cardBorder: 'rgba(51, 65, 85, 0.6)',
-      cardBorderHover: '#475569',
+      cardBorderHover: 'rgba(51, 65, 85, 0.8)',
       
       textPrimary: '#f1f5f9',
       textSecondary: '#cbd5e1',
@@ -131,7 +131,7 @@ export const themes: Record<string, Theme> = {
       cardBg: 'rgba(30, 41, 59, 0.8)',
       cardBgHover: 'rgba(30, 41, 59, 0.95)',
       cardBorder: 'rgba(51, 65, 85, 0.6)',
-      cardBorderHover: '#475569',
+      cardBorderHover: 'rgba(51, 65, 85, 0.8)',
       
       textPrimary: '#fef2f2',
       textSecondary: '#fecaca',
@@ -182,7 +182,7 @@ export const themes: Record<string, Theme> = {
       cardBg: 'rgba(30, 41, 59, 0.8)',
       cardBgHover: 'rgba(30, 41, 59, 0.95)',
       cardBorder: 'rgba(51, 65, 85, 0.6)',
-      cardBorderHover: '#475569',
+      cardBorderHover: 'rgba(51, 65, 85, 0.8)',
       
       textPrimary: '#ecfdf5',
       textSecondary: '#d1fae5',
@@ -284,7 +284,7 @@ export const themes: Record<string, Theme> = {
       cardBg: 'rgba(30, 41, 59, 0.8)',
       cardBgHover: 'rgba(30, 41, 59, 0.95)',
       cardBorder: 'rgba(51, 65, 85, 0.6)',
-      cardBorderHover: '#475569',
+      cardBorderHover: 'rgba(51, 65, 85, 0.8)',
       
       textPrimary: '#faf5ff',
       textSecondary: '#f3e8ff',
@@ -335,7 +335,7 @@ export const themes: Record<string, Theme> = {
       cardBg: 'rgba(30, 41, 59, 0.8)',
       cardBgHover: 'rgba(30, 41, 59, 0.95)',
       cardBorder: 'rgba(51, 65, 85, 0.6)',
-      cardBorderHover: '#475569',
+      cardBorderHover: 'rgba(51, 65, 85, 0.8)',
       
       textPrimary: '#ffedd5',
       textSecondary: '#fed7aa',
