@@ -13,13 +13,13 @@
     background-color: var(--color-card-bg);
   }
   .bg-theme-card-50 {
-    background-color: color-mix(in srgb, var(--color-slate-800) 50%, transparent);
+    background-color: color-mix(in srgb, var(--color-card-bg) 50%, transparent);
   }
   .bg-theme-card-70 {
-    background-color: color-mix(in srgb, var(--color-slate-800) 70%, transparent);
+    background-color: color-mix(in srgb, var(--color-card-bg) 70%, transparent);
   }
   .bg-theme-card-80 {
-    background-color: color-mix(in srgb, var(--color-slate-800) 80%, transparent);
+    background-color: color-mix(in srgb, var(--color-card-bg) 80%, transparent);
   }
   .border-theme-card {
     border-color: var(--color-card-border);
@@ -164,6 +164,27 @@
   
   body[data-theme='sunset'] {
     --background-gradient: linear-gradient(180deg, #3a1c0d 0%, #1f0f06 100%);
+  }
+  
+  /* Safety mapping: alias --card-* to --color-card-* for any legacy references */
+  :root, body {
+    --card-bg: var(--color-card-bg);
+    --card-bg-hover: var(--color-card-bg-hover);
+    --card-border: var(--color-card-border);
+    --card-border-hover: var(--color-card-border-hover);
+  }
+  
+  /* Global lock: Force Sapphire card values for all non-Obsidian themes */
+  body[data-theme='blue'],
+  body[data-theme='sapphire'],
+  body[data-theme='crimson'],
+  body[data-theme='emerald'],
+  body[data-theme='amethyst'],
+  body[data-theme='sunset'] {
+    --color-card-bg: rgba(30, 41, 59, 0.8) !important;
+    --color-card-bg-hover: rgba(30, 41, 59, 0.95) !important;
+    --color-card-border: rgba(51, 65, 85, 0.6) !important;
+    --color-card-border-hover: rgba(51, 65, 85, 0.8) !important;
   }
 }
 
