@@ -2,12 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body {
-  background: linear-gradient(180deg, #081d47 0%, #0b2c78 100%) fixed;
+/* Apply gradient to html only to prevent double-paint seams */
+html {
+  background: linear-gradient(180deg, #081d47 0%, #0b2c78 100%) fixed !important;
   background-attachment: fixed !important;
   background-size: cover !important;
   background-repeat: no-repeat !important;
-  background-position: center top !important;
+  background-position: top center !important;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Make body transparent so html gradient shows through */
+body {
+  background: transparent !important;
   min-height: 100vh;
 }
 
@@ -19,12 +27,13 @@ html, body {
   min-height: 100%;
 }
 
-html[data-theme], body[data-theme] {
-  background: var(--page-bg) fixed;
+/* Apply theme-specific gradients to html only */
+html[data-theme] {
+  background: var(--page-bg) fixed !important;
   background-attachment: fixed !important;
   background-size: cover !important;
   background-repeat: no-repeat !important;
-  background-position: center top !important;
+  background-position: top center !important;
 }
 
 [data-theme='blue'] {
@@ -49,6 +58,11 @@ html[data-theme], body[data-theme] {
 
 [data-theme='sunset'] {
   --page-bg: linear-gradient(180deg, #3a1c0d 0%, #1f0f06 100%);
+}
+
+/* Ensure nested containers don't have their own backgrounds */
+:where(#root, main, .app, .layout, .page, .app-container) {
+  background: transparent !important;
 }
 
 @layer utilities {
@@ -459,6 +473,32 @@ html[data-theme], body[data-theme] {
   border: 1px solid rgba(51, 65, 85, 0.8) !important;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.45) !important;
   color: #f1f5f9 !important;
+}
+
+/* Lock all descendant text elements to Sapphire neutral color */
+[data-theme='blue'] [role='menu'] *,
+[data-theme='crimson'] [role='menu'] *,
+[data-theme='emerald'] [role='menu'] *,
+[data-theme='amethyst'] [role='menu'] *,
+[data-theme='sunset'] [role='menu'] *,
+[data-theme='blue'] [role='menu'] [data-highlighted],
+[data-theme='crimson'] [role='menu'] [data-highlighted],
+[data-theme='emerald'] [role='menu'] [data-highlighted],
+[data-theme='amethyst'] [role='menu'] [data-highlighted],
+[data-theme='sunset'] [role='menu'] [data-highlighted] {
+  color: #f1f5f9 !important;
+}
+
+/* Ensure icons use currentColor */
+[data-theme] [role='menu'] svg,
+[data-theme] [role='menu'] svg * {
+  stroke: currentColor !important;
+}
+
+/* Preserve red color for Logout button if needed */
+[role='menu'] .text-red-400,
+[role='menu'] .text-red-400:hover {
+  color: #f87171 !important;
 }
 
 [data-theme='obsidian'] [role="menu"] {
