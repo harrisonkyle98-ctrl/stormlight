@@ -2,8 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Apply gradient to html only to prevent double-paint seams */
-html {
+/* Make body transparent so html gradient shows through */
+body {
+  background: transparent !important;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100%;
+}
+
+/* Sapphire (blue) theme as default fallback - shows when no theme is set or when Sapphire is active */
+html:not([data-theme]),
+html[data-theme='blue'] {
   background: linear-gradient(180deg, #081d47 0%, #0b2c78 100%) fixed !important;
   background-attachment: fixed !important;
   background-size: cover !important;
@@ -13,27 +24,69 @@ html {
   width: 100%;
 }
 
-/* Make body transparent so html gradient shows through */
-body {
-  background: transparent !important;
-  min-height: 100vh;
-}
-
-:root {
-  --page-bg: linear-gradient(180deg, #081d47 0%, #0b2c78 100%);
-}
-
-#root {
-  min-height: 100%;
-}
-
-/* Apply theme-specific gradients to html only */
-html[data-theme] {
-  background: var(--page-bg) fixed !important;
+/* Crimson theme gradient */
+html[data-theme='crimson'] {
+  background: linear-gradient(180deg, #2d1212 0%, #1c0a0a 100%) fixed !important;
   background-attachment: fixed !important;
   background-size: cover !important;
   background-repeat: no-repeat !important;
   background-position: top center !important;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Emerald theme gradient */
+html[data-theme='emerald'] {
+  background: linear-gradient(180deg, #0f2e26 0%, #0a1f1a 100%) fixed !important;
+  background-attachment: fixed !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  background-position: top center !important;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Obsidian theme gradient */
+html[data-theme='obsidian'] {
+  background: linear-gradient(180deg, #0f172a 0%, #020617 100%) fixed !important;
+  background-attachment: fixed !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  background-position: top center !important;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Amethyst theme gradient */
+html[data-theme='amethyst'] {
+  background: linear-gradient(180deg, #2e1e47 0%, #1e0a33 100%) fixed !important;
+  background-attachment: fixed !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  background-position: top center !important;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Sunset theme gradient */
+html[data-theme='sunset'] {
+  background: linear-gradient(180deg, #3a1c0d 0%, #1f0f06 100%) fixed !important;
+  background-attachment: fixed !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  background-position: top center !important;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Ensure nested containers don't have their own backgrounds */
+:where(#root, main, .app, .layout, .page, .app-container) {
+  background: transparent !important;
+}
+
+/* Keep CSS variables for other component styling */
+:root {
+  --page-bg: linear-gradient(180deg, #081d47 0%, #0b2c78 100%);
 }
 
 [data-theme='blue'] {
@@ -58,11 +111,6 @@ html[data-theme] {
 
 [data-theme='sunset'] {
   --page-bg: linear-gradient(180deg, #3a1c0d 0%, #1f0f06 100%);
-}
-
-/* Ensure nested containers don't have their own backgrounds */
-:where(#root, main, .app, .layout, .page, .app-container) {
-  background: transparent !important;
 }
 
 @layer utilities {

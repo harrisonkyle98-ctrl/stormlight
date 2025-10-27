@@ -27,6 +27,11 @@ export function ThemeProvider({ children, user, loading }: ThemeProviderProps) {
   const hasReconciledFromUser = useRef(false)
 
   useLayoutEffect(() => {
+    const root = document.documentElement
+    if (!root.dataset.theme) {
+      root.setAttribute('data-theme', defaultTheme)
+    }
+    
     const storedTheme = localStorage.getItem('selectedTheme') || defaultTheme
     console.log('🎨 Theme applied on mount:', storedTheme)
     

@@ -100,7 +100,7 @@ export const themes: Record<string, Theme> = {
       error: '#ef4444'
     },
     gradient: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
-    pageBg: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)'
+    pageBg: 'linear-gradient(180deg, #081d47 0%, #0b2c78 100%)'
   },
   crimson: {
     id: 'crimson',
@@ -374,7 +374,6 @@ export function applyTheme(theme: Theme) {
   const body = document.body
   
   root.setAttribute('data-theme', theme.id)
-  body.setAttribute('data-theme', theme.id)
   
   const sapphireCardColors = themes.blue.colors
   const cardColors = theme.id === 'obsidian' ? theme.colors : sapphireCardColors
