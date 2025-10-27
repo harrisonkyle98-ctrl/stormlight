@@ -80,7 +80,7 @@ html[data-theme='sunset'] {
 }
 
 /* Ensure nested containers don't have their own backgrounds */
-:where(#root, main, .app, .layout, .page, .app-container) {
+:where(main, .app, .layout, .page, .app-container) {
   background: transparent !important;
 }
 

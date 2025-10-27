@@ -355,7 +355,7 @@ export const themes: Record<string, Theme> = {
       error: '#ef4444'
     },
     gradient: 'linear-gradient(135deg, #fbbf24 0%, #ea580c 50%, #dc2626 100%)',
-    pageBg: 'linear-gradient(180deg, #fbbf24 0%, #ea580c 50%, #dc2626 100%)'
+    pageBg: 'linear-gradient(135deg, #fbbf24 0%, #ea580c 50%, #dc2626 100%)'
   }
 }
 
@@ -440,4 +440,5 @@ export function applyTheme(theme: Theme) {
   
   root.style.setProperty('--gradient', theme.gradient)
   root.style.setProperty('--page-bg', theme.pageBg)
+  root.style.setProperty('--background-gradient', theme.pageBg)
 }
