@@ -533,7 +533,7 @@ const PlayerProfile = () => {
                     </TableCell>
                     <TableCell className="py-3">
                       <div className="flex items-center space-x-2">
-                        <Badge variant="outline" className={getLevelBadgeStyle(skill, data.level, data.xp)}>
+                        <Badge variant="outline" className={`${getLevelBadgeStyle(skill, data.level, data.xp)} level-text-fixed`}>
                           {data.level}
                         </Badge>
                         <span className="text-sm">

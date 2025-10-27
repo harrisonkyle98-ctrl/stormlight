@@ -675,3 +675,8 @@ html[data-theme='sunset'] {
   border-color: rgba(30, 41, 59, 0.8) !important;
 }
 
+/* Level text color - lock to dull grey across all themes including Obsidian */
+[data-theme] .level-text-fixed {
+  color: #d1d5db !important;
+}
+
