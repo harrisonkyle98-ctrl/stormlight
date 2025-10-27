@@ -768,7 +768,7 @@ const Home = () => {
         <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-300">Total Members</CardTitle>
-            <Users className="h-4 w-4 text-theme-accent-light" />
+            <Users className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -791,7 +791,7 @@ const Home = () => {
         <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-300">Total Clan XP</CardTitle>
-            <TrendingUp className="h-4 w-4 text-purple-400" />
+            <TrendingUp className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -815,7 +815,7 @@ const Home = () => {
           <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-300">Time Spent in Clan</CardTitle>
-              <Calendar className="h-4 w-4 text-cyan-400" />
+              <Calendar className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
             </CardHeader>
             <CardContent>
               {loading || !playerData ? (
@@ -839,7 +839,7 @@ const Home = () => {
         <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-300">Competitions</CardTitle>
-            <Trophy className="h-4 w-4 text-green-400" />
+            <Trophy className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
           </CardHeader>
           <CardContent>
             {loading ? (
