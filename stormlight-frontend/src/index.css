@@ -680,3 +680,106 @@ html[data-theme='sunset'] {
   color: #d1d5db !important;
 }
 
+/* ========================================
+   COMPREHENSIVE THEME LOCK OVERRIDES
+   Lock all non-Obsidian themes to Sapphire styling
+   ======================================== */
+
+/* Input fields - override Tailwind dark: variants */
+[data-theme='blue'] input,
+[data-theme='crimson'] input,
+[data-theme='emerald'] input,
+[data-theme='amethyst'] input,
+[data-theme='sunset'] input {
+  background-color: rgb(51, 65, 85) !important; /* slate-700 */
+  border-color: rgb(71, 85, 105) !important; /* slate-600 */
+  color: rgb(255, 255, 255) !important;
+}
+
+[data-theme='blue'] input:focus,
+[data-theme='crimson'] input:focus,
+[data-theme='emerald'] input:focus,
+[data-theme='amethyst'] input:focus,
+[data-theme='sunset'] input:focus {
+  border-color: rgba(96, 165, 250, 0.9) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+}
+
+/* Pagination and general buttons - override Tailwind dark: variants */
+[data-theme='blue'] button,
+[data-theme='crimson'] button,
+[data-theme='emerald'] button,
+[data-theme='amethyst'] button,
+[data-theme='sunset'] button {
+  border-color: rgb(71, 85, 105) !important; /* slate-600 */
+}
+
+[data-theme='blue'] button:not(:disabled):hover,
+[data-theme='crimson'] button:not(:disabled):hover,
+[data-theme='emerald'] button:not(:disabled):hover,
+[data-theme='amethyst'] button:not(:disabled):hover,
+[data-theme='sunset'] button:not(:disabled):hover {
+  border-color: rgba(96, 165, 250, 0.9) !important;
+}
+
+/* Fix dull text on buttons - make text brighter with higher specificity */
+[data-theme='blue'] button:not(:disabled),
+[data-theme='crimson'] button:not(:disabled),
+[data-theme='emerald'] button:not(:disabled),
+[data-theme='amethyst'] button:not(:disabled),
+[data-theme='sunset'] button:not(:disabled) {
+  color: rgb(255, 255, 255) !important;
+}
+
+/* Specifically target pagination buttons */
+[data-theme='blue'] main button,
+[data-theme='crimson'] main button,
+[data-theme='emerald'] main button,
+[data-theme='amethyst'] main button,
+[data-theme='sunset'] main button {
+  color: rgb(255, 255, 255) !important;
+}
+
+/* Badge text - make brighter and more visible */
+[data-theme='blue'] .badge,
+[data-theme='crimson'] .badge,
+[data-theme='emerald'] .badge,
+[data-theme='amethyst'] .badge,
+[data-theme='sunset'] .badge,
+[data-theme='blue'] [class*="badge"],
+[data-theme='crimson'] [class*="badge"],
+[data-theme='emerald'] [class*="badge"],
+[data-theme='amethyst'] [class*="badge"],
+[data-theme='sunset'] [class*="badge"] {
+  color: rgb(255, 255, 255) !important;
+  opacity: 1 !important;
+}
+
+/* Log text - ensure proper contrast */
+[data-theme='blue'] .log-entry,
+[data-theme='crimson'] .log-entry,
+[data-theme='emerald'] .log-entry,
+[data-theme='amethyst'] .log-entry,
+[data-theme='sunset'] .log-entry {
+  color: rgb(241, 245, 249) !important; /* slate-100 */
+}
+
+/* Admin Panel rows - lock to Sapphire slate colors */
+[data-theme='blue'] .admin-row,
+[data-theme='crimson'] .admin-row,
+[data-theme='emerald'] .admin-row,
+[data-theme='amethyst'] .admin-row,
+[data-theme='sunset'] .admin-row {
+  background-color: rgba(51, 65, 85, 0.5) !important;
+  border-color: rgba(71, 85, 105, 0.5) !important;
+}
+
+/* Leaderboard rank borders - lock to Sapphire */
+[data-theme='blue'] .rank-border,
+[data-theme='crimson'] .rank-border,
+[data-theme='emerald'] .rank-border,
+[data-theme='amethyst'] .rank-border,
+[data-theme='sunset'] .rank-border {
+  border-color: rgb(71, 85, 105) !important; /* slate-600 */
+}
+

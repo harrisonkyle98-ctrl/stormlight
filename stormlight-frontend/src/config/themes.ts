@@ -354,8 +354,8 @@ export const themes: Record<string, Theme> = {
       warning: '#f59e0b',
       error: '#ef4444'
     },
-    gradient: 'linear-gradient(135deg, #ea580c 0%, #fbbf24 50%, #dc2626 100%)',
-    pageBg: 'linear-gradient(180deg, #3a1c0d 0%, #1f0f06 100%)'
+    gradient: 'linear-gradient(135deg, #fbbf24 0%, #ea580c 50%, #dc2626 100%)',
+    pageBg: 'linear-gradient(180deg, #fbbf24 0%, #ea580c 50%, #dc2626 100%)'
   }
 }
 
