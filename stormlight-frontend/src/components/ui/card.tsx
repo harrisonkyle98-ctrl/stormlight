@@ -5,16 +5,49 @@ import { cn } from "@/lib/utils"
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-xl border border-zinc-200 bg-white text-zinc-950 shadow dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50",
-      className
-    )}
-    {...props}
-  />
-))
+>(({ className, style, ...props }, ref) => {
+  const [theme, setTheme] = React.useState<string>('sapphire')
+  
+  React.useEffect(() => {
+    const currentTheme = document.body.getAttribute('data-theme') || 'sapphire'
+    setTheme(currentTheme)
+    
+    const observer = new MutationObserver(() => {
+      const newTheme = document.body.getAttribute('data-theme') || 'sapphire'
+      setTheme(newTheme)
+    })
+    
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    })
+    
+    return () => observer.disconnect()
+  }, [])
+  
+  const isObsidian = theme === 'obsidian'
+  
+  const hardLockedStyle: React.CSSProperties = isObsidian
+    ? {}
+    : {
+        backgroundColor: 'rgba(30, 41, 59, 0.8)',
+        borderColor: 'rgba(51, 65, 85, 0.6)',
+        ...style
+      }
+  
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "rounded-xl border shadow",
+        isObsidian ? "border-zinc-800 bg-zinc-950 text-zinc-50" : "card-hardlock text-zinc-50",
+        className
+      )}
+      style={isObsidian ? style : hardLockedStyle}
+      {...props}
+    />
+  )
+})
 Card.displayName = "Card"
 
 const CardHeader = React.forwardRef<
