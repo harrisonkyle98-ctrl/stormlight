@@ -42,10 +42,24 @@
   .bg-gradient-theme {
     background: var(--gradient);
   }
-  /* Hard-lock hover state for non-Obsidian cards */
-  .card-hardlock:hover {
+  /* Hard-lock base and hover states for non-Obsidian cards */
+  .card-hardlock {
+    background-color: rgba(30, 41, 59, 0.8) !important;
+    border-color: rgba(51, 65, 85, 0.6) !important;
+  }
+  .card-hardlock:hover,
+  .group:hover .card-hardlock,
+  .card-hardlock:active,
+  .card-hardlock:focus {
     background-color: rgba(30, 41, 59, 0.95) !important;
     border-color: rgba(51, 65, 85, 0.8) !important;
+  }
+  
+  /* Hard-lock navbar for non-Obsidian themes */
+  .navbar-hardlock {
+    background-color: rgba(30, 41, 59, 0.8) !important;
+    border-color: rgba(51, 65, 85, 0.6) !important;
+    backdrop-filter: blur(6px);
   }
 }
 @layer base {

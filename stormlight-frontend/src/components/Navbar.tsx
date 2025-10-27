@@ -9,10 +9,38 @@ import {
   DropdownMenuTrigger 
 } from './ui/dropdown-menu'
 import { Home, Users, Trophy, LogOut, Settings } from 'lucide-react'
+import * as React from 'react'
 
 const Navbar = () => {
   const { user, logout } = useAuth()
   const location = useLocation()
+  const [theme, setTheme] = React.useState<string>('sapphire')
+  
+  React.useEffect(() => {
+    const currentTheme = document.body.getAttribute('data-theme') || 'sapphire'
+    setTheme(currentTheme)
+    
+    const observer = new MutationObserver(() => {
+      const newTheme = document.body.getAttribute('data-theme') || 'sapphire'
+      setTheme(newTheme)
+    })
+    
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    })
+    
+    return () => observer.disconnect()
+  }, [])
+  
+  const isObsidian = theme === 'obsidian'
+  
+  const navbarStyle: React.CSSProperties = isObsidian
+    ? {}
+    : {
+        backgroundColor: 'rgba(30, 41, 59, 0.8)',
+        borderColor: 'rgba(51, 65, 85, 0.6)',
+      }
 
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
@@ -23,7 +51,12 @@ const Navbar = () => {
   const isActive = (path: string) => location.pathname === path
 
   return (
-    <nav className="bg-slate-800/80 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50">
+    <nav 
+      className={`backdrop-blur-sm border-b sticky top-0 z-50 ${
+        isObsidian ? 'bg-slate-800/80 border-slate-700' : 'navbar-hardlock'
+      }`}
+      style={isObsidian ? undefined : navbarStyle}
+    >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
