@@ -738,18 +738,25 @@ const Home = () => {
       if (user) {
         const userTheme = (user as any).theme || defaultTheme
         console.log('🎨 Loading user theme:', userTheme, 'from user object:', user)
-        setSelectedTheme(userTheme)
-        applyTheme(themes[userTheme])
-      } else {
+        
+        if (selectedTheme !== userTheme) {
+          setSelectedTheme(userTheme)
+          applyTheme(themes[userTheme])
+          localStorage.setItem('selectedTheme', userTheme)
+        }
+      } else if (!loading) {
         const savedTheme = localStorage.getItem('selectedTheme') || defaultTheme
         console.log('🎨 Loading guest theme from localStorage:', savedTheme)
-        setSelectedTheme(savedTheme)
-        applyTheme(themes[savedTheme])
+        
+        if (selectedTheme !== savedTheme) {
+          setSelectedTheme(savedTheme)
+          applyTheme(themes[savedTheme])
+        }
       }
     }
     
     loadUserTheme()
-  }, [user])
+  }, [user, loading])
 
   useEffect(() => {
     if (settingsOpen) {
