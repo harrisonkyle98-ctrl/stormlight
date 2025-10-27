@@ -4,8 +4,10 @@
 
 html, body {
   background: linear-gradient(180deg, #081d47 0%, #0b2c78 100%) fixed;
-  background-attachment: fixed;
-  background-size: cover;
+  background-attachment: fixed !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  background-position: center top !important;
   min-height: 100vh;
 }
 
@@ -19,6 +21,10 @@ html, body {
 
 html[data-theme], body[data-theme] {
   background: var(--page-bg) fixed;
+  background-attachment: fixed !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  background-position: center top !important;
 }
 
 [data-theme='blue'] {
@@ -441,5 +447,22 @@ html[data-theme], body[data-theme] {
     --color-card-border: rgba(51, 65, 85, 0.6) !important;
     --color-card-border-hover: rgba(51, 65, 85, 0.8) !important;
   }
+}
+
+/* Avatar dropdown modal - lock to Sapphire styling for all non-Obsidian themes */
+[data-theme='blue'] [role="menu"],
+[data-theme='crimson'] [role="menu"],
+[data-theme='emerald'] [role="menu"],
+[data-theme='amethyst'] [role="menu"],
+[data-theme='sunset'] [role="menu"] {
+  background-color: rgba(30, 41, 59, 0.95) !important;
+  border: 1px solid rgba(51, 65, 85, 0.8) !important;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.45) !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme='obsidian'] [role="menu"] {
+  background-color: rgba(15, 23, 42, 0.95) !important;
+  border: 1px solid rgba(30, 41, 59, 0.8) !important;
 }
 
