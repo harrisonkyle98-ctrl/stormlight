@@ -234,36 +234,6 @@
     color: rgba(148, 163, 184, 0.8) !important;
   }
   
-  /* Hard-lock pagination buttons for non-Obsidian themes */
-  body[data-theme='sapphire'] nav[aria-label="pagination"] a,
-  body[data-theme='crimson'] nav[aria-label="pagination"] a,
-  body[data-theme='emerald'] nav[aria-label="pagination"] a,
-  body[data-theme='amethyst'] nav[aria-label="pagination"] a,
-  body[data-theme='sunset'] nav[aria-label="pagination"] a,
-  body[data-theme='sapphire'] nav[aria-label="pagination"] button,
-  body[data-theme='crimson'] nav[aria-label="pagination"] button,
-  body[data-theme='emerald'] nav[aria-label="pagination"] button,
-  body[data-theme='amethyst'] nav[aria-label="pagination"] button,
-  body[data-theme='sunset'] nav[aria-label="pagination"] button {
-    background-color: rgba(30, 41, 59, 0.85) !important;
-    border: 1px solid rgba(51, 65, 85, 0.7) !important;
-    color: #f1f5f9 !important;
-    transition: background-color 0.2s, border-color 0.2s !important;
-  }
-  
-  body[data-theme='sapphire'] nav[aria-label="pagination"] a:hover,
-  body[data-theme='crimson'] nav[aria-label="pagination"] a:hover,
-  body[data-theme='emerald'] nav[aria-label="pagination"] a:hover,
-  body[data-theme='amethyst'] nav[aria-label="pagination"] a:hover,
-  body[data-theme='sunset'] nav[aria-label="pagination"] a:hover,
-  body[data-theme='sapphire'] nav[aria-label="pagination"] button:hover,
-  body[data-theme='crimson'] nav[aria-label="pagination"] button:hover,
-  body[data-theme='emerald'] nav[aria-label="pagination"] button:hover,
-  body[data-theme='amethyst'] nav[aria-label="pagination"] button:hover,
-  body[data-theme='sunset'] nav[aria-label="pagination"] button:hover {
-    background-color: rgba(30, 41, 59, 0.95) !important;
-    border-color: rgba(96, 165, 250, 0.9) !important;
-  }
   
   /* Hard-lock select/dropdown elements for non-Obsidian themes */
   body[data-theme='sapphire'] select,
