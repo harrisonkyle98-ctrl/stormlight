@@ -231,7 +231,7 @@ export const themes: Record<string, Theme> = {
       buttonActive: '#1e293b',
       
       cardBg: 'rgba(15, 23, 42, 0.8)',
-      cardBgHover: 'rgba(30, 41, 59, 0.95)',
+      cardBgHover: 'rgba(15, 23, 42, 0.95)',
       cardBorder: 'rgba(51, 65, 85, 0.6)',
       cardBorderHover: '#475569',
       
