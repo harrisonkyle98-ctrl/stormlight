@@ -2,17 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --page-bg: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+html, body {
+  background: linear-gradient(180deg, #081d47 0%, #0b2c78 100%) fixed;
+  background-attachment: fixed;
+  background-size: cover;
+  min-height: 100vh;
 }
 
-html, body, #root {
-  background: var(--page-bg) fixed;
+:root {
+  --page-bg: linear-gradient(180deg, #081d47 0%, #0b2c78 100%);
+}
+
+#root {
   min-height: 100%;
 }
 
+html[data-theme], body[data-theme] {
+  background: var(--page-bg) fixed;
+}
+
 [data-theme='blue'] {
-  --page-bg: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  --page-bg: linear-gradient(180deg, #081d47 0%, #0b2c78 100%);
 }
 
 [data-theme='crimson'] {
