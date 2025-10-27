@@ -356,6 +356,16 @@ html[data-theme='sunset'] {
     color: #f1f5f9 !important;
   }
   
+  /* Hard-lock badge text to bright white for all themes (Clan Log tags: Joined, Left, Promoted, Demoted) */
+  .bg-green-600.text-white,
+  .bg-red-600.text-white,
+  .bg-green-500.text-white,
+  .bg-red-500.text-white,
+  .bg-yellow-500.text-white {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+  }
+  
   body[data-theme='blue'] select:hover,
   body[data-theme='crimson'] select:hover,
   body[data-theme='emerald'] select:hover,

@@ -413,6 +413,10 @@ export function applyTheme(theme: Theme) {
   root.style.setProperty('--color-button-hover', theme.colors.buttonHover)
   root.style.setProperty('--color-button-active', theme.colors.buttonActive)
   
+  root.style.setProperty('--theme-button', theme.colors.button)
+  root.style.setProperty('--theme-button-hover', theme.colors.buttonHover)
+  root.style.setProperty('--theme-button-active', theme.colors.buttonActive)
+  
   const elements = [root, body]
   elements.forEach(el => {
     el.style.setProperty('--color-card-bg', cardColors.cardBg)

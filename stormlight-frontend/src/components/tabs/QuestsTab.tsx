@@ -78,10 +78,19 @@ export const QuestsTab = ({ username, playerData: _playerData, API_URL }: TabPro
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'COMPLETED': return 'text-green-400 border-green-400';
-      case 'STARTED': return 'text-yellow-400 border-yellow-400';
-      case 'NOT_STARTED': return 'text-slate-400 border-slate-400';
-      default: return 'text-slate-400 border-slate-400';
+      case 'COMPLETED': return 'border-[#22c55e]';
+      case 'STARTED': return 'border-[#facc15]';
+      case 'NOT_STARTED': return 'border-[#d1d5db]';
+      default: return 'border-[#d1d5db]';
+    }
+  };
+
+  const getStatusTextColor = (status: string) => {
+    switch (status) {
+      case 'COMPLETED': return '#22c55e';
+      case 'STARTED': return '#facc15';
+      case 'NOT_STARTED': return '#d1d5db';
+      default: return '#d1d5db';
     }
   };
 
@@ -136,7 +145,7 @@ export const QuestsTab = ({ username, playerData: _playerData, API_URL }: TabPro
                   </div>
                 </TableCell>
                 <TableCell className="py-3">
-                  <Badge variant="outline" className={getStatusColor(quest.status)}>
+                  <Badge variant="outline" className={getStatusColor(quest.status)} style={{ color: getStatusTextColor(quest.status) }}>
                     {quest.status.replace('_', ' ')}
                   </Badge>
                 </TableCell>
