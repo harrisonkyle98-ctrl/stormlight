@@ -426,20 +426,24 @@ const PlayerProfile = () => {
   const getLevelBadgeStyle = (skill: string, level: number, xp: number) => {
     if (skill === 'overall') {
       if (xp >= 5800000000) {
-        return 'text-purple-400 border-purple-400'
+        return 'text-[#d1d5db] border-[#06b6d4]' // Cyan border for 5.8B+ XP
       }
       if (level >= 3510) {
-        return 'text-yellow-400 border-yellow-400'
+        return 'text-[#d1d5db] border-[#facc15]' // Gold border for max total level
       }
+      return 'text-[#d1d5db] border-[#d1d5db]' // Dull grey for below 3510
     } else {
       if (xp >= 200000000) {
-        return 'text-purple-400 border-purple-400'
+        return 'text-[#d1d5db] border-[#06b6d4]' // Cyan border for 200M XP
       }
       if (level >= 120) {
-        return 'text-yellow-400 border-yellow-400'
+        return 'text-[#d1d5db] border-[#facc15]' // Gold border for 120+
       }
+      if (level >= 99) {
+        return 'text-[#d1d5db] border-[#22c55e]' // Green border for 99-119
+      }
+      return 'text-[#d1d5db] border-[#d1d5db]' // Dull grey for below 99
     }
-    return 'text-[#60a5fa] border-[#60a5fa] level-low-badge'
   }
 
   const tabs = [
@@ -990,7 +994,7 @@ const PlayerProfile = () => {
               <Card className="bg-slate-800/50 border-slate-700">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center space-x-2">
-                    <BarChart2 className="w-5 h-5 text-[#60a5fa]" />
+                    <BarChart2 className="w-5 h-5 text-[#22c55e]" />
                     <span>Skills at 99 [{skillsAt99.length}]</span>
                   </CardTitle>
                 </CardHeader>
@@ -1116,7 +1120,7 @@ const PlayerProfile = () => {
               <Card className="bg-slate-800/50 border-slate-700">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center space-x-2">
-                    <BarChart2 className="w-5 h-5 text-purple-400" />
+                    <BarChart2 className="w-5 h-5 text-[#06b6d4]" />
                     <span>Skills at 200m [{skillsAt200m.length}]</span>
                   </CardTitle>
                 </CardHeader>

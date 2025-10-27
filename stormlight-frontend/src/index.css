@@ -670,12 +670,6 @@ html[data-theme='sunset'] {
   color: rgba(203, 213, 225, 0.8) !important;
 }
 
-/* Level badges below 120 - lock to Sapphire blue for all non-Obsidian themes */
-/* Obsidian exception for level badges below 120 */
-[data-theme='obsidian'] .level-low-badge {
-  border-color: rgba(30, 41, 59, 0.8) !important;
-}
-
 /* Bingo board item slots - Obsidian exception */
 [data-theme='obsidian'] .bingo-slot {
   border-color: rgba(30, 41, 59, 0.8) !important;
