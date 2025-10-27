@@ -371,8 +371,12 @@ function hexToRgb(hex: string): string {
 
 export function applyTheme(theme: Theme) {
   const root = document.documentElement
+  const body = document.body
   
-  document.body.setAttribute('data-theme', theme.id)
+  body.setAttribute('data-theme', theme.id)
+  
+  const sapphireCardColors = themes.blue.colors
+  const cardColors = theme.id === 'obsidian' ? theme.colors : sapphireCardColors
   
   root.style.setProperty('--color-primary', theme.colors.primary)
   root.style.setProperty('--color-secondary', theme.colors.secondary)
@@ -406,10 +410,13 @@ export function applyTheme(theme: Theme) {
   root.style.setProperty('--color-button-hover', theme.colors.buttonHover)
   root.style.setProperty('--color-button-active', theme.colors.buttonActive)
   
-  root.style.setProperty('--color-card-bg', theme.colors.cardBg)
-  root.style.setProperty('--color-card-bg-hover', theme.colors.cardBgHover)
-  root.style.setProperty('--color-card-border', theme.colors.cardBorder)
-  root.style.setProperty('--color-card-border-hover', theme.colors.cardBorderHover)
+  const elements = [root, body]
+  elements.forEach(el => {
+    el.style.setProperty('--color-card-bg', cardColors.cardBg)
+    el.style.setProperty('--color-card-bg-hover', cardColors.cardBgHover)
+    el.style.setProperty('--color-card-border', cardColors.cardBorder)
+    el.style.setProperty('--color-card-border-hover', cardColors.cardBorderHover)
+  })
   
   root.style.setProperty('--color-text-primary', theme.colors.textPrimary)
   root.style.setProperty('--color-text-secondary', theme.colors.textSecondary)
