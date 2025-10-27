@@ -2,9 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Make body transparent so html gradient shows through */
+/* Body will receive gradient from the html, body rule in @layer base */
 body {
-  background: transparent !important;
   min-height: 100vh;
 }
 
@@ -367,12 +366,20 @@ html[data-theme='sunset'] {
   }
 }
 @layer base {
+  /* Apply gradient background to html and body for seamless coverage on all page sizes */
+  html, body {
+    min-height: 100vh;
+    background: var(--background-gradient) fixed center top / cover no-repeat !important;
+    background-repeat: no-repeat !important;
+    background-size: cover !important;
+    background-attachment: fixed !important;
+    background-position: center top !important;
+  }
+  
+  /* Keep #root transparent so the html/body background shows through */
   #root {
     min-height: 100vh;
-    background: var(--background-gradient);
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-    transition: background 0.5s ease-in-out;
+    background: transparent;
   }
   
   :root {
