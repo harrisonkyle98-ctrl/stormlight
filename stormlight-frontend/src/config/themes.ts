@@ -373,6 +373,7 @@ export function applyTheme(theme: Theme) {
   const root = document.documentElement
   const body = document.body
   
+  root.setAttribute('data-theme', theme.id)
   body.setAttribute('data-theme', theme.id)
   
   const sapphireCardColors = themes.blue.colors

@@ -1,30 +1,13 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
+import { useTheme } from "@/contexts/ThemeContext"
 
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, style, ...props }, ref) => {
-  const [theme, setTheme] = React.useState<string>('sapphire')
-  
-  React.useEffect(() => {
-    const currentTheme = document.body.getAttribute('data-theme') || 'sapphire'
-    setTheme(currentTheme)
-    
-    const observer = new MutationObserver(() => {
-      const newTheme = document.body.getAttribute('data-theme') || 'sapphire'
-      setTheme(newTheme)
-    })
-    
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['data-theme']
-    })
-    
-    return () => observer.disconnect()
-  }, [])
-  
+  const { theme } = useTheme()
   const isObsidian = theme === 'obsidian'
   
   const hardLockedStyle: React.CSSProperties = isObsidian

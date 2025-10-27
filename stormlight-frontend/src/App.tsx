@@ -11,6 +11,7 @@ import Login from './pages/Login'
 import LinkAccount from './pages/LinkAccount'
 import AdminPanel from './pages/AdminPanel'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import './App.css'
 
 function AppContent() {
@@ -54,12 +55,22 @@ function AppContent() {
   )
 }
 
-function App() {
+function AppWithTheme() {
+  const { user, loading } = useAuth()
+  
   return (
-    <AuthProvider>
+    <ThemeProvider user={user} loading={loading}>
       <Router>
         <AppContent />
       </Router>
+    </ThemeProvider>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppWithTheme />
     </AuthProvider>
   )
 }

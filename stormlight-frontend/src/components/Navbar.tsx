@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
 import { Button } from './ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { 
@@ -9,30 +10,11 @@ import {
   DropdownMenuTrigger 
 } from './ui/dropdown-menu'
 import { Home, Users, Trophy, LogOut, Settings } from 'lucide-react'
-import * as React from 'react'
 
 const Navbar = () => {
   const { user, logout } = useAuth()
   const location = useLocation()
-  const [theme, setTheme] = React.useState<string>('sapphire')
-  
-  React.useEffect(() => {
-    const currentTheme = document.body.getAttribute('data-theme') || 'sapphire'
-    setTheme(currentTheme)
-    
-    const observer = new MutationObserver(() => {
-      const newTheme = document.body.getAttribute('data-theme') || 'sapphire'
-      setTheme(newTheme)
-    })
-    
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['data-theme']
-    })
-    
-    return () => observer.disconnect()
-  }, [])
-  
+  const { theme } = useTheme()
   const isObsidian = theme === 'obsidian'
   
   const navbarStyle: React.CSSProperties = isObsidian

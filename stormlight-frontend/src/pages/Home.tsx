@@ -7,11 +7,12 @@ import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { Users, Trophy, TrendingUp, User, Settings, Calendar, Activity } from 'lucide-react'
 import { fetchClanMembers, getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
 import { usernameToUrl } from '../utils/urlUtils'
 import { Tooltip } from '../components/ui/tooltip'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog'
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts'
-import { themes, applyTheme, defaultTheme } from '../config/themes'
+import { themes } from '../config/themes'
 
 const getRankIcon = (rank: string): string => {
   const rankImageMap: { [key: string]: string } = {
@@ -152,7 +153,7 @@ const Home = () => {
   const [linkedAccounts, setLinkedAccounts] = useState<any[]>([])
   const [newUsername, setNewUsername] = useState('')
   const [linkRequestLoading, setLinkRequestLoading] = useState(false)
-  const [selectedTheme, setSelectedTheme] = useState<string>(defaultTheme)
+  const { theme: selectedTheme, setTheme: handleThemeChange } = useTheme()
   const [themeTooltip, setThemeTooltip] = useState<string | null>(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -693,70 +694,6 @@ const Home = () => {
     }
   }
 
-  const handleThemeChange = async (themeId: string) => {
-    console.log('🎨 Theme change requested:', themeId)
-    setSelectedTheme(themeId)
-    const theme = themes[themeId]
-    if (theme) {
-      applyTheme(theme)
-      localStorage.setItem('selectedTheme', themeId)
-      console.log('✅ Theme applied and saved to localStorage:', themeId)
-      
-      const token = localStorage.getItem('access_token')
-      console.log('🔐 Token exists:', !!token, 'User exists:', !!user, 'Username:', user?.username)
-      
-      if (token && user?.username) {
-        try {
-          console.log('📡 Calling API to save theme to backend:', themeId)
-          const response = await fetch(`${API_URL}/api/user/theme`, {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ theme: themeId })
-          })
-          
-          if (response.ok) {
-            const result = await response.json()
-            console.log('✅ Theme saved to backend successfully:', result)
-          } else {
-            const error = await response.json()
-            console.error('❌ Failed to save theme to backend:', response.status, error)
-          }
-        } catch (error) {
-          console.error('❌ Error saving theme preference:', error)
-        }
-      } else {
-        console.warn('⚠️ Theme not saved to backend - no token or user')
-      }
-    }
-  }
-
-  useEffect(() => {
-    const loadUserTheme = async () => {
-      if (user) {
-        const userTheme = (user as any).theme || defaultTheme
-        console.log('🎨 Loading user theme:', userTheme, 'from user object:', user)
-        
-        if (selectedTheme !== userTheme) {
-          setSelectedTheme(userTheme)
-          applyTheme(themes[userTheme])
-          localStorage.setItem('selectedTheme', userTheme)
-        }
-      } else if (!loading) {
-        const savedTheme = localStorage.getItem('selectedTheme') || defaultTheme
-        console.log('🎨 Loading guest theme from localStorage:', savedTheme)
-        
-        if (selectedTheme !== savedTheme) {
-          setSelectedTheme(savedTheme)
-          applyTheme(themes[savedTheme])
-        }
-      }
-    }
-    
-    loadUserTheme()
-  }, [user, loading])
 
   useEffect(() => {
     if (settingsOpen) {

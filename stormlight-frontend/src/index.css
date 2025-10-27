@@ -2,6 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --page-bg: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+}
+
+html, body, #root {
+  background: var(--page-bg) fixed;
+  min-height: 100%;
+}
+
+[data-theme='blue'] {
+  --page-bg: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+}
+
+[data-theme='crimson'] {
+  --page-bg: linear-gradient(180deg, #2d1212 0%, #1c0a0a 100%);
+}
+
+[data-theme='emerald'] {
+  --page-bg: linear-gradient(180deg, #0f2e26 0%, #0a1f1a 100%);
+}
+
+[data-theme='obsidian'] {
+  --page-bg: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+}
+
+[data-theme='amethyst'] {
+  --page-bg: linear-gradient(180deg, #2e1e47 0%, #1e0a33 100%);
+}
+
+[data-theme='sunset'] {
+  --page-bg: linear-gradient(180deg, #3a1c0d 0%, #1f0f06 100%);
+}
+
 @layer utilities {
   .bg-theme-primary {
     background-color: var(--color-primary);
@@ -63,7 +96,7 @@
   }
   
   /* Hard-lock modals for non-Obsidian themes */
-  body[data-theme='sapphire'] .modal-hardlock,
+  body[data-theme='blue'] .modal-hardlock,
   body[data-theme='crimson'] .modal-hardlock,
   body[data-theme='emerald'] .modal-hardlock,
   body[data-theme='amethyst'] .modal-hardlock,
@@ -74,7 +107,7 @@
     color: #f1f5f9 !important;
   }
   
-  body[data-theme='sapphire'] .modal-overlay-hardlock,
+  body[data-theme='blue'] .modal-overlay-hardlock,
   body[data-theme='crimson'] .modal-overlay-hardlock,
   body[data-theme='emerald'] .modal-overlay-hardlock,
   body[data-theme='amethyst'] .modal-overlay-hardlock,
@@ -83,42 +116,42 @@
   }
   
   /* Hard-lock subtext and timestamps for non-Obsidian themes */
-  body[data-theme='sapphire'] .card-hardlock time,
+  body[data-theme='blue'] .card-hardlock time,
   body[data-theme='crimson'] .card-hardlock time,
   body[data-theme='emerald'] .card-hardlock time,
   body[data-theme='amethyst'] .card-hardlock time,
   body[data-theme='sunset'] .card-hardlock time,
-  body[data-theme='sapphire'] .card-hardlock .card-subtext,
+  body[data-theme='blue'] .card-hardlock .card-subtext,
   body[data-theme='crimson'] .card-hardlock .card-subtext,
   body[data-theme='emerald'] .card-hardlock .card-subtext,
   body[data-theme='amethyst'] .card-hardlock .card-subtext,
   body[data-theme='sunset'] .card-hardlock .card-subtext,
-  body[data-theme='sapphire'] .card-hardlock .timestamp,
+  body[data-theme='blue'] .card-hardlock .timestamp,
   body[data-theme='crimson'] .card-hardlock .timestamp,
   body[data-theme='emerald'] .card-hardlock .timestamp,
   body[data-theme='amethyst'] .card-hardlock .timestamp,
   body[data-theme='sunset'] .card-hardlock .timestamp,
-  body[data-theme='sapphire'] .card-hardlock .text-slate-300,
+  body[data-theme='blue'] .card-hardlock .text-slate-300,
   body[data-theme='crimson'] .card-hardlock .text-slate-300,
   body[data-theme='emerald'] .card-hardlock .text-slate-300,
   body[data-theme='amethyst'] .card-hardlock .text-slate-300,
   body[data-theme='sunset'] .card-hardlock .text-slate-300,
-  body[data-theme='sapphire'] .card-hardlock .text-slate-400,
+  body[data-theme='blue'] .card-hardlock .text-slate-400,
   body[data-theme='crimson'] .card-hardlock .text-slate-400,
   body[data-theme='emerald'] .card-hardlock .text-slate-400,
   body[data-theme='amethyst'] .card-hardlock .text-slate-400,
   body[data-theme='sunset'] .card-hardlock .text-slate-400,
-  body[data-theme='sapphire'] .card-hardlock .text-slate-500,
+  body[data-theme='blue'] .card-hardlock .text-slate-500,
   body[data-theme='crimson'] .card-hardlock .text-slate-500,
   body[data-theme='emerald'] .card-hardlock .text-slate-500,
   body[data-theme='amethyst'] .card-hardlock .text-slate-500,
   body[data-theme='sunset'] .card-hardlock .text-slate-500,
-  body[data-theme='sapphire'] .card-hardlock .text-zinc-400,
+  body[data-theme='blue'] .card-hardlock .text-zinc-400,
   body[data-theme='crimson'] .card-hardlock .text-zinc-400,
   body[data-theme='emerald'] .card-hardlock .text-zinc-400,
   body[data-theme='amethyst'] .card-hardlock .text-zinc-400,
   body[data-theme='sunset'] .card-hardlock .text-zinc-400,
-  body[data-theme='sapphire'] .card-hardlock .text-zinc-500,
+  body[data-theme='blue'] .card-hardlock .text-zinc-500,
   body[data-theme='crimson'] .card-hardlock .text-zinc-500,
   body[data-theme='emerald'] .card-hardlock .text-zinc-500,
   body[data-theme='amethyst'] .card-hardlock .text-zinc-500,
@@ -126,42 +159,42 @@
     color: #94a3b8 !important;
   }
   
-  body[data-theme='sapphire'] .modal-hardlock time,
+  body[data-theme='blue'] .modal-hardlock time,
   body[data-theme='crimson'] .modal-hardlock time,
   body[data-theme='emerald'] .modal-hardlock time,
   body[data-theme='amethyst'] .modal-hardlock time,
   body[data-theme='sunset'] .modal-hardlock time,
-  body[data-theme='sapphire'] .modal-hardlock .card-subtext,
+  body[data-theme='blue'] .modal-hardlock .card-subtext,
   body[data-theme='crimson'] .modal-hardlock .card-subtext,
   body[data-theme='emerald'] .modal-hardlock .card-subtext,
   body[data-theme='amethyst'] .modal-hardlock .card-subtext,
   body[data-theme='sunset'] .modal-hardlock .card-subtext,
-  body[data-theme='sapphire'] .modal-hardlock .timestamp,
+  body[data-theme='blue'] .modal-hardlock .timestamp,
   body[data-theme='crimson'] .modal-hardlock .timestamp,
   body[data-theme='emerald'] .modal-hardlock .timestamp,
   body[data-theme='amethyst'] .modal-hardlock .timestamp,
   body[data-theme='sunset'] .modal-hardlock .timestamp,
-  body[data-theme='sapphire'] .modal-hardlock .text-slate-300,
+  body[data-theme='blue'] .modal-hardlock .text-slate-300,
   body[data-theme='crimson'] .modal-hardlock .text-slate-300,
   body[data-theme='emerald'] .modal-hardlock .text-slate-300,
   body[data-theme='amethyst'] .modal-hardlock .text-slate-300,
   body[data-theme='sunset'] .modal-hardlock .text-slate-300,
-  body[data-theme='sapphire'] .modal-hardlock .text-slate-400,
+  body[data-theme='blue'] .modal-hardlock .text-slate-400,
   body[data-theme='crimson'] .modal-hardlock .text-slate-400,
   body[data-theme='emerald'] .modal-hardlock .text-slate-400,
   body[data-theme='amethyst'] .modal-hardlock .text-slate-400,
   body[data-theme='sunset'] .modal-hardlock .text-slate-400,
-  body[data-theme='sapphire'] .modal-hardlock .text-slate-500,
+  body[data-theme='blue'] .modal-hardlock .text-slate-500,
   body[data-theme='crimson'] .modal-hardlock .text-slate-500,
   body[data-theme='emerald'] .modal-hardlock .text-slate-500,
   body[data-theme='amethyst'] .modal-hardlock .text-slate-500,
   body[data-theme='sunset'] .modal-hardlock .text-slate-500,
-  body[data-theme='sapphire'] .modal-hardlock .text-zinc-400,
+  body[data-theme='blue'] .modal-hardlock .text-zinc-400,
   body[data-theme='crimson'] .modal-hardlock .text-zinc-400,
   body[data-theme='emerald'] .modal-hardlock .text-zinc-400,
   body[data-theme='amethyst'] .modal-hardlock .text-zinc-400,
   body[data-theme='sunset'] .modal-hardlock .text-zinc-400,
-  body[data-theme='sapphire'] .modal-hardlock .text-zinc-500,
+  body[data-theme='blue'] .modal-hardlock .text-zinc-500,
   body[data-theme='crimson'] .modal-hardlock .text-zinc-500,
   body[data-theme='emerald'] .modal-hardlock .text-zinc-500,
   body[data-theme='amethyst'] .modal-hardlock .text-zinc-500,
@@ -170,22 +203,22 @@
   }
   
   /* Hard-lock input fields for non-Obsidian themes */
-  body[data-theme='sapphire'] input[type="text"],
+  body[data-theme='blue'] input[type="text"],
   body[data-theme='crimson'] input[type="text"],
   body[data-theme='emerald'] input[type="text"],
   body[data-theme='amethyst'] input[type="text"],
   body[data-theme='sunset'] input[type="text"],
-  body[data-theme='sapphire'] input[type="email"],
+  body[data-theme='blue'] input[type="email"],
   body[data-theme='crimson'] input[type="email"],
   body[data-theme='emerald'] input[type="email"],
   body[data-theme='amethyst'] input[type="email"],
   body[data-theme='sunset'] input[type="email"],
-  body[data-theme='sapphire'] input[type="search"],
+  body[data-theme='blue'] input[type="search"],
   body[data-theme='crimson'] input[type="search"],
   body[data-theme='emerald'] input[type="search"],
   body[data-theme='amethyst'] input[type="search"],
   body[data-theme='sunset'] input[type="search"],
-  body[data-theme='sapphire'] textarea,
+  body[data-theme='blue'] textarea,
   body[data-theme='crimson'] textarea,
   body[data-theme='emerald'] textarea,
   body[data-theme='amethyst'] textarea,
@@ -196,22 +229,22 @@
     caret-color: #f1f5f9 !important;
   }
   
-  body[data-theme='sapphire'] input[type="text"]:focus,
+  body[data-theme='blue'] input[type="text"]:focus,
   body[data-theme='crimson'] input[type="text"]:focus,
   body[data-theme='emerald'] input[type="text"]:focus,
   body[data-theme='amethyst'] input[type="text"]:focus,
   body[data-theme='sunset'] input[type="text"]:focus,
-  body[data-theme='sapphire'] input[type="email"]:focus,
+  body[data-theme='blue'] input[type="email"]:focus,
   body[data-theme='crimson'] input[type="email"]:focus,
   body[data-theme='emerald'] input[type="email"]:focus,
   body[data-theme='amethyst'] input[type="email"]:focus,
   body[data-theme='sunset'] input[type="email"]:focus,
-  body[data-theme='sapphire'] input[type="search"]:focus,
+  body[data-theme='blue'] input[type="search"]:focus,
   body[data-theme='crimson'] input[type="search"]:focus,
   body[data-theme='emerald'] input[type="search"]:focus,
   body[data-theme='amethyst'] input[type="search"]:focus,
   body[data-theme='sunset'] input[type="search"]:focus,
-  body[data-theme='sapphire'] textarea:focus,
+  body[data-theme='blue'] textarea:focus,
   body[data-theme='crimson'] textarea:focus,
   body[data-theme='emerald'] textarea:focus,
   body[data-theme='amethyst'] textarea:focus,
@@ -221,12 +254,12 @@
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
   }
   
-  body[data-theme='sapphire'] input::placeholder,
+  body[data-theme='blue'] input::placeholder,
   body[data-theme='crimson'] input::placeholder,
   body[data-theme='emerald'] input::placeholder,
   body[data-theme='amethyst'] input::placeholder,
   body[data-theme='sunset'] input::placeholder,
-  body[data-theme='sapphire'] textarea::placeholder,
+  body[data-theme='blue'] textarea::placeholder,
   body[data-theme='crimson'] textarea::placeholder,
   body[data-theme='emerald'] textarea::placeholder,
   body[data-theme='amethyst'] textarea::placeholder,
@@ -236,7 +269,7 @@
   
   
   /* Hard-lock select/dropdown elements for non-Obsidian themes */
-  body[data-theme='sapphire'] select,
+  body[data-theme='blue'] select,
   body[data-theme='crimson'] select,
   body[data-theme='emerald'] select,
   body[data-theme='amethyst'] select,
@@ -246,7 +279,7 @@
     color: #f1f5f9 !important;
   }
   
-  body[data-theme='sapphire'] select:hover,
+  body[data-theme='blue'] select:hover,
   body[data-theme='crimson'] select:hover,
   body[data-theme='emerald'] select:hover,
   body[data-theme='amethyst'] select:hover,
@@ -350,7 +383,7 @@
     --background-gradient: linear-gradient(180deg, #081d47 0%, #0b2c78 100%);
   }
   
-  body[data-theme='sapphire'] {
+  body[data-theme='blue'] {
     --background-gradient: linear-gradient(180deg, #081d47 0%, #0b2c78 100%);
   }
   
@@ -388,7 +421,7 @@
   
   /* Global lock: Force Sapphire card values for all non-Obsidian themes */
   body[data-theme='blue'],
-  body[data-theme='sapphire'],
+  body[data-theme='blue'],
   body[data-theme='crimson'],
   body[data-theme='emerald'],
   body[data-theme='amethyst'],
