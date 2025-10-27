@@ -439,7 +439,7 @@ const PlayerProfile = () => {
         return 'text-yellow-400 border-yellow-400'
       }
     }
-    return 'text-[#60a5fa] border-blue-400'
+    return 'text-[#60a5fa] border-[#60a5fa] level-low-badge'
   }
 
   const tabs = [
