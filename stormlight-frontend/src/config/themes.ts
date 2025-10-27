@@ -128,10 +128,10 @@ export const themes: Record<string, Theme> = {
       buttonHover: '#b91c1c',
       buttonActive: '#991b1b',
       
-      cardBg: 'rgba(69, 10, 10, 0.8)',
-      cardBgHover: 'rgba(69, 10, 10, 0.95)',
-      cardBorder: 'rgba(127, 29, 29, 0.6)',
-      cardBorderHover: '#991b1b',
+      cardBg: 'rgba(30, 41, 59, 0.8)',
+      cardBgHover: 'rgba(30, 41, 59, 0.95)',
+      cardBorder: 'rgba(51, 65, 85, 0.6)',
+      cardBorderHover: '#475569',
       
       textPrimary: '#fef2f2',
       textSecondary: '#fecaca',
@@ -179,10 +179,10 @@ export const themes: Record<string, Theme> = {
       buttonHover: '#059669',
       buttonActive: '#047857',
       
-      cardBg: 'rgba(6, 78, 59, 0.8)',
-      cardBgHover: 'rgba(6, 78, 59, 0.95)',
-      cardBorder: 'rgba(4, 120, 87, 0.6)',
-      cardBorderHover: '#059669',
+      cardBg: 'rgba(30, 41, 59, 0.8)',
+      cardBgHover: 'rgba(30, 41, 59, 0.95)',
+      cardBorder: 'rgba(51, 65, 85, 0.6)',
+      cardBorderHover: '#475569',
       
       textPrimary: '#ecfdf5',
       textSecondary: '#d1fae5',
@@ -281,10 +281,10 @@ export const themes: Record<string, Theme> = {
       buttonHover: '#7e22ce',
       buttonActive: '#6b21a8',
       
-      cardBg: 'rgba(88, 28, 135, 0.8)',
-      cardBgHover: 'rgba(88, 28, 135, 0.95)',
-      cardBorder: 'rgba(107, 33, 168, 0.6)',
-      cardBorderHover: '#7e22ce',
+      cardBg: 'rgba(30, 41, 59, 0.8)',
+      cardBgHover: 'rgba(30, 41, 59, 0.95)',
+      cardBorder: 'rgba(51, 65, 85, 0.6)',
+      cardBorderHover: '#475569',
       
       textPrimary: '#faf5ff',
       textSecondary: '#f3e8ff',
@@ -332,10 +332,10 @@ export const themes: Record<string, Theme> = {
       buttonHover: '#c2410c',
       buttonActive: '#9a3412',
       
-      cardBg: 'rgba(124, 45, 18, 0.8)',
-      cardBgHover: 'rgba(124, 45, 18, 0.95)',
-      cardBorder: 'rgba(154, 52, 18, 0.6)',
-      cardBorderHover: '#c2410c',
+      cardBg: 'rgba(30, 41, 59, 0.8)',
+      cardBgHover: 'rgba(30, 41, 59, 0.95)',
+      cardBorder: 'rgba(51, 65, 85, 0.6)',
+      cardBorderHover: '#475569',
       
       textPrimary: '#ffedd5',
       textSecondary: '#fed7aa',
