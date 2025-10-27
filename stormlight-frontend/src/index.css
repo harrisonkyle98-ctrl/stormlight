@@ -554,3 +554,119 @@ html[data-theme='sunset'] {
   border: 1px solid rgba(30, 41, 59, 0.8) !important;
 }
 
+/* User Settings Modal - lock to Sapphire styling for all non-Obsidian themes */
+[data-theme='blue'] .modal-hardlock,
+[data-theme='crimson'] .modal-hardlock,
+[data-theme='emerald'] .modal-hardlock,
+[data-theme='amethyst'] .modal-hardlock,
+[data-theme='sunset'] .modal-hardlock {
+  background-color: rgba(30, 41, 59, 0.95) !important;
+  border: 1px solid rgba(51, 65, 85, 0.8) !important;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.45) !important;
+  color: #f1f5f9 !important;
+}
+
+/* Lock modal overlay to Sapphire dark overlay */
+[data-theme='blue'] .modal-overlay-hardlock,
+[data-theme='crimson'] .modal-overlay-hardlock,
+[data-theme='emerald'] .modal-overlay-hardlock,
+[data-theme='amethyst'] .modal-overlay-hardlock,
+[data-theme='sunset'] .modal-overlay-hardlock {
+  background: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Lock input fields inside User Settings modal to Sapphire colors */
+[data-theme='blue'] .modal-hardlock input,
+[data-theme='crimson'] .modal-hardlock input,
+[data-theme='emerald'] .modal-hardlock input,
+[data-theme='amethyst'] .modal-hardlock input,
+[data-theme='sunset'] .modal-hardlock input,
+[data-theme='blue'] .modal-hardlock textarea,
+[data-theme='crimson'] .modal-hardlock textarea,
+[data-theme='emerald'] .modal-hardlock textarea,
+[data-theme='amethyst'] .modal-hardlock textarea,
+[data-theme='sunset'] .modal-hardlock textarea {
+  background-color: rgba(30, 41, 59, 0.85) !important;
+  border: 1px solid rgba(51, 65, 85, 0.7) !important;
+  color: #f1f5f9 !important;
+  caret-color: #f1f5f9 !important;
+}
+
+/* Lock labels inside User Settings modal to Sapphire colors */
+[data-theme='blue'] .modal-hardlock label,
+[data-theme='crimson'] .modal-hardlock label,
+[data-theme='emerald'] .modal-hardlock label,
+[data-theme='amethyst'] .modal-hardlock label,
+[data-theme='sunset'] .modal-hardlock label {
+  color: #f1f5f9 !important;
+}
+
+/* Focus state for inputs in User Settings modal */
+[data-theme='blue'] .modal-hardlock input:focus,
+[data-theme='crimson'] .modal-hardlock input:focus,
+[data-theme='emerald'] .modal-hardlock input:focus,
+[data-theme='amethyst'] .modal-hardlock input:focus,
+[data-theme='sunset'] .modal-hardlock input:focus,
+[data-theme='blue'] .modal-hardlock textarea:focus,
+[data-theme='crimson'] .modal-hardlock textarea:focus,
+[data-theme='emerald'] .modal-hardlock textarea:focus,
+[data-theme='amethyst'] .modal-hardlock textarea:focus,
+[data-theme='sunset'] .modal-hardlock textarea:focus {
+  border-color: rgba(96, 165, 250, 0.9) !important;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+}
+
+/* Lock inner containers inside User Settings modal to Sapphire colors */
+[data-theme='blue'] .modal-hardlock .bg-slate-700\/30,
+[data-theme='crimson'] .modal-hardlock .bg-slate-700\/30,
+[data-theme='emerald'] .modal-hardlock .bg-slate-700\/30,
+[data-theme='amethyst'] .modal-hardlock .bg-slate-700\/30,
+[data-theme='sunset'] .modal-hardlock .bg-slate-700\/30 {
+  background-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+/* Obsidian exception for User Settings modal */
+[data-theme='obsidian'] .modal-hardlock {
+  background-color: rgba(15, 23, 42, 0.95) !important;
+  border: 1px solid rgba(30, 41, 59, 0.8) !important;
+}
+
+/* Sub-text and timestamp colors - lock to Sapphire neutral tone */
+[data-theme='blue'] .subtext,
+[data-theme='blue'] small,
+[data-theme='blue'] time,
+[data-theme='blue'] .text-slate-400,
+[data-theme='blue'] .text-xs,
+[data-theme='crimson'] .subtext,
+[data-theme='crimson'] small,
+[data-theme='crimson'] time,
+[data-theme='crimson'] .text-slate-400,
+[data-theme='crimson'] .text-xs,
+[data-theme='emerald'] .subtext,
+[data-theme='emerald'] small,
+[data-theme='emerald'] time,
+[data-theme='emerald'] .text-slate-400,
+[data-theme='emerald'] .text-xs,
+[data-theme='amethyst'] .subtext,
+[data-theme='amethyst'] small,
+[data-theme='amethyst'] time,
+[data-theme='amethyst'] .text-slate-400,
+[data-theme='amethyst'] .text-xs,
+[data-theme='sunset'] .subtext,
+[data-theme='sunset'] small,
+[data-theme='sunset'] time,
+[data-theme='sunset'] .text-slate-400,
+[data-theme='sunset'] .text-xs {
+  color: rgba(148, 163, 184, 0.8) !important;
+}
+
+/* Obsidian exception for sub-text and timestamps */
+[data-theme='obsidian'] .subtext,
+[data-theme='obsidian'] small,
+[data-theme='obsidian'] time,
+[data-theme='obsidian'] .text-slate-400,
+[data-theme='obsidian'] .text-xs {
+  color: rgba(203, 213, 225, 0.8) !important;
+}
+
