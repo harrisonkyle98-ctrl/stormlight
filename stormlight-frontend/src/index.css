@@ -788,21 +788,21 @@ html[data-theme='sunset'] {
 }
 
 /* Admin Panel rows - lock to Sapphire slate colors */
-[data-theme='blue'] .admin-row,
-[data-theme='crimson'] .admin-row,
-[data-theme='emerald'] .admin-row,
-[data-theme='amethyst'] .admin-row,
-[data-theme='sunset'] .admin-row {
+html[data-theme='blue'] .admin-row,
+html[data-theme='crimson'] .admin-row,
+html[data-theme='emerald'] .admin-row,
+html[data-theme='amethyst'] .admin-row,
+html[data-theme='sunset'] .admin-row {
   background-color: rgba(51, 65, 85, 0.5) !important;
   border-color: rgba(71, 85, 105, 0.5) !important;
 }
 
 /* Leaderboard rank borders - lock to Sapphire */
-[data-theme='blue'] .rank-border,
-[data-theme='crimson'] .rank-border,
-[data-theme='emerald'] .rank-border,
-[data-theme='amethyst'] .rank-border,
-[data-theme='sunset'] .rank-border {
+html[data-theme='blue'] .rank-border,
+html[data-theme='crimson'] .rank-border,
+html[data-theme='emerald'] .rank-border,
+html[data-theme='amethyst'] .rank-border,
+html[data-theme='sunset'] .rank-border {
   border-color: rgb(71, 85, 105) !important; /* slate-600 */
 }
 
