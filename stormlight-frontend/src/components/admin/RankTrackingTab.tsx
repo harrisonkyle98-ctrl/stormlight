@@ -232,7 +232,7 @@ export const RankTrackingTab = () => {
                             const member = members.find(m => m.username === tracking.username)
                             if (member) startEditJoinDate(member)
                           }}
-                          className="flex items-center space-x-1"
+                          className="flex items-center space-x-1 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-white"
                         >
                           <Calendar className="w-3 h-3" />
                           <span>Edit Join Date</span>
@@ -326,7 +326,7 @@ export const RankTrackingTab = () => {
                             const member = members.find(m => m.username === tracking.username)
                             if (member) startEditJoinDate(member)
                           }}
-                          className="flex items-center space-x-1"
+                          className="flex items-center space-x-1 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-white"
                         >
                           <Calendar className="w-3 h-3" />
                           <span>Edit Join Date</span>
@@ -370,7 +370,7 @@ export const RankTrackingTab = () => {
                   variant="outline"
                   onClick={() => setActiveMembersPage(p => Math.max(1, p - 1))}
                   disabled={activeMembersPage === 1}
-                  className="text-white border-slate-500 hover:bg-slate-600"
+                  className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
                 >
                   Previous
                 </Button>
@@ -382,7 +382,7 @@ export const RankTrackingTab = () => {
                   variant="outline"
                   onClick={() => setActiveMembersPage(p => Math.min(totalActivePages, p + 1))}
                   disabled={activeMembersPage === totalActivePages}
-                  className="text-white border-slate-500 hover:bg-slate-600"
+                  className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
                 >
                   Next
                 </Button>
@@ -447,7 +447,7 @@ export const RankTrackingTab = () => {
                             const member = members.find(m => m.username === tracking.username)
                             if (member) startEditJoinDate(member)
                           }}
-                          className="flex items-center space-x-1"
+                          className="flex items-center space-x-1 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-white"
                         >
                           <Calendar className="w-3 h-3" />
                           <span>Edit Join Date</span>

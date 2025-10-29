@@ -247,7 +247,7 @@ export const DropsTab = ({ username, playerData: _playerData, API_URL }: TabProp
               <div key={table.boss_name} className="space-y-2">
                 <button
                   onClick={() => toggleBoss(table.boss_name)}
-                  className="w-full bg-slate-600/50 px-4 py-3 rounded-lg border-l-4 border-theme-accent flex items-center justify-between hover:bg-slate-600/70 transition-colors"
+                  className="w-full bg-slate-700/30 px-4 py-3 rounded-lg border-l-4 border-[rgba(51,65,85,0.6)] flex items-center justify-between hover:border-theme-accent transition-colors group"
                 >
                   <div className="flex items-center space-x-3">
                     <Package className="w-5 h-5 text-theme-accent-light" />

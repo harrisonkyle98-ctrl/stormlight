@@ -614,6 +614,7 @@ export const CompetitionManagementTab = () => {
                       reward_badge_id: ''
                     })
                   }}
+                  className="bg-red-600 hover:bg-red-700 text-white border-red-600"
                 >
                   Cancel
                 </Button>
@@ -656,7 +657,7 @@ export const CompetitionManagementTab = () => {
                           size="sm"
                           variant="outline"
                           onClick={() => startEdit(competition)}
-                          className="p-1 h-8 w-8"
+                          className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-white"
                         >
                           <Edit className="w-3 h-3" />
                         </Button>
@@ -664,7 +665,7 @@ export const CompetitionManagementTab = () => {
                           size="sm"
                           variant="outline"
                           onClick={() => handleDelete(competition.id)}
-                          className="p-1 h-8 w-8 text-red-400 hover:text-red-300"
+                          className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-red-400 hover:text-red-300"
                         >
                           <Trash2 className="w-3 h-3" />
                         </Button>

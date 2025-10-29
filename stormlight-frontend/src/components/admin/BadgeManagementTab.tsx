@@ -311,6 +311,7 @@ export const BadgeManagementTab = () => {
                     })
                     setColorMode('solid')
                   }}
+                  className="bg-red-600 hover:bg-red-700 text-white border-red-600"
                 >
                   Cancel
                 </Button>
@@ -363,7 +364,7 @@ export const BadgeManagementTab = () => {
                         size="sm"
                         variant="outline"
                         onClick={() => startEdit(badge)}
-                        className="p-1 h-8 w-8"
+                        className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-white"
                         title="Edit badge"
                       >
                         <Edit className="w-3 h-3" />
@@ -372,7 +373,7 @@ export const BadgeManagementTab = () => {
                         size="sm"
                         variant="outline"
                         onClick={() => handleDelete(badge.id)}
-                        className="p-1 h-8 w-8 text-red-400 hover:text-red-300"
+                        className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-red-400 hover:text-red-300"
                         title="Delete badge"
                       >
                         <Trash2 className="w-3 h-3" />

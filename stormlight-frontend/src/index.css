@@ -779,3 +779,37 @@ html[data-theme='obsidian'] button[data-state='active'] {
   }
 }
 
+/* Lock Admin Panel dropdown styling to Sapphire theme for all non-Obsidian themes */
+:root[data-theme='sapphire'] [role="listbox"],
+:root[data-theme='crimson'] [role="listbox"],
+:root[data-theme='emerald'] [role="listbox"],
+:root[data-theme='amethyst'] [role="listbox"],
+:root[data-theme='sunset'] [role="listbox"] {
+  background-color: rgba(30, 41, 59, 0.95) !important;
+  border-color: rgba(51, 65, 85, 0.8) !important;
+  color: #f1f5f9 !important;
+}
+
+:root[data-theme='sapphire'] [role="option"],
+:root[data-theme='crimson'] [role="option"],
+:root[data-theme='emerald'] [role="option"],
+:root[data-theme='amethyst'] [role="option"],
+:root[data-theme='sunset'] [role="option"] {
+  color: #f1f5f9 !important;
+}
+
+/* Admin Panel dropdown option hover/selection - use theme accent color */
+:root[data-theme='sapphire'] [role="option"]:hover,
+:root[data-theme='crimson'] [role="option"]:hover,
+:root[data-theme='emerald'] [role="option"]:hover,
+:root[data-theme='amethyst'] [role="option"]:hover,
+:root[data-theme='sunset'] [role="option"]:hover,
+:root[data-theme='sapphire'] [role="option"][aria-selected="true"],
+:root[data-theme='crimson'] [role="option"][aria-selected="true"],
+:root[data-theme='emerald'] [role="option"][aria-selected="true"],
+:root[data-theme='amethyst'] [role="option"][aria-selected="true"],
+:root[data-theme='sunset'] [role="option"][aria-selected="true"] {
+  background-color: var(--color-accent) !important;
+  color: #ffffff !important;
+}
+
