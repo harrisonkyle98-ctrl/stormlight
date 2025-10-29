@@ -425,9 +425,12 @@ export function applyTheme(theme: Theme) {
     el.style.setProperty('--color-card-border-hover', cardColors.cardBorderHover)
   })
   
-  root.style.setProperty('--color-text-primary', theme.colors.textPrimary)
-  root.style.setProperty('--color-text-secondary', theme.colors.textSecondary)
-  root.style.setProperty('--color-text-muted', theme.colors.textMuted)
+  const sapphireTextColors = themes.blue.colors
+  const textColors = theme.id === 'obsidian' ? theme.colors : sapphireTextColors
+  
+  root.style.setProperty('--color-text-primary', textColors.textPrimary)
+  root.style.setProperty('--color-text-secondary', textColors.textSecondary)
+  root.style.setProperty('--color-text-muted', textColors.textMuted)
   root.style.setProperty('--color-text-accent', theme.colors.textAccent)
   
   root.style.setProperty('--color-bg-primary', theme.colors.bgPrimary)
