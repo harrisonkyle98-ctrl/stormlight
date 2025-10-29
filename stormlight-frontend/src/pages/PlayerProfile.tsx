@@ -469,7 +469,7 @@ const PlayerProfile = () => {
           <div className="w-full">
             <Table className="text-slate-300">
               <TableHeader>
-                <TableRow className="border-slate-600 hover:bg-slate-800/50">
+                <TableRow className="border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50">
                   <TableHead className="text-slate-400 font-medium py-3 h-auto">Skills</TableHead>
                   <TableHead className="text-slate-400 font-medium py-3 h-auto">Level</TableHead>
                   <TableHead className="text-slate-400 font-medium py-3 h-auto">Rank</TableHead>
@@ -516,7 +516,7 @@ const PlayerProfile = () => {
               </TableHeader>
               <TableBody>
                 {skills.map(([skill, data]) => (
-                  <TableRow key={skill} className="border-slate-600 hover:bg-slate-800/50">
+                  <TableRow key={skill} className="border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50">
                     <TableCell className="py-3">
                       <div className="flex items-center space-x-3">
                         {getSkillIcon(skill) ? (
