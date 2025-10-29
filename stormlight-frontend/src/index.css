@@ -814,3 +814,14 @@ html[data-theme='obsidian'] button[data-state='active'] {
   color: #ffffff !important;
 }
 
+/* Hard-lock Radix SelectTrigger (dropdown input fields) background for ALL themes */
+/* SelectTrigger renders as button[role="combobox"], not native select */
+:root[data-theme='sapphire'] button[role="combobox"],
+:root[data-theme='crimson'] button[role="combobox"],
+:root[data-theme='emerald'] button[role="combobox"],
+:root[data-theme='amethyst'] button[role="combobox"],
+:root[data-theme='sunset'] button[role="combobox"],
+:root[data-theme='obsidian'] button[role="combobox"] {
+  background-color: rgba(51, 65, 85, 0.6) !important;
+}
+
