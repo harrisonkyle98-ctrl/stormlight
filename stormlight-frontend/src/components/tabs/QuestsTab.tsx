@@ -104,7 +104,7 @@ export const QuestsTab = ({ username, playerData: _playerData, API_URL }: TabPro
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="text-center p-4 bg-slate-700/50 rounded-lg">
           <p className="text-sm text-slate-400 mb-1">Total Quest Points</p>
-          <p className="text-2xl font-bold text-theme-accent-light">{questData.total_quest_points}</p>
+          <p className="text-2xl font-bold text-[#60a5fa]">{questData.total_quest_points}</p>
         </div>
         <div className="text-center p-4 bg-slate-700/50 rounded-lg">
           <p className="text-sm text-slate-400 mb-1">Completed</p>
@@ -123,7 +123,7 @@ export const QuestsTab = ({ username, playerData: _playerData, API_URL }: TabPro
       <div className="w-full">
         <Table className="text-slate-300">
           <TableHeader>
-            <TableRow className="border-slate-600 hover:bg-slate-800/50">
+            <TableRow className="border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50">
               <TableHead className="text-slate-400 font-medium py-3 h-auto">Quest</TableHead>
               <TableHead className="text-slate-400 font-medium py-3 h-auto">Status</TableHead>
               <TableHead className="text-slate-400 font-medium py-3 h-auto">Difficulty</TableHead>
@@ -133,7 +133,7 @@ export const QuestsTab = ({ username, playerData: _playerData, API_URL }: TabPro
           </TableHeader>
           <TableBody>
             {questData.quests.map((quest, index) => (
-              <TableRow key={index} className="border-slate-600 hover:bg-slate-800/50">
+              <TableRow key={index} className="border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50">
                 <TableCell className="py-3">
                   <div className="flex items-center space-x-3">
                     <img 
