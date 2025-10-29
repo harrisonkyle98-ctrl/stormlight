@@ -550,7 +550,7 @@ const PlayerProfile = () => {
                     <TableCell className="py-3">
                       <div className="flex items-center space-x-2">
                         {data.rank ? (
-                          <span className="text-theme-accent-light font-medium">
+                          <span className="text-[#60a5fa] font-medium">
                             #{data.rank.toLocaleString()}
                           </span>
                         ) : (
