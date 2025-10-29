@@ -192,12 +192,7 @@ html[data-theme='sunset'] {
     background: rgba(0, 0, 0, 0.6) !important;
   }
   
-  /* Hard-lock subtext and timestamps for non-Obsidian themes */
-  html[data-theme='blue'] .card-hardlock time,
-  html[data-theme='crimson'] .card-hardlock time,
-  html[data-theme='emerald'] .card-hardlock time,
-  html[data-theme='amethyst'] .card-hardlock time,
-  html[data-theme='sunset'] .card-hardlock time,
+  /* Narrow semantic rules for timestamps and subtexts only */
   html[data-theme='blue'] .card-hardlock .card-subtext,
   html[data-theme='crimson'] .card-hardlock .card-subtext,
   html[data-theme='emerald'] .card-hardlock .card-subtext,
@@ -208,39 +203,14 @@ html[data-theme='sunset'] {
   html[data-theme='emerald'] .card-hardlock .timestamp,
   html[data-theme='amethyst'] .card-hardlock .timestamp,
   html[data-theme='sunset'] .card-hardlock .timestamp,
-  html[data-theme='blue'] .card-hardlock .text-slate-300,
-  html[data-theme='crimson'] .card-hardlock .text-slate-300,
-  html[data-theme='emerald'] .card-hardlock .text-slate-300,
-  html[data-theme='amethyst'] .card-hardlock .text-slate-300,
-  html[data-theme='sunset'] .card-hardlock .text-slate-300,
-  html[data-theme='blue'] .card-hardlock .text-slate-400,
-  html[data-theme='crimson'] .card-hardlock .text-slate-400,
-  html[data-theme='emerald'] .card-hardlock .text-slate-400,
-  html[data-theme='amethyst'] .card-hardlock .text-slate-400,
-  html[data-theme='sunset'] .card-hardlock .text-slate-400,
-  html[data-theme='blue'] .card-hardlock .text-slate-500,
-  html[data-theme='crimson'] .card-hardlock .text-slate-500,
-  html[data-theme='emerald'] .card-hardlock .text-slate-500,
-  html[data-theme='amethyst'] .card-hardlock .text-slate-500,
-  html[data-theme='sunset'] .card-hardlock .text-slate-500,
-  html[data-theme='blue'] .card-hardlock .text-zinc-400,
-  html[data-theme='crimson'] .card-hardlock .text-zinc-400,
-  html[data-theme='emerald'] .card-hardlock .text-zinc-400,
-  html[data-theme='amethyst'] .card-hardlock .text-zinc-400,
-  html[data-theme='sunset'] .card-hardlock .text-zinc-400,
-  html[data-theme='blue'] .card-hardlock .text-zinc-500,
-  html[data-theme='crimson'] .card-hardlock .text-zinc-500,
-  html[data-theme='emerald'] .card-hardlock .text-zinc-500,
-  html[data-theme='amethyst'] .card-hardlock .text-zinc-500,
-  html[data-theme='sunset'] .card-hardlock .text-zinc-500 {
-    color: #94a3b8 !important;
+  html[data-theme='blue'] .card-hardlock time,
+  html[data-theme='crimson'] .card-hardlock time,
+  html[data-theme='emerald'] .card-hardlock time,
+  html[data-theme='amethyst'] .card-hardlock time,
+  html[data-theme='sunset'] .card-hardlock time {
+    color: #94a3b8;
   }
   
-  html[data-theme='blue'] .modal-hardlock time,
-  html[data-theme='crimson'] .modal-hardlock time,
-  html[data-theme='emerald'] .modal-hardlock time,
-  html[data-theme='amethyst'] .modal-hardlock time,
-  html[data-theme='sunset'] .modal-hardlock time,
   html[data-theme='blue'] .modal-hardlock .card-subtext,
   html[data-theme='crimson'] .modal-hardlock .card-subtext,
   html[data-theme='emerald'] .modal-hardlock .card-subtext,
@@ -251,32 +221,12 @@ html[data-theme='sunset'] {
   html[data-theme='emerald'] .modal-hardlock .timestamp,
   html[data-theme='amethyst'] .modal-hardlock .timestamp,
   html[data-theme='sunset'] .modal-hardlock .timestamp,
-  html[data-theme='blue'] .modal-hardlock .text-slate-300,
-  html[data-theme='crimson'] .modal-hardlock .text-slate-300,
-  html[data-theme='emerald'] .modal-hardlock .text-slate-300,
-  html[data-theme='amethyst'] .modal-hardlock .text-slate-300,
-  html[data-theme='sunset'] .modal-hardlock .text-slate-300,
-  html[data-theme='blue'] .modal-hardlock .text-slate-400,
-  html[data-theme='crimson'] .modal-hardlock .text-slate-400,
-  html[data-theme='emerald'] .modal-hardlock .text-slate-400,
-  html[data-theme='amethyst'] .modal-hardlock .text-slate-400,
-  html[data-theme='sunset'] .modal-hardlock .text-slate-400,
-  html[data-theme='blue'] .modal-hardlock .text-slate-500,
-  html[data-theme='crimson'] .modal-hardlock .text-slate-500,
-  html[data-theme='emerald'] .modal-hardlock .text-slate-500,
-  html[data-theme='amethyst'] .modal-hardlock .text-slate-500,
-  html[data-theme='sunset'] .modal-hardlock .text-slate-500,
-  html[data-theme='blue'] .modal-hardlock .text-zinc-400,
-  html[data-theme='crimson'] .modal-hardlock .text-zinc-400,
-  html[data-theme='emerald'] .modal-hardlock .text-zinc-400,
-  html[data-theme='amethyst'] .modal-hardlock .text-zinc-400,
-  html[data-theme='sunset'] .modal-hardlock .text-zinc-400,
-  html[data-theme='blue'] .modal-hardlock .text-zinc-500,
-  html[data-theme='crimson'] .modal-hardlock .text-zinc-500,
-  html[data-theme='emerald'] .modal-hardlock .text-zinc-500,
-  html[data-theme='amethyst'] .modal-hardlock .text-zinc-500,
-  html[data-theme='sunset'] .modal-hardlock .text-zinc-500 {
-    color: #94a3b8 !important;
+  html[data-theme='blue'] .modal-hardlock time,
+  html[data-theme='crimson'] .modal-hardlock time,
+  html[data-theme='emerald'] .modal-hardlock time,
+  html[data-theme='amethyst'] .modal-hardlock time,
+  html[data-theme='sunset'] .modal-hardlock time {
+    color: #94a3b8;
   }
   
   /* Hard-lock input fields for non-Obsidian themes */
@@ -860,6 +810,22 @@ html[data-theme='amethyst'] .text-slate-400.border-slate-400,
 html[data-theme='sunset'] .text-slate-400.border-slate-400 {
   color: #d1d5db !important;
   border-color: #d1d5db !important;
+}
+
+/* Lock rank 1-3 badge text and borders to match their colors */
+.rank-1-badge {
+  color: #facc15 !important; /* yellow-400 - gold */
+  border-color: #facc15 !important;
+}
+
+.rank-2-badge {
+  color: #d1d5db !important; /* gray-300 - silver */
+  border-color: #d1d5db !important;
+}
+
+.rank-3-badge {
+  color: #f59e0b !important; /* amber-400 - bronze */
+  border-color: #f59e0b !important;
 }
 
 /* Add missing Tailwind opacity utilities for theme button classes */

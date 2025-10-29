@@ -417,11 +417,11 @@ const CompetitionDetail = () => {
                     variant="outline" 
                     className={
                       player.rank === 1
-                        ? 'text-yellow-400 border-yellow-400' 
+                        ? 'rank-badge rank-1-badge text-yellow-400 border-yellow-400' 
                         : player.rank === 2
-                        ? 'text-gray-300 border-gray-300'
+                        ? 'rank-badge rank-2-badge text-gray-300 border-gray-300'
                         : player.rank === 3
-                        ? 'text-amber-400 border-amber-400'
+                        ? 'rank-badge rank-3-badge text-amber-400 border-amber-400'
                         : 'text-slate-400 border-slate-400'
                     }
                   >
