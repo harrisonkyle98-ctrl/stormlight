@@ -260,13 +260,14 @@ html[data-theme='sunset'] {
   }
   
   
-  /* Hard-lock select/dropdown elements for non-Obsidian themes */
+  /* Hard-lock select/dropdown elements for ALL themes (including Obsidian) */
   html[data-theme='blue'] select,
   html[data-theme='crimson'] select,
   html[data-theme='emerald'] select,
   html[data-theme='amethyst'] select,
-  html[data-theme='sunset'] select {
-    background-color: rgba(30, 41, 59, 0.85) !important;
+  html[data-theme='sunset'] select,
+  html[data-theme='obsidian'] select {
+    background-color: rgba(51, 65, 85, 0.6) !important;
     border: 1px solid rgba(51, 65, 85, 0.7) !important;
     color: #f1f5f9 !important;
   }
