@@ -797,6 +797,52 @@ html[data-theme='sunset'] .admin-row {
   border-color: rgba(71, 85, 105, 0.5) !important;
 }
 
+/* Admin Panel bg-slate-600/30 rows - lock to Sapphire slate colors */
+html[data-theme='blue'] .bg-slate-600\/30,
+html[data-theme='crimson'] .bg-slate-600\/30,
+html[data-theme='emerald'] .bg-slate-600\/30,
+html[data-theme='amethyst'] .bg-slate-600\/30,
+html[data-theme='sunset'] .bg-slate-600\/30 {
+  background-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+/* Admin Panel TabsTrigger selected tab - use theme accent colors instead of white */
+html[data-theme='blue'] [data-state='active'].inline-flex,
+html[data-theme='blue'] button[data-state='active'] {
+  background-color: rgba(59, 130, 246, 0.2) !important; /* Sapphire blue */
+  color: rgb(96, 165, 250) !important;
+}
+
+html[data-theme='crimson'] [data-state='active'].inline-flex,
+html[data-theme='crimson'] button[data-state='active'] {
+  background-color: rgba(239, 68, 68, 0.2) !important; /* Crimson red */
+  color: rgb(248, 113, 113) !important;
+}
+
+html[data-theme='emerald'] [data-state='active'].inline-flex,
+html[data-theme='emerald'] button[data-state='active'] {
+  background-color: rgba(16, 185, 129, 0.2) !important; /* Emerald green */
+  color: rgb(52, 211, 153) !important;
+}
+
+html[data-theme='amethyst'] [data-state='active'].inline-flex,
+html[data-theme='amethyst'] button[data-state='active'] {
+  background-color: rgba(168, 85, 247, 0.2) !important; /* Amethyst purple */
+  color: rgb(192, 132, 252) !important;
+}
+
+html[data-theme='sunset'] [data-state='active'].inline-flex,
+html[data-theme='sunset'] button[data-state='active'] {
+  background-color: rgba(251, 146, 60, 0.2) !important; /* Sunset orange */
+  color: rgb(251, 146, 60) !important;
+}
+
+html[data-theme='obsidian'] [data-state='active'].inline-flex,
+html[data-theme='obsidian'] button[data-state='active'] {
+  background-color: rgba(34, 211, 238, 0.2) !important; /* Obsidian cyan */
+  color: rgb(103, 232, 249) !important;
+}
+
 /* Leaderboard rank borders - lock to Sapphire */
 html[data-theme='blue'] .rank-border,
 html[data-theme='crimson'] .rank-border,
