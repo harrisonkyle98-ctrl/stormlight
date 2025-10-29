@@ -378,8 +378,11 @@ export function applyTheme(theme: Theme) {
   const sapphireCardColors = themes.blue.colors
   const cardColors = theme.id === 'obsidian' ? theme.colors : sapphireCardColors
   
-  const sapphireSlate700 = themes.blue.colors.slate700
-  const slate700 = theme.id === 'obsidian' ? theme.colors.slate700 : sapphireSlate700
+  const sapphireSlate = themes.blue.colors
+  const slate700 = theme.id === 'obsidian' ? theme.colors.slate700 : sapphireSlate.slate700
+  const slate500 = theme.id === 'obsidian' ? theme.colors.slate500 : sapphireSlate.slate500
+  const slate400 = theme.id === 'obsidian' ? theme.colors.slate400 : sapphireSlate.slate400
+  const slate300 = theme.id === 'obsidian' ? theme.colors.slate300 : sapphireSlate.slate300
   
   root.style.setProperty('--color-primary', theme.colors.primary)
   root.style.setProperty('--color-secondary', theme.colors.secondary)
@@ -388,9 +391,9 @@ export function applyTheme(theme: Theme) {
   root.style.setProperty('--color-slate-800', theme.colors.slate800)
   root.style.setProperty('--color-slate-700', slate700)
   root.style.setProperty('--color-slate-600', theme.colors.slate600)
-  root.style.setProperty('--color-slate-500', theme.colors.slate500)
-  root.style.setProperty('--color-slate-400', theme.colors.slate400)
-  root.style.setProperty('--color-slate-300', theme.colors.slate300)
+  root.style.setProperty('--color-slate-500', slate500)
+  root.style.setProperty('--color-slate-400', slate400)
+  root.style.setProperty('--color-slate-300', slate300)
   root.style.setProperty('--color-slate-200', theme.colors.slate200)
   root.style.setProperty('--color-slate-100', theme.colors.slate100)
   
@@ -398,9 +401,9 @@ export function applyTheme(theme: Theme) {
   root.style.setProperty('--color-slate-800-rgb', hexToRgb(theme.colors.slate800))
   root.style.setProperty('--color-slate-700-rgb', hexToRgb(slate700))
   root.style.setProperty('--color-slate-600-rgb', hexToRgb(theme.colors.slate600))
-  root.style.setProperty('--color-slate-500-rgb', hexToRgb(theme.colors.slate500))
-  root.style.setProperty('--color-slate-400-rgb', hexToRgb(theme.colors.slate400))
-  root.style.setProperty('--color-slate-300-rgb', hexToRgb(theme.colors.slate300))
+  root.style.setProperty('--color-slate-500-rgb', hexToRgb(slate500))
+  root.style.setProperty('--color-slate-400-rgb', hexToRgb(slate400))
+  root.style.setProperty('--color-slate-300-rgb', hexToRgb(slate300))
   root.style.setProperty('--color-slate-200-rgb', hexToRgb(theme.colors.slate200))
   root.style.setProperty('--color-slate-100-rgb', hexToRgb(theme.colors.slate100))
   
