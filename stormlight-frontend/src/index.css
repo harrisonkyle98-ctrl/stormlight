@@ -843,13 +843,23 @@ html[data-theme='obsidian'] button[data-state='active'] {
   color: rgb(103, 232, 249) !important;
 }
 
-/* Leaderboard rank borders - lock to Sapphire */
+/* Leaderboard rank borders and text - lock ranks 4+ to dull grey #d1d5db */
 html[data-theme='blue'] .rank-border,
 html[data-theme='crimson'] .rank-border,
 html[data-theme='emerald'] .rank-border,
 html[data-theme='amethyst'] .rank-border,
 html[data-theme='sunset'] .rank-border {
-  border-color: rgb(71, 85, 105) !important; /* slate-600 */
+  border-color: #d1d5db !important; /* gray-300 - dull grey for ranks 4+ */
+}
+
+/* Lock rank 4+ badge text to dull grey */
+html[data-theme='blue'] .text-slate-400.border-slate-400,
+html[data-theme='crimson'] .text-slate-400.border-slate-400,
+html[data-theme='emerald'] .text-slate-400.border-slate-400,
+html[data-theme='amethyst'] .text-slate-400.border-slate-400,
+html[data-theme='sunset'] .text-slate-400.border-slate-400 {
+  color: #d1d5db !important;
+  border-color: #d1d5db !important;
 }
 
 /* Add missing Tailwind opacity utilities for theme button classes */
