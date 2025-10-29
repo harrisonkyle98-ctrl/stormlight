@@ -192,42 +192,7 @@ html[data-theme='sunset'] {
     background: rgba(0, 0, 0, 0.6) !important;
   }
   
-  /* Narrow semantic rules for timestamps and subtexts only */
-  html[data-theme='blue'] .card-hardlock .card-subtext,
-  html[data-theme='crimson'] .card-hardlock .card-subtext,
-  html[data-theme='emerald'] .card-hardlock .card-subtext,
-  html[data-theme='amethyst'] .card-hardlock .card-subtext,
-  html[data-theme='sunset'] .card-hardlock .card-subtext,
-  html[data-theme='blue'] .card-hardlock .timestamp,
-  html[data-theme='crimson'] .card-hardlock .timestamp,
-  html[data-theme='emerald'] .card-hardlock .timestamp,
-  html[data-theme='amethyst'] .card-hardlock .timestamp,
-  html[data-theme='sunset'] .card-hardlock .timestamp,
-  html[data-theme='blue'] .card-hardlock time,
-  html[data-theme='crimson'] .card-hardlock time,
-  html[data-theme='emerald'] .card-hardlock time,
-  html[data-theme='amethyst'] .card-hardlock time,
-  html[data-theme='sunset'] .card-hardlock time {
-    color: #94a3b8;
-  }
-  
-  html[data-theme='blue'] .modal-hardlock .card-subtext,
-  html[data-theme='crimson'] .modal-hardlock .card-subtext,
-  html[data-theme='emerald'] .modal-hardlock .card-subtext,
-  html[data-theme='amethyst'] .modal-hardlock .card-subtext,
-  html[data-theme='sunset'] .modal-hardlock .card-subtext,
-  html[data-theme='blue'] .modal-hardlock .timestamp,
-  html[data-theme='crimson'] .modal-hardlock .timestamp,
-  html[data-theme='emerald'] .modal-hardlock .timestamp,
-  html[data-theme='amethyst'] .modal-hardlock .timestamp,
-  html[data-theme='sunset'] .modal-hardlock .timestamp,
-  html[data-theme='blue'] .modal-hardlock time,
-  html[data-theme='crimson'] .modal-hardlock time,
-  html[data-theme='emerald'] .modal-hardlock time,
-  html[data-theme='amethyst'] .modal-hardlock time,
-  html[data-theme='sunset'] .modal-hardlock time {
-    color: #94a3b8;
-  }
+  /* Removed old card-hardlock/modal-hardlock subtext rules - now using semantic .subtext, .muted, time selectors instead */
   
   /* Hard-lock input fields for non-Obsidian themes */
   html[data-theme='blue'] input[type="text"],
@@ -348,6 +313,11 @@ html[data-theme='sunset'] {
     background: transparent;
   }
   
+  /* Set default text color for common containers - no !important to allow semantic overrides */
+  html, body, .page, .card, .table, .list {
+    color: var(--text-default-sapphire);
+  }
+  
   :root {
     --radius: 0.5rem;
     
@@ -394,6 +364,10 @@ html[data-theme='sunset'] {
     --color-text-secondary: #cbd5e1;
     --color-text-muted: #94a3b8;
     --color-text-accent: #60a5fa;
+    
+    /* Text color variables for scoped muted text */
+    --text-default-sapphire: #f1f5f9;
+    --text-muted-sapphire: #94a3b8cc;
     
     --color-bg-primary: #0f172a;
     --color-bg-secondary: #1e293b;
@@ -605,42 +579,26 @@ html[data-theme='sunset'] {
   border: 1px solid rgba(30, 41, 59, 0.8) !important;
 }
 
-/* Sub-text and timestamp colors - lock to Sapphire neutral tone */
-[data-theme='blue'] .subtext,
-[data-theme='blue'] small,
-[data-theme='blue'] time,
-[data-theme='blue'] .text-slate-400,
-[data-theme='blue'] .text-xs,
-[data-theme='crimson'] .subtext,
-[data-theme='crimson'] small,
-[data-theme='crimson'] time,
-[data-theme='crimson'] .text-slate-400,
-[data-theme='crimson'] .text-xs,
-[data-theme='emerald'] .subtext,
-[data-theme='emerald'] small,
-[data-theme='emerald'] time,
-[data-theme='emerald'] .text-slate-400,
-[data-theme='emerald'] .text-xs,
-[data-theme='amethyst'] .subtext,
-[data-theme='amethyst'] small,
-[data-theme='amethyst'] time,
-[data-theme='amethyst'] .text-slate-400,
-[data-theme='amethyst'] .text-xs,
-[data-theme='sunset'] .subtext,
-[data-theme='sunset'] small,
-[data-theme='sunset'] time,
-[data-theme='sunset'] .text-slate-400,
-[data-theme='sunset'] .text-xs {
-  color: rgba(148, 163, 184, 0.8) !important;
+/* Narrow semantic muted text rules - no !important to allow local overrides */
+.subtext,
+.muted,
+small,
+time,
+.card .meta,
+.table .note,
+.header-subtext {
+  color: var(--text-muted-sapphire);
 }
 
-/* Obsidian exception for sub-text and timestamps */
+/* Obsidian exception for muted text - slightly brighter */
 [data-theme='obsidian'] .subtext,
+[data-theme='obsidian'] .muted,
 [data-theme='obsidian'] small,
 [data-theme='obsidian'] time,
-[data-theme='obsidian'] .text-slate-400,
-[data-theme='obsidian'] .text-xs {
-  color: rgba(203, 213, 225, 0.8) !important;
+[data-theme='obsidian'] .card .meta,
+[data-theme='obsidian'] .table .note,
+[data-theme='obsidian'] .header-subtext {
+  color: rgba(203, 213, 225, 0.8);
 }
 
 /* Bingo board item slots - Obsidian exception */
