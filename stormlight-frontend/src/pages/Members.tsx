@@ -7,6 +7,7 @@ import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Search, Users, User } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
+import { Spinner } from '../components/ui/spinner'
 import { getGradientStyle, MilestoneBadge, checkPlayerMilestones } from '../utils/gradientUtils'
 import { usernameToUrl, normalizeDisplayUsername } from '../utils/urlUtils'
 
@@ -103,7 +104,8 @@ const Members = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-96">
+      <div className="flex flex-col items-center justify-center min-h-96 gap-4">
+        <Spinner size="lg" />
         <div className="text-white text-xl">Loading clan members...</div>
       </div>
     )

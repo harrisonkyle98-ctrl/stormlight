@@ -4,6 +4,7 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
 import { Users, Search, Calendar, TrendingUp, Crown } from 'lucide-react'
+import { Spinner } from '../ui/spinner'
 
 interface ClanMember {
   id: string
@@ -144,7 +145,12 @@ export const RankTrackingTab = () => {
   ).length
 
   if (loading) {
-    return <div className="text-center py-8 text-slate-400">Loading rank tracking data...</div>
+    return (
+      <div className="flex flex-col items-center justify-center py-8 gap-4">
+        <Spinner size="md" />
+        <div className="text-center text-slate-400">Loading rank tracking data...</div>
+      </div>
+    )
   }
 
   return (

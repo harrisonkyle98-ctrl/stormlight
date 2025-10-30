@@ -4,6 +4,7 @@ import { Navigate } from 'react-router-dom'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Card, CardContent } from '../components/ui/card'
 import { Settings, Home, Award, Trophy, ArrowBigUpDash, UsersRound } from 'lucide-react'
+import { Spinner } from '../components/ui/spinner'
 import { AdminHomeTab } from '../components/admin/AdminHomeTab'
 import { BadgeManagementTab } from '../components/admin/BadgeManagementTab'
 import { CompetitionManagementTab } from '../components/admin/CompetitionManagementTab'
@@ -16,7 +17,8 @@ const AdminPanel = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-96">
+      <div className="flex flex-col items-center justify-center min-h-96 gap-4">
+        <Spinner size="lg" />
         <div className="text-white text-xl">Loading...</div>
       </div>
     )

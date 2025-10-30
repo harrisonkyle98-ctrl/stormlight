@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
+import { Spinner } from './ui/spinner'
 import { detectBingos, getBingoPositions } from '../utils/bingoDetection'
 import { Link } from 'react-router-dom'
 import { usernameToUrl } from '../utils/urlUtils'
@@ -182,7 +183,10 @@ export const BingoBoard = ({
           </CardHeader>
           <CardContent>
             {isLoadingStats ? (
-              <div className="text-slate-400 text-center py-8">Loading...</div>
+              <div className="flex flex-col items-center justify-center py-8 gap-4">
+                <Spinner size="md" />
+                <div className="text-slate-400">Loading...</div>
+              </div>
             ) : selectedPosition !== null && dropStats?.item ? (
               <div className="space-y-4">
                 <div className="flex flex-col items-center space-y-2 pb-3 border-b border-slate-600">

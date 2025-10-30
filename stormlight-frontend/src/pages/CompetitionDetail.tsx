@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { ArrowLeft, Trophy, Calendar, Users, TrendingUp, BarChart3 } from 'lucide-react'
+import { Spinner } from '../components/ui/spinner'
 import { getSkillIcon } from '../utils/skillIcons'
 import { fetchClanMembers, getGradientStyle } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
@@ -160,7 +161,8 @@ const CompetitionDetail = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-96">
+      <div className="flex flex-col items-center justify-center min-h-96 gap-4">
+        <Spinner size="lg" />
         <div className="text-white text-xl">Loading competition...</div>
       </div>
     )

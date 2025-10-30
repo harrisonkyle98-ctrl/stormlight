@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './dialog'
 import { Button } from './button'
+import { Spinner } from './spinner'
 import { Tooltip } from './tooltip'
 
 interface CustomBadge {
@@ -73,7 +74,8 @@ export const BadgeAssignmentModal: React.FC<BadgeAssignmentModalProps> = ({
         
         <div className="py-4">
           {loading ? (
-            <div className="flex items-center justify-center py-8">
+            <div className="flex flex-col items-center justify-center py-8 gap-4">
+              <Spinner size="md" />
               <div className="text-slate-400">Loading badges...</div>
             </div>
           ) : error ? (

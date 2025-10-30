@@ -5,6 +5,7 @@ import { Input } from '../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Badge } from '../ui/badge'
 import { Trophy, Plus, Edit, Trash2, Users } from 'lucide-react'
+import { Spinner } from '../ui/spinner'
 import { toast } from 'sonner'
 import { DropSearchModal } from './DropSearchModal'
 
@@ -284,7 +285,12 @@ export const CompetitionManagementTab = () => {
   }
 
   if (loading) {
-    return <div className="text-center py-8 text-slate-400">Loading competitions...</div>
+    return (
+      <div className="flex flex-col items-center justify-center py-8 gap-4">
+        <Spinner size="md" />
+        <div className="text-center text-slate-400">Loading competitions...</div>
+      </div>
+    )
   }
 
   return (

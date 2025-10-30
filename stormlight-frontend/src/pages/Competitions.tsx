@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Trophy, Calendar, Users, BarChart3 } from 'lucide-react'
+import { Spinner } from '../components/ui/spinner'
 import { getSkillIcon } from '../utils/skillIcons'
 
 interface Competition {
@@ -85,7 +86,8 @@ const Competitions = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-96">
+      <div className="flex flex-col items-center justify-center min-h-96 gap-4">
+        <Spinner size="lg" />
         <div className="text-white text-xl">Loading competitions...</div>
       </div>
     )

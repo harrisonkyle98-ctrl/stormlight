@@ -4,6 +4,7 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
 import { Users, Search, LogIn, LogOut, Filter } from 'lucide-react'
+import { Spinner } from '../ui/spinner'
 
 interface ClanLogEntry {
   id: number
@@ -97,7 +98,12 @@ export const MemberLogTab = () => {
   const totalPages = Math.ceil(totalEntries / pageSize)
 
   if (loading) {
-    return <div className="text-center py-8 text-slate-400">Loading member log...</div>
+    return (
+      <div className="flex flex-col items-center justify-center py-8 gap-4">
+        <Spinner size="md" />
+        <div className="text-center text-slate-400">Loading member log...</div>
+      </div>
+    )
   }
 
   return (

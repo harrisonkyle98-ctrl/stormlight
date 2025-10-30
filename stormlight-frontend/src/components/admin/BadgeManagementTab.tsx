@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Award, Plus, Edit, Trash2, Lock } from 'lucide-react'
+import { Spinner } from '../ui/spinner'
 
 interface CustomBadge {
   id: string
@@ -157,7 +158,12 @@ export const BadgeManagementTab = () => {
   }
 
   if (loading) {
-    return <div className="text-center py-8 text-slate-400">Loading badges...</div>
+    return (
+      <div className="flex flex-col items-center justify-center py-8 gap-4">
+        <Spinner size="md" />
+        <div className="text-center text-slate-400">Loading badges...</div>
+      </div>
+    )
   }
 
   return (

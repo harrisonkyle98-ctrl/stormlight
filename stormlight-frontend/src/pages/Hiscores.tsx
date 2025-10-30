@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Search, Trophy, User } from 'lucide-react'
+import { Spinner } from '../components/ui/spinner'
 import { fetchClanMembers, getGradientStyle } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
 
@@ -98,7 +99,8 @@ const Hiscores = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-96">
+      <div className="flex flex-col items-center justify-center min-h-96 gap-4">
+        <Spinner size="lg" />
         <div className="text-white text-xl">Loading hiscores...</div>
       </div>
     )
