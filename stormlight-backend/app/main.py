@@ -889,6 +889,7 @@ async def sync_clan_members_to_database_with_queue():
                     )
                     
                     if is_new_member or was_inactive:
+                        print(f"📝 [Member Sync] Logging Join event for {member_data['username']} (is_new={is_new_member}, was_inactive={was_inactive})")
                         await log_clan_event_if_new(
                             username=member_data['username'],
                             event_type='Join',
@@ -965,6 +966,7 @@ async def sync_clan_members_to_database_with_queue():
         left_count = 0
         for db_member in all_db_members:
             if db_member.username.lower() not in api_usernames:
+                print(f"📝 [Member Sync] Logging Leave event for {db_member.username} (was {db_member.clanRank})")
                 await prisma.clanmember.update(
                     where={'username': db_member.username},
                     data={'active': False}
@@ -6879,7 +6881,9 @@ async def startup_event():
         
         async def hourly_scheduler():
             """Single 1-hour scheduler for all clan data updates"""
+            print("🚀 [Scheduler] Hourly scheduler task created, waiting 120s before first run...")
             await asyncio.sleep(120)
+            print("✅ [Scheduler] Initial wait complete, starting scheduler loop")
             
             last_sync_hour = None
             
@@ -6891,8 +6895,10 @@ async def startup_event():
                     current_hour = now.hour
                     has_run_today = (getattr(app.state, "last_snapshot_date_utc", None) == today)
                     
+                    print(f"⏰ [Scheduler] Tick at {now.isoformat()}Z - current_hour={current_hour}, last_sync_hour={last_sync_hour}")
+                    
                     if last_sync_hour != current_hour:
-                        print(f"🔄 [Scheduler][HOURLY] Starting clan member sync at {now.isoformat()}Z")
+                        print(f"🔄 [Scheduler][HOURLY] Hour changed! Starting clan member sync at {now.isoformat()}Z")
                         
                         async with app.state.sync_lock:
                             await sync_clan_members_to_database_with_queue()
@@ -6956,9 +6962,10 @@ async def startup_event():
                 await asyncio.sleep(300)
         
         asyncio.create_task(hourly_scheduler())
+        print("✅ [Scheduler] Hourly scheduler task has been created and started")
         
     except Exception as e:
-        print(f"Error during startup: {e}")
+        print(f"❌ Error during startup: {e}")
         import traceback
         traceback.print_exc()
 
