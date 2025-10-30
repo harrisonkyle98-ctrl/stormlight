@@ -9,7 +9,6 @@ import { Spinner } from '../ui/spinner'
 import { toast } from 'sonner'
 import { DropSearchModal } from './DropSearchModal'
 import { getSkillIcon } from '../../utils/skillIcons'
-import { Link } from 'react-router-dom'
 
 interface Competition {
   id: number
@@ -498,8 +497,7 @@ export const CompetitionManagementTab = () => {
                             <Button
                               type="button"
                               onClick={() => setGridItems([])}
-                              variant="outline"
-                              className="text-red-400 border-red-400"
+                              className="bg-[#ef4444] hover:bg-[#dc2626] text-white"
                             >
                               Clear Grid
                             </Button>
@@ -774,18 +772,10 @@ export const CompetitionManagementTab = () => {
                           <div>
                             <p className="text-sm text-slate-400">Participants</p>
                             <p className="text-white font-medium">
-                              {competition.participantCount || 0}
+                              Auto-Enrolled
                             </p>
                           </div>
                         </div>
-                      </div>
-                      
-                      <div className="flex justify-end pt-4 border-t border-slate-700">
-                        <Button asChild variant="default" className="bg-theme-button hover:bg-theme-button-hover">
-                          <Link to={`/competitions/${competition.id}`}>
-                            View Leaderboard
-                          </Link>
-                        </Button>
                       </div>
                     </CardContent>
                   </Card>
