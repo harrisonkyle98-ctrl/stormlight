@@ -838,3 +838,34 @@ html[data-theme='obsidian'] button[data-state='active'] {
   background-color: rgba(51, 65, 85, 0.6) !important;
 }
 
+/* Avatar dropdown menu hover - use theme-specific accent colors with transparency */
+:root[data-theme='sapphire'] [role="menuitem"]:hover,
+:root[data-theme='sapphire'] [role="menuitem"]:focus {
+  background-color: #60a5fa33 !important; /* Sapphire blue with transparency */
+  color: #ffffff !important;
+}
+
+:root[data-theme='crimson'] [role="menuitem"]:hover,
+:root[data-theme='crimson'] [role="menuitem"]:focus {
+  background-color: #ef444433 !important; /* Crimson red with transparency */
+  color: #ffffff !important;
+}
+
+:root[data-theme='emerald'] [role="menuitem"]:hover,
+:root[data-theme='emerald'] [role="menuitem"]:focus {
+  background-color: #22c55e33 !important; /* Emerald green with transparency */
+  color: #ffffff !important;
+}
+
+:root[data-theme='amethyst'] [role="menuitem"]:hover,
+:root[data-theme='amethyst'] [role="menuitem"]:focus {
+  background-color: #a855f733 !important; /* Amethyst purple with transparency */
+  color: #ffffff !important;
+}
+
+:root[data-theme='sunset'] [role="menuitem"]:hover,
+:root[data-theme='sunset'] [role="menuitem"]:focus {
+  background-color: #f9731633 !important; /* Sunset orange with transparency */
+  color: #ffffff !important;
+}
+
