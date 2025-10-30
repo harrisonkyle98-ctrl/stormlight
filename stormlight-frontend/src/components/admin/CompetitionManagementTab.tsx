@@ -1,21 +1,24 @@
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Badge } from '../ui/badge'
-import { Trophy, Plus, Edit, Trash2, Users } from 'lucide-react'
+import { Trophy, Plus, Edit, Trash2, Users, Calendar, BarChart3 } from 'lucide-react'
 import { Spinner } from '../ui/spinner'
 import { toast } from 'sonner'
 import { DropSearchModal } from './DropSearchModal'
+import { getSkillIcon } from '../../utils/skillIcons'
+import { Link } from 'react-router-dom'
 
 interface Competition {
   id: number
   name: string
   description: string
-  type: 'XP' | 'DROPS'
+  type: 'XP' | 'DROPS' | 'XP_GAIN' | 'BOSS_KILLS'
   skill?: string
   boss?: string
+  boardSize?: number
   startDate: string
   endDate: string
   createdBy: string
@@ -230,10 +233,15 @@ export const CompetitionManagementTab = () => {
 
   const startEdit = (competition: Competition) => {
     setEditingCompetition(competition)
+    
+    const normalizedType = (competition.type === 'XP_GAIN' ? 'XP' : 
+                           competition.type === 'BOSS_KILLS' ? 'DROPS' : 
+                           competition.type) as 'XP' | 'DROPS'
+    
     setFormData({
       name: competition.name,
       description: competition.description,
-      type: competition.type,
+      type: normalizedType,
       skill: competition.skill || '',
       boss: competition.boss || '',
       startDate: competition.startDate.split('T')[0],
@@ -247,9 +255,23 @@ export const CompetitionManagementTab = () => {
     const start = new Date(startDate)
     const end = new Date(endDate)
 
-    if (now < start) return { status: 'upcoming', color: 'bg-blue-500' }
+    if (now < start) return { status: 'upcoming', color: 'bg-[#60a5fa]' }
     if (now > end) return { status: 'ended', color: 'bg-gray-500' }
     return { status: 'active', color: 'bg-green-500' }
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    })
+  }
+
+  const getCompetitionTypeLabel = (type: string): string => {
+    if (type === 'XP' || type === 'XP_GAIN') return 'Skilling'
+    if (type === 'DROPS' || type === 'BOSS_KILLS') return 'PvM'
+    return type
   }
 
   const handleDropSelect = (drop: any, bossName: string) => {
@@ -647,68 +669,126 @@ export const CompetitionManagementTab = () => {
                 const { status, color } = getCompetitionStatus(competition.startDate, competition.endDate)
 
                 return (
-                  <div key={competition.id} className="p-4 bg-slate-600/30 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-3">
-                        <h3 className="text-white font-semibold">{competition.name}</h3>
-                        <Badge className={`${color} text-white capitalize`}>
-                          {status}
-                        </Badge>
-                        <Badge variant="outline" className="text-theme-accent-light border-blue-400">
-                          {competition.type}
-                        </Badge>
+                  <Card key={competition.id} className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center space-x-3">
+                          {competition.type === 'XP' || competition.type === 'XP_GAIN' ? (
+                            getSkillIcon(competition.skill || 'overall') ? (
+                              <img 
+                                src={getSkillIcon(competition.skill || 'overall')!} 
+                                alt={competition.skill}
+                                className="w-6 h-6"
+                              />
+                            ) : (
+                              <div className="text-2xl">📊</div>
+                            )
+                          ) : (
+                            <div className="text-2xl">💀</div>
+                          )}
+                          <div className="text-left">
+                            <CardTitle className="text-white text-xl text-left">
+                              {competition.name}
+                            </CardTitle>
+                            <CardDescription className="text-slate-400 mt-1 text-left">
+                              {competition.description}
+                            </CardDescription>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge className={`${color} text-white capitalize pointer-events-none`}>
+                            {status}
+                          </Badge>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => startEdit(competition)}
+                            className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-white"
+                          >
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDelete(competition.id)}
+                            className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-red-400 hover:text-red-300"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex space-x-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => startEdit(competition)}
-                          className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-white"
-                        >
-                          <Edit className="w-3 h-3" />
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="w-4 h-4 text-slate-400" />
+                          <div>
+                            <p className="text-sm text-slate-400">Start Date</p>
+                            <p className="text-white font-medium">
+                              {formatDate(competition.startDate)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="w-4 h-4 text-slate-400" />
+                          <div>
+                            <p className="text-sm text-slate-400">End Date</p>
+                            <p className="text-white font-medium">
+                              {formatDate(competition.endDate)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Users className="w-4 h-4 text-slate-400" />
+                          <div>
+                            <p className="text-sm text-slate-400">Type</p>
+                            <p className="text-white font-medium">
+                              {getCompetitionTypeLabel(competition.type)}
+                            </p>
+                          </div>
+                        </div>
+                        {(competition.type === 'XP' || competition.type === 'XP_GAIN') && competition.skill && (
+                          <div className="flex items-center space-x-2">
+                            <BarChart3 className="w-4 h-4 text-slate-400" />
+                            <div>
+                              <p className="text-sm text-slate-400">Skill</p>
+                              <p className="text-white font-medium capitalize">
+                                {competition.skill}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        {(competition.type === 'DROPS' || competition.type === 'BOSS_KILLS') && competition.boardSize && (
+                          <div className="flex items-center space-x-2">
+                            <Trophy className="w-4 h-4 text-slate-400" />
+                            <div>
+                              <p className="text-sm text-slate-400">Grid Size</p>
+                              <p className="text-white font-medium">
+                                {competition.boardSize}×{competition.boardSize}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex items-center space-x-2">
+                          <Users className="w-4 h-4 text-slate-400" />
+                          <div>
+                            <p className="text-sm text-slate-400">Participants</p>
+                            <p className="text-white font-medium">
+                              {competition.participantCount || 0}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-end pt-4 border-t border-slate-700">
+                        <Button asChild variant="default" className="bg-theme-button hover:bg-theme-button-hover">
+                          <Link to={`/competitions/${competition.id}`}>
+                            View Leaderboard
+                          </Link>
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDelete(competition.id)}
-                          className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-red-400 hover:text-red-300"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
                       </div>
-                    </div>
-
-                    <p className="text-slate-400 text-sm mb-2">{competition.description}</p>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span className="text-slate-400">
-                          {competition.type === 'XP' ? 'Skill:' : 'Boss:'}
-                        </span>
-                        <span className="text-white ml-1 capitalize">
-                          {competition.type === 'XP' ? competition.skill : competition.boss || 'All'}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-slate-400">Start:</span>
-                        <span className="text-white ml-1">
-                          {new Date(competition.startDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-slate-400">End:</span>
-                        <span className="text-white ml-1">
-                          {new Date(competition.endDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Users className="w-4 h-4 text-slate-400" />
-                        <span className="text-white">
-                          {competition.participantCount || 'Auto-enrolled'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 )
               })}
             </div>
