@@ -5068,10 +5068,11 @@ async def update_member_join_date(
 async def get_clan_log(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
+    event_types: str = Query(None, description="Comma-separated list of event types to filter (case-insensitive)"),
     response: Response = None,
     request: Request = None,
 ):
-    """Get recent clan log events with pagination"""
+    """Get recent clan log events with pagination and optional event type filtering"""
     offset = (page - 1) * limit
 
     if response is not None:
@@ -5079,7 +5080,11 @@ async def get_clan_log(
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
 
-    print(f"🔄 [ClanLog API] page={page} limit={limit} offset={offset} url={getattr(request, 'url', None)}")
+    event_type_list = []
+    if event_types:
+        event_type_list = [et.strip().lower() for et in event_types.split(',') if et.strip()]
+    
+    print(f"🔄 [ClanLog API] page={page} limit={limit} offset={offset} event_types={event_type_list} url={getattr(request, 'url', None)}")
 
     try:
         entries = []
@@ -5089,16 +5094,26 @@ async def get_clan_log(
         if prisma:
             try:
                 import asyncio
+                
+                where_clause = {}
+                if event_type_list:
+                    pass
+                
                 log_entries = await asyncio.wait_for(
                     prisma.clanlog.find_many(
+                        where=where_clause,
                         skip=offset,
                         take=limit,
                         order_by={'timestamp': 'desc'}
                     ),
                     timeout=2.0
                 )
+                
+                if event_type_list:
+                    log_entries = [e for e in log_entries if e.eventType.lower() in event_type_list]
+                
                 prisma_total = await asyncio.wait_for(
-                    prisma.clanlog.count(),
+                    prisma.clanlog.count(where=where_clause),
                     timeout=2.0
                 )
                 
@@ -5129,19 +5144,36 @@ async def get_clan_log(
             
             conn = await get_db_connection()
             async with conn:
-                cnt_cur = await conn.execute("SELECT COUNT(*) FROM clan_log")
-                cnt_row = await cnt_cur.fetchone()
-                total_count = cnt_row[0] if cnt_row else 0
-                
-                cur = await conn.execute(
+                if event_type_list:
+                    placeholders = ','.join(['%s'] * len(event_type_list))
+                    count_query = f"SELECT COUNT(*) FROM clan_log WHERE LOWER(event_type) IN ({placeholders})"
+                    cnt_cur = await conn.execute(count_query, tuple(event_type_list))
+                    cnt_row = await cnt_cur.fetchone()
+                    total_count = cnt_row[0] if cnt_row else 0
+                    
+                    query = f"""
+                        SELECT id, username, event_type, old_rank, new_rank, timestamp
+                        FROM clan_log
+                        WHERE LOWER(event_type) IN ({placeholders})
+                        ORDER BY timestamp DESC
+                        LIMIT %s OFFSET %s
                     """
-                    SELECT id, username, event_type, old_rank, new_rank, timestamp
-                    FROM clan_log
-                    ORDER BY timestamp DESC
-                    LIMIT %s OFFSET %s
-                    """,
-                    (limit, offset)
-                )
+                    cur = await conn.execute(query, tuple(event_type_list) + (limit, offset))
+                else:
+                    cnt_cur = await conn.execute("SELECT COUNT(*) FROM clan_log")
+                    cnt_row = await cnt_cur.fetchone()
+                    total_count = cnt_row[0] if cnt_row else 0
+                    
+                    cur = await conn.execute(
+                        """
+                        SELECT id, username, event_type, old_rank, new_rank, timestamp
+                        FROM clan_log
+                        ORDER BY timestamp DESC
+                        LIMIT %s OFFSET %s
+                        """,
+                        (limit, offset)
+                    )
+                
                 rows = await cur.fetchall()
                 entries = [
                     {
@@ -5154,7 +5186,7 @@ async def get_clan_log(
                     }
                     for r in rows
                 ]
-                print(f"✅ [ClanLog API] SQL OK: returned={len(entries)} total={total_count}")
+                print(f"✅ [ClanLog API] SQL OK: returned={len(entries)} total={total_count} filtered_by={event_type_list if event_type_list else 'none'}")
         
         seen = set()
         deduped = []

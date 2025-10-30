@@ -40,7 +40,7 @@ export const MemberLogTab = () => {
       setLoading(true)
       const token = localStorage.getItem('access_token')
       const response = await fetch(
-        `${API_URL}/api/clan/log?page=${currentPage}&limit=${pageSize}`,
+        `${API_URL}/api/clan/log?page=${currentPage}&limit=${pageSize}&event_types=join,leave`,
         {
           headers: { 'Authorization': `Bearer ${token}` }
         }
@@ -48,10 +48,7 @@ export const MemberLogTab = () => {
 
       if (response.ok) {
         const data = await response.json()
-        const joinLeaveEntries = (data.log_entries || []).filter(
-          (entry: ClanLogEntry) => entry.event_type === 'Join' || entry.event_type === 'Leave'
-        )
-        setLogEntries(joinLeaveEntries)
+        setLogEntries(data.log_entries || [])
         setTotalEntries(data.pagination?.total_entries || 0)
       } else {
         console.error('Failed to fetch clan log:', response.status)
