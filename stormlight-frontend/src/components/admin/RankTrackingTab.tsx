@@ -412,9 +412,9 @@ export const RankTrackingTab = () => {
         <Card className="bg-slate-700/30 border-slate-600">
           <CardHeader>
             <CardTitle className="text-white flex items-center space-x-2">
-              <Crown className="w-5 h-5 text-purple-400" />
+              <Crown className="w-5 h-5 text-[#facc15]" />
               <span>Leadership Ranks</span>
-              <Badge className="bg-purple-600 text-white ml-2">
+              <Badge className="bg-[#facc15] text-slate-900 ml-2">
                 {leadershipMembers.length}
               </Badge>
             </CardTitle>
@@ -438,10 +438,10 @@ export const RankTrackingTab = () => {
                       <span className="text-white font-medium">{tracking.username}</span>
                     </TableCell>
                     <TableCell className="py-3">
-                      <span className="text-purple-400 font-medium">{tracking.actualRank}</span>
+                      <span className="text-[#facc15] font-medium">{tracking.actualRank}</span>
                     </TableCell>
                     <TableCell className="py-3">
-                      <Badge className="bg-purple-600 text-white">Leadership</Badge>
+                      <Badge className="bg-[#facc15] text-slate-900">Leadership</Badge>
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-slate-300">
