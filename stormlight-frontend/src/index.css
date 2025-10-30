@@ -646,12 +646,25 @@ time,
   border-color: rgb(71, 85, 105) !important; /* slate-600 */
 }
 
-[data-theme='blue'] button:not(:disabled):hover,
-[data-theme='crimson'] button:not(:disabled):hover,
-[data-theme='emerald'] button:not(:disabled):hover,
-[data-theme='amethyst'] button:not(:disabled):hover,
+/* Button hover accent - use theme-specific accent colors */
+[data-theme='blue'] button:not(:disabled):hover {
+  border-color: #60a5fae6 !important; /* Sapphire blue */
+}
+
+[data-theme='crimson'] button:not(:disabled):hover {
+  border-color: #ef4444e6 !important; /* Crimson red */
+}
+
+[data-theme='emerald'] button:not(:disabled):hover {
+  border-color: #22c55ee6 !important; /* Emerald green */
+}
+
+[data-theme='amethyst'] button:not(:disabled):hover {
+  border-color: #a855f7e6 !important; /* Amethyst purple */
+}
+
 [data-theme='sunset'] button:not(:disabled):hover {
-  border-color: rgba(96, 165, 250, 0.9) !important;
+  border-color: #f97316e6 !important; /* Sunset orange */
 }
 
 /* Fix dull text on buttons - make text brighter with higher specificity */
