@@ -251,11 +251,11 @@ export const RankTrackingTab = () => {
                           </Button>
                           <Button
                             size="sm"
-                            variant="outline"
                             onClick={() => {
                               setEditingMember(null)
                               setEditJoinDate('')
                             }}
+                            className="bg-[#ef4444] hover:bg-[#dc2626] text-white"
                           >
                             Cancel
                           </Button>
@@ -348,11 +348,11 @@ export const RankTrackingTab = () => {
                           </Button>
                           <Button
                             size="sm"
-                            variant="outline"
                             onClick={() => {
                               setEditingMember(null)
                               setEditJoinDate('')
                             }}
+                            className="bg-[#ef4444] hover:bg-[#dc2626] text-white"
                           >
                             Cancel
                           </Button>
@@ -472,11 +472,11 @@ export const RankTrackingTab = () => {
                           </Button>
                           <Button
                             size="sm"
-                            variant="outline"
                             onClick={() => {
                               setEditingMember(null)
                               setEditJoinDate('')
                             }}
+                            className="bg-[#ef4444] hover:bg-[#dc2626] text-white"
                           >
                             Cancel
                           </Button>
