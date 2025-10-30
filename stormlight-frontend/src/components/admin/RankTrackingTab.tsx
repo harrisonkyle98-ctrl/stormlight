@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/table'
 import { Users, Search, Calendar, TrendingUp, Crown } from 'lucide-react'
 import { Spinner } from '../ui/spinner'
 
@@ -192,18 +193,47 @@ export const RankTrackingTab = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {dueForPromotionMembers.map((tracking) => (
-                <div key={tracking.username} className="p-4 bg-slate-600/30 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-3">
-                      <h3 className="text-white font-medium">{tracking.username}</h3>
-                      <Badge className="bg-yellow-600 text-white">
-                        <TrendingUp className="w-3 h-3 mr-1" />
-                        Due for Promotion
-                      </Badge>
-                    </div>
-                    <div className="flex items-center space-x-2">
+            <Table className="text-slate-300">
+              <TableHeader>
+                <TableRow className="border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50">
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Member</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Actual Rank</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Rank Needed</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Join Date</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Days in Clan</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {dueForPromotionMembers.map((tracking) => (
+                  <TableRow key={tracking.username} className="border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50">
+                    <TableCell className="py-3">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-white font-medium">{tracking.username}</span>
+                        <Badge className="bg-yellow-600 text-white">
+                          <TrendingUp className="w-3 h-3 mr-1" />
+                          Due
+                        </Badge>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <span className="text-white">{tracking.actualRank}</span>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <span className="text-white">{tracking.rankNeeded}</span>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <span className="text-slate-300">
+                        {tracking.joinDate 
+                          ? new Date(tracking.joinDate).toLocaleDateString()
+                          : 'Not set'
+                        }
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <span className="text-theme-accent-light font-medium">{tracking.daysInClan}</span>
+                    </TableCell>
+                    <TableCell className="py-3">
                       {editingMember === tracking.username ? (
                         <div className="flex items-center space-x-2">
                           <Input
@@ -241,38 +271,14 @@ export const RankTrackingTab = () => {
                           className="flex items-center space-x-1 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-white"
                         >
                           <Calendar className="w-3 h-3" />
-                          <span>Edit Join Date</span>
+                          <span>Edit</span>
                         </Button>
                       )}
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="text-slate-400">Actual Rank:</span>
-                      <div className="text-white font-medium">{tracking.actualRank}</div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400">Rank Needed:</span>
-                      <div className="text-white font-medium">{tracking.rankNeeded}</div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400">Join Date:</span>
-                      <div className="text-white">
-                        {tracking.joinDate 
-                          ? new Date(tracking.joinDate).toLocaleDateString()
-                          : 'Not set'
-                        }
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400">Days in Clan:</span>
-                      <div className="text-white font-medium">{tracking.daysInClan}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       )}
@@ -290,14 +296,41 @@ export const RankTrackingTab = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {paginatedActiveMembers.map((tracking) => (
-                <div key={tracking.username} className="p-4 bg-slate-600/30 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-3">
-                      <h3 className="text-white font-medium">{tracking.username}</h3>
-                    </div>
-                    <div className="flex items-center space-x-2">
+            <Table className="text-slate-300">
+              <TableHeader>
+                <TableRow className="border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50">
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Member</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Actual Rank</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Rank Needed</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Join Date</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Days in Clan</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedActiveMembers.map((tracking) => (
+                  <TableRow key={tracking.username} className="border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50">
+                    <TableCell className="py-3">
+                      <span className="text-white font-medium">{tracking.username}</span>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <span className="text-white">{tracking.actualRank}</span>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <span className="text-white">{tracking.rankNeeded}</span>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <span className="text-slate-300">
+                        {tracking.joinDate 
+                          ? new Date(tracking.joinDate).toLocaleDateString()
+                          : 'Not set'
+                        }
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <span className="text-theme-accent-light font-medium">{tracking.daysInClan}</span>
+                    </TableCell>
+                    <TableCell className="py-3">
                       {editingMember === tracking.username ? (
                         <div className="flex items-center space-x-2">
                           <Input
@@ -335,38 +368,14 @@ export const RankTrackingTab = () => {
                           className="flex items-center space-x-1 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-white"
                         >
                           <Calendar className="w-3 h-3" />
-                          <span>Edit Join Date</span>
+                          <span>Edit</span>
                         </Button>
                       )}
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="text-slate-400">Actual Rank:</span>
-                      <div className="text-white font-medium">{tracking.actualRank}</div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400">Rank Needed:</span>
-                      <div className="text-white font-medium">{tracking.rankNeeded}</div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400">Join Date:</span>
-                      <div className="text-white">
-                        {tracking.joinDate 
-                          ? new Date(tracking.joinDate).toLocaleDateString()
-                          : 'Not set'
-                        }
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400">Days in Clan:</span>
-                      <div className="text-white font-medium">{tracking.daysInClan}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
 
             {/* Pagination Controls */}
             {totalActivePages > 1 && (
@@ -411,14 +420,41 @@ export const RankTrackingTab = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {leadershipMembers.map((tracking) => (
-                <div key={tracking.username} className="p-4 bg-slate-600/30 rounded-lg border border-purple-500/30">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-3">
-                      <h3 className="text-white font-medium">{tracking.username}</h3>
-                    </div>
-                    <div className="flex items-center space-x-2">
+            <Table className="text-slate-300">
+              <TableHeader>
+                <TableRow className="border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50">
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Member</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Rank</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Status</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Join Date</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Days in Clan</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {leadershipMembers.map((tracking) => (
+                  <TableRow key={tracking.username} className="border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50">
+                    <TableCell className="py-3">
+                      <span className="text-white font-medium">{tracking.username}</span>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <span className="text-purple-400 font-medium">{tracking.actualRank}</span>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <Badge className="bg-purple-600 text-white">Leadership</Badge>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <span className="text-slate-300">
+                        {tracking.joinDate 
+                          ? new Date(tracking.joinDate).toLocaleDateString()
+                          : 'Not set'
+                        }
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <span className="text-theme-accent-light font-medium">{tracking.daysInClan}</span>
+                    </TableCell>
+                    <TableCell className="py-3">
                       {editingMember === tracking.username ? (
                         <div className="flex items-center space-x-2">
                           <Input
@@ -456,38 +492,14 @@ export const RankTrackingTab = () => {
                           className="flex items-center space-x-1 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-white"
                         >
                           <Calendar className="w-3 h-3" />
-                          <span>Edit Join Date</span>
+                          <span>Edit</span>
                         </Button>
                       )}
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="text-slate-400">Rank:</span>
-                      <div className="text-white font-medium">{tracking.actualRank}</div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400">Status:</span>
-                      <div className="text-white font-medium">Leadership</div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400">Join Date:</span>
-                      <div className="text-white">
-                        {tracking.joinDate 
-                          ? new Date(tracking.joinDate).toLocaleDateString()
-                          : 'Not set'
-                        }
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400">Days in Clan:</span>
-                      <div className="text-white font-medium">{tracking.daysInClan}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       )}
