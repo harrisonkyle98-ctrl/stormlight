@@ -441,7 +441,7 @@ export const RankTrackingTab = () => {
                       <span className="text-[#facc15] font-medium">{tracking.actualRank}</span>
                     </TableCell>
                     <TableCell className="py-3">
-                      <Badge className="bg-[#facc15] text-slate-900">Leadership</Badge>
+                      <Badge className="bg-[#facc15] text-slate-900 pointer-events-none">Leadership</Badge>
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-slate-300">

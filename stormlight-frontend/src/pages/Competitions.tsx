@@ -69,7 +69,7 @@ const Competitions = () => {
     const start = new Date(startDate)
     const end = new Date(endDate)
 
-    if (now < start) return { status: 'upcoming', color: 'bg-blue-500' }
+    if (now < start) return { status: 'upcoming', color: 'bg-[#60a5fa]' }
     if (now > end) return { status: 'ended', color: 'bg-gray-500' }
     return { status: 'active', color: 'bg-green-500' }
   }
@@ -165,7 +165,7 @@ const Competitions = () => {
                           </CardDescription>
                         </div>
                       </div>
-                      <Badge className={`${color} text-white capitalize`}>
+                      <Badge className={`${color} text-white capitalize pointer-events-none`}>
                         {status}
                       </Badge>
                     </div>
