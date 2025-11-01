@@ -8,7 +8,6 @@ import { Users, Trophy, TrendingUp, User, Settings, Calendar, Activity } from 'l
 import { fetchClanMembers, getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
-import { useProfileGains } from '../contexts/ProfileGainsContext'
 import { usernameToUrl } from '../utils/urlUtils'
 import { Tooltip } from '../components/ui/tooltip'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog'
@@ -131,7 +130,6 @@ interface ActivityResponse {
 
 const Home = () => {
   const { user } = useAuth()
-  const { getTodayGains, publish } = useProfileGains()
   const [clanStats, setClanStats] = useState<ClanStats | null>(null)
   const [activities, setActivities] = useState<Activity[]>([])
   const [activityLoading, setActivityLoading] = useState(true)
@@ -182,21 +180,13 @@ const Home = () => {
 
     loadAllData()
 
-    autoPopulateProfileGains()
-
     const statsInterval = setInterval(() => {
       console.log('🔄 Refreshing Total XP data (hourly)')
       fetchClanStats()
     }, 60 * 60 * 1000)
 
-    const profileGainsInterval = setInterval(() => {
-      console.log('🔄 Auto-populating ProfileGainsContext (every 30 minutes)')
-      autoPopulateProfileGains()
-    }, 30 * 60 * 1000)
-
     return () => {
       clearInterval(statsInterval)
-      clearInterval(profileGainsInterval)
     }
   }, [])
 
@@ -497,78 +487,21 @@ const Home = () => {
   const fetchActiveMembers = async () => {
     setActiveMembersLoading(true)
     try {
-      const todayGains = getTodayGains()
-      const top5 = todayGains.slice(0, 5)
-      const totalActive = todayGains.length
-      
-      setActiveMembers({
-        active_members: top5,
-        total_active: totalActive,
-        last_updated: Date.now()
-      })
-      
-      console.log('📊 Members Active Today (from context):', { top5Count: top5.length, totalActive })
+      const response = await fetch(`${API_URL}/api/members/active-today`)
+      if (response.ok) {
+        const data = await response.json()
+        setActiveMembers(data)
+        console.log('📊 Members Active Today (from backend):', { 
+          top5Count: data.active_members?.length || 0, 
+          totalActive: data.total_active || 0 
+        })
+      } else {
+        console.error('Failed to fetch active members:', response.status)
+      }
     } catch (error) {
-      console.error('Error reading active members from context:', error)
+      console.error('Error fetching active members:', error)
     } finally {
       setActiveMembersLoading(false)
-    }
-  }
-
-  const autoPopulateProfileGains = async () => {
-    try {
-      console.log('🔄 Auto-populating ProfileGainsContext for all active members...')
-      
-      const members = await fetchClanMembers()
-      const activeMembers = members.filter((m: any) => m.active !== false)
-      
-      console.log(`📊 Fetching profile data for ${activeMembers.length} active members...`)
-      
-      let successCount = 0
-      let errorCount = 0
-      
-      for (const member of activeMembers) {
-        try {
-          const encodedUsername = encodeURIComponent(member.username)
-          const response = await fetch(
-            `${API_URL}/api/player/${encodedUsername}/stats/history?period1=today&period2=yesterday`,
-            {
-              cache: 'no-cache',
-              headers: {
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
-              }
-            }
-          )
-          
-          if (response.ok) {
-            const data = await response.json()
-            const xpToday = data.stats?.overall?.xp_gain_period1 || 0
-            
-            publish(member.username, {
-              xpToday,
-              lastUpdated: Date.now(),
-              period1: 'today',
-              period2: 'yesterday'
-            })
-            
-            successCount++
-          } else {
-            errorCount++
-          }
-        } catch (error) {
-          console.error(`Error fetching profile for ${member.username}:`, error)
-          errorCount++
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 100))
-      }
-      
-      console.log(`✅ Auto-populate complete: ${successCount} success, ${errorCount} errors`)
-      
-      fetchActiveMembers()
-    } catch (error) {
-      console.error('Error auto-populating profile gains:', error)
     }
   }
 

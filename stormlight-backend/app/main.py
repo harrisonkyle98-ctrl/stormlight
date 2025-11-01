@@ -6333,6 +6333,16 @@ async def get_player_stats_with_history(
                                 'rank_change': 0
                             })
                             changes_data[skill_name] = cd
+                    
+                    if 'overall' in changes_data and changes_data['overall'].get('xp_gain_period1', 0) > 0:
+                        try:
+                            from .database import upsert_today_gain
+                        except ImportError:
+                            from database import upsert_today_gain
+                        
+                        overall_xp_gain = changes_data['overall']['xp_gain_period1']
+                        await upsert_today_gain(conn, decoded_username, decoded_username, overall_xp_gain, today)
+                        print(f"[History] Upserted today's gain to player_today_gains: {decoded_username} = {overall_xp_gain:,} XP")
                         
         except Exception as db_error:
             print(f"Database error fetching changes (historical tracking disabled): {db_error}")
@@ -6893,79 +6903,87 @@ async def update_today_gains_for_all_members():
     try:
         from datetime import datetime, timezone
         try:
-            from .database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before
+            from .database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before, upsert_today_gain
         except ImportError:
-            from database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before
+            from database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before, upsert_today_gain
         
         conn = await get_db_connection()
         async with conn:
-            today = datetime.now(timezone.utc).date()
+            cursor = await conn.execute("SELECT pg_try_advisory_lock(123456789)")
+            lock_acquired = (await cursor.fetchone())[0]
             
-            cursor = await conn.execute("""
-                SELECT username FROM clan_members WHERE active = TRUE
-            """)
-            active_members = [row[0] for row in await cursor.fetchall()]
-            print(f"[Today Gains Job] Found {len(active_members)} active clan members")
+            if not lock_acquired:
+                print("[Today Gains Job] Another instance is already running (advisory lock not acquired). Skipping.")
+                return 0
             
-            BATCH_SIZE = 10
-            updated_count = 0
-            
-            for i in range(0, len(active_members), BATCH_SIZE):
-                batch = active_members[i:i + BATCH_SIZE]
-                batch_num = (i // BATCH_SIZE) + 1
-                print(f"[Today Gains Job] Processing batch {batch_num} ({len(batch)} members)")
+            try:
+                today = datetime.now(timezone.utc).date()
                 
-                async def process_one_member(username: str):
-                    try:
-                        live_stats = await asyncio.wait_for(
-                            fetch_player_stats(username, max_retries=1, timeout=3.0),
-                            timeout=3.0
-                        )
+                clan_members = await fetch_clan_members()
+                active_members = [m for m in clan_members if m.get('active', True)]
+                print(f"[Today Gains Job] Found {len(active_members)} active clan members")
+                
+                BATCH_SIZE = 10
+                updated_count = 0
+                
+                for i in range(0, len(active_members), BATCH_SIZE):
+                    batch = active_members[i:i + BATCH_SIZE]
+                    batch_num = (i // BATCH_SIZE) + 1
+                    print(f"[Today Gains Job] Processing batch {batch_num} ({len(batch)} members)")
+                    
+                    async def process_one_member(member: dict):
+                        username = member['username']
+                        display_username = member['username']  # Already properly cased from API
                         
-                        if not live_stats or 'stats' not in live_stats or 'overall' not in live_stats['stats']:
+                        try:
+                            live_stats = await asyncio.wait_for(
+                                fetch_player_stats(username, max_retries=1, timeout=3.0),
+                                timeout=3.0
+                            )
+                            
+                            if not live_stats or 'stats' not in live_stats or 'overall' not in live_stats['stats']:
+                                return None
+                            
+                            live_total_xp = live_stats['stats']['overall'].get('xp', 0)
+                            
+                            baseline_json = await get_snapshot_json_on_date(conn, username, today)
+                            if not baseline_json:
+                                baseline_json = await get_snapshot_json_on_or_before(conn, username, today)
+                            
+                            if baseline_json and 'overall' in baseline_json:
+                                baseline_xp = baseline_json['overall'].get('xp', 0)
+                            else:
+                                baseline_xp = 0
+                            
+                            xp_gained_today = max(0, live_total_xp - baseline_xp)
+                            
+                            if xp_gained_today > 0:
+                                await upsert_today_gain(conn, username, display_username, xp_gained_today, today)
+                                return username
                             return None
                         
-                        live_total_xp = live_stats['stats']['overall'].get('xp', 0)
-                        
-                        baseline_json = await get_snapshot_json_on_date(conn, username, today)
-                        if not baseline_json:
-                            baseline_json = await get_snapshot_json_on_or_before(conn, username, today)
-                        
-                        if baseline_json and 'overall' in baseline_json:
-                            baseline_xp = baseline_json['overall'].get('xp', 0)
-                        else:
-                            baseline_xp = 0
-                        
-                        xp_gained_today = max(0, live_total_xp - baseline_xp)
-                        
-                        if xp_gained_today > 0:
-                            await conn.execute("""
-                                INSERT INTO player_today_gains (username, snapshot_date, overall_gain, updated_at)
-                                VALUES (%s, %s, %s, NOW())
-                                ON CONFLICT (username, snapshot_date)
-                                DO UPDATE SET overall_gain = EXCLUDED.overall_gain, updated_at = NOW()
-                            """, (username, today, xp_gained_today))
-                            return username
-                        return None
+                        except asyncio.TimeoutError:
+                            print(f"[Today Gains Job] Timeout fetching {username}")
+                            return None
+                        except Exception as e:
+                            print(f"[Today Gains Job] Error processing {username}: {e}")
+                            return None
                     
-                    except asyncio.TimeoutError:
-                        print(f"[Today Gains Job] Timeout fetching {username}")
-                        return None
-                    except Exception as e:
-                        print(f"[Today Gains Job] Error processing {username}: {e}")
-                        return None
+                    tasks = [process_one_member(member) for member in batch]
+                    results = await asyncio.gather(*tasks, return_exceptions=True)
+                    
+                    for result in results:
+                        if result and not isinstance(result, Exception):
+                            updated_count += 1
+                    
+                    await asyncio.sleep(0.5)
                 
-                tasks = [process_one_member(username) for username in batch]
-                results = await asyncio.gather(*tasks, return_exceptions=True)
-                
-                for result in results:
-                    if result and not isinstance(result, Exception):
-                        updated_count += 1
-                
-                await asyncio.sleep(0.5)
+                print(f"[Today Gains Job] Completed: {updated_count} members updated with XP gains")
+                return updated_count
             
-            print(f"[Today Gains Job] Completed: {updated_count} members updated with XP gains")
-            return updated_count
+            finally:
+                await conn.execute("SELECT pg_advisory_unlock(123456789)")
+                print("[Today Gains Job] Advisory lock released")
     
     except Exception as e:
         print(f"[Today Gains Job] Fatal error: {e}")
@@ -7260,11 +7278,11 @@ async def get_player_recent_progress(username: str):
 @app.get("/api/members/active-today")
 async def get_members_active_today(
     refresh: bool = False,
-    limit: int = Query(5, ge=1, le=20),
-    concurrency: int = Query(10, ge=1, le=20)
+    limit: int = Query(5, ge=1, le=20)
 ):
-    """Get active clan members who gained XP today (reads from profile_history_cache - values already displayed on profiles)"""
+    """Get active clan members who gained XP today (reads from player_today_gains table)"""
     import time as time_module
+    from datetime import datetime, timezone
     
     start_time = time_module.monotonic()
     
@@ -7277,61 +7295,54 @@ async def get_members_active_today(
                 return active_today_cache['data']
     
     try:
-        clan_members = await fetch_clan_members()
-        active_members = [m['username'] for m in clan_members if m.get('active', True)]
+        try:
+            from .database import get_db_connection
+        except ImportError:
+            from database import get_db_connection
         
-        members_with_gains = []
-        cache_hits = 0
-        cache_misses = 0
-        
-        for username in active_members:
-            cached_gain = None
-            cached_timestamp = None
+        conn = await get_db_connection()
+        async with conn:
+            today = datetime.now(timezone.utc).date()
             
-            for key in profile_history_cache['data'].keys():
-                if key.startswith(f"{username}:today:"):
-                    cached_data = profile_history_cache['data'].get(key)
-                    if cached_data and 'stats' in cached_data and 'overall' in cached_data['stats']:
-                        overall_stats = cached_data['stats']['overall']
-                        xp_gain = overall_stats.get('xp_gain_period1', 0)
-                        
-                        if xp_gain > 0:
-                            cached_gain = xp_gain
-                            cached_timestamp = profile_history_cache['timestamps'].get(key)
-                            break
+            cursor = await conn.execute("""
+                SELECT display_username, overall_gain, updated_at
+                FROM player_today_gains
+                WHERE snapshot_date = %s AND overall_gain > 0
+                ORDER BY overall_gain DESC
+                LIMIT %s
+            """, (today, limit))
+            top_rows = await cursor.fetchall()
             
-            if cached_gain is not None and cached_gain > 0:
-                members_with_gains.append({
-                    'username': username,
-                    'xp_gained': int(cached_gain),
-                    'cached_at': cached_timestamp
-                })
-                cache_hits += 1
-            else:
-                cache_misses += 1
-        
-        members_with_gains.sort(key=lambda x: x['xp_gained'], reverse=True)
-        
-        top_members = [
-            {'username': m['username'], 'xp_gained': m['xp_gained']}
-            for m in members_with_gains[:limit]
-        ]
-        
-        last_updated = max([m['cached_at'] for m in members_with_gains], default=None) if members_with_gains else None
-        
-        result = {
-            'active_members': top_members,
-            'total_active': len(members_with_gains),
-            'last_updated': last_updated
-        }
-        
-        elapsed = time_module.monotonic() - start_time
-        print(f"[Active Today] Aggregated from profile cache in {elapsed:.3f}s: {len(top_members)} top members, {len(members_with_gains)} total with gains (cache hits: {cache_hits}, misses: {cache_misses})")
-        
-        active_today_cache['data'] = result
-        active_today_cache['timestamp'] = time_module.time()
-        
-        return result
+            cursor = await conn.execute("""
+                SELECT COUNT(*) 
+                FROM player_today_gains 
+                WHERE snapshot_date = %s AND overall_gain > 0
+            """, (today,))
+            total_count = (await cursor.fetchone())[0]
+            
+            top_members = [
+                {
+                    'username': row[0] if row[0] else row[0],
+                    'xp_gained': int(row[1])
+                }
+                for row in top_rows
+            ]
+            
+            last_updated = max([row[2] for row in top_rows], default=None) if top_rows else None
+            
+            result = {
+                'active_members': top_members,
+                'total_active': total_count,
+                'last_updated': last_updated.timestamp() if last_updated else None
+            }
+            
+            elapsed = time_module.monotonic() - start_time
+            print(f"[Active Today] Read from player_today_gains in {elapsed:.3f}s: {len(top_members)} top members, {total_count} total with gains")
+            
+            active_today_cache['data'] = result
+            active_today_cache['timestamp'] = time_module.time()
+            
+            return result
         
     except Exception as e:
         print(f"[Active Today] Fatal error: {e}")

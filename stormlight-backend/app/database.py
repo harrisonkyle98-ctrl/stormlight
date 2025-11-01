@@ -126,6 +126,10 @@ async def init_database():
                 
                 CREATE INDEX IF NOT EXISTS idx_today_gains_date ON player_today_gains(snapshot_date);
                 CREATE INDEX IF NOT EXISTS idx_today_gains_date_gain ON player_today_gains(snapshot_date, overall_gain DESC);
+                
+                -- Add display_username column for proper capitalization (migration)
+                ALTER TABLE player_today_gains ADD COLUMN IF NOT EXISTS display_username TEXT;
+                CREATE INDEX IF NOT EXISTS idx_today_gains_display ON player_today_gains(display_username);
             """)
             print("Database schema initialized successfully")
     except Exception as e:
@@ -658,6 +662,27 @@ async def ensure_today_snapshot(conn, username: str, stats: dict):
     """Ensure a 'today' baseline snapshot exists for a user (preserve existing baseline)."""
     today = date.today()
     await upsert_daily_snapshot(conn, username, stats, today)
+
+async def upsert_today_gain(conn, username: str, display_username: str, xp_gain: int, date_utc):
+    """
+    Upsert today's XP gain for a player into player_today_gains table.
+    
+    Args:
+        conn: Database connection
+        username: Username (mixed-case, used for PRIMARY KEY)
+        display_username: Properly capitalized username for display
+        xp_gain: XP gained today
+        date_utc: UTC date for the snapshot
+    """
+    await conn.execute("""
+        INSERT INTO player_today_gains (username, snapshot_date, overall_gain, display_username, updated_at)
+        VALUES (%s, %s, %s, %s, NOW())
+        ON CONFLICT (username, snapshot_date)
+        DO UPDATE SET 
+            overall_gain = EXCLUDED.overall_gain,
+            display_username = EXCLUDED.display_username,
+            updated_at = NOW()
+    """, (username, date_utc, xp_gain, display_username))
 
 async def get_player_stats_for_periods(conn, username: str, period1: str, period2: str):
     """Get player stats comparison between two time periods using consolidated snapshots"""
