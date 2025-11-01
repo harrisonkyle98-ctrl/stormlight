@@ -326,6 +326,12 @@ profile_history_cache = {
     'ttl': 3600  # 1 hour cache (same as profile_cache)
 }
 
+live_stats_cache = {
+    'data': {},  # username -> stats data mapping
+    'timestamps': {},  # username -> timestamp mapping
+    'ttl': 120  # 2 minutes cache for live API calls
+}
+
 clan_members_cache = {
     'data': [],
     'timestamp': 0,
@@ -463,8 +469,18 @@ SKILL_TABLE_MAPPING = {
 HISCORE_SKILL_ORDER = [name for name, idx in sorted(SKILL_TABLE_MAPPING.items(), key=lambda kv: kv[1])]
 
 
-async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Dict[str, Any]]:
-    """Fetch player stats from RuneScape Runemetrics API with rate limiting"""
+async def fetch_player_stats(username: str, max_retries: int = 3, use_cache: bool = True) -> Optional[Dict[str, Any]]:
+    """Fetch player stats from RuneScape Runemetrics API with rate limiting and caching"""
+    import time as time_module
+    
+    if use_cache:
+        current_time = time_module.time()
+        if username in live_stats_cache['data'] and username in live_stats_cache['timestamps']:
+            cache_age = current_time - live_stats_cache['timestamps'][username]
+            if cache_age < live_stats_cache['ttl']:
+                print(f"[Live Stats Cache] Returning cached stats for {username} (age: {cache_age:.1f}s)")
+                return live_stats_cache['data'][username]
+    
     for attempt in range(max_retries):
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
@@ -566,13 +582,20 @@ async def fetch_player_stats(username: str, max_retries: int = 3) -> Optional[Di
                         print(f"DEBUG: Quest API exception for {username}: {e}")
 
                     print(f"DEBUG: Returning quest_points for {username}: {quest_points}")
-                    return {
+                    result = {
                         'stats': stats,
                         'quest_points': quest_points,
                         'last_updated': datetime.now(),
                         'username': data.get('name', username),
                         'hiscores': hiscores_extended
                     }
+                    
+                    if use_cache:
+                        live_stats_cache['data'][username] = result
+                        live_stats_cache['timestamps'][username] = time_module.time()
+                        print(f"[Live Stats Cache] Cached stats for {username}")
+                    
+                    return result
                 elif response.status_code == 429:
                     base_delay = 2.0
                     max_delay = 20.0
@@ -6238,28 +6261,33 @@ async def get_player_stats_with_history(
                 
                 print(f"[History] Live API fetched for {decoded_username} (overall xp={current_stats['stats']['overall']['xp']:,})")
                 
+                from datetime import timezone
+                today = datetime.now(timezone.utc).date()
+                
+                baseline_json_for_today = await get_snapshot_json_on_date(conn, decoded_username, today)
+                if not baseline_json_for_today:
+                    # Fallback to most recent snapshot if today's doesn't exist yet
+                    baseline_json_for_today = await get_snapshot_json_on_or_before(conn, decoded_username, today)
+                    print(f"[History] No today snapshot found, using fallback baseline from on_or_before({today})")
+                
                 await ensure_today_snapshot(conn, decoded_username, current_stats)
+                
                 changes_data = await get_player_stats_for_periods(conn, decoded_username, period1, period2)
                 
-                today = date.today()
                 p1_start, p1_end = get_period_window(period1)
                 p2_start, p2_end = get_period_window(period2)
                 
                 print(f"[History] Period window check: p1_end={p1_end}, today={today}, condition_met={p1_end == today}")
-                if p1_end == today:
-                    print(f"[History] Recomputing live gains for period1={period1} ending today")
+                if p1_end == today and period1.lower() == 'today':
+                    print(f"[History] Computing live 'Today' gains: live_xp - today_baseline_xp")
                     
-                    if period1.lower() == 'today':
-                        baseline_json = await get_snapshot_json_on_date(conn, decoded_username, today)
-                        cnt = len(baseline_json or {})
-                        print(f"[History] Found {cnt} baseline skills in today's snapshot")
-                        if baseline_json:
-                            sample_skill = list(baseline_json.keys())[0]
-                            sample_data = baseline_json[sample_skill]
-                            print(f"[History] Sample baseline: {sample_skill} = level:{sample_data.get('level')}, xp:{sample_data.get('xp'):,}, rank:{sample_data.get('rank')}")
-                    else:
-                        baseline_json = await get_snapshot_json_on_or_before(conn, decoded_username, p1_start)
-                        print(f"[History] Found {len(baseline_json or {})} baseline skills on/before {p1_start}")
+                    baseline_json = baseline_json_for_today
+                    cnt = len(baseline_json or {})
+                    print(f"[History] Using today's baseline with {cnt} skills")
+                    if baseline_json:
+                        sample_skill = list(baseline_json.keys())[0]
+                        sample_data = baseline_json[sample_skill]
+                        print(f"[History] Sample baseline: {sample_skill} = level:{sample_data.get('level')}, xp:{sample_data.get('xp'):,}, rank:{sample_data.get('rank')}")
                     
                     for skill_name in current_stats['stats'].keys():
                         cur_level = current_stats['stats'][skill_name].get('level', 0)
@@ -6277,8 +6305,7 @@ async def get_player_stats_with_history(
                             level_delta = max(cur_level - base_level, 0)
                             rank_delta = base_rank - cur_rank
                             
-                            print(f"[History] {skill_name}: live_rank={cur_rank} baseline_rank={base_rank} rank_delta={rank_delta}")
-                            print(f"[History] {skill_name}: live_xp={cur_xp:,} baseline_xp={base_xp:,} gain={xp_gain_p1:,}")
+                            print(f"[History] {skill_name}: live_xp={cur_xp:,} today_baseline_xp={base_xp:,} today_gain={xp_gain_p1:,}")
                             
                             cd = changes_data.get(skill_name, {})
                             cd.update({
@@ -7131,60 +7158,71 @@ async def get_player_recent_progress(username: str):
 
 @app.get("/api/members/active-today")
 async def get_members_active_today():
-    """Get active clan members who gained XP in the last 24 hours"""
+    """Get active clan members who gained XP today (live XP vs today's baseline)"""
     try:
         from datetime import datetime, timedelta, timezone
         
         try:
-            from .database import get_db_connection
+            from .database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before
         except ImportError:
-            from database import get_db_connection
+            from database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before
         
         conn = await get_db_connection()
         async with conn:
-            now = datetime.now(timezone.utc).date()
-            date_24h_ago = now - timedelta(days=1)
+            today = datetime.now(timezone.utc).date()
             
             cursor = await conn.execute("""
                 SELECT username FROM clan_members WHERE active = TRUE
             """)
-            active_clan_members = {row[0] for row in await cursor.fetchall()}
+            active_clan_members = [row[0] for row in await cursor.fetchall()]
+            print(f"[Active Today] Found {len(active_clan_members)} active clan members")
             
             cursor = await conn.execute("""
-                SELECT username, snapshot_date, total_xp
+                SELECT username, total_xp
                 FROM player_daily_snapshots
-                WHERE snapshot_date >= %s
-                ORDER BY username, snapshot_date DESC
-            """, (date_24h_ago,))
-            all_snapshots = await cursor.fetchall()
-            
-            latest_by_user = {}
-            previous_by_user = {}
-            
-            for snap in all_snapshots:
-                username = snap[0]
-                if username not in active_clan_members:
-                    continue
-                    
-                if username not in latest_by_user:
-                    latest_by_user[username] = snap
-                elif username not in previous_by_user:
-                    previous_by_user[username] = snap
+                WHERE snapshot_date = %s
+            """, (today,))
+            today_baselines = {row[0]: row[1] for row in await cursor.fetchall()}
+            print(f"[Active Today] Found {len(today_baselines)} today baselines")
             
             active_members = []
-            for username, latest_snap in latest_by_user.items():
-                if latest_snap[2]:
-                    previous_snap = previous_by_user.get(username)
-                    if previous_snap and previous_snap[2]:
-                        xp_gained = latest_snap[2] - previous_snap[2]
-                        if xp_gained > 0:
-                            active_members.append({
-                                'username': username,
-                                'xp_gained': int(xp_gained)
-                            })
+            for username in active_clan_members:
+                try:
+                    live_stats = await fetch_player_stats(username)
+                    if not live_stats or 'stats' not in live_stats or 'overall' not in live_stats['stats']:
+                        continue
+                    
+                    live_total_xp = live_stats['stats']['overall'].get('xp', 0)
+                    
+                    baseline_total_xp = today_baselines.get(username)
+                    if baseline_total_xp is None:
+                        cursor = await conn.execute("""
+                            SELECT total_xp FROM player_daily_snapshots
+                            WHERE username = %s AND snapshot_date <= %s
+                            ORDER BY snapshot_date DESC
+                            LIMIT 1
+                        """, (username, today))
+                        row = await cursor.fetchone()
+                        baseline_total_xp = row[0] if row else 0
+                        print(f"[Active Today] {username}: No today baseline, using fallback={baseline_total_xp:,}")
+                    
+                    xp_gained_today = max(0, live_total_xp - baseline_total_xp)
+                    
+                    if xp_gained_today > 0:
+                        active_members.append({
+                            'username': username,
+                            'xp_gained': int(xp_gained_today)
+                        })
+                        print(f"[Active Today] {username}: live={live_total_xp:,} baseline={baseline_total_xp:,} gained={xp_gained_today:,}")
+                
+                except Exception as member_error:
+                    print(f"[Active Today] Error processing {username}: {member_error}")
+                    continue
             
             active_members.sort(key=lambda x: x['xp_gained'], reverse=True)
             top_5 = active_members[:5]
+            
+            print(f"[Active Today] Returning {len(top_5)} top members out of {len(active_members)} total active")
             
             return {
                 'active_members': top_5,
