@@ -7261,11 +7261,10 @@ async def get_player_recent_progress(username: str):
 async def get_members_active_today(
     refresh: bool = False,
     limit: int = Query(5, ge=1, le=20),
-    concurrency: int = Query(10, ge=1, le=20)  # Kept for backwards compatibility, unused
+    concurrency: int = Query(10, ge=1, le=20)
 ):
-    """Get active clan members who gained XP today (reads from player_today_gains table populated by hourly job)"""
+    """Get active clan members who gained XP today (reads from profile_history_cache - values already displayed on profiles)"""
     import time as time_module
-    from datetime import datetime, timezone
     
     start_time = time_module.monotonic()
     
@@ -7278,65 +7277,61 @@ async def get_members_active_today(
                 return active_today_cache['data']
     
     try:
-        try:
-            from .database import get_db_connection
-        except ImportError:
-            from database import get_db_connection
+        clan_members = await fetch_clan_members()
+        active_members = [m['username'] for m in clan_members if m.get('active', True)]
         
-        conn = await get_db_connection()
-        async with conn:
-            today = datetime.now(timezone.utc).date()
+        members_with_gains = []
+        cache_hits = 0
+        cache_misses = 0
+        
+        for username in active_members:
+            cached_gain = None
+            cached_timestamp = None
             
-            cursor = await conn.execute("""
-                SELECT 
-                    g.username,
-                    g.overall_gain,
-                    COUNT(*) OVER() as total_count,
-                    MAX(g.updated_at) OVER() as last_updated
-                FROM player_today_gains g
-                JOIN clan_members c
-                    ON LOWER(REPLACE(c.username, CHR(160), ' ')) = LOWER(REPLACE(g.username, CHR(160), ' '))
-                WHERE c.active = TRUE
-                    AND g.snapshot_date = %s
-                    AND g.overall_gain > 0
-                ORDER BY g.overall_gain DESC
-                LIMIT %s
-            """, (today, limit))
+            for key in profile_history_cache['data'].keys():
+                if key.startswith(f"{username}:today:"):
+                    cached_data = profile_history_cache['data'].get(key)
+                    if cached_data and 'stats' in cached_data and 'overall' in cached_data['stats']:
+                        overall_stats = cached_data['stats']['overall']
+                        xp_gain = overall_stats.get('xp_gain_period1', 0)
+                        
+                        if xp_gain > 0:
+                            cached_gain = xp_gain
+                            cached_timestamp = profile_history_cache['timestamps'].get(key)
+                            break
             
-            rows = await cursor.fetchall()
-            
-            if not rows:
-                print(f"[Active Today] No XP gains found for {today.isoformat()}")
-                result = {
-                    'active_members': [],
-                    'total_active': 0,
-                    'last_updated': None
-                }
+            if cached_gain is not None and cached_gain > 0:
+                members_with_gains.append({
+                    'username': username,
+                    'xp_gained': int(cached_gain),
+                    'cached_at': cached_timestamp
+                })
+                cache_hits += 1
             else:
-                top_members = [
-                    {
-                        'username': row[0],
-                        'xp_gained': int(row[1])
-                    }
-                    for row in rows
-                ]
-                
-                total_count = rows[0][2] if rows else 0
-                last_updated = rows[0][3] if rows and rows[0][3] else None
-                
-                result = {
-                    'active_members': top_members,
-                    'total_active': total_count,
-                    'last_updated': last_updated.isoformat() if last_updated else None
-                }
-            
-            elapsed = time_module.monotonic() - start_time
-            print(f"[Active Today] Query completed in {elapsed:.3f}s: {len(result['active_members'])} top members, {result['total_active']} total with gains")
-            
-            active_today_cache['data'] = result
-            active_today_cache['timestamp'] = time_module.time()
-            
-            return result
+                cache_misses += 1
+        
+        members_with_gains.sort(key=lambda x: x['xp_gained'], reverse=True)
+        
+        top_members = [
+            {'username': m['username'], 'xp_gained': m['xp_gained']}
+            for m in members_with_gains[:limit]
+        ]
+        
+        last_updated = max([m['cached_at'] for m in members_with_gains], default=None) if members_with_gains else None
+        
+        result = {
+            'active_members': top_members,
+            'total_active': len(members_with_gains),
+            'last_updated': last_updated
+        }
+        
+        elapsed = time_module.monotonic() - start_time
+        print(f"[Active Today] Aggregated from profile cache in {elapsed:.3f}s: {len(top_members)} top members, {len(members_with_gains)} total with gains (cache hits: {cache_hits}, misses: {cache_misses})")
+        
+        active_today_cache['data'] = result
+        active_today_cache['timestamp'] = time_module.time()
+        
+        return result
         
     except Exception as e:
         print(f"[Active Today] Fatal error: {e}")
