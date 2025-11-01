@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react'
 
 interface ProfileGainEntry {
+  displayUsername: string
   xpToday: number
   lastUpdated: number
   period1: string
@@ -9,7 +10,7 @@ interface ProfileGainEntry {
 
 interface ProfileGainsContextType {
   gainsMap: Map<string, ProfileGainEntry>
-  publish: (username: string, entry: ProfileGainEntry) => void
+  publish: (username: string, entry: Omit<ProfileGainEntry, 'displayUsername'>) => void
   getTodayGains: () => Array<{ username: string; xp_gained: number }>
 }
 
@@ -19,39 +20,44 @@ export const ProfileGainsProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [gainsMap, setGainsMap] = useState<Map<string, ProfileGainEntry>>(new Map())
   const previousValuesRef = useRef<Map<string, ProfileGainEntry>>(new Map())
 
-  const publish = useCallback((username: string, entry: ProfileGainEntry) => {
+  const publish = useCallback((username: string, entry: Omit<ProfileGainEntry, 'displayUsername'>) => {
     const normalizedUsername = username.toLowerCase().trim()
     
     if (entry.period1 !== 'today') {
       return
     }
 
+    const fullEntry: ProfileGainEntry = {
+      ...entry,
+      displayUsername: username
+    }
+
     const previousEntry = previousValuesRef.current.get(normalizedUsername)
     if (
       previousEntry &&
-      previousEntry.xpToday === entry.xpToday &&
-      previousEntry.lastUpdated === entry.lastUpdated &&
-      previousEntry.period1 === entry.period1 &&
-      previousEntry.period2 === entry.period2
+      previousEntry.xpToday === fullEntry.xpToday &&
+      previousEntry.lastUpdated === fullEntry.lastUpdated &&
+      previousEntry.period1 === fullEntry.period1 &&
+      previousEntry.period2 === fullEntry.period2
     ) {
-      return // No change, skip update
+      return
     }
 
     setGainsMap((prev) => {
       const newMap = new Map(prev)
-      newMap.set(normalizedUsername, entry)
+      newMap.set(normalizedUsername, fullEntry)
       return newMap
     })
 
-    previousValuesRef.current.set(normalizedUsername, entry)
+    previousValuesRef.current.set(normalizedUsername, fullEntry)
   }, [])
 
   const getTodayGains = useCallback(() => {
     const entries = Array.from(gainsMap.entries())
     const list = entries
       .filter(([_, entry]) => entry.period1 === 'today' && entry.xpToday > 0)
-      .map(([username, entry]) => ({
-        username,
+      .map(([_, entry]) => ({
+        username: entry.displayUsername,
         xp_gained: entry.xpToday
       }))
       .sort((a, b) => b.xp_gained - a.xp_gained)
