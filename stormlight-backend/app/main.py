@@ -7268,6 +7268,9 @@ async def get_members_active_today(
     import asyncio
     from datetime import datetime, timezone
     
+    t0 = time_module.monotonic()
+    print(f"[Active Today] t0: Route entry at {t0:.3f}")
+    
     if not refresh:
         current_time = time_module.time()
         if active_today_cache['data'] is not None:
@@ -7276,12 +7279,17 @@ async def get_members_active_today(
                 print(f"[Active Today] Returning cached result (age: {cache_age:.1f}s)")
                 return active_today_cache['data']
     
+    t1 = time_module.monotonic()
+    print(f"[Active Today] t1: After cache check (+{t1-t0:.3f}s)")
+    
     try:
         start_time = time_module.monotonic()
         
         clan_members = await fetch_clan_members()
         active_members = [m['username'] for m in clan_members if m.get('active', True)]
-        print(f"[Active Today] Found {len(active_members)} active clan members")
+        
+        t2 = time_module.monotonic()
+        print(f"[Active Today] t2: After fetch_clan_members, found {len(active_members)} active members (+{t2-t1:.3f}s, total: {t2-t0:.3f}s)")
         
         try:
             from .database import get_db_connection
@@ -7345,7 +7353,8 @@ async def get_members_active_today(
                         norm_username = username.lower().replace('\xa0', ' ')
                         baseline_xp_map[norm_username] = base_xp
         
-        print(f"[Active Today] Prefetched {len(baseline_xp_map)} baselines for {len(active_members)} members")
+        t3 = time_module.monotonic()
+        print(f"[Active Today] t3: Prefetched {len(baseline_xp_map)} baselines for {len(active_members)} members (+{t3-t2:.3f}s, total: {t3-t0:.3f}s)")
         
         timeouts = 0
         errors = 0
@@ -7390,7 +7399,13 @@ async def get_members_active_today(
         semaphore = asyncio.Semaphore(concurrency)
         tasks = [fetch_member_today_gain(username, semaphore) for username in active_members]
         
+        t4 = time_module.monotonic()
+        print(f"[Active Today] t4: Created {len(tasks)} tasks, starting asyncio.gather (+{t4-t3:.3f}s, total: {t4-t0:.3f}s)")
+        
         results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        t5 = time_module.monotonic()
+        print(f"[Active Today] t5: Finished asyncio.gather (+{t5-t4:.3f}s, total: {t5-t0:.3f}s)")
         
         active_with_gains = []
         for result in results:
@@ -7400,8 +7415,9 @@ async def get_members_active_today(
         active_with_gains.sort(key=lambda x: x['xp_gained'], reverse=True)
         top_members = active_with_gains[:limit]
         
+        t6 = time_module.monotonic()
         elapsed = time_module.monotonic() - start_time
-        print(f"[Active Today] Processed {len(active_members)} members: {len(active_with_gains)} with gains, {timeouts} timeouts, {errors} errors, {no_baseline} no baseline (took {elapsed:.3f}s)")
+        print(f"[Active Today] t6: Processed {len(active_members)} members: {len(active_with_gains)} with gains, {timeouts} timeouts, {errors} errors, {no_baseline} no baseline (+{t6-t5:.3f}s, total: {t6-t0:.3f}s, elapsed: {elapsed:.3f}s)")
         
         result = {
             'active_members': top_members,
