@@ -332,6 +332,12 @@ live_stats_cache = {
     'ttl': 120  # 2 minutes cache for live API calls
 }
 
+active_today_cache = {
+    'data': None,  # cached response
+    'timestamp': 0,  # last update timestamp
+    'ttl': 90  # 90 seconds cache for endpoint result
+}
+
 clan_members_cache = {
     'data': [],
     'timestamp': 0,
@@ -469,7 +475,7 @@ SKILL_TABLE_MAPPING = {
 HISCORE_SKILL_ORDER = [name for name, idx in sorted(SKILL_TABLE_MAPPING.items(), key=lambda kv: kv[1])]
 
 
-async def fetch_player_stats(username: str, max_retries: int = 3, use_cache: bool = True) -> Optional[Dict[str, Any]]:
+async def fetch_player_stats(username: str, max_retries: int = 3, use_cache: bool = True, timeout: float = 30.0) -> Optional[Dict[str, Any]]:
     """Fetch player stats from RuneScape Runemetrics API with rate limiting and caching"""
     import time as time_module
     
@@ -483,7 +489,7 @@ async def fetch_player_stats(username: str, max_retries: int = 3, use_cache: boo
     
     for attempt in range(max_retries):
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
+            async with httpx.AsyncClient(timeout=timeout) as client:
                 runemetrics_url = f"https://apps.runescape.com/runemetrics/profile/profile?user={username}&activities=20"
                 response = await client.get(runemetrics_url)
                 
@@ -7157,15 +7163,29 @@ async def get_player_recent_progress(username: str):
         }
 
 @app.get("/api/members/active-today")
-async def get_members_active_today():
-    """Get active clan members who gained XP today (live XP vs today's baseline)"""
+async def get_members_active_today(refresh: bool = False):
+    """Get active clan members who gained XP today (live XP vs today's baseline) - sequential batches of 5"""
+    import time as time_module
+    from datetime import datetime, timezone
+    
+    if not refresh:
+        current_time = time_module.time()
+        if active_today_cache['data'] is not None:
+            cache_age = current_time - active_today_cache['timestamp']
+            if cache_age < active_today_cache['ttl']:
+                print(f"[Active Today] Returning cached result (age: {cache_age:.1f}s)")
+                return active_today_cache['data']
+    
     try:
-        from datetime import datetime, timedelta, timezone
-        
         try:
-            from .database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before
+            from .database import get_db_connection
         except ImportError:
-            from database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before
+            from database import get_db_connection
+        
+        start_time = time_module.monotonic()
+        BATCH_SIZE = 5
+        MAX_BATCHES = 40
+        PER_CALL_TIMEOUT = 3.0
         
         conn = await get_db_connection()
         async with conn:
@@ -7186,51 +7206,79 @@ async def get_members_active_today():
             print(f"[Active Today] Found {len(today_baselines)} today baselines")
             
             active_members = []
-            for username in active_clan_members:
-                try:
-                    live_stats = await fetch_player_stats(username)
-                    if not live_stats or 'stats' not in live_stats or 'overall' not in live_stats['stats']:
-                        continue
-                    
-                    live_total_xp = live_stats['stats']['overall'].get('xp', 0)
-                    
-                    baseline_total_xp = today_baselines.get(username)
-                    if baseline_total_xp is None:
-                        cursor = await conn.execute("""
-                            SELECT total_xp FROM player_daily_snapshots
-                            WHERE username = %s AND snapshot_date <= %s
-                            ORDER BY snapshot_date DESC
-                            LIMIT 1
-                        """, (username, today))
-                        row = await cursor.fetchone()
-                        baseline_total_xp = row[0] if row else 0
-                        print(f"[Active Today] {username}: No today baseline, using fallback={baseline_total_xp:,}")
-                    
-                    xp_gained_today = max(0, live_total_xp - baseline_total_xp)
-                    
-                    if xp_gained_today > 0:
-                        active_members.append({
-                            'username': username,
-                            'xp_gained': int(xp_gained_today)
-                        })
-                        print(f"[Active Today] {username}: live={live_total_xp:,} baseline={baseline_total_xp:,} gained={xp_gained_today:,}")
+            batches_processed = 0
+            
+            for i in range(0, len(active_clan_members), BATCH_SIZE):
+                if batches_processed >= MAX_BATCHES:
+                    print(f"[Active Today] Reached max batches ({MAX_BATCHES}), stopping")
+                    break
                 
-                except Exception as member_error:
-                    print(f"[Active Today] Error processing {username}: {member_error}")
-                    continue
+                batch = active_clan_members[i:i + BATCH_SIZE]
+                batch_num = batches_processed + 1
+                print(f"[Active Today] Processing batch {batch_num} ({len(batch)} members)")
+                
+                for username in batch:
+                    try:
+                        live_stats = await asyncio.wait_for(
+                            fetch_player_stats(username, max_retries=1, timeout=PER_CALL_TIMEOUT),
+                            timeout=PER_CALL_TIMEOUT
+                        )
+                        
+                        if not live_stats or 'stats' not in live_stats or 'overall' not in live_stats['stats']:
+                            continue
+                        
+                        live_total_xp = live_stats['stats']['overall'].get('xp', 0)
+                        baseline_total_xp = today_baselines.get(username, 0)
+                        
+                        if baseline_total_xp == 0:
+                            cursor = await conn.execute("""
+                                SELECT total_xp FROM player_daily_snapshots
+                                WHERE username = %s AND snapshot_date <= %s
+                                ORDER BY snapshot_date DESC
+                                LIMIT 1
+                            """, (username, today))
+                            row = await cursor.fetchone()
+                            baseline_total_xp = row[0] if row else 0
+                        
+                        xp_gained_today = max(0, live_total_xp - baseline_total_xp)
+                        
+                        if xp_gained_today > 0:
+                            active_members.append({
+                                'username': username,
+                                'xp_gained': int(xp_gained_today)
+                            })
+                    
+                    except asyncio.TimeoutError:
+                        print(f"[Active Today] Timeout fetching {username}, skipping")
+                        continue
+                    except Exception as e:
+                        print(f"[Active Today] Error processing {username}: {e}")
+                        continue
+                
+                batches_processed += 1
+                
+                if len(active_members) >= 10:
+                    print(f"[Active Today] Found {len(active_members)} active members, stopping early")
+                    break
             
             active_members.sort(key=lambda x: x['xp_gained'], reverse=True)
             top_5 = active_members[:5]
             
-            print(f"[Active Today] Returning {len(top_5)} top members out of {len(active_members)} total active")
+            elapsed = time_module.monotonic() - start_time
+            print(f"[Active Today] Returning {len(top_5)} top members out of {len(active_members)} total active (took {elapsed:.1f}s, {batches_processed} batches)")
             
-            return {
+            result = {
                 'active_members': top_5,
                 'total_active': len(active_members)
             }
+            
+            active_today_cache['data'] = result
+            active_today_cache['timestamp'] = time_module.time()
+            
+            return result
         
     except Exception as e:
-        print(f"Error fetching active members: {e}")
+        print(f"[Active Today] Fatal error: {e}")
         import traceback
         traceback.print_exc()
         return {"active_members": [], "total_active": 0}
