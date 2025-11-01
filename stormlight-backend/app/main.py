@@ -7295,36 +7295,34 @@ async def get_members_active_today(
             today = datetime.now(timezone.utc).date()
             
             cursor = await conn.execute("""
-                SELECT username, snapshot_json
-                FROM player_snapshots
+                SELECT username, stats
+                FROM player_daily_snapshots
                 WHERE snapshot_date = %s
-                AND username = ANY(%s)
-            """, (today, active_members))
+            """, (today,))
             
             today_snapshots = await cursor.fetchall()
             for row in today_snapshots:
                 username = row[0]
-                snapshot_json = row[1]
-                if snapshot_json and 'overall' in snapshot_json:
-                    baseline_xp_map[username.lower().replace('\xa0', ' ')] = snapshot_json['overall'].get('xp', 0)
+                stats_json = row[1]
+                if stats_json and 'overall' in stats_json:
+                    baseline_xp_map[username.lower().replace('\xa0', ' ')] = stats_json['overall'].get('xp', 0)
             
             if len(baseline_xp_map) < len(active_members):
                 cursor = await conn.execute("""
-                    SELECT DISTINCT ON (username) username, snapshot_json
-                    FROM player_snapshots
-                    WHERE username = ANY(%s)
-                    AND snapshot_date < %s
+                    SELECT DISTINCT ON (username) username, stats
+                    FROM player_daily_snapshots
+                    WHERE snapshot_date < %s
                     ORDER BY username, snapshot_date DESC
-                """, (active_members, today))
+                """, (today,))
                 
                 fallback_snapshots = await cursor.fetchall()
                 for row in fallback_snapshots:
                     username = row[0]
                     norm_username = username.lower().replace('\xa0', ' ')
                     if norm_username not in baseline_xp_map:
-                        snapshot_json = row[1]
-                        if snapshot_json and 'overall' in snapshot_json:
-                            baseline_xp_map[norm_username] = snapshot_json['overall'].get('xp', 0)
+                        stats_json = row[1]
+                        if stats_json and 'overall' in stats_json:
+                            baseline_xp_map[norm_username] = stats_json['overall'].get('xp', 0)
         
         print(f"[Active Today] Prefetched {len(baseline_xp_map)} baselines for {len(active_members)} members")
         
