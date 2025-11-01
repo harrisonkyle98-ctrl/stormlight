@@ -7261,7 +7261,7 @@ async def get_player_recent_progress(username: str):
 async def get_members_active_today(
     refresh: bool = False,
     limit: int = Query(5, ge=1, le=20),
-    concurrency: int = Query(10, ge=1, le=20)
+    concurrency: int = Query(8, ge=1, le=20)
 ):
     """Get active clan members who gained XP today (aggregates live profile data)"""
     import time as time_module
@@ -7272,7 +7272,7 @@ async def get_members_active_today(
         current_time = time_module.time()
         if active_today_cache['data'] is not None:
             cache_age = current_time - active_today_cache['timestamp']
-            if cache_age < active_today_cache['ttl']:
+            if cache_age < 60:
                 print(f"[Active Today] Returning cached result (age: {cache_age:.1f}s)")
                 return active_today_cache['data']
     
@@ -7283,35 +7283,41 @@ async def get_members_active_today(
         active_members = [m['username'] for m in clan_members if m.get('active', True)]
         print(f"[Active Today] Found {len(active_members)} active clan members")
         
-        async def fetch_member_today_gain(username: str, semaphore: asyncio.Semaphore) -> dict:
+        async def fetch_member_today_gain(username: str, semaphore: asyncio.Semaphore):
             async with semaphore:
                 try:
-                    from urllib.parse import quote
-                    encoded_username = quote(username.replace(' ', '-'))
+                    current_stats = await fetch_player_stats(username)
+                    if not current_stats:
+                        return None
                     
-                    stats = await get_player_stats_with_history(
-                        username=encoded_username,
-                        period1='today',
-                        period2='yesterday',
-                        refresh=False
-                    )
+                    try:
+                        from .database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before
+                    except ImportError:
+                        from database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before
                     
-                    if isinstance(stats, JSONResponse):
-                        import json
-                        stats_data = json.loads(stats.body.decode())
-                    else:
-                        stats_data = stats
-                    
-                    overall_stats = stats_data.get('stats', {}).get('overall', {})
-                    today_gain = overall_stats.get('xp_gain_period1', 0)
-                    
-                    if today_gain > 0:
-                        return {
-                            'username': username,
-                            'xp_gained': int(today_gain)
-                        }
-                    return None
-                    
+                    conn = await get_db_connection()
+                    async with conn:
+                        today = datetime.now(timezone.utc).date()
+                        
+                        baseline_json = await get_snapshot_json_on_date(conn, username, today)
+                        if not baseline_json:
+                            baseline_json = await get_snapshot_json_on_or_before(conn, username, today)
+                        
+                        if not baseline_json or 'overall' not in baseline_json:
+                            return None
+                        
+                        cur_xp = current_stats['stats']['overall'].get('xp', 0)
+                        base_xp = baseline_json['overall'].get('xp', 0)
+                        today_gain = max(cur_xp - base_xp, 0)
+                        
+                        if today_gain > 0:
+                            print(f"[Active Today] {username}: {today_gain:,} XP gained today")
+                            return {
+                                'username': username,
+                                'xp_gained': int(today_gain)
+                            }
+                        return None
+                        
                 except asyncio.TimeoutError:
                     print(f"[Active Today] Timeout fetching {username}")
                     return None
@@ -7320,13 +7326,10 @@ async def get_members_active_today(
                     return None
         
         semaphore = asyncio.Semaphore(concurrency)
-        tasks = [
-            asyncio.wait_for(
-                fetch_member_today_gain(username, semaphore),
-                timeout=5.0  # 5 second timeout per member
-            )
-            for username in active_members
-        ]
+        tasks = []
+        for username in active_members:
+            task = asyncio.create_task(fetch_member_today_gain(username, semaphore))
+            tasks.append(asyncio.wait_for(task, timeout=15.0))
         
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
