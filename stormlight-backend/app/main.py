@@ -7339,6 +7339,58 @@ async def get_members_active_today(refresh: bool = False):
         traceback.print_exc()
         return {"active_members": [], "total_active": 0}
 
+@app.get("/api/admin/debug/today-gains")
+async def debug_today_gains():
+    """Diagnostic endpoint to check player_today_gains table state"""
+    try:
+        from datetime import datetime, timezone
+        try:
+            from .database import get_db_connection
+        except ImportError:
+            from database import get_db_connection
+        
+        conn = await get_db_connection()
+        async with conn:
+            today = datetime.now(timezone.utc).date()
+            
+            cursor = await conn.execute("""
+                SELECT COUNT(*) FROM player_today_gains WHERE snapshot_date = %s
+            """, (today,))
+            total_count = (await cursor.fetchone())[0]
+            
+            cursor = await conn.execute("""
+                SELECT username, overall_gain, updated_at 
+                FROM player_today_gains 
+                WHERE snapshot_date = %s 
+                ORDER BY updated_at DESC 
+                LIMIT 10
+            """, (today,))
+            recent_rows = await cursor.fetchall()
+            
+            cursor = await conn.execute("""
+                SELECT COUNT(*) FROM clan_members WHERE active = TRUE
+            """)
+            active_members_count = (await cursor.fetchone())[0]
+            
+            return {
+                'today_date': today.isoformat(),
+                'total_rows_today': total_count,
+                'active_clan_members': active_members_count,
+                'recent_upserts': [
+                    {
+                        'username': row[0],
+                        'overall_gain': int(row[1]),
+                        'updated_at': row[2].isoformat() if row[2] else None
+                    }
+                    for row in recent_rows
+                ]
+            }
+    except Exception as e:
+        print(f"[Debug Today Gains] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+
 app.include_router(api_router)
 
 app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
