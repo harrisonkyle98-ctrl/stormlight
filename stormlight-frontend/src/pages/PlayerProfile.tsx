@@ -12,6 +12,7 @@ import { getSkillIcon } from '../utils/skillIcons'
 import { getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
 import { urlToUsername } from '../utils/urlUtils'
 import { useAuth } from '../contexts/AuthContext'
+import { useProfileGains } from '../contexts/ProfileGainsContext'
 import { Tooltip } from '../components/ui/tooltip'
 import { BadgeAssignmentModal } from '../components/ui/badge-assignment-modal'
 import { DropsTab } from '../components/tabs/DropsTab'
@@ -81,6 +82,7 @@ interface PlayerStats {
 const PlayerProfile = () => {
   const { username } = useParams<{ username: string }>()
   const { user } = useAuth()
+  const { publish } = useProfileGains()
   const [playerData, setPlayerData] = useState<PlayerStats | null>(null)
   const [questData, setQuestData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -141,6 +143,17 @@ const PlayerProfile = () => {
         setPlayerData(data)
         console.log('🎯 CLAN DEBUG: setPlayerData called, React should re-render with new data')
         console.log('🎯 BADGE DEBUG: State updated, badges should now be available for rendering')
+        
+        if (period1 === 'today') {
+          const xpToday = data.stats?.overall?.xp_gain_period1 || 0
+          publish(decodedUsername, {
+            xpToday,
+            lastUpdated: Date.now(),
+            period1,
+            period2
+          })
+          console.log('📊 Published to ProfileGainsContext:', { username: decodedUsername, xpToday, period1, period2 })
+        }
       } else {
         setError('Clan member not found or stats unavailable')
       }

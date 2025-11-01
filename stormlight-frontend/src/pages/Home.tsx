@@ -8,6 +8,7 @@ import { Users, Trophy, TrendingUp, User, Settings, Calendar, Activity } from 'l
 import { fetchClanMembers, getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
+import { useProfileGains } from '../contexts/ProfileGainsContext'
 import { usernameToUrl } from '../utils/urlUtils'
 import { Tooltip } from '../components/ui/tooltip'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog'
@@ -130,6 +131,7 @@ interface ActivityResponse {
 
 const Home = () => {
   const { user } = useAuth()
+  const { getTodayGains } = useProfileGains()
   const [clanStats, setClanStats] = useState<ClanStats | null>(null)
   const [activities, setActivities] = useState<Activity[]>([])
   const [activityLoading, setActivityLoading] = useState(true)
@@ -487,13 +489,19 @@ const Home = () => {
   const fetchActiveMembers = async () => {
     setActiveMembersLoading(true)
     try {
-      const response = await fetch(`${API_URL}/api/members/active-today`)
-      if (response.ok) {
-        const data = await response.json()
-        setActiveMembers(data)
-      }
+      const todayGains = getTodayGains()
+      const top5 = todayGains.slice(0, 5)
+      const totalActive = todayGains.length
+      
+      setActiveMembers({
+        active_members: top5,
+        total_active: totalActive,
+        last_updated: Date.now()
+      })
+      
+      console.log('📊 Members Active Today (from context):', { top5Count: top5.length, totalActive })
     } catch (error) {
-      console.error('Error fetching active members:', error)
+      console.error('Error reading active members from context:', error)
     } finally {
       setActiveMembersLoading(false)
     }

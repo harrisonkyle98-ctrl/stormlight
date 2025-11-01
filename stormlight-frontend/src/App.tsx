@@ -12,6 +12,7 @@ import LinkAccount from './pages/LinkAccount'
 import AdminPanel from './pages/AdminPanel'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { ProfileGainsProvider } from './contexts/ProfileGainsContext'
 import './App.css'
 
 function AppContent() {
@@ -60,9 +61,11 @@ function AppWithTheme() {
   
   return (
     <ThemeProvider user={user} loading={loading}>
-      <Router>
-        <AppContent />
-      </Router>
+      <ProfileGainsProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </ProfileGainsProvider>
     </ThemeProvider>
   )
 }
