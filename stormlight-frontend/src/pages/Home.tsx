@@ -390,7 +390,7 @@ const Home = () => {
       setClanLogLoading(true)
       console.log('🔄 Fetching clan log...')
       const cacheBuster = Date.now()
-      const requestUrl = `${API_URL}/api/clan/log?page=1&limit=10&_t=${cacheBuster}`
+      const requestUrl = `${API_URL}/api/clan/log?page=1&limit=50&_t=${cacheBuster}`
       console.log('📡 Clan Log Request URL:', requestUrl)
       const response = await fetch(requestUrl, {
         cache: 'no-store',

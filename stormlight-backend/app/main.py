@@ -957,36 +957,73 @@ async def sync_clan_members_to_database_with_queue():
                 await asyncio.sleep(3)
         
         print("🔍 Checking for members who left the clan...")
-        api_usernames = {member['username'].lower() for member in clan_data}
+        api_usernames = {member['username'].lower().strip() for member in clan_data}
         
         all_db_members = await prisma.clanmember.find_many(
             where={'active': True}
         )
         
-        left_count = 0
-        for db_member in all_db_members:
-            if db_member.username.lower() not in api_usernames:
-                print(f"📝 [Member Sync] Logging Leave event for {db_member.username} (was {db_member.clanRank})")
-                await prisma.clanmember.update(
-                    where={'username': db_member.username},
-                    data={'active': False}
-                )
-                
-                await log_clan_event_if_new(
-                    username=db_member.username,
-                    event_type='Leave',
-                    old_rank=db_member.clanRank,
-                    new_rank=None,
-                    window_minutes=60
-                )
-                
-                left_count += 1
-                print(f"👋 {db_member.username} left the clan (was {db_member.clanRank})")
+        db_active_count = len(all_db_members)
+        api_count = len(clan_data)
+        min_expected = min(EXPECTED_ROSTER_COUNT, db_active_count)
+        sanity_threshold = 0.8  # 80% threshold
         
-        if left_count > 0:
-            print(f"📊 Detected {left_count} member(s) who left the clan")
+        print(f"📊 Roster comparison: API={api_count}, DB_active={db_active_count}, Expected={EXPECTED_ROSTER_COUNT}, Min_expected={min_expected}")
+        print(f"📊 First 5 API usernames: {[m['username'] for m in clan_data[:5]]}")
+        print(f"📊 First 5 DB active usernames: {[m.username for m in all_db_members[:5]]}")
+        
+        if api_count < min_expected * sanity_threshold:
+            print(f"⚠️ ROSTER SANITY CHECK FAILED: API returned only {api_count} members (expected at least {int(min_expected * sanity_threshold)})")
+            print(f"⚠️ Skipping leave detection to prevent false 'everyone left' spam")
+            print(f"⚠️ This could indicate an API blip, network issue, or parsing error")
         else:
-            print(f"✅ No members have left the clan")
+            print(f"✅ Roster sanity check passed: {api_count} >= {int(min_expected * sanity_threshold)}")
+            
+            grace_period = timedelta(hours=3)
+            now = datetime.now()
+            left_count = 0
+            left_candidates = []
+            
+            for db_member in all_db_members:
+                if db_member.username.lower().strip() not in api_usernames:
+                    left_candidates.append(db_member.username)
+            
+            print(f"📊 Found {len(left_candidates)} members not in API roster")
+            if left_candidates:
+                print(f"📊 First 5 left candidates: {left_candidates[:5]}")
+            
+            for db_member in all_db_members:
+                if db_member.username.lower().strip() not in api_usernames:
+                    if db_member.lastSeenInApi is None:
+                        print(f"⚠️ {db_member.username} not in API but lastSeenInApi is None - skipping leave detection (first-run protection)")
+                        continue
+                    
+                    time_since_last_seen = now - db_member.lastSeenInApi
+                    if time_since_last_seen < grace_period:
+                        print(f"⏳ {db_member.username} not in API but within grace period ({time_since_last_seen.total_seconds()/3600:.1f}h < 3h) - not marking as left yet")
+                        continue
+                    
+                    print(f"📝 [Member Sync] Logging Leave event for {db_member.username} (was {db_member.clanRank}, last seen {time_since_last_seen.total_seconds()/3600:.1f}h ago)")
+                    await prisma.clanmember.update(
+                        where={'username': db_member.username},
+                        data={'active': False}
+                    )
+                    
+                    await log_clan_event_if_new(
+                        username=db_member.username,
+                        event_type='Leave',
+                        old_rank=db_member.clanRank,
+                        new_rank=None,
+                        window_minutes=60
+                    )
+                    
+                    left_count += 1
+                    print(f"👋 {db_member.username} left the clan (was {db_member.clanRank})")
+            
+            if left_count > 0:
+                print(f"📊 Detected {left_count} member(s) who left the clan")
+            else:
+                print(f"✅ No members have left the clan")
         
         try:
             final_count = await prisma.clanmember.count()
@@ -5074,6 +5111,8 @@ async def get_clan_log(
 ):
     """Get recent clan log events with pagination and optional event type filtering"""
     offset = (page - 1) * limit
+    
+    fetch_limit = min(limit * 5, 100)
 
     if response is not None:
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
@@ -5084,7 +5123,7 @@ async def get_clan_log(
     if event_types:
         event_type_list = [et.strip().lower() for et in event_types.split(',') if et.strip()]
     
-    print(f"🔄 [ClanLog API] page={page} limit={limit} offset={offset} event_types={event_type_list} url={getattr(request, 'url', None)}")
+    print(f"🔄 [ClanLog API] page={page} limit={limit} fetch_limit={fetch_limit} offset={offset} event_types={event_type_list} url={getattr(request, 'url', None)}")
 
     try:
         entries = []
@@ -5103,7 +5142,7 @@ async def get_clan_log(
                     prisma.clanlog.find_many(
                         where=where_clause,
                         skip=offset,
-                        take=limit,
+                        take=fetch_limit,
                         order_by={'timestamp': 'desc'}
                     ),
                     timeout=2.0
@@ -5129,7 +5168,7 @@ async def get_clan_log(
                     for e in log_entries
                 ]
                 total_count = prisma_total
-                print(f"✅ [ClanLog API] Prisma OK: returned={len(entries)} total={total_count}")
+                print(f"✅ [ClanLog API] Prisma OK: fetched={len(entries)} total={total_count}")
             except Exception as pe:
                 print(f"❌ [ClanLog API] Prisma error: {type(pe)} {pe} - falling back to SQL")
                 used_fallback = True
@@ -5158,7 +5197,7 @@ async def get_clan_log(
                         ORDER BY timestamp DESC
                         LIMIT %s OFFSET %s
                     """
-                    cur = await conn.execute(query, tuple(event_type_list) + (limit, offset))
+                    cur = await conn.execute(query, tuple(event_type_list) + (fetch_limit, offset))
                 else:
                     cnt_cur = await conn.execute("SELECT COUNT(*) FROM clan_log")
                     cnt_row = await cnt_cur.fetchone()
@@ -5171,7 +5210,7 @@ async def get_clan_log(
                         ORDER BY timestamp DESC
                         LIMIT %s OFFSET %s
                         """,
-                        (limit, offset)
+                        (fetch_limit, offset)
                     )
                 
                 rows = await cur.fetchall()
@@ -5186,7 +5225,7 @@ async def get_clan_log(
                     }
                     for r in rows
                 ]
-                print(f"✅ [ClanLog API] SQL OK: returned={len(entries)} total={total_count} filtered_by={event_type_list if event_type_list else 'none'}")
+                print(f"✅ [ClanLog API] SQL OK: fetched={len(entries)} total={total_count} filtered_by={event_type_list if event_type_list else 'none'}")
         
         seen = set()
         deduped = []
@@ -5199,8 +5238,10 @@ async def get_clan_log(
             seen.add(key)
             deduped.append(e)
         
+        deduped = deduped[:limit]
+        
         first = deduped[0] if deduped else None
-        print(f"📊 [ClanLog API] Returning {len(deduped)} entries (deduped from {len(entries)}); first={first['username'] if first else 'none'} ts={first['timestamp'] if first else 'n/a'}")
+        print(f"📊 [ClanLog API] Returning {len(deduped)} entries (deduped from {len(entries)}, sliced to limit={limit}); first={first['username'] if first else 'none'} ts={first['timestamp'] if first else 'n/a'}")
         
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"
