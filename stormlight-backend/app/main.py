@@ -7261,7 +7261,7 @@ async def get_player_recent_progress(username: str):
 async def get_members_active_today(
     refresh: bool = False,
     limit: int = Query(5, ge=1, le=20),
-    concurrency: int = Query(8, ge=1, le=20)
+    concurrency: int = Query(5, ge=1, le=20)
 ):
     """Get active clan members who gained XP today (aggregates live profile data)"""
     import time as time_module
@@ -7283,53 +7283,92 @@ async def get_members_active_today(
         active_members = [m['username'] for m in clan_members if m.get('active', True)]
         print(f"[Active Today] Found {len(active_members)} active clan members")
         
+        try:
+            from .database import get_db_connection
+        except ImportError:
+            from database import get_db_connection
+        
+        conn = await get_db_connection()
+        baseline_xp_map = {}
+        
+        async with conn:
+            today = datetime.now(timezone.utc).date()
+            
+            cursor = await conn.execute("""
+                SELECT username, snapshot_json
+                FROM player_snapshots
+                WHERE snapshot_date = %s
+                AND username = ANY(%s)
+            """, (today, active_members))
+            
+            today_snapshots = await cursor.fetchall()
+            for row in today_snapshots:
+                username = row[0]
+                snapshot_json = row[1]
+                if snapshot_json and 'overall' in snapshot_json:
+                    baseline_xp_map[username.lower().replace('\xa0', ' ')] = snapshot_json['overall'].get('xp', 0)
+            
+            if len(baseline_xp_map) < len(active_members):
+                cursor = await conn.execute("""
+                    SELECT DISTINCT ON (username) username, snapshot_json
+                    FROM player_snapshots
+                    WHERE username = ANY(%s)
+                    AND snapshot_date < %s
+                    ORDER BY username, snapshot_date DESC
+                """, (active_members, today))
+                
+                fallback_snapshots = await cursor.fetchall()
+                for row in fallback_snapshots:
+                    username = row[0]
+                    norm_username = username.lower().replace('\xa0', ' ')
+                    if norm_username not in baseline_xp_map:
+                        snapshot_json = row[1]
+                        if snapshot_json and 'overall' in snapshot_json:
+                            baseline_xp_map[norm_username] = snapshot_json['overall'].get('xp', 0)
+        
+        print(f"[Active Today] Prefetched {len(baseline_xp_map)} baselines for {len(active_members)} members")
+        
+        timeouts = 0
+        errors = 0
+        no_baseline = 0
+        
         async def fetch_member_today_gain(username: str, semaphore: asyncio.Semaphore):
+            nonlocal timeouts, errors, no_baseline
             async with semaphore:
                 try:
-                    current_stats = await fetch_player_stats(username)
+                    current_stats = await asyncio.wait_for(
+                        fetch_player_stats(username),
+                        timeout=30.0
+                    )
                     if not current_stats:
                         return None
                     
-                    try:
-                        from .database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before
-                    except ImportError:
-                        from database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before
+                    norm_username = username.lower().replace('\xa0', ' ')
+                    base_xp = baseline_xp_map.get(norm_username)
                     
-                    conn = await get_db_connection()
-                    async with conn:
-                        today = datetime.now(timezone.utc).date()
-                        
-                        baseline_json = await get_snapshot_json_on_date(conn, username, today)
-                        if not baseline_json:
-                            baseline_json = await get_snapshot_json_on_or_before(conn, username, today)
-                        
-                        if not baseline_json or 'overall' not in baseline_json:
-                            return None
-                        
-                        cur_xp = current_stats['stats']['overall'].get('xp', 0)
-                        base_xp = baseline_json['overall'].get('xp', 0)
-                        today_gain = max(cur_xp - base_xp, 0)
-                        
-                        if today_gain > 0:
-                            print(f"[Active Today] {username}: {today_gain:,} XP gained today")
-                            return {
-                                'username': username,
-                                'xp_gained': int(today_gain)
-                            }
+                    if base_xp is None:
+                        no_baseline += 1
                         return None
-                        
+                    
+                    cur_xp = current_stats['stats']['overall'].get('xp', 0)
+                    today_gain = max(cur_xp - base_xp, 0)
+                    
+                    if today_gain > 0:
+                        return {
+                            'username': username,
+                            'xp_gained': int(today_gain)
+                        }
+                    return None
+                    
                 except asyncio.TimeoutError:
-                    print(f"[Active Today] Timeout fetching {username}")
+                    timeouts += 1
                     return None
                 except Exception as e:
-                    print(f"[Active Today] Error fetching {username}: {e}")
+                    errors += 1
                     return None
         
         semaphore = asyncio.Semaphore(concurrency)
-        tasks = []
-        for username in active_members:
-            task = asyncio.create_task(fetch_member_today_gain(username, semaphore))
-            tasks.append(asyncio.wait_for(task, timeout=15.0))
+        tasks = [fetch_member_today_gain(username, semaphore) for username in active_members]
         
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
@@ -7342,7 +7381,7 @@ async def get_members_active_today(
         top_members = active_with_gains[:limit]
         
         elapsed = time_module.monotonic() - start_time
-        print(f"[Active Today] Returning {len(top_members)} top members out of {len(active_with_gains)} total active (took {elapsed:.3f}s)")
+        print(f"[Active Today] Processed {len(active_members)} members: {len(active_with_gains)} with gains, {timeouts} timeouts, {errors} errors, {no_baseline} no baseline (took {elapsed:.3f}s)")
         
         result = {
             'active_members': top_members,
