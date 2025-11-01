@@ -7294,40 +7294,48 @@ async def get_members_active_today(
         async with conn:
             today = datetime.now(timezone.utc).date()
             
-            placeholders = ','.join(['%s'] * len(active_members))
-            cursor = await conn.execute(f"""
-                SELECT username, stats
-                FROM player_daily_snapshots
-                WHERE snapshot_date = %s
-                AND username IN ({placeholders})
-            """, (today, *active_members))
-            
-            today_snapshots = await cursor.fetchall()
-            for row in today_snapshots:
-                username = row[0]
-                stats_json = row[1]
-                if stats_json and 'overall' in stats_json:
-                    baseline_xp_map[username.lower().replace('\xa0', ' ')] = stats_json['overall'].get('xp', 0)
+            batch_size = 50
+            for i in range(0, len(active_members), batch_size):
+                batch = active_members[i:i + batch_size]
+                placeholders = ','.join(['%s'] * len(batch))
+                
+                cursor = await conn.execute(f"""
+                    SELECT username, stats
+                    FROM player_daily_snapshots
+                    WHERE snapshot_date = %s
+                    AND username IN ({placeholders})
+                """, (today, *batch))
+                
+                today_snapshots = await cursor.fetchall()
+                for row in today_snapshots:
+                    username = row[0]
+                    stats_json = row[1]
+                    if stats_json and 'overall' in stats_json:
+                        baseline_xp_map[username.lower().replace('\xa0', ' ')] = stats_json['overall'].get('xp', 0)
             
             if len(baseline_xp_map) < len(active_members):
-                cursor = await conn.execute(f"""
-                    SELECT username, stats, snapshot_date
-                    FROM player_daily_snapshots
-                    WHERE snapshot_date < %s
-                    AND username IN ({placeholders})
-                    ORDER BY username, snapshot_date DESC
-                """, (today, *active_members))
-                
-                fallback_snapshots = await cursor.fetchall()
-                seen_usernames = set()
-                for row in fallback_snapshots:
-                    username = row[0]
-                    norm_username = username.lower().replace('\xa0', ' ')
-                    if norm_username not in baseline_xp_map and username not in seen_usernames:
-                        seen_usernames.add(username)
-                        stats_json = row[1]
-                        if stats_json and 'overall' in stats_json:
-                            baseline_xp_map[norm_username] = stats_json['overall'].get('xp', 0)
+                for i in range(0, len(active_members), batch_size):
+                    batch = active_members[i:i + batch_size]
+                    placeholders = ','.join(['%s'] * len(batch))
+                    
+                    cursor = await conn.execute(f"""
+                        SELECT username, stats, snapshot_date
+                        FROM player_daily_snapshots
+                        WHERE snapshot_date < %s
+                        AND username IN ({placeholders})
+                        ORDER BY username, snapshot_date DESC
+                    """, (today, *batch))
+                    
+                    fallback_snapshots = await cursor.fetchall()
+                    seen_usernames = set()
+                    for row in fallback_snapshots:
+                        username = row[0]
+                        norm_username = username.lower().replace('\xa0', ' ')
+                        if norm_username not in baseline_xp_map and username not in seen_usernames:
+                            seen_usernames.add(username)
+                            stats_json = row[1]
+                            if stats_json and 'overall' in stats_json:
+                                baseline_xp_map[norm_username] = stats_json['overall'].get('xp', 0)
         
         print(f"[Active Today] Prefetched {len(baseline_xp_map)} baselines for {len(active_members)} members")
         
