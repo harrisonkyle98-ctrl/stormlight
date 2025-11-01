@@ -7207,8 +7207,50 @@ async def get_members_active_today(refresh: bool = False):
             
             active_members = []
             batches_processed = 0
+            OVERALL_BUDGET = 7.0
+            
+            async def fetch_one_member(username: str):
+                try:
+                    live_stats = await asyncio.wait_for(
+                        fetch_player_stats(username, max_retries=1, timeout=PER_CALL_TIMEOUT),
+                        timeout=PER_CALL_TIMEOUT
+                    )
+                    
+                    if not live_stats or 'stats' not in live_stats or 'overall' not in live_stats['stats']:
+                        return None
+                    
+                    live_total_xp = live_stats['stats']['overall'].get('xp', 0)
+                    baseline_total_xp = today_baselines.get(username, 0)
+                    
+                    if baseline_total_xp == 0:
+                        cursor = await conn.execute("""
+                            SELECT total_xp FROM player_daily_snapshots
+                            WHERE username = %s AND snapshot_date <= %s
+                            ORDER BY snapshot_date DESC
+                            LIMIT 1
+                        """, (username, today))
+                        row = await cursor.fetchone()
+                        baseline_total_xp = row[0] if row else 0
+                    
+                    xp_gained_today = max(0, live_total_xp - baseline_total_xp)
+                    
+                    if xp_gained_today > 0:
+                        return {'username': username, 'xp_gained': int(xp_gained_today)}
+                    return None
+                
+                except asyncio.TimeoutError:
+                    print(f"[Active Today] Timeout fetching {username}")
+                    return None
+                except Exception as e:
+                    print(f"[Active Today] Error processing {username}: {e}")
+                    return None
             
             for i in range(0, len(active_clan_members), BATCH_SIZE):
+                elapsed = time_module.monotonic() - start_time
+                if elapsed > OVERALL_BUDGET:
+                    print(f"[Active Today] Overall budget exceeded ({elapsed:.1f}s), stopping")
+                    break
+                
                 if batches_processed >= MAX_BATCHES:
                     print(f"[Active Today] Reached max batches ({MAX_BATCHES}), stopping")
                     break
@@ -7217,43 +7259,12 @@ async def get_members_active_today(refresh: bool = False):
                 batch_num = batches_processed + 1
                 print(f"[Active Today] Processing batch {batch_num} ({len(batch)} members)")
                 
-                for username in batch:
-                    try:
-                        live_stats = await asyncio.wait_for(
-                            fetch_player_stats(username, max_retries=1, timeout=PER_CALL_TIMEOUT),
-                            timeout=PER_CALL_TIMEOUT
-                        )
-                        
-                        if not live_stats or 'stats' not in live_stats or 'overall' not in live_stats['stats']:
-                            continue
-                        
-                        live_total_xp = live_stats['stats']['overall'].get('xp', 0)
-                        baseline_total_xp = today_baselines.get(username, 0)
-                        
-                        if baseline_total_xp == 0:
-                            cursor = await conn.execute("""
-                                SELECT total_xp FROM player_daily_snapshots
-                                WHERE username = %s AND snapshot_date <= %s
-                                ORDER BY snapshot_date DESC
-                                LIMIT 1
-                            """, (username, today))
-                            row = await cursor.fetchone()
-                            baseline_total_xp = row[0] if row else 0
-                        
-                        xp_gained_today = max(0, live_total_xp - baseline_total_xp)
-                        
-                        if xp_gained_today > 0:
-                            active_members.append({
-                                'username': username,
-                                'xp_gained': int(xp_gained_today)
-                            })
-                    
-                    except asyncio.TimeoutError:
-                        print(f"[Active Today] Timeout fetching {username}, skipping")
-                        continue
-                    except Exception as e:
-                        print(f"[Active Today] Error processing {username}: {e}")
-                        continue
+                tasks = [fetch_one_member(username) for username in batch]
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+                
+                for result in results:
+                    if result and not isinstance(result, Exception):
+                        active_members.append(result)
                 
                 batches_processed += 1
                 
