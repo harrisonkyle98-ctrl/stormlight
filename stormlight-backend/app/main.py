@@ -7353,6 +7353,14 @@ async def get_members_active_today(
         
         async def fetch_member_today_gain(username: str, semaphore: asyncio.Semaphore):
             nonlocal timeouts, errors, no_baseline
+            
+            norm_username = username.lower().replace('\xa0', ' ')
+            base_xp = baseline_xp_map.get(norm_username)
+            
+            if base_xp is None:
+                no_baseline += 1
+                return None
+            
             async with semaphore:
                 try:
                     current_stats = await asyncio.wait_for(
@@ -7360,13 +7368,6 @@ async def get_members_active_today(
                         timeout=10.0
                     )
                     if not current_stats:
-                        return None
-                    
-                    norm_username = username.lower().replace('\xa0', ' ')
-                    base_xp = baseline_xp_map.get(norm_username)
-                    
-                    if base_xp is None:
-                        no_baseline += 1
                         return None
                     
                     cur_xp = current_stats['stats']['overall'].get('xp', 0)
