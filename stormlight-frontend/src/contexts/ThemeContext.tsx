@@ -25,6 +25,7 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children, user, loading }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<string>(defaultTheme)
   const hasReconciledFromUser = useRef(false)
+  const isInitialMount = useRef(true)
 
   useLayoutEffect(() => {
     const root = document.documentElement
@@ -32,15 +33,23 @@ export function ThemeProvider({ children, user, loading }: ThemeProviderProps) {
       root.setAttribute('data-theme', defaultTheme)
     }
     
-    const storedTheme = localStorage.getItem('selectedTheme') || defaultTheme
-    console.log('🎨 Theme applied on mount:', storedTheme)
-    
-    setThemeState(storedTheme)
-    applyTheme(themes[storedTheme])
-    
-    const computedBg = getComputedStyle(document.documentElement).getPropertyValue('--page-bg')
-    console.log('🎨 Background variable for', storedTheme, ':', computedBg)
-  }, [])
+    if (isInitialMount.current) {
+      if (!loading && !user) {
+        const storedTheme = localStorage.getItem('selectedTheme') || defaultTheme
+        console.log('🎨 Guest user - applying theme from localStorage:', storedTheme)
+        setThemeState(storedTheme)
+        applyTheme(themes[storedTheme])
+      } else if (!loading && user) {
+        const userTheme = (user as any).theme || defaultTheme
+        console.log('🎨 Logged in user - applying theme from database:', userTheme)
+        setThemeState(userTheme)
+        applyTheme(themes[userTheme])
+        localStorage.setItem('selectedTheme', userTheme)
+        hasReconciledFromUser.current = true
+      }
+      isInitialMount.current = false
+    }
+  }, [user, loading])
 
   useLayoutEffect(() => {
     if (user && !loading && !hasReconciledFromUser.current) {

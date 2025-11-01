@@ -444,7 +444,7 @@ const PlayerProfile = () => {
       if (level >= 99) {
         return 'text-[#d1d5db] border-[#22c55e]' // Green border for 99-119
       }
-      return 'text-[#d1d5db] border-[#d1d5db]' // Dull grey for below 99
+      return 'text-[#60a5fa] border-[#60a5fa]' // Sapphire blue for below 99 (fixed across all themes)
     }
   }
 
