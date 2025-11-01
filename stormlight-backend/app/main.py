@@ -6902,6 +6902,91 @@ async def daily_clan_member_refresh():
         traceback.print_exc()
 
 
+async def update_today_gains_for_all_members():
+    """Calculate and update Today XP gains for all active clan members (hourly background job)"""
+    try:
+        from datetime import datetime, timezone
+        try:
+            from .database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before
+        except ImportError:
+            from database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before
+        
+        conn = await get_db_connection()
+        async with conn:
+            today = datetime.now(timezone.utc).date()
+            
+            cursor = await conn.execute("""
+                SELECT username FROM clan_members WHERE active = TRUE
+            """)
+            active_members = [row[0] for row in await cursor.fetchall()]
+            print(f"[Today Gains Job] Found {len(active_members)} active clan members")
+            
+            BATCH_SIZE = 10
+            updated_count = 0
+            
+            for i in range(0, len(active_members), BATCH_SIZE):
+                batch = active_members[i:i + BATCH_SIZE]
+                batch_num = (i // BATCH_SIZE) + 1
+                print(f"[Today Gains Job] Processing batch {batch_num} ({len(batch)} members)")
+                
+                async def process_one_member(username: str):
+                    try:
+                        live_stats = await asyncio.wait_for(
+                            fetch_player_stats(username, max_retries=1, timeout=3.0),
+                            timeout=3.0
+                        )
+                        
+                        if not live_stats or 'stats' not in live_stats or 'overall' not in live_stats['stats']:
+                            return None
+                        
+                        live_total_xp = live_stats['stats']['overall'].get('xp', 0)
+                        
+                        baseline_json = await get_snapshot_json_on_date(conn, username, today)
+                        if not baseline_json:
+                            baseline_json = await get_snapshot_json_on_or_before(conn, username, today)
+                        
+                        if baseline_json and 'overall' in baseline_json:
+                            baseline_xp = baseline_json['overall'].get('xp', 0)
+                        else:
+                            baseline_xp = 0
+                        
+                        xp_gained_today = max(0, live_total_xp - baseline_xp)
+                        
+                        if xp_gained_today > 0:
+                            await conn.execute("""
+                                INSERT INTO player_today_gains (username, snapshot_date, overall_gain, updated_at)
+                                VALUES (%s, %s, %s, NOW())
+                                ON CONFLICT (username, snapshot_date)
+                                DO UPDATE SET overall_gain = EXCLUDED.overall_gain, updated_at = NOW()
+                            """, (username, today, xp_gained_today))
+                            return username
+                        return None
+                    
+                    except asyncio.TimeoutError:
+                        print(f"[Today Gains Job] Timeout fetching {username}")
+                        return None
+                    except Exception as e:
+                        print(f"[Today Gains Job] Error processing {username}: {e}")
+                        return None
+                
+                tasks = [process_one_member(username) for username in batch]
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+                
+                for result in results:
+                    if result and not isinstance(result, Exception):
+                        updated_count += 1
+                
+                await asyncio.sleep(0.5)
+            
+            print(f"[Today Gains Job] Completed: {updated_count} members updated with XP gains")
+            return updated_count
+    
+    except Exception as e:
+        print(f"[Today Gains Job] Fatal error: {e}")
+        import traceback
+        traceback.print_exc()
+        return 0
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize database and start scheduled tasks"""
@@ -7070,6 +7155,16 @@ async def startup_event():
                                 await cleanup_old_activities(conn, days_to_keep=30)
                         except Exception as e:
                             print(f"❌ [Scheduler][HOURLY] Error cleaning up activities: {e}")
+                        
+                        print(f"🚀 [Scheduler][HOURLY] Starting Today XP gains calculation at {now.isoformat()}Z")
+                        try:
+                            updated_count = await update_today_gains_for_all_members()
+                            completion_time = datetime.now(timezone.utc).isoformat()
+                            print(f"✅ [Scheduler][HOURLY] Today XP gains calculation completed at {completion_time}Z: {updated_count} members updated")
+                        except Exception as e:
+                            print(f"❌ [Scheduler][HOURLY] Error calculating Today XP gains: {e}")
+                            import traceback
+                            traceback.print_exc()
                         
                         last_sync_hour = current_hour
                         print(f"✅ [Scheduler][HOURLY] All hourly tasks completed for hour {current_hour}. Next run: {(current_hour + 1) % 24}:00 UTC")
