@@ -6406,19 +6406,30 @@ async def get_player_stats_with_history(
         profile_history_cache['timestamps'][cache_key] = current_time
         print(f"Cached history data for {decoded_username} ({period1} vs {period2}) for {profile_history_cache['ttl']} seconds")
         
-        if period1.lower() == 'today' and 'overall' in changes_data:
-            overall_gain = changes_data['overall'].get('xp_gain_period1', 0)
-            if overall_gain > 0:
-                try:
-                    await conn.execute("""
-                        INSERT INTO player_today_gains (username, snapshot_date, overall_gain, updated_at)
-                        VALUES (%s, %s, %s, NOW())
-                        ON CONFLICT (username, snapshot_date)
-                        DO UPDATE SET overall_gain = EXCLUDED.overall_gain, updated_at = NOW()
-                    """, (decoded_username, today, overall_gain))
-                    print(f"[Today Gains] Upserted {decoded_username}: {overall_gain:,} XP gained today")
-                except Exception as e:
-                    print(f"[Today Gains] Error upserting for {decoded_username}: {e}")
+        if period1.lower() == 'today':
+            print(f"[Today Gains Debug] period1='today' for {decoded_username}")
+            print(f"[Today Gains Debug] changes_data keys: {list(changes_data.keys())}")
+            
+            if 'overall' in changes_data:
+                print(f"[Today Gains Debug] changes_data['overall']: {changes_data['overall']}")
+                overall_gain = changes_data['overall'].get('xp_gain_period1', 0)
+                print(f"[Today Gains Debug] overall_gain computed: {overall_gain}")
+                
+                if overall_gain > 0:
+                    try:
+                        await conn.execute("""
+                            INSERT INTO player_today_gains (username, snapshot_date, overall_gain, updated_at)
+                            VALUES (%s, %s, %s, NOW())
+                            ON CONFLICT (username, snapshot_date)
+                            DO UPDATE SET overall_gain = EXCLUDED.overall_gain, updated_at = NOW()
+                        """, (decoded_username, today, overall_gain))
+                        print(f"[Today Gains] Upserted {decoded_username}: {overall_gain:,} XP gained today")
+                    except Exception as e:
+                        print(f"[Today Gains] Error upserting for {decoded_username}: {e}")
+                else:
+                    print(f"[Today Gains Debug] Skipping upsert for {decoded_username}: overall_gain={overall_gain} (not > 0)")
+            else:
+                print(f"[Today Gains Debug] 'overall' not in changes_data for {decoded_username}")
         
         return JSONResponse(
             content=jsonable_encoder(enhanced_stats),
