@@ -7261,7 +7261,7 @@ async def get_player_recent_progress(username: str):
 async def get_members_active_today(
     refresh: bool = False,
     limit: int = Query(5, ge=1, le=20),
-    concurrency: int = Query(5, ge=1, le=20)
+    concurrency: int = Query(10, ge=1, le=20)
 ):
     """Get active clan members who gained XP today (aggregates live profile data)"""
     import time as time_module
@@ -7336,7 +7336,7 @@ async def get_members_active_today(
                 try:
                     current_stats = await asyncio.wait_for(
                         fetch_player_stats(username),
-                        timeout=30.0
+                        timeout=10.0
                     )
                     if not current_stats:
                         return None
