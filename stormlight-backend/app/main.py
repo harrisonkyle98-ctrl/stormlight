@@ -7300,7 +7300,8 @@ async def get_members_active_today(
                 placeholders = ','.join(['%s'] * len(batch))
                 
                 cursor = await conn.execute(f"""
-                    SELECT username, stats
+                    SELECT username, 
+                           COALESCE((stats->'overall'->>'xp')::bigint, 0) AS base_xp
                     FROM player_daily_snapshots
                     WHERE snapshot_date = %s
                     AND username IN ({placeholders})
@@ -7309,17 +7310,26 @@ async def get_members_active_today(
                 today_snapshots = await cursor.fetchall()
                 for row in today_snapshots:
                     username = row[0]
-                    stats_json = row[1]
-                    if stats_json and 'overall' in stats_json:
-                        baseline_xp_map[username.lower().replace('\xa0', ' ')] = stats_json['overall'].get('xp', 0)
+                    base_xp = row[1]
+                    baseline_xp_map[username.lower().replace('\xa0', ' ')] = base_xp
+            
+            print(f"[Active Today] Found {len(baseline_xp_map)} today baselines, need {len(active_members)} total")
             
             if len(baseline_xp_map) < len(active_members):
-                for i in range(0, len(active_members), batch_size):
-                    batch = active_members[i:i + batch_size]
+                missing_usernames = [u for u in active_members if u.lower().replace('\xa0', ' ') not in baseline_xp_map]
+                print(f"[Active Today] Fetching fallback baselines for {len(missing_usernames)} missing members")
+                
+                for i in range(0, len(missing_usernames), batch_size):
+                    batch = missing_usernames[i:i + batch_size]
+                    if not batch:
+                        continue
+                    
                     placeholders = ','.join(['%s'] * len(batch))
                     
                     cursor = await conn.execute(f"""
-                        SELECT username, stats, snapshot_date
+                        SELECT DISTINCT ON (username)
+                               username,
+                               COALESCE((stats->'overall'->>'xp')::bigint, 0) AS base_xp
                         FROM player_daily_snapshots
                         WHERE snapshot_date < %s
                         AND username IN ({placeholders})
@@ -7327,15 +7337,13 @@ async def get_members_active_today(
                     """, (today, *batch))
                     
                     fallback_snapshots = await cursor.fetchall()
-                    seen_usernames = set()
+                    print(f"[Active Today] Fallback batch {i//batch_size + 1}: queried {len(batch)} members, got {len(fallback_snapshots)} results")
+                    
                     for row in fallback_snapshots:
                         username = row[0]
+                        base_xp = row[1]
                         norm_username = username.lower().replace('\xa0', ' ')
-                        if norm_username not in baseline_xp_map and username not in seen_usernames:
-                            seen_usernames.add(username)
-                            stats_json = row[1]
-                            if stats_json and 'overall' in stats_json:
-                                baseline_xp_map[norm_username] = stats_json['overall'].get('xp', 0)
+                        baseline_xp_map[norm_username] = base_xp
         
         print(f"[Active Today] Prefetched {len(baseline_xp_map)} baselines for {len(active_members)} members")
         
