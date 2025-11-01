@@ -115,6 +115,17 @@ async def init_database():
                 
                 CREATE INDEX IF NOT EXISTS idx_drops_username ON clan_drops(username);
                 CREATE INDEX IF NOT EXISTS idx_drops_timestamp ON clan_drops(activity_timestamp DESC);
+                
+                CREATE TABLE IF NOT EXISTS player_today_gains (
+                    username VARCHAR(255) NOT NULL,
+                    snapshot_date DATE NOT NULL,
+                    overall_gain BIGINT NOT NULL DEFAULT 0,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (username, snapshot_date)
+                );
+                
+                CREATE INDEX IF NOT EXISTS idx_today_gains_date ON player_today_gains(snapshot_date);
+                CREATE INDEX IF NOT EXISTS idx_today_gains_date_gain ON player_today_gains(snapshot_date, overall_gain DESC);
             """)
             print("Database schema initialized successfully")
     except Exception as e:
