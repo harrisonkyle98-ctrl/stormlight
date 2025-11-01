@@ -7294,11 +7294,13 @@ async def get_members_active_today(
         async with conn:
             today = datetime.now(timezone.utc).date()
             
-            cursor = await conn.execute("""
+            placeholders = ','.join(['%s'] * len(active_members))
+            cursor = await conn.execute(f"""
                 SELECT username, stats
                 FROM player_daily_snapshots
                 WHERE snapshot_date = %s
-            """, (today,))
+                AND username IN ({placeholders})
+            """, (today, *active_members))
             
             today_snapshots = await cursor.fetchall()
             for row in today_snapshots:
@@ -7308,18 +7310,21 @@ async def get_members_active_today(
                     baseline_xp_map[username.lower().replace('\xa0', ' ')] = stats_json['overall'].get('xp', 0)
             
             if len(baseline_xp_map) < len(active_members):
-                cursor = await conn.execute("""
-                    SELECT DISTINCT ON (username) username, stats
+                cursor = await conn.execute(f"""
+                    SELECT username, stats, snapshot_date
                     FROM player_daily_snapshots
                     WHERE snapshot_date < %s
+                    AND username IN ({placeholders})
                     ORDER BY username, snapshot_date DESC
-                """, (today,))
+                """, (today, *active_members))
                 
                 fallback_snapshots = await cursor.fetchall()
+                seen_usernames = set()
                 for row in fallback_snapshots:
                     username = row[0]
                     norm_username = username.lower().replace('\xa0', ' ')
-                    if norm_username not in baseline_xp_map:
+                    if norm_username not in baseline_xp_map and username not in seen_usernames:
+                        seen_usernames.add(username)
                         stats_json = row[1]
                         if stats_json and 'overall' in stats_json:
                             baseline_xp_map[norm_username] = stats_json['overall'].get('xp', 0)
