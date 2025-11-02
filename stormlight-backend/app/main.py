@@ -7107,31 +7107,56 @@ async def startup_event():
                     print(f"⏰ [Scheduler] Tick at {now.isoformat()}Z - current_hour={current_hour}, last_sync_hour={last_sync_hour}")
                     
                     if last_sync_hour != current_hour:
-                        print(f"🔄 [Scheduler][HOURLY] Hour changed! Starting clan member sync at {now.isoformat()}Z")
+                        machine_id = os.getenv('FLY_MACHINE_ID', 'local')
+                        print(f"🔄 [Scheduler][HOURLY] Hour changed! Starting clan member sync at {now.isoformat()}Z (machine: {machine_id})")
                         
-                        async with app.state.sync_lock:
-                            await sync_clan_members_to_database_with_queue()
-                        print(f"✅ [Scheduler][HOURLY] Clan member sync completed at {datetime.now(timezone.utc).isoformat()}Z")
+                        try:
+                            async with app.state.sync_lock:
+                                await sync_clan_members_to_database_with_queue()
+                            print(f"✅ [Scheduler][HOURLY] Clan member sync completed at {datetime.now(timezone.utc).isoformat()}Z (machine: {machine_id})")
+                        except Exception as e:
+                            print(f"❌ [Scheduler][HOURLY] Error in clan member sync: {e} (machine: {machine_id})")
+                            import traceback
+                            traceback.print_exc()
                         
                         if current_hour == 0 and not has_run_today:
-                            print(f"🚀 [Scheduler][DAILY] Starting daily snapshot collection at {now.isoformat()}Z")
+                            print(f"🚀 [Scheduler][DAILY] Entering midnight snapshot branch at {now.isoformat()}Z (machine: {machine_id})")
                             
                             async def run_daily_snapshots():
                                 try:
-                                    async with app.state.snapshot_lock:
-                                        done_count, remaining_count = await collect_daily_player_stats_multi_cycle()
-                                    app.state.last_snapshot_date_utc = today
-                                    completion_time = datetime.now(timezone.utc).isoformat()
-                                    print(f"✅ [Scheduler][DAILY] Snapshot collection completed at {completion_time}Z: {done_count} processed, {remaining_count} remaining")
+                                    try:
+                                        from .database import get_db_connection
+                                    except ImportError:
+                                        from database import get_db_connection
+                                    
+                                    conn = await get_db_connection()
+                                    async with conn:
+                                        cursor = await conn.execute("SELECT pg_try_advisory_lock(987654321)")
+                                        lock_acquired = (await cursor.fetchone())[0]
+                                        
+                                        if not lock_acquired:
+                                            print(f"[Scheduler][DAILY] Another instance is already running snapshots (advisory lock not acquired). Skipping. (machine: {machine_id})")
+                                            return
+                                        
+                                        try:
+                                            print(f"[Scheduler][DAILY] Advisory lock acquired, starting snapshot collection (machine: {machine_id})")
+                                            async with app.state.snapshot_lock:
+                                                done_count, remaining_count = await collect_daily_player_stats_multi_cycle()
+                                            app.state.last_snapshot_date_utc = today
+                                            completion_time = datetime.now(timezone.utc).isoformat()
+                                            print(f"✅ [Scheduler][DAILY] Snapshot collection completed at {completion_time}Z: {done_count} processed, {remaining_count} remaining (machine: {machine_id})")
+                                        finally:
+                                            await conn.execute("SELECT pg_advisory_unlock(987654321)")
+                                            print(f"[Scheduler][DAILY] Advisory lock released (machine: {machine_id})")
                                 except Exception as e:
-                                    print(f"❌ [Scheduler][DAILY] Error in snapshot collection: {e}")
+                                    print(f"❌ [Scheduler][DAILY] Error in snapshot collection: {e} (machine: {machine_id})")
                                     import traceback
                                     traceback.print_exc()
                             
                             asyncio.create_task(run_daily_snapshots())
-                            print(f"📋 [Scheduler][DAILY] Snapshot collection task created (running in background)")
+                            print(f"📋 [Scheduler][DAILY] Snapshot collection task created (running in background) (machine: {machine_id})")
                         elif current_hour == 0:
-                            print(f"⏭️  [Scheduler][DAILY] Snapshot already ran today ({today.isoformat()}), skipping")
+                            print(f"⏭️  [Scheduler][DAILY] Snapshot already ran today ({today.isoformat()}), skipping (machine: {machine_id})")
                         
                         print(f"🚀 [Scheduler][HOURLY] Starting activity/drop collection at {now.isoformat()}Z")
                         try:
@@ -7398,6 +7423,34 @@ async def debug_today_gains():
             }
     except Exception as e:
         print(f"[Debug Today Gains] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+
+@app.get("/api/admin/debug/scheduler-health")
+async def debug_scheduler_health():
+    """Diagnostic endpoint to check scheduler state across machines"""
+    try:
+        from datetime import datetime, timezone
+        
+        machine_id = os.getenv('FLY_MACHINE_ID', 'local')
+        now = datetime.now(timezone.utc)
+        
+        last_snapshot_date = getattr(app.state, "last_snapshot_date_utc", None)
+        snapshot_lock_locked = getattr(app.state, "snapshot_lock", None) and app.state.snapshot_lock.locked()
+        sync_lock_locked = getattr(app.state, "sync_lock", None) and app.state.sync_lock.locked()
+        
+        return {
+            'machine_id': machine_id,
+            'current_time_utc': now.isoformat(),
+            'current_hour': now.hour,
+            'last_snapshot_date_utc': last_snapshot_date.isoformat() if last_snapshot_date else None,
+            'snapshot_lock_locked': snapshot_lock_locked,
+            'sync_lock_locked': sync_lock_locked,
+            'scheduler_initialized': hasattr(app.state, 'snapshot_lock') and hasattr(app.state, 'sync_lock')
+        }
+    except Exception as e:
+        print(f"[Debug Scheduler Health] Error: {e}")
         import traceback
         traceback.print_exc()
         return {"error": str(e)}
