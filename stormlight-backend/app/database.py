@@ -139,6 +139,7 @@ async def init_database():
 async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int, total_cycles: int, start_index_base: int = 0, roster_usernames: set[str] | None = None):
     """Collect daily snapshots for a subset of clan members (one cycle)."""
     import asyncio
+    import random
     
     try:
         from .main import fetch_player_stats
@@ -166,6 +167,10 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
         
         if err:
             msg = str(err).lower()
+            if "429" in msg or "rate limit" in msg or "too many requests" in msg:
+                return "RATE_LIMIT_429"
+            if "timeout" in msg or "timed out" in msg:
+                return "TIMEOUT"
             if "profile_private" in msg or "private profile" in msg:
                 return "PROFILE_PRIVATE"
             if "not_a_member" in msg:
@@ -218,9 +223,9 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
         
         return False, None, None
 
-    per_member_delay_secs = 1.5  # Reduced from 2.0 to 1.5 seconds for faster processing
+    per_member_delay_secs = 3.0 + random.uniform(-0.3, 0.3)
     
-    print(f"[Bulk Snapshots] Cycle {cycle_num} Configuration: processing {len(usernames)} members sequentially, per_member_delay={per_member_delay_secs}s")
+    print(f"[Bulk Snapshots] Cycle {cycle_num} Configuration: processing {len(usernames)} members sequentially, per_member_delay={per_member_delay_secs:.2f}s")
     
     for i, username in enumerate(usernames):
         global_idx = start_index_base + processed + 1
@@ -240,7 +245,8 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
                 print(f"[Bulk Snapshots] 🔍 Detailed failure for {username}: {reason}")
         
         if i < len(usernames) - 1:
-            await asyncio.sleep(per_member_delay_secs)
+            delay_with_jitter = 3.0 + random.uniform(-0.3, 0.3)
+            await asyncio.sleep(delay_with_jitter)
 
     if failed_users:
         print(f"[Bulk Snapshots] Cycle {cycle_num} - Skipping long retry sweep ({len(failed_users)} failed); multi-cycle will retry them in the next cycle")
@@ -255,8 +261,9 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
     return succeeded, len(failed_users), failed_users, failure_reasons
 
 async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cycle_delay_minutes: int = 0.3):
-    """Collect daily snapshots of all clan members using persistent multi-cycle approach."""
+    """Collect daily snapshots of all clan members using persistent multi-cycle approach with adaptive rate limit handling."""
     import asyncio
+    import random
     from datetime import datetime
     from math import ceil
     
@@ -303,7 +310,8 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
         final_failed_set: set[str] = set()
         final_failure_reasons: dict[str, str] = {}
         consecutive_no_progress_cycles = 0
-        max_no_progress_cycles = 10  # Stop only after 10 consecutive cycles with no progress
+        consecutive_non_retryable_no_progress = 0
+        max_no_progress_cycles = 60  # Increased from 10 to 60 to allow more retries
         
         while remaining and cycle_num < max_cycles:
             cycle_num += 1
@@ -318,6 +326,16 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
                     chunk, cycle_num, total_cycles_est, start_index_base=done_before, roster_usernames=roster_usernames
                 )
                 print(f"✅ [Multi-Cycle] Cycle {cycle_num} finished: {succeeded} succeeded, {failed} failed (chunk={len(chunk)})")
+                
+                rate_limit_count = sum(1 for r in failure_reasons.values() if r and 'RATE_LIMIT' in r)
+                timeout_count = sum(1 for r in failure_reasons.values() if r and 'TIMEOUT' in r)
+                private_count = sum(1 for r in failure_reasons.values() if r and 'PRIVATE' in r)
+                not_found_count = sum(1 for r in failure_reasons.values() if r and ('404' in r or 'NOT_FOUND' in r))
+                not_in_roster_count = sum(1 for r in failure_reasons.values() if r and 'NOT_IN_ROSTER' in r)
+                other_count = len(failure_reasons) - rate_limit_count - timeout_count - private_count - not_found_count - not_in_roster_count
+                
+                print(f"📊 [Multi-Cycle] Cycle {cycle_num} Failure Summary: RATE_LIMIT={rate_limit_count}, TIMEOUT={timeout_count}, PRIVATE={private_count}, NOT_FOUND={not_found_count}, NOT_IN_ROSTER={not_in_roster_count}, OTHER={other_count}")
+                
                 for u, reason in failure_reasons.items():
                     final_failure_reasons[u] = reason
             except Exception as e:
@@ -325,6 +343,9 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
                 import traceback
                 traceback.print_exc()
                 failed_users = []
+                failure_reasons = {}
+                rate_limit_count = 0
+                timeout_count = 0
             
             newly_finalized = []
             for u in failed_users:
@@ -342,12 +363,26 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
             done_after = len(done)
             print(f"📊 [Multi-Cycle] Progress: done={done_after}/{expected_members}; remaining={len(remaining_after)}; diff=+{done_after - done_before}")
             
+            transient_failures = rate_limit_count + timeout_count
+            transient_ratio = transient_failures / len(chunk) if len(chunk) > 0 else 0
+            is_rate_limited = succeeded == 0 and transient_ratio >= 0.6
+            
             if done_after == done_before and remaining_after:
                 consecutive_no_progress_cycles += 1
-                print(f"⚠️ [Multi-Cycle] No progress this cycle ({consecutive_no_progress_cycles}/{max_no_progress_cycles}); rotating remaining to avoid head-of-line blocking")
+                
+                if is_rate_limited:
+                    print(f"⚠️ [Multi-Cycle] No progress this cycle due to rate limiting ({consecutive_no_progress_cycles} total, {consecutive_non_retryable_no_progress} non-retryable); will back off and retry")
+                else:
+                    consecutive_non_retryable_no_progress += 1
+                    print(f"⚠️ [Multi-Cycle] No progress this cycle ({consecutive_no_progress_cycles} total, {consecutive_non_retryable_no_progress} non-retryable); rotating remaining to avoid head-of-line blocking")
+                
+                if consecutive_non_retryable_no_progress >= 10:
+                    print(f"🛑 [Multi-Cycle] Stopping after 10 consecutive non-retryable no-progress cycles")
+                    all_failed_users.extend([u for u in remaining_after if u not in all_failed_users])
+                    break
                 
                 if consecutive_no_progress_cycles >= max_no_progress_cycles:
-                    print(f"🛑 [Multi-Cycle] Stopping after {max_no_progress_cycles} consecutive cycles with no progress")
+                    print(f"🛑 [Multi-Cycle] Stopping after {max_no_progress_cycles} total consecutive cycles with no progress")
                     all_failed_users.extend([u for u in remaining_after if u not in all_failed_users])
                     break
                 
@@ -356,6 +391,7 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
                 print(f"🔄 [Multi-Cycle] Rotated {rot} members to end of queue; new order: {remaining[:5]}...")
             else:
                 consecutive_no_progress_cycles = 0  # Reset counter on progress
+                consecutive_non_retryable_no_progress = 0
                 remaining = remaining_after
                 print(f"✅ [Multi-Cycle] Progress made: +{done_after - done_before} members completed")
             
@@ -368,8 +404,15 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
                 break
             
             if remaining:
-                actual_delay = cycle_delay_minutes if consecutive_no_progress_cycles == 0 else cycle_delay_minutes * 2
-                print(f"⏳ [Multi-Cycle] Waiting {actual_delay} minutes before next cycle...")
+                if is_rate_limited:
+                    actual_delay = max(3.0, cycle_delay_minutes * 4)  # 3-5 minute backoff for rate limiting
+                    print(f"⏳ [Multi-Cycle] Rate limiting detected, backing off for {actual_delay} minutes before next cycle...")
+                elif consecutive_no_progress_cycles > 0:
+                    actual_delay = cycle_delay_minutes * 2
+                    print(f"⏳ [Multi-Cycle] Waiting {actual_delay} minutes before next cycle...")
+                else:
+                    actual_delay = cycle_delay_minutes
+                    print(f"⏳ [Multi-Cycle] Waiting {actual_delay} minutes before next cycle...")
                 await asyncio.sleep(actual_delay * 60)
         
         if cycle_num >= max_cycles and remaining:
