@@ -9,7 +9,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from './ui/dropdown-menu'
-import { Home, Users, Trophy, LogOut, Settings, Key } from 'lucide-react'
+import { Home, Users, Trophy, LogOut, Key } from 'lucide-react'
 
 const Navbar = () => {
   const { user, logout } = useAuth()
