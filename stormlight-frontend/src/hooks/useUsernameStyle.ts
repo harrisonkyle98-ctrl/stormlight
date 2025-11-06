@@ -1,15 +1,7 @@
 import { useEffect, useState } from 'react'
-import { getGradientStyle } from '../../utils/gradientUtils'
-
-interface UsernameProps {
-  username: string
-  clanRank?: string
-  className?: string
-  style?: React.CSSProperties
-}
+import { getGradientStyle } from '../utils/gradientUtils'
 
 interface BadgeColorInfo {
-  id: string
   backgroundColor?: string
   gradientColors?: string[]
 }
@@ -22,7 +14,7 @@ interface CachedData {
 const badgeColorCache = new Map<string, CachedData>()
 const CACHE_TTL = 60000
 
-export const Username = ({ username, clanRank, className = '', style = {} }: UsernameProps) => {
+export const useUsernameStyle = (username: string, clanRank?: string): React.CSSProperties => {
   const [badgeColor, setBadgeColor] = useState<BadgeColorInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000'
@@ -60,40 +52,26 @@ export const Username = ({ username, clanRank, className = '', style = {} }: Use
     fetchBadgeColor()
   }, [username, API_URL])
 
-  const getColorStyle = (): React.CSSProperties => {
-    if (badgeColor) {
-      if (badgeColor.gradientColors && Array.isArray(badgeColor.gradientColors) && badgeColor.gradientColors.length === 2) {
-        return {
-          ...style,
-          background: `linear-gradient(135deg, ${badgeColor.gradientColors[0]}, ${badgeColor.gradientColors[1]})`,
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          fontWeight: 600
-        }
-      } else if (badgeColor.backgroundColor) {
-        return {
-          ...style,
-          color: badgeColor.backgroundColor,
-          fontWeight: 600
-        }
-      }
-    }
-
-    if (!isLoading && clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(clanRank)) {
-      const gradientStyle = getGradientStyle(username, clanRank)
+  if (badgeColor) {
+    if (badgeColor.gradientColors && Array.isArray(badgeColor.gradientColors) && badgeColor.gradientColors.length === 2) {
       return {
-        ...style,
-        ...gradientStyle
+        background: `linear-gradient(135deg, ${badgeColor.gradientColors[0]}, ${badgeColor.gradientColors[1]})`,
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        backgroundClip: 'text',
+        fontWeight: 600
+      }
+    } else if (badgeColor.backgroundColor) {
+      return {
+        color: badgeColor.backgroundColor,
+        fontWeight: 600
       }
     }
-
-    return style
   }
 
-  return (
-    <span className={className} style={getColorStyle()}>
-      {username}
-    </span>
-  )
+  if (!isLoading && clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(clanRank)) {
+    return getGradientStyle(username, clanRank)
+  }
+
+  return { color: 'white' }
 }
