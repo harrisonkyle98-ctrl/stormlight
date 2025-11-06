@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/table'
-import { Users, Search, Calendar, TrendingUp, Crown } from 'lucide-react'
+import { Users, Search, Calendar, TrendingUp, Crown, AlertCircle } from 'lucide-react'
 import { Spinner } from '../ui/spinner'
 import { checkPlayerMilestones, MilestoneBadge } from '../../utils/gradientUtils'
 
@@ -139,7 +139,7 @@ export const RankTrackingTab = () => {
     
     return (
       <div
-        className="px-2 py-1 text-xs font-semibold flex items-center gap-1 rounded-md text-white"
+        className="inline-flex w-fit shrink-0 px-2 py-1 text-xs font-semibold items-center gap-1 rounded-md text-white"
         style={{
           background: badge.gradientBackground || badge.backgroundColor
         }}
@@ -154,6 +154,11 @@ export const RankTrackingTab = () => {
       </div>
     )
   }
+
+  const dueForPromotionSet = useMemo(() => 
+    new Set(dueForPromotionMembers.map(m => m.username)), 
+    [dueForPromotionMembers]
+  )
 
   const filteredAndSortedTracking = rankTracking
     .filter(tracking => tracking.username.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -194,6 +199,20 @@ export const RankTrackingTab = () => {
           </Badge>
         </div>
       </div>
+
+      {/* Promotion Notification Card */}
+      {dueForPromotionCount > 0 && (
+        <Card className="bg-yellow-500/15 border border-yellow-500">
+          <CardContent className="p-3">
+            <div className="flex items-center text-sm text-yellow-200">
+              <AlertCircle className="w-4 h-4 text-yellow-500 mr-2 shrink-0" />
+              <span>
+                {dueForPromotionCount} {dueForPromotionCount === 1 ? 'member is' : 'members are'} due for a promotion. Please resolve in-game.
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Search */}
       <Card className="bg-slate-700/30 border-slate-600">
@@ -341,7 +360,12 @@ export const RankTrackingTab = () => {
                 {paginatedActiveMembers.map((tracking) => (
                   <TableRow key={tracking.username} className="border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50">
                     <TableCell className="py-3">
-                      <span className="text-white font-medium">{tracking.username}</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-white font-medium">{tracking.username}</span>
+                        {dueForPromotionSet.has(tracking.username) && (
+                          <AlertCircle className="w-4 h-4 text-yellow-400 shrink-0" />
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="py-3">
                       {renderRankBadge(tracking.actualRank, tracking.username)}
