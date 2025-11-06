@@ -39,19 +39,21 @@ export function ClanLogRow({
 
       {/* Right content column */}
       <div className="flex-1 p-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <Link
-            to={`/clan-member/${usernameToUrl(entry.username)}`}
-            className="text-white font-medium hover:text-blue-300 transition-colors"
-            style={getGradientStyle(entry.username, entry.new_rank || entry.old_rank)}
-          >
-            {entry.username}
-          </Link>
-          <span className="text-slate-300">{message}</span>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link
+              to={`/clan-member/${usernameToUrl(entry.username)}`}
+              className="text-white font-medium hover:text-blue-300 transition-colors"
+              style={getGradientStyle(entry.username, entry.new_rank || entry.old_rank)}
+            >
+              {entry.username}
+            </Link>
+            <span className="text-slate-300">{message}</span>
+          </div>
+          <span className="text-slate-400 text-xs whitespace-nowrap ml-2">
+            {formatTimeAgo(new Date(entry.timestamp).getTime() / 1000)}
+          </span>
         </div>
-        <p className="text-slate-400 text-xs mt-1">
-          {formatTimeAgo(new Date(entry.timestamp).getTime() / 1000)}
-        </p>
       </div>
     </div>
   )
