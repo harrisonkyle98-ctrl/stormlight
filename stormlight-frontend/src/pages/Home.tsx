@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
-import { Badge } from '../components/ui/badge'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { Users, Trophy, TrendingUp, User, Settings, Calendar, Activity } from 'lucide-react'
 import { fetchClanMembers, getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
@@ -13,6 +12,7 @@ import { Tooltip } from '../components/ui/tooltip'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog'
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts'
 import { themes } from '../config/themes'
+import { ClanLogRow } from '../components/clanLogs/ClanLogRow'
 
 const getRankIcon = (rank: string): string => {
   const rankImageMap: { [key: string]: string } = {
@@ -1275,55 +1275,18 @@ const Home = () => {
               ))}
             </div>
           ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {clanLogEntries.length > 0 ? (
-              clanLogEntries.map((entry) => {
-                const eventType = entry.event_type.toLowerCase()
-
-                return (
-                  <div key={entry.id} className="p-3 bg-slate-700/50 rounded-lg">
-                    <div className="flex items-center justify-center space-x-2 mb-1">
-                      <div className="flex-shrink-0">
-                        {eventType === 'join' && <Badge className="bg-green-600 text-white font-bold hover:bg-green-600">Joined</Badge>}
-                        {eventType === 'leave' && <Badge className="bg-red-600 text-white font-bold hover:bg-red-600">Left</Badge>}
-                        {eventType === 'rank_up' && <Badge className="bg-green-500 text-white hover:bg-green-500">Promoted</Badge>}
-                        {eventType === 'rank_down' && <Badge className="bg-red-500 text-white hover:bg-red-500">Demoted</Badge>}
-                        {eventType === 'name_change' && <Badge className="bg-yellow-500 text-white hover:bg-yellow-500">Name</Badge>}
-                      </div>
-                      <Link
-                        to={`/clan-member/${usernameToUrl(entry.username)}`}
-                        className="text-white font-medium hover:text-blue-300 transition-colors"
-                        style={getGradientStyle(entry.username, entry.new_rank || entry.old_rank)}
-                      >
-                        {entry.username}
-                      </Link>
-                      <span className="text-slate-300">
-                        {eventType === 'join' && `joined the clan`}
-                        {eventType === 'leave' && `left the clan`}
-                        {eventType === 'rank_up' && (
-                          <span className="flex items-center gap-1">
-                            promoted from
-                            <img src={getRankIcon(entry.old_rank || '')} alt={entry.old_rank} className="w-4 h-4 mx-1" />
-                            to
-                            <img src={getRankIcon(entry.new_rank || '')} alt={entry.new_rank} className="w-4 h-4 mx-1" />
-                          </span>
-                        )}
-                        {eventType === 'rank_down' && (
-                          <span className="flex items-center gap-1">
-                            demoted from
-                            <img src={getRankIcon(entry.old_rank || '')} alt={entry.old_rank} className="w-4 h-4 mx-1" />
-                            to
-                            <img src={getRankIcon(entry.new_rank || '')} alt={entry.new_rank} className="w-4 h-4 mx-1" />
-                          </span>
-                        )}
-                        {eventType === 'name_change' && `${entry.old_rank} changed their name to ${entry.username}`}
-                        {!['join', 'leave', 'rank_up', 'rank_down', 'name_change'].includes(eventType) && 'clan event'}
-                      </span>
-                    </div>
-                    <p className="text-slate-400 text-xs text-center">{formatTimeAgo(new Date(entry.timestamp).getTime() / 1000)}</p>
-                  </div>
-                )
-              })
+              clanLogEntries.map((entry) => (
+                <ClanLogRow
+                  key={entry.id}
+                  entry={entry}
+                  formatTimeAgo={formatTimeAgo}
+                  getGradientStyle={getGradientStyle}
+                  getRankIcon={getRankIcon}
+                  usernameToUrl={usernameToUrl}
+                />
+              ))
             ) : (
               <div className="text-center py-8">
                 <p className="text-slate-400">No recent clan events</p>

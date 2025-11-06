@@ -3,8 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
-import { Users, Search, LogIn, LogOut, Filter } from 'lucide-react'
+import { Users, Search, Filter } from 'lucide-react'
 import { Spinner } from '../ui/spinner'
+import { ClanLogRow } from '../clanLogs/ClanLogRow'
+import { getGradientStyle } from '../../utils/gradientUtils'
+import { usernameToUrl } from '../../utils/urlUtils'
 
 interface ClanLogEntry {
   id: number
@@ -76,20 +79,8 @@ export const MemberLogTab = () => {
     setFilteredEntries(filtered)
   }
 
-  const getEventIcon = (eventType: string) => {
-    return eventType === 'Join' ? (
-      <LogIn className="w-4 h-4 text-green-400" />
-    ) : (
-      <LogOut className="w-4 h-4 text-red-400" />
-    )
-  }
-
-  const getEventBadge = (eventType: string) => {
-    return eventType === 'Join' ? (
-      <Badge className="bg-green-600 text-white">Join</Badge>
-    ) : (
-      <Badge className="bg-red-600 text-white">Leave</Badge>
-    )
+  const formatTimeAgo = (timestamp: number): string => {
+    return new Date(timestamp * 1000).toLocaleString()
   }
 
   const totalPages = Math.ceil(totalEntries / pageSize)
@@ -157,31 +148,14 @@ export const MemberLogTab = () => {
             <>
               <div className="space-y-3">
                 {filteredEntries.map((entry) => (
-                  <div
+                  <ClanLogRow
                     key={entry.id}
-                    className="flex items-center justify-between p-4 bg-slate-600/30 rounded-lg"
-                  >
-                    <div className="flex items-center space-x-4">
-                      {getEventIcon(entry.event_type)}
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-white font-medium">{entry.username}</span>
-                          {getEventBadge(entry.event_type)}
-                        </div>
-                        <div className="text-sm text-slate-400 mt-1">
-                          {entry.event_type === 'Join' && entry.new_rank && (
-                            <span>Joined as {entry.new_rank}</span>
-                          )}
-                          {entry.event_type === 'Leave' && entry.old_rank && (
-                            <span>Left clan (was {entry.old_rank})</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-xs text-slate-500">
-                      {new Date(entry.timestamp).toLocaleString()}
-                    </span>
-                  </div>
+                    entry={entry}
+                    formatTimeAgo={formatTimeAgo}
+                    getGradientStyle={getGradientStyle}
+                    usernameToUrl={usernameToUrl}
+                    className="bg-slate-600/30"
+                  />
                 ))}
               </div>
 
