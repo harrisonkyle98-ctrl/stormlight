@@ -9,7 +9,7 @@ import { Search, Users, User } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { Spinner } from '../components/ui/spinner'
 import { MilestoneBadge, checkPlayerMilestones } from '../utils/gradientUtils'
-import { usernameToUrl, normalizeDisplayUsername } from '../utils/urlUtils'
+import { usernameToUrl } from '../utils/urlUtils'
 import { Username } from '../components/ui/username'
 
 interface ClanMember {

@@ -6,7 +6,6 @@ import { Badge } from '../ui/badge'
 import { Users, Search, Filter } from 'lucide-react'
 import { Spinner } from '../ui/spinner'
 import { ClanLogRow } from '../clanLogs/ClanLogRow'
-import { getGradientStyle } from '../../utils/gradientUtils'
 import { usernameToUrl } from '../../utils/urlUtils'
 
 interface ClanLogEntry {

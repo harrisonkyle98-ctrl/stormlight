@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { FileText } from 'lucide-react'
 import { usernameToUrl } from '../../utils/urlUtils'
-import { getGradientStyle } from '../../utils/gradientUtils'
 import { ClanLogRow } from '../clanLogs/ClanLogRow'
 
 const getRankIcon = (rank: string): string => {

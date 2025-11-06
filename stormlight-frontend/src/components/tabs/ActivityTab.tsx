@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Activity } from 'lucide-react'
 import { usernameToUrl } from '../../utils/urlUtils'
-import { getGradientStyle } from '../../utils/gradientUtils'
 import { ActivityLogRow } from '../activityLogs/ActivityLogRow'
 
 interface TabProps {
