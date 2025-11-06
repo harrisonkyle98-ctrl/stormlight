@@ -329,7 +329,7 @@ const Home = () => {
       setActivityLoading(true)
       console.log('🔄 Fetching activities...', { page, append })
       const cacheBuster = Date.now()
-      const requestUrl = `${API_URL}/api/clan/activities?page=${page}&limit=8&_t=${cacheBuster}`
+      const requestUrl = `${API_URL}/api/clan/activities?page=${page}&limit=10&_t=${cacheBuster}`
       console.log('📡 Request URL:', requestUrl)
       const response = await fetch(requestUrl, {
         cache: 'no-cache',
@@ -432,7 +432,7 @@ const Home = () => {
           seen.add(key)
           return true
         })
-        setClanLogEntries(deduped.slice(0, 8))
+        setClanLogEntries(deduped.slice(0, 10))
       } else {
         console.error('❌ Clan log fetch failed:', response.status, response.statusText)
       }
