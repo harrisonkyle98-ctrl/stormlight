@@ -2825,24 +2825,44 @@ async def get_highest_placement(username: str):
                         except ImportError:
                             from database import get_db_connection, get_snapshot_json_on_or_before
                         
+                        from datetime import datetime, timezone
+                        now = datetime.now(timezone.utc).date()
+                        is_active = comp.endDate.date() >= now
+                        
                         conn = await get_db_connection()
                         async with conn:
                             leaderboard_entries = []
                             for e in comp_with_entries.entries:
                                 xp_gain = 0
                                 try:
-                                    end_snapshot = await get_snapshot_json_on_or_before(
-                                        conn, e.username, comp.endDate.date()
-                                    )
+                                    if is_active:
+                                        end_snapshot = await get_snapshot_json_on_or_before(
+                                            conn, e.username, now
+                                        )
+                                    else:
+                                        end_snapshot = await get_snapshot_json_on_or_before(
+                                            conn, e.username, comp.endDate.date()
+                                        )
                                     
                                     if end_snapshot:
                                         skill = comp.skill or 'overall'
                                         if skill and skill.lower() == 'overall':
-                                            xp_end = sum(s.get('xp', 0) for s in end_snapshot.values() if isinstance(s, dict))
+                                            xp_end = end_snapshot.get('overall', {}).get('xp', 0)
                                         else:
                                             xp_end = end_snapshot.get(skill, {}).get('xp', 0)
                                         
                                         xp_gain = max(0, xp_end - e.xpStart)
+                                        
+                                        if is_active:
+                                            cursor = await conn.execute("""
+                                                SELECT overall_gain
+                                                FROM player_today_gains
+                                                WHERE username = %s AND snapshot_date = %s
+                                            """, (e.username, now))
+                                            today_row = await cursor.fetchone()
+                                            if today_row and today_row[0]:
+                                                if skill and skill.lower() == 'overall':
+                                                    xp_gain += int(today_row[0])
                                 except:
                                     xp_gain = 0
                                 
