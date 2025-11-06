@@ -1902,6 +1902,11 @@ async def get_eligible_badges(user_id: str = Depends(verify_token)):
         
         print(f"🔍 Querying custom badges with IDs: {badge_ids}")
         
+        all_override_badges = await prisma.custombadge.find_many(
+            where={'allowUsernameColorOverride': True}
+        )
+        print(f"📋 All badges with override enabled: {[(b.id, b.name) for b in all_override_badges]}")
+        
         badges = await prisma.custombadge.find_many(
             where={
                 'id': {'in': badge_ids},
@@ -1909,7 +1914,17 @@ async def get_eligible_badges(user_id: str = Depends(verify_token)):
             }
         )
         
-        print(f"✅ Found {len(badges)} eligible badges")
+        print(f"✅ Found {len(badges)} eligible badges matching IDs")
+        
+        if not badges and badge_ids:
+            print(f"⚠️ No badges found by ID, trying to match by name...")
+            badges = await prisma.custombadge.find_many(
+                where={
+                    'name': {'in': badge_ids},
+                    'allowUsernameColorOverride': True
+                }
+            )
+            print(f"✅ Found {len(badges)} eligible badges matching names")
         
         eligible_badges = []
         for badge in badges:
