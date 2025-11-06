@@ -1,4 +1,4 @@
-import { LucideIcon, Compass, BarChart4, Castle, PackageOpen, Sword } from 'lucide-react'
+import { LucideIcon, Compass, BarChart4, Castle, Package, Sword, Dices } from 'lucide-react'
 
 export interface ActivityEntry {
   username: string
@@ -17,8 +17,16 @@ export interface ActivityVisual {
  * Categorizes activity text based on RuneMetrics categories
  * Reference: https://runescape.wiki/w/RuneMetrics/Adventurer%27s_Log
  */
-export function categorizeActivity(text: string): 'quest' | 'skill' | 'minigame' | 'item' | 'monster' {
+export function categorizeActivity(text: string): 'quest' | 'skill' | 'minigame' | 'item' | 'monster' | 'citadel' {
   const lowerText = text.toLowerCase()
+  
+  if (
+    lowerText.includes('capped') ||
+    lowerText.includes('citadel') ||
+    lowerText.includes('fealty')
+  ) {
+    return 'citadel'
+  }
   
   if (
     lowerText.includes('quest') ||
@@ -44,7 +52,6 @@ export function categorizeActivity(text: string): 'quest' | 'skill' | 'minigame'
     lowerText.includes('game') ||
     lowerText.includes('arena') ||
     lowerText.includes('wars') ||
-    lowerText.includes('castle') ||
     lowerText.includes('trouble brewing') ||
     lowerText.includes('pest control') ||
     lowerText.includes('barbarian assault')
@@ -72,6 +79,12 @@ export function getActivityVisual(activity: ActivityEntry): ActivityVisual {
   const category = categorizeActivity(activity.text)
   
   switch (category) {
+    case 'citadel':
+      return {
+        color: '#84c27a', // Green
+        Icon: Castle
+      }
+    
     case 'quest':
       return {
         color: '#57a9c1', // Cyan blue
@@ -87,13 +100,13 @@ export function getActivityVisual(activity: ActivityEntry): ActivityVisual {
     case 'minigame':
       return {
         color: '#9957c1', // Purple
-        Icon: Castle
+        Icon: Dices
       }
     
     case 'item':
       return {
         color: '#be9a55', // Gold
-        Icon: PackageOpen
+        Icon: Package
       }
     
     case 'monster':
