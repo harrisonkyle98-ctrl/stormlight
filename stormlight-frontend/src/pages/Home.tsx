@@ -224,21 +224,6 @@ const Home = () => {
     fetchActiveMembers()
   }, [])
 
-  useEffect(() => {
-    if (!user?.username || !user?.isLinked) {
-      return
-    }
-
-    const placementInterval = setInterval(() => {
-      console.log('🔄 Refreshing highest placement (60s poll)')
-      fetchHighestPlacement()
-    }, 60 * 1000) // 60 seconds
-
-    return () => {
-      clearInterval(placementInterval)
-    }
-  }, [user?.username, user?.isLinked])
-
   const loadClanMembers = async () => {
     const members = await fetchClanMembers()
     setClanMembers(members)
