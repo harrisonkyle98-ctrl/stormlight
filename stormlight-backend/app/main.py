@@ -1843,6 +1843,172 @@ async def update_user_theme(
         raise HTTPException(status_code=500, detail="Failed to update theme")
 
 
+@api_router.get("/user/eligible-badges")
+async def get_eligible_badges(user_id: str = Depends(verify_token)):
+    """Get badges eligible for username color override for the current user"""
+    try:
+        global prisma, PRISMA_AVAILABLE
+        if not PRISMA_AVAILABLE or not prisma:
+            raise HTTPException(status_code=503, detail="Database not available")
+        
+        user = await prisma.user.find_unique(
+            where={'discordId': user_id},
+            select={'username': True, 'selectedBadgeId': True}
+        )
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        member = await prisma.clanmember.find_unique(
+            where={'username': user.username}
+        )
+        
+        if not member or not member.badges:
+            return {'eligibleBadges': [], 'selectedBadgeId': user.selectedBadgeId}
+        
+        badge_ids = member.badges if isinstance(member.badges, list) else json.loads(member.badges)
+        
+        if not badge_ids:
+            return {'eligibleBadges': [], 'selectedBadgeId': user.selectedBadgeId}
+        
+        badges = await prisma.custombadge.find_many(
+            where={
+                'id': {'in': badge_ids},
+                'allowUsernameColorOverride': True
+            }
+        )
+        
+        eligible_badges = []
+        for badge in badges:
+            eligible_badges.append({
+                'id': badge.id,
+                'name': badge.name,
+                'description': badge.description,
+                'imageUrl': badge.imageUrl,
+                'backgroundColor': badge.backgroundColor,
+                'gradientColors': badge.gradientColors
+            })
+        
+        return {
+            'eligibleBadges': eligible_badges,
+            'selectedBadgeId': user.selectedBadgeId
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error getting eligible badges: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Failed to get eligible badges")
+
+
+@api_router.put("/user/selected-badge")
+async def update_selected_badge(
+    request: Request,
+    user_id: str = Depends(verify_token)
+):
+    """Update user's selected badge for username color override"""
+    try:
+        global prisma, PRISMA_AVAILABLE
+        if not PRISMA_AVAILABLE or not prisma:
+            raise HTTPException(status_code=503, detail="Database not available")
+        
+        body = await request.json()
+        badge_id = body.get('badgeId')
+        
+        user = await prisma.user.find_unique(
+            where={'discordId': user_id},
+            select={'username': True, 'selectedBadgeId': True}
+        )
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        if badge_id:
+            member = await prisma.clanmember.find_unique(
+                where={'username': user.username}
+            )
+            
+            if not member or not member.badges:
+                raise HTTPException(status_code=400, detail="User has no badges")
+            
+            badge_ids = member.badges if isinstance(member.badges, list) else json.loads(member.badges)
+            
+            if badge_id not in badge_ids:
+                raise HTTPException(status_code=400, detail="Badge not assigned to user")
+            
+            badge = await prisma.custombadge.find_unique(
+                where={'id': badge_id}
+            )
+            
+            if not badge or not badge.allowUsernameColorOverride:
+                raise HTTPException(status_code=400, detail="Badge not eligible for username color override")
+        
+        await prisma.user.update(
+            where={'discordId': user_id},
+            data={'selectedBadgeId': badge_id}
+        )
+        
+        return {'success': True, 'selectedBadgeId': badge_id}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating selected badge: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Failed to update selected badge")
+
+
+@api_router.get("/player/{username}/badge-color")
+async def get_player_badge_color(username: str):
+    """Get badge color information for a player's username"""
+    try:
+        global prisma, PRISMA_AVAILABLE
+        if not PRISMA_AVAILABLE or not prisma:
+            return {'selectedBadgeId': None, 'badgeColorInfo': None}
+        
+        member = await prisma.clanmember.find_unique(
+            where={'username': username}
+        )
+        
+        if not member or not member.discordId:
+            return {'selectedBadgeId': None, 'badgeColorInfo': None}
+        
+        user = await prisma.user.find_unique(
+            where={'discordId': member.discordId},
+            select={'selectedBadgeId': True}
+        )
+        
+        if not user or not user.selectedBadgeId:
+            return {'selectedBadgeId': None, 'badgeColorInfo': None}
+        
+        badge = await prisma.custombadge.find_unique(
+            where={'id': user.selectedBadgeId}
+        )
+        
+        if not badge or not badge.allowUsernameColorOverride:
+            return {'selectedBadgeId': None, 'badgeColorInfo': None}
+        
+        badge_color_info = {
+            'id': badge.id,
+            'backgroundColor': badge.backgroundColor,
+            'gradientColors': badge.gradientColors
+        }
+        
+        return {
+            'selectedBadgeId': user.selectedBadgeId,
+            'badgeColorInfo': badge_color_info
+        }
+    
+    except Exception as e:
+        print(f"Error getting player badge color: {e}")
+        import traceback
+        traceback.print_exc()
+        return {'selectedBadgeId': None, 'badgeColorInfo': None}
+
+
 @api_router.get("/player/{username}/stats")
 async def get_player_stats(username: str, refresh: bool = Query(False, description="Force refresh from API")):
     """Get player stats from RuneScape API with clan rank if available"""
@@ -3929,6 +4095,7 @@ async def create_custom_badge(
     background_color: str = Form(None),
     gradient_color1: str = Form(None),
     gradient_color2: str = Form(None),
+    allow_username_color_override: str = Form("false"),
     badge_file: UploadFile = File(...),
     admin_info: dict = Depends(verify_admin_access)
 ):
@@ -3958,7 +4125,8 @@ async def create_custom_badge(
                 'description': description,
                 'imagePath': str(file_path),
                 'imageUrl': f"/uploads/badges/{unique_filename}",
-                'createdBy': admin_id
+                'createdBy': admin_id,
+                'allowUsernameColorOverride': allow_username_color_override.lower() == 'true'
             }
             
             if gradient_color1 and gradient_color2:
@@ -3993,6 +4161,7 @@ async def update_custom_badge(
     background_color: str = Form(None),
     gradient_color1: str = Form(None),
     gradient_color2: str = Form(None),
+    allow_username_color_override: str = Form("false"),
     badge_file: UploadFile = File(None),
     admin_info: dict = Depends(verify_admin_access)
 ):
@@ -4007,7 +4176,8 @@ async def update_custom_badge(
             
             update_data = {
                 'name': name,
-                'description': description
+                'description': description,
+                'allowUsernameColorOverride': allow_username_color_override.lower() == 'true'
             }
             
             if gradient_color1 and gradient_color2:

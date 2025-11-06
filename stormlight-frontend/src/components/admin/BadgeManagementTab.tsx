@@ -13,6 +13,7 @@ interface CustomBadge {
   imageUrl: string
   backgroundColor?: string
   gradientColors?: string[]
+  allowUsernameColorOverride?: boolean
   createdBy: string
   createdAt: string
   competitions?: any[]
@@ -28,7 +29,8 @@ export const BadgeManagementTab = () => {
     description: '',
     backgroundColor: '#3b82f6',
     gradientColor1: '#3b82f6',
-    gradientColor2: '#1d4ed8'
+    gradientColor2: '#1d4ed8',
+    allowUsernameColorOverride: false
   })
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [colorMode, setColorMode] = useState<'solid' | 'gradient'>('solid')
@@ -82,7 +84,9 @@ export const BadgeManagementTab = () => {
         formDataToSend.append('badge_file', selectedFile)
       }
       
-      const url = editingBadge 
+      formDataToSend.append('allow_username_color_override', formData.allowUsernameColorOverride.toString())
+      
+      const url = editingBadge
         ? `${API_URL}/api/admin/badges/${editingBadge.id}`
         : `${API_URL}/api/admin/badges`
       
@@ -106,7 +110,8 @@ export const BadgeManagementTab = () => {
           description: '',
           backgroundColor: '#3b82f6',
           gradientColor1: '#3b82f6',
-          gradientColor2: '#1d4ed8'
+          gradientColor2: '#1d4ed8',
+          allowUsernameColorOverride: false
         })
         setColorMode('solid')
       } else {
@@ -148,7 +153,8 @@ export const BadgeManagementTab = () => {
       description: badge.description || '',
       backgroundColor: badge.backgroundColor || '#3b82f6',
       gradientColor1: hasGradient ? gradColors[0] : '#3b82f6',
-      gradientColor2: hasGradient ? gradColors[1] : '#1d4ed8'
+      gradientColor2: hasGradient ? gradColors[1] : '#1d4ed8',
+      allowUsernameColorOverride: badge.allowUsernameColorOverride || false
     })
     
     setColorMode(hasGradient ? 'gradient' : 'solid')
@@ -297,6 +303,23 @@ export const BadgeManagementTab = () => {
                 )}
               </div>
 
+              <div>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.allowUsernameColorOverride}
+                    onChange={(e) => setFormData({ ...formData, allowUsernameColorOverride: e.target.checked })}
+                    className="w-4 h-4 rounded border-slate-500 bg-slate-600 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-slate-300">
+                    Allow this badge to override username color
+                  </span>
+                </label>
+                <p className="text-xs text-slate-400 mt-1 ml-6">
+                  Users with this badge can select it to apply its color to their username site-wide
+                </p>
+              </div>
+
               <div className="flex space-x-2">
                 <Button type="submit" className="bg-green-600 hover:bg-green-700">
                   {editingBadge ? 'Update' : 'Create'} Badge
@@ -313,7 +336,8 @@ export const BadgeManagementTab = () => {
                       description: '',
                       backgroundColor: '#3b82f6',
                       gradientColor1: '#3b82f6',
-                      gradientColor2: '#1d4ed8'
+                      gradientColor2: '#1d4ed8',
+                      allowUsernameColorOverride: false
                     })
                     setColorMode('solid')
                   }}

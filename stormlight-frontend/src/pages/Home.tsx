@@ -38,9 +38,11 @@ const getRankIcon = (rank: string): string => {
 interface CustomBadge {
   id: string
   name: string
+  description?: string
   imageUrl: string
   backgroundColor?: string
   gradientColors?: string[]
+  allowUsernameColorOverride?: boolean
 }
 
 interface PlayerStats {
@@ -150,6 +152,8 @@ const Home = () => {
   const [highestPlacement, setHighestPlacement] = useState<any>(null)
   const [highestPlacementLoading, setHighestPlacementLoading] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [eligibleBadges, setEligibleBadges] = useState<CustomBadge[]>([])
+  const [selectedBadgeId, setSelectedBadgeId] = useState<string | null>(null)
   const [accountLinkRequests, setAccountLinkRequests] = useState<any[]>([])
   const [linkedAccounts, setLinkedAccounts] = useState<any[]>([])
   const [newUsername, setNewUsername] = useState('')
@@ -702,10 +706,55 @@ const Home = () => {
   }
 
 
+  const fetchEligibleBadges = async () => {
+    try {
+      const token = localStorage.getItem('access_token')
+      const response = await fetch(`${API_URL}/api/user/eligible-badges`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setEligibleBadges(data.eligibleBadges || [])
+        setSelectedBadgeId(data.selectedBadgeId || null)
+      }
+    } catch (error) {
+      console.error('Error fetching eligible badges:', error)
+    }
+  }
+
+  const handleBadgeSelection = async (badgeId: string) => {
+    try {
+      const token = localStorage.getItem('access_token')
+      const newBadgeId = selectedBadgeId === badgeId ? null : badgeId
+      
+      const response = await fetch(`${API_URL}/api/user/selected-badge`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ badgeId: newBadgeId })
+      })
+
+      if (response.ok) {
+        setSelectedBadgeId(newBadgeId)
+        window.location.reload()
+      } else {
+        const errorData = await response.json()
+        alert(errorData.detail || 'Failed to update badge selection')
+      }
+    } catch (error) {
+      console.error('Error updating badge selection:', error)
+      alert('Failed to update badge selection')
+    }
+  }
+
   useEffect(() => {
     if (settingsOpen) {
       fetchAccountLinkRequests()
       fetchLinkedAccounts()
+      fetchEligibleBadges()
     }
   }, [settingsOpen])
 
@@ -1469,6 +1518,53 @@ const Home = () => {
                 </div>
               </div>
             </div>
+
+            {/* Badge Username Color Section */}
+            {eligibleBadges.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-2">
+                  Username Color Badge
+                </h3>
+                <div className="bg-slate-700/30 rounded-lg p-4">
+                  <div className="space-y-4">
+                    <p className="text-sm text-slate-300 mb-3">
+                      Select a badge to apply its color to your username across the site. Click again to deselect.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      {eligibleBadges.map((badge) => {
+                        const isSelected = selectedBadgeId === badge.id
+                        const backgroundColor = badge.gradientColors 
+                          ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
+                          : badge.backgroundColor || '#6b7280'
+                        
+                        return (
+                          <button
+                            key={badge.id}
+                            onClick={() => handleBadgeSelection(badge.id)}
+                            className={`px-3 py-1.5 text-sm font-semibold flex items-center space-x-2 rounded-md text-white transition-all ${
+                              isSelected 
+                                ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-800 scale-105' 
+                                : 'hover:scale-105 opacity-80 hover:opacity-100'
+                            }`}
+                            style={{
+                              background: backgroundColor
+                            }}
+                            title={badge.description || badge.name}
+                          >
+                            <img 
+                              src={`https://stormlight.fly.dev${badge.imageUrl}`} 
+                              alt={badge.name} 
+                              className="w-4 h-4"
+                            />
+                            <span>{badge.name}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Appearance Section */}
             <div className="space-y-3">
