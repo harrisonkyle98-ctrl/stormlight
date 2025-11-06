@@ -1851,35 +1851,54 @@ async def get_eligible_badges(user_id: str = Depends(verify_token)):
         if not PRISMA_AVAILABLE or not prisma:
             raise HTTPException(status_code=503, detail="Database not available")
         
+        print(f"🔍 Fetching eligible badges for user_id: {user_id}")
+        
         user = await prisma.user.find_unique(
             where={'discordId': user_id},
             select={'username': True, 'selectedBadgeId': True}
         )
         
         if not user:
+            print(f"❌ User not found for discordId: {user_id}")
             raise HTTPException(status_code=404, detail="User not found")
+        
+        print(f"✅ User found: {user.username}")
         
         member = await prisma.clanmember.find_first(
             where={'discordId': user_id}
         )
         
+        print(f"🔍 Member lookup by discordId: {'Found' if member else 'Not found'}")
+        
         if not member:
-            # Fallback to username lookup if discordId not found
+            print(f"🔄 Falling back to username lookup: {user.username}")
             member = await prisma.clanmember.find_unique(
                 where={'username': user.username}
             )
+            print(f"🔍 Member lookup by username: {'Found' if member else 'Not found'}")
         
-        if not member or not member.badges:
+        if not member:
+            print(f"❌ No clan member found for user {user.username}")
             return {'eligibleBadges': [], 'selectedBadgeId': user.selectedBadgeId}
+        
+        if not member.badges:
+            print(f"ℹ️ Member {user.username} has no badges")
+            return {'eligibleBadges': [], 'selectedBadgeId': user.selectedBadgeId}
+        
+        print(f"📦 Raw badges data: {member.badges} (type: {type(member.badges)})")
         
         try:
             badge_ids = member.badges if isinstance(member.badges, list) else json.loads(member.badges)
-        except (json.JSONDecodeError, TypeError):
-            print(f"Warning: Could not parse badges for user {user_id}: {member.badges}")
+            print(f"✅ Parsed badge_ids: {badge_ids}")
+        except (json.JSONDecodeError, TypeError) as parse_error:
+            print(f"⚠️ Could not parse badges for user {user_id}: {member.badges} - Error: {parse_error}")
             return {'eligibleBadges': [], 'selectedBadgeId': user.selectedBadgeId}
         
         if not badge_ids:
+            print(f"ℹ️ No badge IDs after parsing")
             return {'eligibleBadges': [], 'selectedBadgeId': user.selectedBadgeId}
+        
+        print(f"🔍 Querying custom badges with IDs: {badge_ids}")
         
         badges = await prisma.custombadge.find_many(
             where={
@@ -1887,6 +1906,8 @@ async def get_eligible_badges(user_id: str = Depends(verify_token)):
                 'allowUsernameColorOverride': True
             }
         )
+        
+        print(f"✅ Found {len(badges)} eligible badges")
         
         eligible_badges = []
         for badge in badges:
@@ -1907,10 +1928,10 @@ async def get_eligible_badges(user_id: str = Depends(verify_token)):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error getting eligible badges: {e}")
+        print(f"❌ Error getting eligible badges: {e}")
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail="Failed to get eligible badges")
+        raise HTTPException(status_code=500, detail=f"Failed to get eligible badges: {str(e)}")
 
 
 @api_router.put("/user/selected-badge")
