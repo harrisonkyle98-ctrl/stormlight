@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
 import { FileText } from 'lucide-react'
-import { Link } from 'react-router-dom'
-import { Badge } from '../ui/badge'
 import { usernameToUrl } from '../../utils/urlUtils'
 import { getGradientStyle } from '../../utils/gradientUtils'
+import { ClanLogRow } from '../clanLogs/ClanLogRow'
 
 const getRankIcon = (rank: string): string => {
   const rankImageMap: { [key: string]: string } = {
@@ -50,7 +49,7 @@ interface UserLogResponse {
   }
 }
 
-export const LogTab = ({ username, playerData, API_URL }: TabProps) => {
+export const LogTab = ({ username, playerData: _playerData, API_URL }: TabProps) => {
   const [logEntries, setLogEntries] = useState<UserLogEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -130,53 +129,17 @@ export const LogTab = ({ username, playerData, API_URL }: TabProps) => {
         <span className="text-sm text-slate-400">({logEntries.length} entries)</span>
       </div>
 
-      {logEntries.map((entry) => {
-        const eventType = entry.event_type.toLowerCase()
-        
-        return (
-          <div key={entry.id} className="p-3 bg-slate-700/50 rounded-lg">
-            <div className="flex items-center justify-center space-x-2 mb-1">
-              <div className="flex-shrink-0">
-                {eventType === 'join' && <Badge className="bg-green-600 text-white font-bold hover:bg-green-600">Joined</Badge>}
-                {eventType === 'leave' && <Badge className="bg-red-600 text-white font-bold hover:bg-red-600">Left</Badge>}
-                {eventType === 'rank_up' && <Badge className="bg-green-500 text-white hover:bg-green-500">Promoted</Badge>}
-                {eventType === 'rank_down' && <Badge className="bg-red-500 text-white hover:bg-red-500">Demoted</Badge>}
-                {eventType === 'name_change' && <Badge className="bg-yellow-500 text-white hover:bg-yellow-500">Name</Badge>}
-              </div>
-              <Link 
-                to={`/clan-member/${usernameToUrl(entry.username)}`}
-                className="text-white font-medium hover:text-blue-300 transition-colors"
-                style={getGradientStyle(entry.username, entry.new_rank || entry.old_rank || playerData?.clan_rank)}
-              >
-                {entry.username}
-              </Link>
-              <span className="text-slate-300">
-                {eventType === 'join' && `joined the clan as ${entry.new_rank}`}
-                {eventType === 'leave' && `has left the clan`}
-                {eventType === 'rank_up' && (
-                  <span className="flex items-center gap-1">
-                    promoted from 
-                    <img src={getRankIcon(entry.old_rank || '')} alt={entry.old_rank} className="w-4 h-4 mx-1" />
-                    to 
-                    <img src={getRankIcon(entry.new_rank || '')} alt={entry.new_rank} className="w-4 h-4 mx-1" />
-                  </span>
-                )}
-                {eventType === 'rank_down' && (
-                  <span className="flex items-center gap-1">
-                    demoted from 
-                    <img src={getRankIcon(entry.old_rank || '')} alt={entry.old_rank} className="w-4 h-4 mx-1" />
-                    to 
-                    <img src={getRankIcon(entry.new_rank || '')} alt={entry.new_rank} className="w-4 h-4 mx-1" />
-                  </span>
-                )}
-                {eventType === 'name_change' && `${entry.old_rank} changed their name to ${entry.username}`}
-                {!['join', 'leave', 'rank_up', 'rank_down', 'name_change'].includes(eventType) && 'clan event'}
-              </span>
-            </div>
-            <p className="text-slate-400 text-xs text-center">{formatTimeAgo(new Date(entry.timestamp).getTime() / 1000)}</p>
-          </div>
-        )
-      })}
+      {logEntries.map((entry) => (
+        <ClanLogRow
+          key={entry.id}
+          entry={entry}
+          formatTimeAgo={formatTimeAgo}
+          getGradientStyle={getGradientStyle}
+          getRankIcon={getRankIcon}
+          usernameToUrl={usernameToUrl}
+          className="bg-slate-700/50"
+        />
+      ))}
     </div>
   )
 }
