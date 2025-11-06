@@ -264,7 +264,6 @@ const Members = () => {
                           to={`/clan-member/${usernameToUrl(member.username)}`}
                           className="text-lg font-semibold hover:text-theme-accent-light transition-colors block truncate"
                           style={{
-                            ...getGradientStyle(member.username, member.clan_rank),
                             textAlign: 'left',
                             margin: 0,
                             padding: 0,
@@ -272,7 +271,10 @@ const Members = () => {
                             paddingLeft: '1px'
                           }}
                         >
-                          {normalizeDisplayUsername(member.username)}
+                          <Username
+                            username={member.username}
+                            clanRank={member.clan_rank}
+                          />
                         </Link>
                         <div className="flex items-center mt-1">
                           {member.badgesLoading ? (
