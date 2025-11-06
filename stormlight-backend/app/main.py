@@ -1887,8 +1887,11 @@ async def get_eligible_badges(user_id: str = Depends(verify_token)):
         print(f"📦 Raw badges data: {member.badges} (type: {type(member.badges)})")
         
         try:
-            badge_ids = member.badges if isinstance(member.badges, list) else json.loads(member.badges)
-            print(f"✅ Parsed badge_ids: {badge_ids}")
+            badge_ids_raw = member.badges if isinstance(member.badges, list) else json.loads(member.badges)
+            print(f"✅ Parsed badge_ids_raw: {badge_ids_raw} (type: {type(badge_ids_raw)})")
+            
+            badge_ids = [str(badge_id) for badge_id in badge_ids_raw if badge_id]
+            print(f"✅ Converted badge_ids to strings: {badge_ids}")
         except (json.JSONDecodeError, TypeError) as parse_error:
             print(f"⚠️ Could not parse badges for user {user_id}: {member.badges} - Error: {parse_error}")
             return {'eligibleBadges': [], 'selectedBadgeId': user.selectedBadgeId}
