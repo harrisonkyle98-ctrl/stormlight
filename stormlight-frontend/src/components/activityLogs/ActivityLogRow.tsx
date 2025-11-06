@@ -38,19 +38,19 @@ export function ActivityLogRow({
       </div>
 
       {/* Right content column */}
-      <div className="flex-1 p-3">
+      <div className="flex-1 p-3 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <Link
               to={`/clan-member/${usernameToUrl(activity.username)}`}
-              className="text-white font-medium hover:text-blue-300 transition-colors"
+              className="text-white font-medium hover:text-blue-300 transition-colors flex-shrink-0"
               style={getGradientStyle(activity.username, clanRank)}
             >
               {activity.username}
             </Link>
-            <span className="text-slate-300">{activity.text}</span>
+            <span className="text-slate-300 truncate">{activity.text}</span>
           </div>
-          <span className="text-slate-400 text-xs whitespace-nowrap ml-2">
+          <span className="text-slate-400 text-xs whitespace-nowrap ml-2 flex-shrink-0">
             {formatTimeAgo(activity.timestamp)}
           </span>
         </div>

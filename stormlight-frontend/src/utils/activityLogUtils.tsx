@@ -74,31 +74,31 @@ export function getActivityVisual(activity: ActivityEntry): ActivityVisual {
   switch (category) {
     case 'quest':
       return {
-        color: '#60a5fa', // Tailwind blue-400
+        color: '#57a9c1', // Cyan blue
         Icon: Compass
       }
     
     case 'skill':
       return {
-        color: '#22c55e', // Tailwind green-500
+        color: '#5789c1', // Steel blue
         Icon: BarChart4
       }
     
     case 'minigame':
       return {
-        color: '#991b1b', // Tailwind red-800
+        color: '#9957c1', // Purple
         Icon: Castle
       }
     
     case 'item':
       return {
-        color: '#ca8a04', // Tailwind yellow-600
+        color: '#be9a55', // Gold
         Icon: Scroll
       }
     
     case 'monster':
       return {
-        color: '#ef4444', // Tailwind red-500
+        color: '#9f3f3f', // Dark red
         Icon: Sword
       }
   }
