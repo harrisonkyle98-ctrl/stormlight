@@ -26,13 +26,13 @@ export function ClanLogRow({
 
   return (
     <div
-      className={`flex items-stretch rounded-lg overflow-hidden ${className} border-l-4`}
+      className={`flex items-stretch rounded-lg overflow-hidden ${className} border-2`}
       style={{ borderColor: color }}
     >
       {/* Left colored icon column */}
       <div
-        className="w-10 flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: color }}
+        className="flex items-center justify-center flex-shrink-0"
+        style={{ backgroundColor: color, width: '52px' }}
       >
         <Icon className="w-5 h-5 text-white" aria-hidden="true" />
       </div>
