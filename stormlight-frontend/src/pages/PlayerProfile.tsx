@@ -441,7 +441,7 @@ const PlayerProfile = () => {
   const getLevelBadgeStyle = (skill: string, level: number, xp: number) => {
     if (skill === 'overall') {
       if (xp >= 5800000000) {
-        return 'text-[#d1d5db] border-[#06b6d4]' // Cyan border for 5.8B+ XP
+        return 'text-[#d1d5db] border-[#a855f7]' // Purple border for 5.8B+ XP
       }
       if (level >= 3510) {
         return 'text-[#d1d5db] border-[#facc15]' // Gold border for max total level
@@ -449,7 +449,7 @@ const PlayerProfile = () => {
       return 'text-[#d1d5db] border-[#d1d5db]' // Dull grey for below 3510
     } else {
       if (xp >= 200000000) {
-        return 'text-[#d1d5db] border-[#06b6d4]' // Cyan border for 200M XP
+        return 'text-[#d1d5db] border-[#a855f7]' // Purple border for 200M XP
       }
       if (level >= 120) {
         return 'text-[#d1d5db] border-[#facc15]' // Gold border for 120+
@@ -457,7 +457,7 @@ const PlayerProfile = () => {
       if (level >= 99) {
         return 'text-[#d1d5db] border-[#22c55e]' // Green border for 99-119
       }
-      return 'text-[#60a5fa] border-[#60a5fa]' // Sapphire blue for below 99 (fixed across all themes)
+      return 'text-[#d1d5db] border-[#d1d5db]' // Dull grey border for below 99 (matches text color)
     }
   }
 
