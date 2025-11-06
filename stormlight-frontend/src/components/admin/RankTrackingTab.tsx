@@ -6,6 +6,7 @@ import { Badge } from '../ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/table'
 import { Users, Search, Calendar, TrendingUp, Crown } from 'lucide-react'
 import { Spinner } from '../ui/spinner'
+import { checkPlayerMilestones, MilestoneBadge } from '../../utils/gradientUtils'
 
 interface ClanMember {
   id: string
@@ -125,22 +126,33 @@ export const RankTrackingTab = () => {
     return ['Owner', 'Deputy Owner', 'Overseer'].includes(rank)
   }
 
-  const getRankBadgeImage = (rank: string): string => {
-    const rankMap: { [key: string]: string } = {
-      'Owner': '/assets/ranks/owner.png',
-      'Deputy Owner': '/assets/ranks/depowner.png',
-      'Overseer': '/assets/ranks/overseer.png',
-      'Coordinator': '/assets/ranks/coordinator.png',
-      'Organiser': '/assets/ranks/organiser.png',
-      'Admin': '/assets/ranks/admin.png',
-      'General': '/assets/ranks/general.png',
-      'Captain': '/assets/ranks/captain.png',
-      'Lieutenant': '/assets/ranks/lieutenant.png',
-      'Sergeant': '/assets/ranks/sergeant.png',
-      'Corporal': '/assets/ranks/corporal.png',
-      'Recruit': '/assets/ranks/recruit.png'
+  const getRankBadgeMeta = (rank: string, username?: string): MilestoneBadge | null => {
+    const badges = checkPlayerMilestones(null, undefined, rank, username)
+    return badges.length > 0 ? badges[0] : null
+  }
+
+  const renderRankBadge = (rank: string, username?: string) => {
+    const badge = getRankBadgeMeta(rank, username)
+    if (!badge) {
+      return <span className="text-white">{rank}</span>
     }
-    return rankMap[rank] || '/assets/ranks/recruit.png'
+    
+    return (
+      <div
+        className="px-2 py-1 text-xs font-semibold flex items-center gap-1 rounded-md text-white"
+        style={{
+          background: badge.gradientBackground || badge.backgroundColor
+        }}
+        title={badge.name}
+      >
+        <img
+          src={badge.icon}
+          alt={badge.name}
+          className="w-3 h-3"
+        />
+        <span>{badge.name}</span>
+      </div>
+    )
   }
 
   const filteredAndSortedTracking = rankTracking
@@ -338,16 +350,10 @@ export const RankTrackingTab = () => {
                       <span className="text-white font-medium">{tracking.username}</span>
                     </TableCell>
                     <TableCell className="py-3">
-                      <div className="flex items-center space-x-2">
-                        <img src={getRankBadgeImage(tracking.actualRank)} alt={tracking.actualRank} className="w-5 h-5" />
-                        <span className="text-white">{tracking.actualRank}</span>
-                      </div>
+                      {renderRankBadge(tracking.actualRank, tracking.username)}
                     </TableCell>
                     <TableCell className="py-3">
-                      <div className="flex items-center space-x-2">
-                        <img src={getRankBadgeImage(tracking.rankNeeded)} alt={tracking.rankNeeded} className="w-5 h-5" />
-                        <span className="text-white">{tracking.rankNeeded}</span>
-                      </div>
+                      {renderRankBadge(tracking.rankNeeded, tracking.username)}
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-slate-300">
@@ -468,10 +474,7 @@ export const RankTrackingTab = () => {
                       <span className="text-white font-medium">{tracking.username}</span>
                     </TableCell>
                     <TableCell className="py-3">
-                      <div className="flex items-center space-x-2">
-                        <img src={getRankBadgeImage(tracking.actualRank)} alt={tracking.actualRank} className="w-5 h-5" />
-                        <span className="text-[#be9a55] font-medium">{tracking.actualRank}</span>
-                      </div>
+                      {renderRankBadge(tracking.actualRank, tracking.username)}
                     </TableCell>
                     <TableCell className="py-3">
                       <Badge className="bg-[#be9a55] text-white pointer-events-none">Leadership</Badge>
