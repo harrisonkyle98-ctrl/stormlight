@@ -1083,14 +1083,14 @@ const Home = () => {
                   {/* Stats Grid */}
                   <div className="grid grid-cols-3 gap-4 mb-6">
                     <div className="bg-slate-700/30 rounded-lg p-3">
-                      <p className="text-xs text-slate-400 mb-1">Yesterday</p>
+                      <p className="text-xs text-slate-400 mb-1">Today</p>
                       <p className="text-lg font-bold text-green-400">
-                        {formatNumber(recentProgress.xp_24h)}
+                        {formatNumber(recentProgress.xp_today || 0)}
                       </p>
                     </div>
                     <div className="bg-slate-700/30 rounded-lg p-3">
                       <p className="text-xs text-slate-400 mb-1">7 Days</p>
-                      <p className="text-lg font-bold text-theme-accent-light">
+                      <p className="text-lg font-bold" style={{ color: '#60a5fa' }}>
                         {formatNumber(recentProgress.xp_7d)}
                       </p>
                     </div>

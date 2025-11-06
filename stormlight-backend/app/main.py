@@ -7215,7 +7215,7 @@ async def startup_event():
 
 @app.get("/api/player/{username}/recent-progress")
 async def get_player_recent_progress(username: str):
-    """Get player's recent XP progress over 24h, 7d, and 30d"""
+    """Get player's recent XP progress over today (live), 7d, and 30d"""
     try:
         from urllib.parse import unquote
         from datetime import datetime, timedelta, timezone
@@ -7232,6 +7232,14 @@ async def get_player_recent_progress(username: str):
             now = datetime.now(timezone.utc).date()
             
             cursor = await conn.execute("""
+                SELECT overall_gain
+                FROM player_today_gains
+                WHERE username = %s AND snapshot_date = %s
+            """, (decoded_username, now))
+            today_row = await cursor.fetchone()
+            xp_today = int(today_row[0]) if today_row and today_row[0] else 0
+            
+            cursor = await conn.execute("""
                 SELECT username, snapshot_date, total_xp
                 FROM player_daily_snapshots
                 WHERE username = %s
@@ -7243,10 +7251,10 @@ async def get_player_recent_progress(username: str):
             if not latest_snapshot or not latest_snapshot[2]:
                 return {
                     'username': decoded_username,
-                    'xp_30d': 0,
-                    'xp_24h': 0,
-                    'xp_7d': 0,
-                    'sparkline': []
+                    'xp_30d': xp_today,
+                    'xp_today': xp_today,
+                    'xp_7d': xp_today,
+                    'sparkline': [{'date': now.isoformat(), 'xp': xp_today}] if xp_today > 0 else []
                 }
             
             current_xp = latest_snapshot[2]
@@ -7276,14 +7284,20 @@ async def get_player_recent_progress(username: str):
                     })
                 prev_xp = snap[1] if snap[1] else prev_xp
             
-            xp_24h = sum(item['xp'] for item in sparkline[-1:]) if len(sparkline) >= 1 else 0
+            if not sparkline or sparkline[-1]['date'] != now.isoformat():
+                sparkline.append({
+                    'date': now.isoformat(),
+                    'xp': xp_today
+                })
+            
+            # Calculate totals including today's live gains
             xp_7d = sum(item['xp'] for item in sparkline[-7:]) if len(sparkline) >= 7 else sum(item['xp'] for item in sparkline)
             xp_30d = sum(item['xp'] for item in sparkline)
             
             return {
                 'username': decoded_username,
                 'xp_30d': int(xp_30d),
-                'xp_24h': int(xp_24h),
+                'xp_today': int(xp_today),
                 'xp_7d': int(xp_7d),
                 'sparkline': sparkline
             }
@@ -7295,7 +7309,7 @@ async def get_player_recent_progress(username: str):
         return {
             'username': username,
             'xp_30d': 0,
-            'xp_24h': 0,
+            'xp_today': 0,
             'xp_7d': 0,
             'sparkline': []
         }
