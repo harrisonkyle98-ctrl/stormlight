@@ -14,7 +14,7 @@ import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip as Recharts
 import { themes } from '../config/themes'
 import { ClanLogRow } from '../components/clanLogs/ClanLogRow'
 import { ActivityLogRow } from '../components/activityLogs/ActivityLogRow'
-import { Username } from '../components/ui/username'
+import { Username, clearUsernameColorCache } from '../components/ui/username'
 
 const getRankIcon = (rank: string): string => {
   const rankImageMap: { [key: string]: string } = {
