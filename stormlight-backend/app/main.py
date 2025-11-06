@@ -2078,14 +2078,20 @@ async def get_player_badge_color(username: str):
     """Get badge color information for a player's username"""
     try:
         global prisma, PRISMA_AVAILABLE
+        print(f"[Badge Color API] Request for username: {username}")
+        
         if not PRISMA_AVAILABLE or not prisma:
+            print(f"[Badge Color API] Prisma not available")
             return {'selectedBadgeId': None, 'badgeColorInfo': None}
         
         member = await prisma.clanmember.find_unique(
             where={'username': username}
         )
         
+        print(f"[Badge Color API] Member found: {member is not None}, discordId: {member.discordId if member else None}")
+        
         if not member or not member.discordId:
+            print(f"[Badge Color API] No member or no discordId for {username}")
             return {'selectedBadgeId': None, 'badgeColorInfo': None}
         
         user = await prisma.user.find_unique(
@@ -2093,14 +2099,20 @@ async def get_player_badge_color(username: str):
             select={'selectedBadgeId': True}
         )
         
+        print(f"[Badge Color API] User found: {user is not None}, selectedBadgeId: {user.selectedBadgeId if user else None}")
+        
         if not user or not user.selectedBadgeId:
+            print(f"[Badge Color API] No user or no selectedBadgeId for discordId {member.discordId}")
             return {'selectedBadgeId': None, 'badgeColorInfo': None}
         
         badge = await prisma.custombadge.find_unique(
             where={'id': user.selectedBadgeId}
         )
         
+        print(f"[Badge Color API] Badge found: {badge is not None}, allowOverride: {badge.allowUsernameColorOverride if badge else None}")
+        
         if not badge or not badge.allowUsernameColorOverride:
+            print(f"[Badge Color API] No badge or override not allowed for badge {user.selectedBadgeId}")
             return {'selectedBadgeId': None, 'badgeColorInfo': None}
         
         badge_color_info = {
@@ -2108,6 +2120,8 @@ async def get_player_badge_color(username: str):
             'backgroundColor': badge.backgroundColor,
             'gradientColors': badge.gradientColors
         }
+        
+        print(f"[Badge Color API] Returning badge color info: {badge_color_info}")
         
         return {
             'selectedBadgeId': user.selectedBadgeId,
