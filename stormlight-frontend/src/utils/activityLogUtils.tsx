@@ -1,4 +1,4 @@
-import { LucideIcon, Compass, BarChart4, Castle, Scroll, Sword } from 'lucide-react'
+import { LucideIcon, Compass, BarChart4, Castle, PackageOpen, Sword } from 'lucide-react'
 
 export interface ActivityEntry {
   username: string
@@ -93,7 +93,7 @@ export function getActivityVisual(activity: ActivityEntry): ActivityVisual {
     case 'item':
       return {
         color: '#be9a55', // Gold
-        Icon: Scroll
+        Icon: PackageOpen
       }
     
     case 'monster':

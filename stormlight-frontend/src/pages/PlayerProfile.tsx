@@ -1072,7 +1072,7 @@ const PlayerProfile = () => {
               <Card className="bg-slate-800/50 border-slate-700">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center space-x-2">
-                    <BarChart2 className="w-5 h-5 text-yellow-400" />
+                    <BarChart2 className="w-5 h-5 text-[#a855f7]" />
                     <span>Skills at 120 [{skillsAt120Plus.length}]</span>
                   </CardTitle>
                 </CardHeader>

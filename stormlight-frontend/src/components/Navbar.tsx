@@ -9,7 +9,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from './ui/dropdown-menu'
-import { Home, Users, Trophy, LogOut, Settings } from 'lucide-react'
+import { Home, Users, Trophy, LogOut, Settings, Key } from 'lucide-react'
 
 const Navbar = () => {
   const { user, logout } = useAuth()
@@ -102,7 +102,7 @@ const Navbar = () => {
                       to="/admin" 
                       className="text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer"
                     >
-                      <Settings className="mr-2 h-4 w-4" />
+                      <Key className="mr-2 h-4 w-4" />
                       <span>Admin Panel</span>
                     </Link>
                   </DropdownMenuItem>

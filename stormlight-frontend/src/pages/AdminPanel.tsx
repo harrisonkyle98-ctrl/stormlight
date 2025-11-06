@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { Navigate } from 'react-router-dom'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Card, CardContent } from '../components/ui/card'
-import { Settings, Home, Award, Trophy, ArrowBigUpDash, UsersRound } from 'lucide-react'
+import { Home, Award, Trophy, ArrowBigUp, UsersRound, Key } from 'lucide-react'
 import { Spinner } from '../components/ui/spinner'
 import { AdminHomeTab } from '../components/admin/AdminHomeTab'
 import { BadgeManagementTab } from '../components/admin/BadgeManagementTab'
@@ -32,7 +32,7 @@ const AdminPanel = () => {
     <div className="space-y-6">
       <div className="text-center">
         <h1 className="text-3xl font-bold text-white mb-2">
-          <Settings className="inline-block w-8 h-8 mr-2 text-theme-accent-light" />
+          <Key className="inline-block w-8 h-8 mr-2 text-theme-accent-light" />
           Admin Control Panel
         </h1>
         <p className="text-slate-300">Manage clan settings and operations</p>
@@ -55,7 +55,7 @@ const AdminPanel = () => {
                 <span>Competitions</span>
               </TabsTrigger>
               <TabsTrigger value="ranks" className="flex items-center space-x-2">
-                <ArrowBigUpDash className="w-4 h-4" />
+                <ArrowBigUp className="w-4 h-4" />
                 <span>Rank Tracking</span>
               </TabsTrigger>
               <TabsTrigger value="memberlog" className="flex items-center space-x-2">
