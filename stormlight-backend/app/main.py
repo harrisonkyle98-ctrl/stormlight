@@ -2095,8 +2095,7 @@ async def get_player_badge_color(username: str):
             return {'selectedBadgeId': None, 'badgeColorInfo': None}
         
         user = await prisma.user.find_unique(
-            where={'discordId': member.discordId},
-            select={'selectedBadgeId': True}
+            where={'discordId': member.discordId}
         )
         
         print(f"[Badge Color API] User found: {user is not None}, selectedBadgeId: {user.selectedBadgeId if user else None}")
