@@ -86,6 +86,14 @@ html[data-theme='sunset'] {
 /* Keep CSS variables for other component styling */
 :root {
   --page-bg: linear-gradient(180deg, #081d47 0%, #0b2c78 100%);
+  
+  /* Default button colors (Sapphire theme) - prevents transparent buttons before JS loads */
+  --color-button: #2563eb;
+  --color-button-hover: #1d4ed8;
+  --color-button-active: #1e40af;
+  --theme-button: #2563eb;
+  --theme-button-hover: #1d4ed8;
+  --theme-button-active: #1e40af;
 }
 
 [data-theme='blue'] {

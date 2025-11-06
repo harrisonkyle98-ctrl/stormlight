@@ -28,6 +28,17 @@ export function ThemeProvider({ children, user, loading }: ThemeProviderProps) {
   const isInitialMount = useRef(true)
 
   useLayoutEffect(() => {
+    const storedTheme = localStorage.getItem('selectedTheme') || defaultTheme
+    const root = document.documentElement
+    
+    root.setAttribute('data-theme', storedTheme)
+    setThemeState(storedTheme)
+    applyTheme(themes[storedTheme])
+    
+    console.log('🎨 [Early Init] Applied theme from localStorage:', storedTheme)
+  }, []) // Empty dependency array - runs once on mount
+
+  useLayoutEffect(() => {
     const root = document.documentElement
     if (!root.dataset.theme) {
       root.setAttribute('data-theme', defaultTheme)
