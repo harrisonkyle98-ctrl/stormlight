@@ -463,6 +463,51 @@ def invalidate_player_cache(username: str):
         profile_history_cache['timestamps'].pop(key, None)
         print(f"🗑️ Cache invalidated for key: {key}")
 
+async def compute_today_overall_gain(conn, username: str, current_stats: dict, today) -> int:
+    """
+    Compute today's overall XP gain by comparing current stats with today's baseline snapshot.
+    Shared logic used by both profile visits and background refresh worker.
+    
+    Returns: Overall XP gain for today (0 if no baseline or error)
+    """
+    try:
+        try:
+            from .database import get_snapshot_json_on_or_before
+        except ImportError:
+            from database import get_snapshot_json_on_or_before
+        
+        baseline_snapshot = await get_snapshot_json_on_or_before(conn, username, today)
+        
+        if not baseline_snapshot or 'overall' not in baseline_snapshot:
+            return 0
+        
+        current_overall_xp = current_stats.get('stats', {}).get('overall', {}).get('xp', 0)
+        baseline_overall_xp = baseline_snapshot.get('overall', {}).get('xp', 0)
+        
+        xp_gain = max(0, current_overall_xp - baseline_overall_xp)
+        return xp_gain
+        
+    except Exception as e:
+        print(f"[Compute Today Gain] Error for {username}: {e}")
+        return 0
+
+async def try_acquire_advisory_lock(conn, lock_id: int) -> bool:
+    """Try to acquire a Postgres advisory lock for cross-machine coordination"""
+    try:
+        cursor = await conn.execute("SELECT pg_try_advisory_lock(%s)", (lock_id,))
+        result = await cursor.fetchone()
+        return result[0] if result else False
+    except Exception as e:
+        print(f"[Advisory Lock] Error acquiring lock {lock_id}: {e}")
+        return False
+
+async def release_advisory_lock(conn, lock_id: int):
+    """Release a Postgres advisory lock"""
+    try:
+        await conn.execute("SELECT pg_advisory_unlock(%s)", (lock_id,))
+    except Exception as e:
+        print(f"[Advisory Lock] Error releasing lock {lock_id}: {e}")
+
 SKILL_TABLE_MAPPING = {
     'overall': 0, 'attack': 1, 'defence': 2, 'strength': 3, 'constitution': 4,
     'ranged': 5, 'prayer': 6, 'magic': 7, 'cooking': 8, 'woodcutting': 9,
@@ -7205,16 +7250,6 @@ async def startup_event():
                         except Exception as e:
                             print(f"❌ [Scheduler][HOURLY] Error cleaning up activities: {e}")
                         
-                        print(f"🚀 [Scheduler][HOURLY] Starting Today XP gains calculation at {now.isoformat()}Z")
-                        try:
-                            updated_count = await update_today_gains_for_all_members()
-                            completion_time = datetime.now(timezone.utc).isoformat()
-                            print(f"✅ [Scheduler][HOURLY] Today XP gains calculation completed at {completion_time}Z: {updated_count} members updated")
-                        except Exception as e:
-                            print(f"❌ [Scheduler][HOURLY] Error calculating Today XP gains: {e}")
-                            import traceback
-                            traceback.print_exc()
-                        
                         last_sync_hour = current_hour
                         print(f"✅ [Scheduler][HOURLY] All hourly tasks completed for hour {current_hour}. Next run: {(current_hour + 1) % 24}:00 UTC")
                     
@@ -7227,6 +7262,38 @@ async def startup_event():
         
         asyncio.create_task(hourly_scheduler())
         print("✅ [Scheduler] Hourly scheduler task has been created and started")
+        
+        async def thirty_minute_scheduler():
+            """30-minute scheduler for updating today's XP gains for all members"""
+            print("🚀 [Scheduler] 30-minute Today Gains scheduler task created, waiting 60s before first run...")
+            await asyncio.sleep(60)
+            print("✅ [Scheduler] 30-minute scheduler initial wait complete, starting loop")
+            
+            while True:
+                try:
+                    from datetime import timezone
+                    now = datetime.now(timezone.utc)
+                    machine_id = os.getenv('FLY_MACHINE_ID', 'local')
+                    
+                    print(f"🔄 [Scheduler][30MIN] Starting Today XP gains calculation at {now.isoformat()}Z (machine: {machine_id})")
+                    try:
+                        updated_count = await update_today_gains_for_all_members()
+                        completion_time = datetime.now(timezone.utc).isoformat()
+                        print(f"✅ [Scheduler][30MIN] Today XP gains calculation completed at {completion_time}Z: {updated_count} members updated (machine: {machine_id})")
+                    except Exception as e:
+                        print(f"❌ [Scheduler][30MIN] Error calculating Today XP gains: {e} (machine: {machine_id})")
+                        import traceback
+                        traceback.print_exc()
+                    
+                except Exception as e:
+                    print(f"❌ [Scheduler][30MIN] Critical error in 30-minute scheduler: {e}")
+                    import traceback
+                    traceback.print_exc()
+                
+                await asyncio.sleep(1800)
+        
+        asyncio.create_task(thirty_minute_scheduler())
+        print("✅ [Scheduler] 30-minute Today Gains scheduler task has been created and started")
         
     except Exception as e:
         print(f"❌ Error during startup: {e}")
@@ -7408,6 +7475,41 @@ async def get_members_active_today(
         import traceback
         traceback.print_exc()
         return {"active_members": [], "total_active": 0, "last_updated": None}
+
+@app.post("/api/admin/refresh-today-gains")
+async def admin_refresh_today_gains(limit: int = Query(None, ge=1, le=500)):
+    """Admin endpoint to manually trigger today's XP gains refresh for all members"""
+    try:
+        from datetime import datetime, timezone
+        
+        machine_id = os.getenv('FLY_MACHINE_ID', 'local')
+        start_time = datetime.now(timezone.utc)
+        
+        print(f"[Admin Refresh] Manual today gains refresh triggered at {start_time.isoformat()}Z (machine: {machine_id})")
+        
+        updated_count = await update_today_gains_for_all_members()
+        
+        end_time = datetime.now(timezone.utc)
+        elapsed = (end_time - start_time).total_seconds()
+        
+        print(f"[Admin Refresh] Manual refresh completed: {updated_count} members updated in {elapsed:.2f}s")
+        
+        return {
+            'success': True,
+            'members_updated': updated_count,
+            'started_at': start_time.isoformat(),
+            'completed_at': end_time.isoformat(),
+            'elapsed_seconds': elapsed,
+            'machine_id': machine_id
+        }
+    except Exception as e:
+        print(f"[Admin Refresh] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'error': str(e)
+        }
 
 @app.get("/api/admin/debug/today-gains")
 async def debug_today_gains():
