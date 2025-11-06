@@ -1552,7 +1552,7 @@ const Home = () => {
                             title={badge.description || badge.name}
                           >
                             <img 
-                              src={`https://stormlight.fly.dev${badge.imageUrl}`} 
+                              src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
                               alt={badge.name} 
                               className="w-4 h-4"
                             />
