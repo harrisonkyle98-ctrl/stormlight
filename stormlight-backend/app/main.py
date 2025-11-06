@@ -1978,46 +1978,96 @@ async def update_selected_badge(
         
         body = await request.json()
         badge_id = body.get('badgeId')
+        print(f"🔄 Updating selected badge for user {user_id} to: {badge_id}")
         
         user = await prisma.user.find_unique(
-            where={'discordId': user_id},
-            select={'username': True, 'selectedBadgeId': True}
+            where={'discordId': user_id}
         )
         
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
+        print(f"✅ Found user: {user.username}")
+        
         if badge_id:
             member = await prisma.clanmember.find_unique(
-                where={'username': user.username}
+                where={'discordId': user_id}
             )
+            
+            if not member:
+                print(f"⚠️ No clan member found for discordId {user_id}, trying username fallback")
+                member = await prisma.clanmember.find_unique(
+                    where={'username': user.username}
+                )
             
             if not member or not member.badges:
+                print(f"❌ User has no badges")
                 raise HTTPException(status_code=400, detail="User has no badges")
             
-            badge_ids = member.badges if isinstance(member.badges, list) else json.loads(member.badges)
+            try:
+                parsed = member.badges if isinstance(member.badges, list) else json.loads(member.badges or "[]")
+                print(f"✅ Parsed badges: {parsed}")
+                
+                ids = []
+                names = []
+                
+                for item in parsed:
+                    if isinstance(item, dict):
+                        if item.get('id'):
+                            ids.append(str(item['id']))
+                        if item.get('name'):
+                            names.append(str(item['name']))
+                    elif isinstance(item, str):
+                        s = item.strip()
+                        if s:
+                            ids.append(s)
+                            names.append(s)
+                
+                ids = list(dict.fromkeys(ids))
+                names = list(dict.fromkeys(names))
+                
+                print(f"✅ Extracted badge IDs: {ids}")
+                print(f"✅ Extracted badge names: {names}")
+                
+            except (json.JSONDecodeError, TypeError) as parse_error:
+                print(f"⚠️ Could not parse badges: {member.badges} - Error: {parse_error}")
+                raise HTTPException(status_code=400, detail="Invalid badge data")
             
-            if badge_id not in badge_ids:
+            badge_id_str = str(badge_id)
+            if badge_id_str not in ids and badge_id_str not in names:
+                print(f"❌ Badge {badge_id_str} not found in user's badges")
                 raise HTTPException(status_code=400, detail="Badge not assigned to user")
             
+            print(f"✅ Badge {badge_id_str} found in user's badges")
+            
             badge = await prisma.custombadge.find_unique(
-                where={'id': badge_id}
+                where={'id': badge_id_str}
             )
             
+            if not badge:
+                print(f"⚠️ Badge not found by ID, trying by name...")
+                badge = await prisma.custombadge.find_first(
+                    where={'name': badge_id_str}
+                )
+            
             if not badge or not badge.allowUsernameColorOverride:
+                print(f"❌ Badge not eligible for username color override")
                 raise HTTPException(status_code=400, detail="Badge not eligible for username color override")
+            
+            print(f"✅ Badge {badge.name} (ID: {badge.id}) is eligible for username color override")
         
         await prisma.user.update(
             where={'discordId': user_id},
             data={'selectedBadgeId': badge_id}
         )
         
+        print(f"✅ Successfully updated selected badge to: {badge_id}")
         return {'success': True, 'selectedBadgeId': badge_id}
     
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error updating selected badge: {e}")
+        print(f"❌ Error updating selected badge: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail="Failed to update selected badge")
