@@ -1887,44 +1887,58 @@ async def get_eligible_badges(user_id: str = Depends(verify_token)):
         print(f"📦 Raw badges data: {member.badges} (type: {type(member.badges)})")
         
         try:
-            badge_ids_raw = member.badges if isinstance(member.badges, list) else json.loads(member.badges)
-            print(f"✅ Parsed badge_ids_raw: {badge_ids_raw} (type: {type(badge_ids_raw)})")
+            parsed = member.badges if isinstance(member.badges, list) else json.loads(member.badges or "[]")
+            print(f"✅ Parsed badges: {parsed} (type: {type(parsed)})")
             
-            badge_ids = [str(badge_id) for badge_id in badge_ids_raw if badge_id]
-            print(f"✅ Converted badge_ids to strings: {badge_ids}")
+            ids = []
+            names = []
+            
+            for item in parsed:
+                if isinstance(item, dict):
+                    if item.get('id'):
+                        ids.append(str(item['id']))
+                    if item.get('name'):
+                        names.append(str(item['name']))
+                elif isinstance(item, str):
+                    s = item.strip()
+                    if s:
+                        ids.append(s)
+                        names.append(s)
+            
+            ids = list(dict.fromkeys(ids))
+            names = list(dict.fromkeys(names))
+            
+            print(f"✅ Extracted badge IDs: {ids}")
+            print(f"✅ Extracted badge names: {names}")
         except (json.JSONDecodeError, TypeError) as parse_error:
             print(f"⚠️ Could not parse badges for user {user_id}: {member.badges} - Error: {parse_error}")
             return {'eligibleBadges': [], 'selectedBadgeId': user.selectedBadgeId}
         
-        if not badge_ids:
-            print(f"ℹ️ No badge IDs after parsing")
+        if not ids and not names:
+            print(f"ℹ️ No badge IDs or names after parsing")
             return {'eligibleBadges': [], 'selectedBadgeId': user.selectedBadgeId}
-        
-        print(f"🔍 Querying custom badges with IDs: {badge_ids}")
         
         all_override_badges = await prisma.custombadge.find_many(
             where={'allowUsernameColorOverride': True}
         )
         print(f"📋 All badges with override enabled: {[(b.id, b.name) for b in all_override_badges]}")
         
-        badges = await prisma.custombadge.find_many(
-            where={
-                'id': {'in': badge_ids},
-                'allowUsernameColorOverride': True
-            }
-        )
+        where_or = []
+        if ids:
+            where_or.append({'id': {'in': ids}})
+        if names:
+            where_or.append({'name': {'in': names}})
         
-        print(f"✅ Found {len(badges)} eligible badges matching IDs")
-        
-        if not badges and badge_ids:
-            print(f"⚠️ No badges found by ID, trying to match by name...")
+        badges = []
+        if where_or:
+            print(f"🔍 Querying custom badges with OR conditions: {where_or}")
             badges = await prisma.custombadge.find_many(
                 where={
-                    'name': {'in': badge_ids},
-                    'allowUsernameColorOverride': True
+                    'allowUsernameColorOverride': True,
+                    'OR': where_or
                 }
             )
-            print(f"✅ Found {len(badges)} eligible badges matching names")
+            print(f"✅ Found {len(badges)} eligible badges")
         
         eligible_badges = []
         for badge in badges:
