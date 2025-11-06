@@ -9,7 +9,7 @@ import { ArrowLeft, User, Scroll, Trophy, Package, Activity, BarChart3, Compass,
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { Spinner } from '../components/ui/spinner'
 import { getSkillIcon } from '../utils/skillIcons'
-import { getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
+import { checkPlayerMilestones } from '../utils/gradientUtils'
 import { urlToUsername } from '../utils/urlUtils'
 import { Username } from '../components/ui/username'
 import { useAuth } from '../contexts/AuthContext'

@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom'
 import { ActivityEntry, getActivityVisual } from '../../utils/activityLogUtils'
+import { Username } from '../ui/username'
 
 interface ActivityLogRowProps {
   activity: ActivityEntry
   formatTimeAgo: (timestamp: number) => string
-  getGradientStyle: (username: string, rank?: string) => React.CSSProperties
   usernameToUrl: (username: string) => string
   clanRank?: string
   className?: string
@@ -17,7 +17,6 @@ interface ActivityLogRowProps {
 export function ActivityLogRow({
   activity,
   formatTimeAgo,
-  getGradientStyle,
   usernameToUrl,
   clanRank,
   className = 'bg-slate-700/50'
@@ -44,9 +43,11 @@ export function ActivityLogRow({
             <Link
               to={`/clan-member/${usernameToUrl(activity.username)}`}
               className="text-white font-medium hover:text-blue-300 transition-colors flex-shrink-0"
-              style={getGradientStyle(activity.username, clanRank)}
             >
-              {activity.username}
+              <Username
+                username={activity.username}
+                clanRank={clanRank}
+              />
             </Link>
             <span className="text-slate-300 truncate">{activity.text}</span>
           </div>

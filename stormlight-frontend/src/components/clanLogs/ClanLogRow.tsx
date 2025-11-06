@@ -5,7 +5,6 @@ import { Username } from '../ui/username'
 interface ClanLogRowProps {
   entry: ClanLogEntry
   formatTimeAgo: (timestamp: number) => string
-  getGradientStyle: (username: string, rank?: string) => React.CSSProperties
   getRankIcon?: (rank: string) => string
   usernameToUrl: (username: string) => string
   className?: string
@@ -18,7 +17,6 @@ interface ClanLogRowProps {
 export function ClanLogRow({
   entry,
   formatTimeAgo,
-  getGradientStyle,
   getRankIcon,
   usernameToUrl,
   className = 'bg-slate-700/50'

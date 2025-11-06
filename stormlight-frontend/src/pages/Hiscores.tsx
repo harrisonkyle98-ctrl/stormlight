@@ -7,7 +7,7 @@ import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Search, Trophy, User } from 'lucide-react'
 import { Spinner } from '../components/ui/spinner'
-import { fetchClanMembers, getGradientStyle } from '../utils/gradientUtils'
+import { fetchClanMembers } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
 import { Username } from '../components/ui/username'
 
