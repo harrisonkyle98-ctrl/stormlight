@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { Users, Trophy, TrendingUp, User, Settings, Calendar, Activity } from 'lucide-react'
-import { fetchClanMembers, getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
+import { fetchClanMembers, checkPlayerMilestones } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { usernameToUrl } from '../utils/urlUtils'
