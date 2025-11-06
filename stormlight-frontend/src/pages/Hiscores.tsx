@@ -9,6 +9,7 @@ import { Search, Trophy, User } from 'lucide-react'
 import { Spinner } from '../components/ui/spinner'
 import { fetchClanMembers, getGradientStyle } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
+import { Username } from '../components/ui/username'
 
 interface PlayerStats {
   username: string
@@ -227,9 +228,11 @@ const Hiscores = () => {
                       <Link 
                         to={`/clan-member/${usernameToUrl(player.username)}`}
                         className="text-lg font-semibold hover:text-theme-accent-light transition-colors"
-                        style={getGradientStyle(player.username, clanMembers.find(m => m.username === player.username)?.clan_rank)}
                       >
-                        {player.username}
+                        <Username
+                          username={player.username}
+                          clanRank={clanMembers.find(m => m.username === player.username)?.clan_rank}
+                        />
                       </Link>
                       <p className="text-sm text-slate-400">
                         Last updated: {new Date(player.last_updated).toLocaleDateString()}

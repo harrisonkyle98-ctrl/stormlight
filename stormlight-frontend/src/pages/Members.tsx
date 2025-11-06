@@ -10,6 +10,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { Spinner } from '../components/ui/spinner'
 import { getGradientStyle, MilestoneBadge, checkPlayerMilestones } from '../utils/gradientUtils'
 import { usernameToUrl, normalizeDisplayUsername } from '../utils/urlUtils'
+import { Username } from '../components/ui/username'
 
 interface ClanMember {
   username: string

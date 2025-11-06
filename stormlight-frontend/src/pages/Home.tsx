@@ -14,6 +14,7 @@ import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip as Recharts
 import { themes } from '../config/themes'
 import { ClanLogRow } from '../components/clanLogs/ClanLogRow'
 import { ActivityLogRow } from '../components/activityLogs/ActivityLogRow'
+import { Username } from '../components/ui/username'
 
 const getRankIcon = (rank: string): string => {
   const rankImageMap: { [key: string]: string } = {
@@ -948,11 +949,10 @@ const Home = () => {
                           to={`/clan-member/${usernameToUrl(user.username)}`}
                           className="hover:opacity-80 transition-opacity"
                         >
-                          <span
-                            style={getGradientStyle(user.username, playerData.clan_rank)}
-                          >
-                            {user.username}
-                          </span>
+                          <Username
+                            username={user.username}
+                            clanRank={playerData.clan_rank}
+                          />
                         </Link>
                       </h1>
 
@@ -1256,9 +1256,11 @@ const Home = () => {
                           <Link
                             to={`/clan-member/${usernameToUrl(member.username)}`}
                             className="text-white font-medium hover:text-blue-300 transition-colors"
-                            style={getGradientStyle(member.username, clanMembers.find(m => m.username === member.username)?.clan_rank)}
                           >
-                            {member.username}
+                            <Username
+                              username={member.username}
+                              clanRank={clanMembers.find(m => m.username === member.username)?.clan_rank}
+                            />
                           </Link>
                         </div>
                         <span className="text-green-400 font-semibold">

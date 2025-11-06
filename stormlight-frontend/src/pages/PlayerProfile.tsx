@@ -11,6 +11,7 @@ import { Spinner } from '../components/ui/spinner'
 import { getSkillIcon } from '../utils/skillIcons'
 import { getGradientStyle, checkPlayerMilestones } from '../utils/gradientUtils'
 import { urlToUsername } from '../utils/urlUtils'
+import { Username } from '../components/ui/username'
 import { useAuth } from '../contexts/AuthContext'
 import { useProfileGains } from '../contexts/ProfileGainsContext'
 import { Tooltip } from '../components/ui/tooltip'
@@ -684,11 +685,10 @@ const PlayerProfile = () => {
                   </Avatar>
                   <div className="text-center">
                     <h1 className="text-2xl font-bold text-center">
-                      <span 
-                        style={getGradientStyle(urlToUsername(username || ''), playerData.clan_rank)}
-                      >
-                        {urlToUsername(username || '')}
-                      </span>
+                      <Username
+                        username={urlToUsername(username || '')}
+                        clanRank={playerData.clan_rank}
+                      />
                     </h1>
                     
                     {/* Rank Badge */}

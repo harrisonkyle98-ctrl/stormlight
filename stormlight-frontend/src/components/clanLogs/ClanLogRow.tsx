@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ClanLogEntry, getLogVisual } from '../../utils/clanLogUtils'
+import { Username } from '../ui/username'
 
 interface ClanLogRowProps {
   entry: ClanLogEntry
@@ -44,9 +45,11 @@ export function ClanLogRow({
             <Link
               to={`/clan-member/${usernameToUrl(entry.username)}`}
               className="text-white font-medium hover:text-blue-300 transition-colors"
-              style={getGradientStyle(entry.username, entry.new_rank || entry.old_rank)}
             >
-              {entry.username}
+              <Username
+                username={entry.username}
+                clanRank={entry.new_rank || entry.old_rank}
+              />
             </Link>
             <span className="text-slate-300">{message}</span>
           </div>

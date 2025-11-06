@@ -8,6 +8,7 @@ import { Spinner } from '../components/ui/spinner'
 import { getSkillIcon } from '../utils/skillIcons'
 import { fetchClanMembers, getGradientStyle } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
+import { Username } from '../components/ui/username'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { BingoBoard } from '../components/BingoBoard'
 
@@ -432,9 +433,11 @@ const CompetitionDetail = () => {
                   <Link 
                     to={`/clan-member/${usernameToUrl(player.username)}`}
                     className="text-lg font-semibold hover:text-theme-accent-light transition-colors"
-                    style={getGradientStyle(player.username, clanMembers.find(m => m.username === player.username)?.clan_rank)}
                   >
-                    {player.username}
+                    <Username
+                      username={player.username}
+                      clanRank={clanMembers.find(m => m.username === player.username)?.clan_rank}
+                    />
                   </Link>
                   {player.rank && player.rank <= 3 && (
                     <span className="text-lg">
