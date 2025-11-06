@@ -9,13 +9,11 @@ interface BadgeColorInfo {
 
 /**
  * Get the color style for a username based on their selected badge
- * @param username - The username to get color for
  * @param selectedBadgeId - The ID of the selected badge (if any)
  * @param eligibleBadges - Array of badges eligible for username color override
  * @returns CSS style object for the username
  */
 export const getUsernameColorStyle = (
-  username: string,
   selectedBadgeId: string | null | undefined,
   eligibleBadges: BadgeColorInfo[]
 ): React.CSSProperties => {
