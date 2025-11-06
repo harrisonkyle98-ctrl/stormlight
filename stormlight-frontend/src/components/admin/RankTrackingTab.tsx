@@ -247,16 +247,10 @@ export const RankTrackingTab = () => {
                       </div>
                     </TableCell>
                     <TableCell className="py-3">
-                      <div className="flex items-center space-x-2">
-                        <img src={getRankBadgeImage(tracking.actualRank)} alt={tracking.actualRank} className="w-5 h-5" />
-                        <span className="text-white">{tracking.actualRank}</span>
-                      </div>
+                      {renderRankBadge(tracking.actualRank, tracking.username)}
                     </TableCell>
                     <TableCell className="py-3">
-                      <div className="flex items-center space-x-2">
-                        <img src={getRankBadgeImage(tracking.rankNeeded)} alt={tracking.rankNeeded} className="w-5 h-5" />
-                        <span className="text-white">{tracking.rankNeeded}</span>
-                      </div>
+                      {renderRankBadge(tracking.rankNeeded, tracking.username)}
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-slate-300">
