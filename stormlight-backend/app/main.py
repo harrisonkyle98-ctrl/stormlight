@@ -4018,32 +4018,6 @@ async def get_site_health(admin_id: str = Depends(verify_admin_access)):
         print(f"Error fetching site health: {e}")
         raise HTTPException(status_code=500, detail="Error fetching site health")
 
-@api_router.post("/admin/apply-badge-migration")
-async def apply_badge_migration(admin_id: str = Depends(verify_admin_access)):
-    """Apply the badge username color override migration to the database"""
-    try:
-        global prisma, PRISMA_AVAILABLE
-        if not PRISMA_AVAILABLE or not prisma:
-            raise HTTPException(status_code=503, detail="Database not available")
-        
-        await prisma.execute_raw(
-            'ALTER TABLE "custom_badges" ADD COLUMN IF NOT EXISTS "allow_username_color_override" BOOLEAN NOT NULL DEFAULT false'
-        )
-        
-        await prisma.execute_raw(
-            'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "selected_badge_id" TEXT'
-        )
-        
-        return {
-            "success": True,
-            "message": "Migration applied successfully"
-        }
-    except Exception as e:
-        print(f"Error applying migration: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Failed to apply migration: {str(e)}")
-
 @api_router.get("/debug/auth")
 async def debug_auth_flow(token: str = Depends(verify_token)):
     """Debug authentication flow - TEMPORARY"""
