@@ -445,7 +445,7 @@ const PlayerProfile = () => {
         return 'text-[#d1d5db] border-[#a855f7]' // Purple border for 5.8B+ XP
       }
       if (level >= 3510) {
-        return 'text-[#d1d5db] border-[#facc15]' // Gold border for max total level
+        return 'text-[#d1d5db] border-[#be9a55]' // Bronze/gold border for max total level
       }
       return 'text-[#d1d5db] border-[#d1d5db]' // Dull grey for below 3510
     } else {
@@ -453,7 +453,7 @@ const PlayerProfile = () => {
         return 'text-[#d1d5db] border-[#a855f7]' // Purple border for 200M XP
       }
       if (level >= 120) {
-        return 'text-[#d1d5db] border-[#facc15]' // Gold border for 120+
+        return 'text-[#d1d5db] border-[#be9a55]' // Bronze/gold border for 120+
       }
       if (level >= 99) {
         return 'text-[#d1d5db] border-[#22c55e]' // Green border for 99-119
@@ -1072,7 +1072,7 @@ const PlayerProfile = () => {
               <Card className="bg-slate-800/50 border-slate-700">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center space-x-2">
-                    <BarChart2 className="w-5 h-5 text-[#a855f7]" />
+                    <BarChart2 className="w-5 h-5 text-[#be9a55]" />
                     <span>Skills at 120 [{skillsAt120Plus.length}]</span>
                   </CardTitle>
                 </CardHeader>
@@ -1135,7 +1135,7 @@ const PlayerProfile = () => {
               <Card className="bg-slate-800/50 border-slate-700">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center space-x-2">
-                    <BarChart2 className="w-5 h-5 text-[#06b6d4]" />
+                    <BarChart2 className="w-5 h-5 text-[#a855f7]" />
                     <span>Skills at 200m [{skillsAt200m.length}]</span>
                   </CardTitle>
                 </CardHeader>

@@ -125,6 +125,24 @@ export const RankTrackingTab = () => {
     return ['Owner', 'Deputy Owner', 'Overseer'].includes(rank)
   }
 
+  const getRankBadgeImage = (rank: string): string => {
+    const rankMap: { [key: string]: string } = {
+      'Owner': '/assets/ranks/owner.png',
+      'Deputy Owner': '/assets/ranks/depowner.png',
+      'Overseer': '/assets/ranks/overseer.png',
+      'Coordinator': '/assets/ranks/coordinator.png',
+      'Organiser': '/assets/ranks/organiser.png',
+      'Admin': '/assets/ranks/admin.png',
+      'General': '/assets/ranks/general.png',
+      'Captain': '/assets/ranks/captain.png',
+      'Lieutenant': '/assets/ranks/lieutenant.png',
+      'Sergeant': '/assets/ranks/sergeant.png',
+      'Corporal': '/assets/ranks/corporal.png',
+      'Recruit': '/assets/ranks/recruit.png'
+    }
+    return rankMap[rank] || '/assets/ranks/recruit.png'
+  }
+
   const filteredAndSortedTracking = rankTracking
     .filter(tracking => tracking.username.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => getRankPriority(a.actualRank) - getRankPriority(b.actualRank))
@@ -159,7 +177,7 @@ export const RankTrackingTab = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-white">Rank Tracking &amp; Longevity</h2>
         <div className="flex items-center space-x-2">
-          <Badge className="bg-yellow-600 text-white">
+          <Badge className="bg-[#be9a55] text-white">
             {dueForPromotionCount} Due for Promotion
           </Badge>
         </div>
@@ -185,9 +203,9 @@ export const RankTrackingTab = () => {
         <Card className="bg-slate-700/30 border-slate-600">
           <CardHeader>
             <CardTitle className="text-white flex items-center space-x-2">
-              <TrendingUp className="w-5 h-5 text-yellow-400" />
+              <TrendingUp className="w-5 h-5 text-[#be9a55]" />
               <span>Members Due for Promotion</span>
-              <Badge className="bg-yellow-600 text-white ml-2">
+              <Badge className="bg-[#be9a55] text-white ml-2">
                 {dueForPromotionMembers.length}
               </Badge>
             </CardTitle>
@@ -210,17 +228,23 @@ export const RankTrackingTab = () => {
                     <TableCell className="py-3">
                       <div className="flex items-center space-x-2">
                         <span className="text-white font-medium">{tracking.username}</span>
-                        <Badge className="bg-yellow-600 text-white">
+                        <Badge className="bg-[#be9a55] text-white">
                           <TrendingUp className="w-3 h-3 mr-1" />
                           Due
                         </Badge>
                       </div>
                     </TableCell>
                     <TableCell className="py-3">
-                      <span className="text-white">{tracking.actualRank}</span>
+                      <div className="flex items-center space-x-2">
+                        <img src={getRankBadgeImage(tracking.actualRank)} alt={tracking.actualRank} className="w-5 h-5" />
+                        <span className="text-white">{tracking.actualRank}</span>
+                      </div>
                     </TableCell>
                     <TableCell className="py-3">
-                      <span className="text-white">{tracking.rankNeeded}</span>
+                      <div className="flex items-center space-x-2">
+                        <img src={getRankBadgeImage(tracking.rankNeeded)} alt={tracking.rankNeeded} className="w-5 h-5" />
+                        <span className="text-white">{tracking.rankNeeded}</span>
+                      </div>
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-slate-300">
@@ -314,10 +338,16 @@ export const RankTrackingTab = () => {
                       <span className="text-white font-medium">{tracking.username}</span>
                     </TableCell>
                     <TableCell className="py-3">
-                      <span className="text-white">{tracking.actualRank}</span>
+                      <div className="flex items-center space-x-2">
+                        <img src={getRankBadgeImage(tracking.actualRank)} alt={tracking.actualRank} className="w-5 h-5" />
+                        <span className="text-white">{tracking.actualRank}</span>
+                      </div>
                     </TableCell>
                     <TableCell className="py-3">
-                      <span className="text-white">{tracking.rankNeeded}</span>
+                      <div className="flex items-center space-x-2">
+                        <img src={getRankBadgeImage(tracking.rankNeeded)} alt={tracking.rankNeeded} className="w-5 h-5" />
+                        <span className="text-white">{tracking.rankNeeded}</span>
+                      </div>
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-slate-300">
@@ -412,9 +442,9 @@ export const RankTrackingTab = () => {
         <Card className="bg-slate-700/30 border-slate-600">
           <CardHeader>
             <CardTitle className="text-white flex items-center space-x-2">
-              <Crown className="w-5 h-5 text-[#facc15]" />
+              <Crown className="w-5 h-5 text-[#be9a55]" />
               <span>Leadership Ranks</span>
-              <Badge className="bg-[#facc15] text-slate-900 ml-2">
+              <Badge className="bg-[#be9a55] text-white ml-2">
                 {leadershipMembers.length}
               </Badge>
             </CardTitle>
@@ -438,10 +468,13 @@ export const RankTrackingTab = () => {
                       <span className="text-white font-medium">{tracking.username}</span>
                     </TableCell>
                     <TableCell className="py-3">
-                      <span className="text-[#facc15] font-medium">{tracking.actualRank}</span>
+                      <div className="flex items-center space-x-2">
+                        <img src={getRankBadgeImage(tracking.actualRank)} alt={tracking.actualRank} className="w-5 h-5" />
+                        <span className="text-[#be9a55] font-medium">{tracking.actualRank}</span>
+                      </div>
                     </TableCell>
                     <TableCell className="py-3">
-                      <Badge className="bg-[#facc15] text-slate-900 pointer-events-none">Leadership</Badge>
+                      <Badge className="bg-[#be9a55] text-white pointer-events-none">Leadership</Badge>
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-slate-300">
