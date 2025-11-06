@@ -412,6 +412,62 @@ async def log_clan_event_if_new(username: str, event_type: str, old_rank: str = 
         return None
 
 
+async def log_competition_event(competition_id: str, competition_name: str, event_type: str):
+    """Log competition start/end events to clan log"""
+    try:
+        existing_log = await prisma.clanlog.find_first(
+            where={
+                'username': competition_name,
+                'eventType': event_type,
+                'oldRank': competition_id,
+            },
+            order={'timestamp': 'desc'}
+        )
+        
+        if existing_log:
+            print(f"🔁 Competition event already logged: {event_type} for {competition_name}")
+            return None
+            
+        print(f"📝 Logging competition event: {event_type} for {competition_name}")
+        return await prisma.clanlog.create(data={
+            'username': competition_name,
+            'eventType': event_type,
+            'oldRank': competition_id,  # Store competition ID for linking
+            'newRank': None,
+            'timestamp': datetime.now(),
+        })
+    except Exception as e:
+        print(f"⚠️ Failed to log competition event for {competition_name}: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+async def check_and_log_competition_events():
+    """Check all competitions and log start/end events"""
+    try:
+        if not PRISMA_AVAILABLE or not prisma:
+            return
+        
+        from datetime import timezone
+        now = datetime.now(timezone.utc)
+        
+        competitions = await prisma.competition.find_many(
+            order={'startDate': 'desc'}
+        )
+        
+        for comp in competitions:
+            if now >= comp.startDate and now < comp.endDate:
+                await log_competition_event(comp.id, comp.name, 'competition_start')
+            elif now >= comp.endDate:
+                await log_competition_event(comp.id, comp.name, 'competition_end')
+                
+    except Exception as e:
+        print(f"❌ Error checking competition events: {e}")
+        import traceback
+        traceback.print_exc()
+
+
 def is_rate_limited(client_ip: str, endpoint: str) -> bool:
     """Check if client is rate limited for profile endpoints"""
     if not endpoint.startswith('/api/player/'):
@@ -7249,6 +7305,15 @@ async def startup_event():
                                 await cleanup_old_activities(conn, days_to_keep=30)
                         except Exception as e:
                             print(f"❌ [Scheduler][HOURLY] Error cleaning up activities: {e}")
+                        
+                        print(f"🏆 [Scheduler][HOURLY] Checking competition events at {now.isoformat()}Z")
+                        try:
+                            await check_and_log_competition_events()
+                            print(f"✅ [Scheduler][HOURLY] Competition event check completed")
+                        except Exception as e:
+                            print(f"❌ [Scheduler][HOURLY] Error checking competition events: {e}")
+                            import traceback
+                            traceback.print_exc()
                         
                         last_sync_hour = current_hour
                         print(f"✅ [Scheduler][HOURLY] All hourly tasks completed for hour {current_hour}. Next run: {(current_hour + 1) % 24}:00 UTC")
