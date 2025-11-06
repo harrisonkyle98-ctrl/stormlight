@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts'
 import { themes } from '../config/themes'
 import { ClanLogRow } from '../components/clanLogs/ClanLogRow'
+import { ActivityLogRow } from '../components/activityLogs/ActivityLogRow'
 
 const getRankIcon = (rank: string): string => {
   const rankImageMap: { [key: string]: string } = {
@@ -1321,20 +1322,15 @@ const Home = () => {
           <div className="space-y-4">
             {activities.length > 0 ? (
               activities.map((activity, index) => (
-                <div key={`${activity.username}-${activity.timestamp}-${index}`} className="p-3 bg-slate-700/50 rounded-lg">
-                  <p className="text-slate-300 text-center mb-1">
-                    <Link
-                      to={`/clan-member/${usernameToUrl(activity.username)}`}
-                      className="text-white font-medium hover:text-blue-300 transition-colors"
-                      style={getGradientStyle(activity.username, clanMembers.find(m => m.username === activity.username)?.clan_rank)}
-                    >
-                      {activity.username}
-                    </Link>
-                    {' '}
-                    {activity.text}
-                  </p>
-                  <p className="text-slate-400 text-xs text-center">{formatTimeAgo(activity.timestamp)}</p>
-                </div>
+                <ActivityLogRow
+                  key={`${activity.username}-${activity.timestamp}-${index}`}
+                  activity={activity}
+                  formatTimeAgo={formatTimeAgo}
+                  getGradientStyle={getGradientStyle}
+                  usernameToUrl={usernameToUrl}
+                  clanRank={clanMembers.find(m => m.username === activity.username)?.clan_rank}
+                  className="bg-slate-700/50"
+                />
               ))
             ) : (
               <div className="text-center py-8">

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Activity } from 'lucide-react'
 import { usernameToUrl } from '../../utils/urlUtils'
+import { getGradientStyle } from '../../utils/gradientUtils'
+import { ActivityLogRow } from '../activityLogs/ActivityLogRow'
 
 interface TabProps {
   username: string;
@@ -85,13 +87,16 @@ export const ActivityTab = ({ username, playerData: _playerData, API_URL }: TabP
     );
   }
 
-  const toMMDDYYYY = (ts: number): string => {
-    const ms = ts > 1000000000000 ? ts : ts * 1000
-    const d = new Date(ms)
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const dd = String(d.getDate()).padStart(2, '0')
-    const yyyy = d.getFullYear()
-    return `${mm}-${dd}-${yyyy}`
+  const formatTimeAgo = (timestamp: number): string => {
+    const now = Date.now() / 1000
+    const ts = timestamp > 1000000000000 ? timestamp / 1000 : timestamp
+    const diff = now - ts
+
+    if (diff < 60) return 'just now'
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+    if (diff < 2592000) return `${Math.floor(diff / 86400)}d ago`
+    return `${Math.floor(diff / 2592000)}mo ago`
   }
 
   return (
@@ -99,11 +104,14 @@ export const ActivityTab = ({ username, playerData: _playerData, API_URL }: TabP
       {activities.length > 0 ? (
         <>
           {activities.map((activity, index) => (
-            <div key={index} className="bg-slate-700/50 p-4 rounded-lg">
-              <p className="text-white font-medium">{activity.username}</p>
-              <p className="text-slate-300">{activity.text}</p>
-              <p className="text-slate-500 text-sm">{toMMDDYYYY(activity.timestamp)}</p>
-            </div>
+            <ActivityLogRow
+              key={index}
+              activity={activity}
+              formatTimeAgo={formatTimeAgo}
+              getGradientStyle={getGradientStyle}
+              usernameToUrl={usernameToUrl}
+              className="bg-slate-700/50"
+            />
           ))}
           
           {hasMoreActivities && (
