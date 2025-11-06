@@ -1859,14 +1859,24 @@ async def get_eligible_badges(user_id: str = Depends(verify_token)):
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        member = await prisma.clanmember.find_unique(
-            where={'username': user.username}
+        member = await prisma.clanmember.find_first(
+            where={'discordId': user_id}
         )
+        
+        if not member:
+            # Fallback to username lookup if discordId not found
+            member = await prisma.clanmember.find_unique(
+                where={'username': user.username}
+            )
         
         if not member or not member.badges:
             return {'eligibleBadges': [], 'selectedBadgeId': user.selectedBadgeId}
         
-        badge_ids = member.badges if isinstance(member.badges, list) else json.loads(member.badges)
+        try:
+            badge_ids = member.badges if isinstance(member.badges, list) else json.loads(member.badges)
+        except (json.JSONDecodeError, TypeError):
+            print(f"Warning: Could not parse badges for user {user_id}: {member.badges}")
+            return {'eligibleBadges': [], 'selectedBadgeId': user.selectedBadgeId}
         
         if not badge_ids:
             return {'eligibleBadges': [], 'selectedBadgeId': user.selectedBadgeId}
