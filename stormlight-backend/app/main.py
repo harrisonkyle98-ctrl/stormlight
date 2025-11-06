@@ -1854,8 +1854,7 @@ async def get_eligible_badges(user_id: str = Depends(verify_token)):
         print(f"🔍 Fetching eligible badges for user_id: {user_id}")
         
         user = await prisma.user.find_unique(
-            where={'discordId': user_id},
-            select={'username': True, 'selectedBadgeId': True}
+            where={'discordId': user_id}
         )
         
         if not user:
