@@ -155,11 +155,6 @@ export const RankTrackingTab = () => {
     )
   }
 
-  const dueForPromotionSet = useMemo(() => 
-    new Set(dueForPromotionMembers.map(m => m.username)), 
-    [dueForPromotionMembers]
-  )
-
   const filteredAndSortedTracking = rankTracking
     .filter(tracking => tracking.username.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => getRankPriority(a.actualRank) - getRankPriority(b.actualRank))
@@ -170,6 +165,11 @@ export const RankTrackingTab = () => {
   )
   const activeMembers = filteredAndSortedTracking.filter(t => 
     !isLeadershipRank(t.actualRank) && !t.dueForPromotion
+  )
+
+  const dueForPromotionSet = useMemo(() => 
+    new Set(dueForPromotionMembers.map(m => m.username)), 
+    [dueForPromotionMembers]
   )
 
   const totalActivePages = Math.ceil(activeMembers.length / pageSize)
