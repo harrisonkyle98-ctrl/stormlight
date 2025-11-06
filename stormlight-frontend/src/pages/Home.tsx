@@ -1319,7 +1319,7 @@ const Home = () => {
               ))}
             </div>
           ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {activities.length > 0 ? (
               activities.map((activity, index) => (
                 <ActivityLogRow

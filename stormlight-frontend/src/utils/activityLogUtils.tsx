@@ -98,7 +98,7 @@ export function getActivityVisual(activity: ActivityEntry): ActivityVisual {
     
     case 'monster':
       return {
-        color: '#9f3f3f', // Dark red
+        color: '#af4f4f', // Red
         Icon: Sword
       }
   }
