@@ -134,7 +134,6 @@ export const LogTab = ({ username, playerData: _playerData, API_URL }: TabProps)
           key={entry.id}
           entry={entry}
           formatTimeAgo={formatTimeAgo}
-          getGradientStyle={getGradientStyle}
           getRankIcon={getRankIcon}
           usernameToUrl={usernameToUrl}
           className="bg-slate-700/50"

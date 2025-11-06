@@ -1319,7 +1319,6 @@ const Home = () => {
                   key={entry.id}
                   entry={entry}
                   formatTimeAgo={formatTimeAgo}
-                  getGradientStyle={getGradientStyle}
                   getRankIcon={getRankIcon}
                   usernameToUrl={usernameToUrl}
                 />
@@ -1362,7 +1361,6 @@ const Home = () => {
                   key={`${activity.username}-${activity.timestamp}-${index}`}
                   activity={activity}
                   formatTimeAgo={formatTimeAgo}
-                  getGradientStyle={getGradientStyle}
                   usernameToUrl={usernameToUrl}
                   clanRank={clanMembers.find(m => m.username === activity.username)?.clan_rank}
                   className="bg-slate-700/50"

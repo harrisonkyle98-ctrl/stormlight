@@ -152,7 +152,6 @@ export const MemberLogTab = () => {
                     key={entry.id}
                     entry={entry}
                     formatTimeAgo={formatTimeAgo}
-                    getGradientStyle={getGradientStyle}
                     usernameToUrl={usernameToUrl}
                     className="bg-slate-600/30"
                   />
