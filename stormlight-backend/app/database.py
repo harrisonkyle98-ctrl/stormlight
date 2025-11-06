@@ -195,18 +195,12 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
                 stats_data = await asyncio.wait_for(fetch_player_stats(username), timeout=25)
                 
                 if not stats_data or 'stats' not in stats_data:
-                    print(f"[Bulk Snapshots] ❌ No stats for {username} (attempt {attempt + 1}/{max_retries + 1})")
                     return False, None, None
 
                 conn = await get_db_connection()
                 async with conn:
                     await ensure_today_snapshot(conn, username, stats_data)
                 
-                api_name = stats_data.get('username')
-                if api_name and api_name != username:
-                    print(f"[Bulk Snapshots] ℹ️ Detected rename: requested '{username}' -> API '{api_name}'")
-                
-                print(f"[Bulk Snapshots] ✅ Completed {username} on attempt {attempt + 1}")
                 return True, stats_data, None
                 
             except Exception as e:
@@ -214,11 +208,9 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
                 non_retryable = any(s in err for s in ["404", "not found", "invalid", "no hiscore", "private profile", "profile_private", "not_a_member"])
                 if attempt < max_retries and not non_retryable:
                     delay = retry_delays[attempt]
-                    print(f"[Bulk Snapshots] ⚠️ Retry {attempt + 1}/{max_retries + 1} for {username} after {delay}s: {e}")
                     await asyncio.sleep(delay)
                 else:
                     failure_reason = classify_failure_reason(username, e, None)
-                    print(f"[Bulk Snapshots] ❌ Final failure for {username} (attempt {attempt + 1}): {failure_reason} - {e} (non_retryable={non_retryable})")
                     return False, None, failure_reason
         
         return False, None, None
@@ -229,20 +221,19 @@ async def collect_daily_player_stats_cycle(usernames: list[str], cycle_num: int,
     
     for i, username in enumerate(usernames):
         global_idx = start_index_base + processed + 1
-        print(f"[Bulk Snapshots] Cycle {cycle_num} ▶️ Member #{global_idx}: {username}")
         ok, stats_data, err = await process_member_with_retry(username, max_retries=5)
         processed += 1
         if ok:
             succeeded += 1
-            print(f"[Bulk Snapshots] Cycle {cycle_num} ✅ #{global_idx} {username} (succeeded={succeeded}, failed={failed})")
+            if global_idx % 5 == 0 or global_idx == start_index_base + len(usernames):
+                print(f"[Bulk Snapshots] Cycle {cycle_num} Progress: #{global_idx} (succeeded={succeeded}, failed={failed})")
         else:
             failed += 1
             failed_users.append(username)
             reason = classify_failure_reason(username, err, stats_data)
             failure_reasons[username] = reason
-            print(f"[Bulk Snapshots] Cycle {cycle_num} ❌ #{global_idx} {username} (succeeded={succeeded}, failed={failed}) reason={reason}")
-            if reason and "RATE_LIMIT" not in reason:
-                print(f"[Bulk Snapshots] 🔍 Detailed failure for {username}: {reason}")
+            if failed <= 10:
+                print(f"[Bulk Snapshots] Cycle {cycle_num} ❌ #{global_idx} {username}: {reason}")
         
         if i < len(usernames) - 1:
             delay_with_jitter = 3.0 + random.uniform(-0.3, 0.3)
@@ -304,14 +295,14 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
         cycle_num = 0
         start = datetime.utcnow()
         needed_cycles = max(1, ceil(expected_members / members_per_cycle))
-        max_cycles = needed_cycles * 15  # Increased to 15 to allow more retry cycles for all members
+        max_cycles = needed_cycles * 15
         all_failed_users: list[str] = []
         attempts_today: dict[str, int] = {}
         final_failed_set: set[str] = set()
         final_failure_reasons: dict[str, str] = {}
         consecutive_no_progress_cycles = 0
         consecutive_non_retryable_no_progress = 0
-        max_no_progress_cycles = 60  # Increased from 10 to 60 to allow more retries
+        max_no_progress_cycles = 30
         
         while remaining and cycle_num < max_cycles:
             cycle_num += 1
@@ -337,7 +328,8 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
                 print(f"📊 [Multi-Cycle] Cycle {cycle_num} Failure Summary: RATE_LIMIT={rate_limit_count}, TIMEOUT={timeout_count}, PRIVATE={private_count}, NOT_FOUND={not_found_count}, NOT_IN_ROSTER={not_in_roster_count}, OTHER={other_count}")
                 
                 for u, reason in failure_reasons.items():
-                    final_failure_reasons[u] = reason
+                    if len(final_failure_reasons) < 50:
+                        final_failure_reasons[u] = reason
             except Exception as e:
                 print(f"❌ [Multi-Cycle] Cycle {cycle_num} crashed: {e}")
                 import traceback
