@@ -2849,8 +2849,7 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
             raise HTTPException(status_code=503, detail="Database not available")
         
         competition = await prisma.competition.find_unique(
-            where={'id': competition_id},
-            include={'entries': True}
+            where={'id': competition_id}
         )
         
         if not competition:
@@ -2858,6 +2857,14 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         
         if competition.type != 'XP_GAIN':
             raise HTTPException(status_code=400, detail="Live tracking only available for XP competitions")
+        
+        entries = await prisma.competitionentry.find_many(
+            where={'competitionId': competition_id, 'isActive': True},
+            order={'xpGained': 'desc'},
+            take=100
+        )
+        
+        print(f"[Live Competition] Found {len(entries)} entries for competition {competition_id}")
         
         from datetime import timezone, timedelta
         now = datetime.now(timezone.utc)
@@ -2873,17 +2880,22 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         skill = competition.skill or 'overall'
         
         async with conn:
-            for entry in competition.entries[:50]:
+            for entry in entries[:50]:
                 try:
+                    xp_start = int(entry.xpStart or 0)
+                    
                     current_stats = await fetch_player_stats(entry.username)
                     
                     if current_stats and 'stats' in current_stats:
                         if skill.lower() == 'overall':
                             current_xp = sum(s.get('xp', 0) for s in current_stats['stats'].values() if isinstance(s, dict))
                         else:
-                            current_xp = current_stats['stats'].get(skill, {}).get('xp', 0)
+                            skill_data = current_stats['stats'].get(skill.lower(), {})
+                            if not skill_data:
+                                skill_data = current_stats['stats'].get(skill, {})
+                            current_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
                         
-                        live_xp_gain = max(0, current_xp - entry.xpStart)
+                        live_xp_gain = max(0, current_xp - xp_start)
                         
                         cursor = await conn.execute("""
                             SELECT snapshot_date, stats
@@ -2907,9 +2919,12 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
                             if skill.lower() == 'overall':
                                 snapshot_xp = sum(s.get('xp', 0) for s in snapshot_stats.values() if isinstance(s, dict))
                             else:
-                                snapshot_xp = snapshot_stats.get(skill, {}).get('xp', 0)
+                                skill_data = snapshot_stats.get(skill.lower(), {})
+                                if not skill_data:
+                                    skill_data = snapshot_stats.get(skill, {})
+                                snapshot_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
                             
-                            snapshot_gain = max(0, snapshot_xp - entry.xpStart)
+                            snapshot_gain = max(0, snapshot_xp - xp_start)
                             user_timeline.append({
                                 'timestamp': snapshot['snapshot_date'].isoformat(),
                                 'xp_gain': snapshot_gain
@@ -2930,6 +2945,8 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
                         
                 except Exception as e:
                     print(f"Error fetching live data for {entry.username}: {e}")
+                    import traceback
+                    traceback.print_exc()
                     continue
         
         leaderboard.sort(key=lambda x: x['xp_gain'], reverse=True)
