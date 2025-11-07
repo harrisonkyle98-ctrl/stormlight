@@ -435,11 +435,11 @@ const Home = () => {
 
   const fetchActiveCompetitions = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/competitions`)
+      const response = await fetch(`${API_URL}/api/competitions?status=active`)
       if (response.ok) {
         const data = await response.json()
-        const activeCount = data.filter((comp: any) => comp.status === 'active').length
-        setActiveCompetitionsCount(activeCount)
+        const competitions = data.competitions || []
+        setActiveCompetitionsCount(competitions.length)
       }
     } catch (error) {
       console.error('Error fetching competitions:', error)
