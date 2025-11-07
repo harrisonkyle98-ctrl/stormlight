@@ -197,7 +197,7 @@ export const RankTrackingTab = () => {
 
       {/* Promotion Notification Card */}
       {dueForPromotionCount > 0 && (
-        <Card className="bg-[rgba(255,183,77,0.25)] border-2 border-[#ffb74d]">
+        <Card className="bg-[rgba(255,183,77,0.25)] border border-[#ffb74d]">
           <CardContent className="p-3">
             <div className="flex items-center justify-center text-center text-sm text-[#ffb74d]">
               <AlertCircle className="w-4 h-4 text-[#ffb74d] mr-2 shrink-0" />
