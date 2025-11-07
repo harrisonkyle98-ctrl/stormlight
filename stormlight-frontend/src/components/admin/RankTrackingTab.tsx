@@ -229,9 +229,9 @@ export const RankTrackingTab = () => {
         <Card className="bg-slate-700/30 border-slate-600">
           <CardHeader>
             <CardTitle className="text-white flex items-center space-x-2">
-              <TrendingUp className="w-5 h-5 text-[#be9a55]" />
+              <TrendingUp className="w-5 h-5 text-[#ffb74d]" />
               <span>Members Due for Promotion</span>
-              <Badge className="bg-[#be9a55] text-white ml-2">
+              <Badge className="bg-[#ffb74d] text-white ml-2">
                 {dueForPromotionMembers.length}
               </Badge>
             </CardTitle>
