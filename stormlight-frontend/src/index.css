@@ -3,17 +3,28 @@
 @tailwind utilities;
 
 /* Promotion Notification Card - Force yellow styling across all themes */
-.promotion-notification {
+.promotion-notification,
+.promotion-notification:hover,
+.promotion-notification:focus,
+.promotion-notification:active {
   background-color: rgba(255, 183, 77, 0.25) !important;
   border: 1px solid #ffb74d !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
-.promotion-notification__content {
+.promotion-notification__content,
+.promotion-notification__content:hover,
+.promotion-notification__content:focus,
+.promotion-notification__content:active {
   color: #ffb74d !important;
   text-align: center;
 }
 
-.promotion-notification__icon {
+.promotion-notification__icon,
+.promotion-notification__icon:hover,
+.promotion-notification__icon:focus,
+.promotion-notification__icon:active {
   color: #ffb74d !important;
 }
 
