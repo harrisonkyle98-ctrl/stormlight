@@ -2841,10 +2841,21 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
+_live_competition_cache = {}
+_live_competition_cache_ttl = 60  # seconds
+
 @api_router.get("/competitions/{competition_id}/live")
 async def get_competition_live(competition_id: str, page: int = 1, per_page: int = 25):
     """Get competition with live XP tracking and time series for line graph"""
     try:
+        cache_key = f"{competition_id}:{page}"
+        if cache_key in _live_competition_cache:
+            cached_data, cached_time = _live_competition_cache[cache_key]
+            from datetime import timezone
+            now = datetime.now(timezone.utc)
+            if (now - cached_time).total_seconds() < _live_competition_cache_ttl:
+                return cached_data
+        
         if not PRISMA_AVAILABLE or not prisma:
             raise HTTPException(status_code=503, detail="Database not available")
         
@@ -2866,7 +2877,26 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         
         print(f"[Live Competition] Found {len(entries)} entries for competition {competition_id}")
         
+        if len(entries) == 0:
+            from datetime import timezone
+            now = datetime.now(timezone.utc)
+            return {
+                "id": competition.id,
+                "name": competition.name,
+                "description": competition.description,
+                "type": competition.type,
+                "skill": competition.skill,
+                "startDate": competition.startDate.isoformat(),
+                "endDate": competition.endDate.isoformat(),
+                "leaderboard": [],
+                "top_10": [],
+                "timeline": {},
+                "pagination": {"page": page, "per_page": per_page, "total": 0, "total_pages": 0},
+                "last_updated": now.isoformat()
+            }
+        
         from datetime import timezone, timedelta
+        import asyncio
         now = datetime.now(timezone.utc)
         
         try:
@@ -2874,80 +2904,109 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         except ImportError:
             from database import get_db_connection, get_snapshot_json_on_or_before
         
-        conn = await get_db_connection()
-        leaderboard = []
-        timeline_data = {}
         skill = competition.skill or 'overall'
         
-        async with conn:
-            for entry in entries[:50]:
+        entries_to_process = entries[:50]
+        
+        semaphore = asyncio.Semaphore(8)
+        
+        async def fetch_with_timeout(entry):
+            async with semaphore:
                 try:
-                    xp_start = int(entry.xpStart or 0)
-                    
-                    current_stats = await fetch_player_stats(entry.username)
-                    
-                    if current_stats and 'stats' in current_stats:
-                        if skill.lower() == 'overall':
-                            current_xp = sum(s.get('xp', 0) for s in current_stats['stats'].values() if isinstance(s, dict))
-                        else:
-                            skill_data = current_stats['stats'].get(skill.lower(), {})
-                            if not skill_data:
-                                skill_data = current_stats['stats'].get(skill, {})
-                            current_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
-                        
-                        live_xp_gain = max(0, current_xp - xp_start)
-                        
-                        cursor = await conn.execute("""
-                            SELECT snapshot_date, stats
-                            FROM player_daily_snapshots
-                            WHERE username = $1
-                              AND snapshot_date >= $2
-                              AND snapshot_date <= $3
-                            ORDER BY snapshot_date ASC
-                        """, entry.username, competition.startDate.date(), now.date())
-                        
-                        snapshots = await cursor.fetchall()
-                        
-                        user_timeline = []
-                        user_timeline.append({
-                            'timestamp': competition.startDate.isoformat(),
-                            'xp_gain': 0
-                        })
-                        
-                        for snapshot in snapshots:
-                            snapshot_stats = snapshot['stats']
-                            if skill.lower() == 'overall':
-                                snapshot_xp = sum(s.get('xp', 0) for s in snapshot_stats.values() if isinstance(s, dict))
-                            else:
-                                skill_data = snapshot_stats.get(skill.lower(), {})
-                                if not skill_data:
-                                    skill_data = snapshot_stats.get(skill, {})
-                                snapshot_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
-                            
-                            snapshot_gain = max(0, snapshot_xp - xp_start)
-                            user_timeline.append({
-                                'timestamp': snapshot['snapshot_date'].isoformat(),
-                                'xp_gain': snapshot_gain
-                            })
-                        
-                        user_timeline.append({
-                            'timestamp': now.isoformat(),
-                            'xp_gain': live_xp_gain
-                        })
-                        
-                        leaderboard.append({
-                            'username': entry.username,
-                            'xp_gain': live_xp_gain,
-                            'skill': skill
-                        })
-                        
-                        timeline_data[entry.username] = user_timeline
-                        
+                    stats = await asyncio.wait_for(fetch_player_stats(entry.username), timeout=6.0)
+                    return entry, stats
+                except asyncio.TimeoutError:
+                    print(f"Timeout fetching stats for {entry.username}")
+                    return entry, None
                 except Exception as e:
-                    print(f"Error fetching live data for {entry.username}: {e}")
-                    import traceback
-                    traceback.print_exc()
-                    continue
+                    print(f"Error fetching stats for {entry.username}: {e}")
+                    return entry, None
+        
+        results = await asyncio.gather(*[fetch_with_timeout(entry) for entry in entries_to_process])
+        
+        stats_map = {}
+        for entry, stats in results:
+            if stats and 'stats' in stats:
+                stats_map[entry.username] = stats
+        
+        conn = await get_db_connection()
+        usernames = [entry.username for entry in entries_to_process]
+        
+        async with conn:
+            cursor = await conn.execute("""
+                SELECT username, snapshot_date, stats
+                FROM player_daily_snapshots
+                WHERE username = ANY($1)
+                  AND snapshot_date >= $2
+                  AND snapshot_date <= $3
+                ORDER BY username, snapshot_date ASC
+            """, usernames, competition.startDate.date(), now.date())
+            
+            all_snapshots = await cursor.fetchall()
+        
+        snapshots_by_user = {}
+        for row in all_snapshots:
+            username = row['username']
+            if username not in snapshots_by_user:
+                snapshots_by_user[username] = []
+            snapshots_by_user[username].append(row)
+        
+        leaderboard = []
+        timeline_data = {}
+        
+        for entry in entries_to_process:
+            try:
+                xp_start = int(entry.xpStart or 0)
+                current_stats = stats_map.get(entry.username)
+                
+                if current_stats:
+                    if skill.lower() == 'overall':
+                        current_xp = sum(s.get('xp', 0) for s in current_stats['stats'].values() if isinstance(s, dict))
+                    else:
+                        skill_data = current_stats['stats'].get(skill.lower(), {})
+                        if not skill_data:
+                            skill_data = current_stats['stats'].get(skill, {})
+                        current_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
+                    
+                    live_xp_gain = max(0, current_xp - xp_start)
+                    
+                    user_timeline = [{
+                        'timestamp': competition.startDate.isoformat(),
+                        'xp_gain': 0
+                    }]
+                    
+                    for snapshot in snapshots_by_user.get(entry.username, []):
+                        snapshot_stats = snapshot['stats']
+                        if skill.lower() == 'overall':
+                            snapshot_xp = sum(s.get('xp', 0) for s in snapshot_stats.values() if isinstance(s, dict))
+                        else:
+                            skill_data = snapshot_stats.get(skill.lower(), {})
+                            if not skill_data:
+                                skill_data = snapshot_stats.get(skill, {})
+                            snapshot_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
+                        
+                        snapshot_gain = max(0, snapshot_xp - xp_start)
+                        user_timeline.append({
+                            'timestamp': snapshot['snapshot_date'].isoformat(),
+                            'xp_gain': snapshot_gain
+                        })
+                    
+                    user_timeline.append({
+                        'timestamp': now.isoformat(),
+                        'xp_gain': live_xp_gain
+                    })
+                    
+                    leaderboard.append({
+                        'username': entry.username,
+                        'xp_gain': live_xp_gain,
+                        'skill': skill
+                    })
+                    
+                    timeline_data[entry.username] = user_timeline
+                    
+            except Exception as e:
+                print(f"Error processing live data for {entry.username}: {e}")
+                continue
         
         leaderboard.sort(key=lambda x: x['xp_gain'], reverse=True)
         
@@ -2961,7 +3020,7 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         
         top_10_timeline = {username: timeline_data.get(username, []) for username in [p['username'] for p in top_10]}
         
-        return {
+        response = {
             "id": competition.id,
             "name": competition.name,
             "description": competition.description,
@@ -2980,6 +3039,10 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
             },
             "last_updated": now.isoformat()
         }
+        
+        _live_competition_cache[cache_key] = (response, now)
+        
+        return response
         
     except Exception as e:
         print(f"Error fetching live competition data: {e}")
