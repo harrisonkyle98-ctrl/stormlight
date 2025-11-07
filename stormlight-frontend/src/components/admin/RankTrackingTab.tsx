@@ -197,10 +197,10 @@ export const RankTrackingTab = () => {
 
       {/* Promotion Notification Card */}
       {dueForPromotionCount > 0 && (
-        <Card className="bg-[rgba(255,183,77,0.25)] border border-[#ffb74d]">
+        <Card className="promotion-notification">
           <CardContent className="p-3">
-            <div className="flex items-center justify-center text-center text-sm text-[#ffb74d]">
-              <AlertCircle className="w-4 h-4 text-[#ffb74d] mr-2 shrink-0" />
+            <div className="promotion-notification__content flex items-center justify-center text-sm">
+              <AlertCircle className="promotion-notification__icon w-4 h-4 mr-2 shrink-0" />
               <span>
                 {dueForPromotionCount} {dueForPromotionCount === 1 ? 'member is' : 'members are'} due for a promotion. Please resolve in-game.
               </span>
