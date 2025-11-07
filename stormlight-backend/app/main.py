@@ -2841,6 +2841,135 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.get("/competitions/{competition_id}/live")
+async def get_competition_live(competition_id: str, page: int = 1, per_page: int = 25):
+    """Get competition with live XP tracking and time series for line graph"""
+    try:
+        if not PRISMA_AVAILABLE or not prisma:
+            raise HTTPException(status_code=503, detail="Database not available")
+        
+        competition = await prisma.competition.find_unique(
+            where={'id': competition_id},
+            include={'entries': True}
+        )
+        
+        if not competition:
+            raise HTTPException(status_code=404, detail="Competition not found")
+        
+        if competition.type != 'XP_GAIN':
+            raise HTTPException(status_code=400, detail="Live tracking only available for XP competitions")
+        
+        from datetime import timezone, timedelta
+        now = datetime.now(timezone.utc)
+        
+        try:
+            from .database import get_db_connection, get_snapshot_json_on_or_before
+        except ImportError:
+            from database import get_db_connection, get_snapshot_json_on_or_before
+        
+        conn = await get_db_connection()
+        leaderboard = []
+        timeline_data = {}
+        skill = competition.skill or 'overall'
+        
+        async with conn:
+            for entry in competition.entries[:50]:
+                try:
+                    current_stats = await fetch_player_stats(entry.username)
+                    
+                    if current_stats and 'stats' in current_stats:
+                        if skill.lower() == 'overall':
+                            current_xp = sum(s.get('xp', 0) for s in current_stats['stats'].values() if isinstance(s, dict))
+                        else:
+                            current_xp = current_stats['stats'].get(skill, {}).get('xp', 0)
+                        
+                        live_xp_gain = max(0, current_xp - entry.xpStart)
+                        
+                        cursor = await conn.execute("""
+                            SELECT snapshot_date, stats
+                            FROM player_daily_snapshots
+                            WHERE username = $1
+                              AND snapshot_date >= $2
+                              AND snapshot_date <= $3
+                            ORDER BY snapshot_date ASC
+                        """, entry.username, competition.startDate.date(), now.date())
+                        
+                        snapshots = await cursor.fetchall()
+                        
+                        user_timeline = []
+                        user_timeline.append({
+                            'timestamp': competition.startDate.isoformat(),
+                            'xp_gain': 0
+                        })
+                        
+                        for snapshot in snapshots:
+                            snapshot_stats = snapshot['stats']
+                            if skill.lower() == 'overall':
+                                snapshot_xp = sum(s.get('xp', 0) for s in snapshot_stats.values() if isinstance(s, dict))
+                            else:
+                                snapshot_xp = snapshot_stats.get(skill, {}).get('xp', 0)
+                            
+                            snapshot_gain = max(0, snapshot_xp - entry.xpStart)
+                            user_timeline.append({
+                                'timestamp': snapshot['snapshot_date'].isoformat(),
+                                'xp_gain': snapshot_gain
+                            })
+                        
+                        user_timeline.append({
+                            'timestamp': now.isoformat(),
+                            'xp_gain': live_xp_gain
+                        })
+                        
+                        leaderboard.append({
+                            'username': entry.username,
+                            'xp_gain': live_xp_gain,
+                            'skill': skill
+                        })
+                        
+                        timeline_data[entry.username] = user_timeline
+                        
+                except Exception as e:
+                    print(f"Error fetching live data for {entry.username}: {e}")
+                    continue
+        
+        leaderboard.sort(key=lambda x: x['xp_gain'], reverse=True)
+        
+        for idx, entry in enumerate(leaderboard, 1):
+            entry['rank'] = idx
+        
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        total_participants = len(leaderboard)
+        top_10 = leaderboard[:10]
+        
+        top_10_timeline = {username: timeline_data.get(username, []) for username in [p['username'] for p in top_10]}
+        
+        return {
+            "id": competition.id,
+            "name": competition.name,
+            "description": competition.description,
+            "type": competition.type,
+            "skill": competition.skill,
+            "startDate": competition.startDate.isoformat(),
+            "endDate": competition.endDate.isoformat(),
+            "leaderboard": leaderboard[start_idx:end_idx],
+            "top_10": top_10,
+            "timeline": top_10_timeline,
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total": total_participants,
+                "total_pages": (total_participants + per_page - 1) // per_page
+            },
+            "last_updated": now.isoformat()
+        }
+        
+    except Exception as e:
+        print(f"Error fetching live competition data: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.get("/competitions/{competition_id}/drop-stats")
 async def get_competition_drop_stats(competition_id: str, position: Optional[int] = None):
     """Get drop statistics for a PvM competition"""

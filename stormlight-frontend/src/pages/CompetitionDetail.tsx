@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
-import { ArrowLeft, Trophy, Calendar, Users, TrendingUp, BarChart3 } from 'lucide-react'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
+import { ArrowLeft, Trophy, Calendar, Users, TrendingUp, BarChart3, ArrowUp, ArrowDown, Radio } from 'lucide-react'
 import { Spinner } from '../components/ui/spinner'
 import { getSkillIcon } from '../utils/skillIcons'
 import { fetchClanMembers } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
 import { Username } from '../components/ui/username'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { BingoBoard } from '../components/BingoBoard'
 
 interface CompetitionLeaderboard {
@@ -22,6 +23,7 @@ interface CompetitionLeaderboard {
   bingos?: number
   skill?: string
   rank?: number | null
+  previousRank?: number | null
 }
 
 interface CompetitionDetail {
@@ -57,6 +59,11 @@ const CompetitionDetail = () => {
   const [top10Data, setTop10Data] = useState<CompetitionLeaderboard[]>([])
   const [leaderboardData, setLeaderboardData] = useState<CompetitionLeaderboard[]>([])
   const [firstPlaceData, setFirstPlaceData] = useState<CompetitionLeaderboard | null>(null)
+  const [timelineData, setTimelineData] = useState<any>(null)
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null)
+  const [isLive, setIsLive] = useState(false)
+  const [previousRanks, setPreviousRanks] = useState<Map<string, number>>(new Map())
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -66,6 +73,47 @@ const CompetitionDetail = () => {
       loadClanMembers()
     }
   }, [id])
+
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (competition && competition.type === 'XP_GAIN') {
+      const now = new Date()
+      const start = new Date(competition.startDate)
+      const end = new Date(competition.endDate)
+      const isActive = now >= start && now <= end
+      
+      setIsLive(isActive)
+      
+      if (isActive) {
+        fetchLiveData()
+        
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current)
+        }
+        
+        pollIntervalRef.current = setInterval(() => {
+          fetchLiveData()
+        }, 60000)
+      } else {
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current)
+        }
+      }
+    }
+    
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+      }
+    }
+  }, [competition, currentPage])
 
   const loadClanMembers = async () => {
     const members = await fetchClanMembers()
@@ -109,18 +157,93 @@ const CompetitionDetail = () => {
     }
   }
 
-  const fetchLeaderboardPage = async (page: number) => {
+  const fetchLiveData = async () => {
+    if (!id || !competition || competition.type !== 'XP_GAIN') return
+    
     try {
-      setPaginationLoading(true)
-      const response = await fetch(`${API_URL}/api/competitions/${id}?page=${page}&per_page=25`)
+      const response = await fetch(`${API_URL}/api/competitions/${id}/live?page=${currentPage}&per_page=25`)
       if (response.ok) {
         const data = await response.json()
-        setLeaderboardData(data.leaderboard || [])
+        
+        const newRanks = new Map<string, number>()
+        const updatedLeaderboard = data.leaderboard.map((player: CompetitionLeaderboard) => {
+          const prevRank = previousRanks.get(player.username)
+          newRanks.set(player.username, player.rank || 0)
+          return {
+            ...player,
+            previousRank: prevRank
+          }
+        })
+        
+        setLeaderboardData(updatedLeaderboard)
+        setPreviousRanks(newRanks)
+        
+        if (data.top_10) {
+          setTop10Data(data.top_10)
+        }
+        
+        if (data.timeline) {
+          setTimelineData(data.timeline)
+        }
         
         if (data.pagination) {
           setCurrentPage(data.pagination.page)
           setTotalPages(data.pagination.total_pages)
           setTotalParticipants(data.pagination.total)
+        }
+        
+        if (data.last_updated) {
+          setLastUpdated(data.last_updated)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching live competition data:', error)
+    }
+  }
+
+  const fetchLeaderboardPage = async (page: number) => {
+    try {
+      setPaginationLoading(true)
+      
+      if (isLive && competition?.type === 'XP_GAIN') {
+        const response = await fetch(`${API_URL}/api/competitions/${id}/live?page=${page}&per_page=25`)
+        if (response.ok) {
+          const data = await response.json()
+          
+          const newRanks = new Map<string, number>()
+          const updatedLeaderboard = data.leaderboard.map((player: CompetitionLeaderboard) => {
+            const prevRank = previousRanks.get(player.username)
+            newRanks.set(player.username, player.rank || 0)
+            return {
+              ...player,
+              previousRank: prevRank
+            }
+          })
+          
+          setLeaderboardData(updatedLeaderboard)
+          setPreviousRanks(newRanks)
+          
+          if (data.pagination) {
+            setCurrentPage(data.pagination.page)
+            setTotalPages(data.pagination.total_pages)
+            setTotalParticipants(data.pagination.total)
+          }
+          
+          if (data.last_updated) {
+            setLastUpdated(data.last_updated)
+          }
+        }
+      } else {
+        const response = await fetch(`${API_URL}/api/competitions/${id}?page=${page}&per_page=25`)
+        if (response.ok) {
+          const data = await response.json()
+          setLeaderboardData(data.leaderboard || [])
+          
+          if (data.pagination) {
+            setCurrentPage(data.pagination.page)
+            setTotalPages(data.pagination.total_pages)
+            setTotalParticipants(data.pagination.total)
+          }
         }
       }
     } catch (error) {
@@ -157,6 +280,62 @@ const CompetitionDetail = () => {
     if (now < start) return { status: 'upcoming', color: 'bg-blue-500' }
     if (now > end) return { status: 'ended', color: 'bg-gray-500' }
     return { status: 'active', color: 'bg-green-500' }
+  }
+
+  const getTimeSinceUpdate = () => {
+    if (!lastUpdated) return ''
+    const now = new Date()
+    const updated = new Date(lastUpdated)
+    const diffSeconds = Math.floor((now.getTime() - updated.getTime()) / 1000)
+    
+    if (diffSeconds < 60) return `${diffSeconds}s ago`
+    const diffMinutes = Math.floor(diffSeconds / 60)
+    if (diffMinutes < 60) return `${diffMinutes}m ago`
+    const diffHours = Math.floor(diffMinutes / 60)
+    return `${diffHours}h ago`
+  }
+
+  const prepareLineChartData = () => {
+    if (!timelineData || !top10Data || top10Data.length === 0) return []
+    
+    const allTimestamps = new Set<string>()
+    Object.values(timelineData).forEach((timeline: any) => {
+      timeline.forEach((point: any) => {
+        allTimestamps.add(point.timestamp)
+      })
+    })
+    
+    const sortedTimestamps = Array.from(allTimestamps).sort()
+    
+    return sortedTimestamps.map(timestamp => {
+      const dataPoint: any = {
+        timestamp: new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      }
+      
+      top10Data.forEach(player => {
+        const playerTimeline = timelineData[player.username] || []
+        const point = playerTimeline.find((p: any) => p.timestamp === timestamp)
+        dataPoint[player.username] = point ? point.xp_gain : null
+      })
+      
+      return dataPoint
+    })
+  }
+
+  const getLineColor = (index: number) => {
+    const colors = [
+      '#fbbf24', // gold
+      '#9ca3af', // silver
+      '#f59e0b', // bronze
+      '#10b981', // green
+      '#3b82f6', // blue
+      '#8b5cf6', // purple
+      '#ec4899', // pink
+      '#f97316', // orange
+      '#06b6d4', // cyan
+      '#84cc16'  // lime
+    ]
+    return colors[index % colors.length]
   }
 
 
@@ -330,24 +509,30 @@ const CompetitionDetail = () => {
         </Card>
       )}
 
-      {competition.type === 'XP_GAIN' && top10Data.length > 0 && (
+      {competition.type === 'XP_GAIN' && top10Data.length > 0 && timelineData && (
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader>
-            <CardTitle className="text-white flex items-center space-x-2">
-              <TrendingUp className="w-5 h-5 text-green-400" />
-              <span>Top 10 Progress</span>
+            <CardTitle className="text-white flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <TrendingUp className="w-5 h-5 text-green-400" />
+                <span>Top 10 Progress</span>
+              </div>
+              {isLive && lastUpdated && (
+                <Badge className="bg-green-500/20 text-green-400 border-green-500/30 flex items-center space-x-1">
+                  <Radio className="w-3 h-3 animate-pulse" />
+                  <span>Live • {getTimeSinceUpdate()}</span>
+                </Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={top10Data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart data={prepareLineChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis 
-                  dataKey="username" 
+                  dataKey="timestamp" 
                   stroke="#9ca3af"
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
+                  tick={{ fontSize: 12 }}
                 />
                 <YAxis 
                   stroke="#9ca3af"
@@ -363,12 +548,23 @@ const CompetitionDetail = () => {
                   labelStyle={{ color: '#f1f5f9' }}
                   formatter={(value: any) => [formatNumber(value), 'XP Gained']}
                 />
-                <Bar dataKey="xp_gain" radius={[8, 8, 0, 0]}>
-                  {top10Data.map((_entry, index) => (
-                    <Cell key={`cell-${index}`} fill={index === 0 ? '#fbbf24' : index === 1 ? '#9ca3af' : index === 2 ? '#f59e0b' : '#10b981'} />
-                  ))}
-                </Bar>
-              </BarChart>
+                <Legend 
+                  wrapperStyle={{ paddingTop: '20px' }}
+                  iconType="line"
+                />
+                {top10Data.map((player, index) => (
+                  <Line
+                    key={player.username}
+                    type="monotone"
+                    dataKey={player.username}
+                    stroke={getLineColor(index)}
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                    activeDot={{ r: 5 }}
+                    connectNulls
+                  />
+                ))}
+              </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
@@ -395,101 +591,177 @@ const CompetitionDetail = () => {
 
       <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader>
-          <CardTitle className="text-white flex items-center space-x-2">
-            <Trophy className="w-5 h-5 text-yellow-400" />
-            <span>Leaderboard</span>
+          <CardTitle className="text-white flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Trophy className="w-5 h-5 text-yellow-400" />
+              <span>Leaderboard</span>
+            </div>
+            {isLive && lastUpdated && competition.type === 'XP_GAIN' && (
+              <Badge className="bg-green-500/20 text-green-400 border-green-500/30 flex items-center space-x-1">
+                <Radio className="w-3 h-3 animate-pulse" />
+                <span>Live • {getTimeSinceUpdate()}</span>
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {leaderboardData.map((player) => (
-              <div
-                key={player.username}
-                className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
-                  player.rank === 1
-                    ? 'bg-gradient-to-r from-yellow-600/20 to-yellow-800/20 border border-yellow-600/30' 
-                    : player.rank === 2
-                    ? 'bg-gradient-to-r from-gray-400/20 to-gray-600/20 border border-gray-400/30'
-                    : player.rank === 3
-                    ? 'bg-gradient-to-r from-amber-600/20 to-amber-800/20 border border-amber-600/30'
-                    : 'bg-slate-700/50 hover:bg-slate-700/70'
-                }`}
-              >
-                <div className="flex items-center space-x-4">
-                  <Badge 
-                    variant="outline" 
-                    className={
-                      player.rank === 1
-                        ? 'rank-badge rank-1-badge' 
-                        : player.rank === 2
-                        ? 'rank-badge rank-2-badge'
-                        : player.rank === 3
-                        ? 'rank-badge rank-3-badge'
-                        : 'rank-badge rank-border'
-                    }
-                  >
-                    #{player.rank || '—'}
-                  </Badge>
-                  <Link 
-                    to={`/clan-member/${usernameToUrl(player.username)}`}
-                    className="text-lg font-semibold hover:text-theme-accent-light transition-colors"
-                  >
-                    <Username
-                      username={player.username}
-                      clanRank={clanMembers.find(m => m.username === player.username)?.clan_rank}
-                    />
-                  </Link>
-                  {player.rank && player.rank <= 3 && (
-                    <span className="text-lg">
-                      {player.rank === 1 ? '🥇' : player.rank === 2 ? '🥈' : '🥉'}
-                    </span>
-                  )}
-                </div>
-                
-                <div className="flex items-center space-x-6">
-                  {competition.type === 'XP_GAIN' ? (
-                    <>
-                      <div className="text-right">
-                        <p className="text-sm text-slate-400">Skill</p>
-                        <p className="text-lg font-bold text-white capitalize">
-                          {competition.skill || 'Overall'}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-slate-400">XP Gained</p>
-                        <p className="text-lg font-bold text-green-400">
-                          {formatFullNumber(player.xp_gain || 0)} XP
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="text-right">
-                        <p className="text-sm text-slate-400">Completed</p>
-                        <p className="text-lg font-bold text-green-400">
-                          {player.squares_completed || 0} / {player.total_squares || 0}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-slate-400">Progress</p>
-                        <p className="text-lg font-bold text-purple-400">
-                          {player.completion_percentage || 0}%
-                        </p>
-                      </div>
-                      {player.bingos !== undefined && player.bingos > 0 && (
-                        <div className="text-right">
-                          <p className="text-sm text-slate-400">Bingos</p>
-                          <p className="text-lg font-bold text-yellow-400">
-                            {player.bingos}
-                          </p>
+          {competition.type === 'XP_GAIN' ? (
+            <Table className="text-slate-300">
+              <TableHeader>
+                <TableRow className="border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50">
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Rank</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Player</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">XP Gained</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto text-center">Change</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {leaderboardData.map((player) => {
+                  const rankChange = player.previousRank && player.rank 
+                    ? player.previousRank - player.rank 
+                    : null
+                  
+                  return (
+                    <TableRow 
+                      key={player.username} 
+                      className={`border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50 ${
+                        player.rank === 1 ? 'bg-gradient-to-r from-yellow-600/10 to-yellow-800/10' :
+                        player.rank === 2 ? 'bg-gradient-to-r from-gray-400/10 to-gray-600/10' :
+                        player.rank === 3 ? 'bg-gradient-to-r from-amber-600/10 to-amber-800/10' : ''
+                      }`}
+                    >
+                      <TableCell className="py-3">
+                        <div className="flex items-center space-x-2">
+                          <Badge 
+                            variant="outline" 
+                            className={
+                              player.rank === 1 ? 'rank-badge rank-1-badge' :
+                              player.rank === 2 ? 'rank-badge rank-2-badge' :
+                              player.rank === 3 ? 'rank-badge rank-3-badge' :
+                              'rank-badge rank-border'
+                            }
+                          >
+                            #{player.rank || '—'}
+                          </Badge>
+                          {player.rank && player.rank <= 3 && (
+                            <span className="text-lg">
+                              {player.rank === 1 ? '🥇' : player.rank === 2 ? '🥈' : '🥉'}
+                            </span>
+                          )}
                         </div>
-                      )}
-                    </>
-                  )}
+                      </TableCell>
+                      <TableCell className="py-3">
+                        <Link 
+                          to={`/clan-member/${usernameToUrl(player.username)}`}
+                          className="font-medium hover:text-theme-accent-light transition-colors"
+                        >
+                          <Username
+                            username={player.username}
+                            clanRank={clanMembers.find(m => m.username === player.username)?.clan_rank}
+                          />
+                        </Link>
+                      </TableCell>
+                      <TableCell className="py-3">
+                        <span className="text-green-400 font-bold">
+                          {formatFullNumber(player.xp_gain || 0)} XP
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-3 text-center">
+                        {rankChange !== null && rankChange !== 0 ? (
+                          <div className="flex items-center justify-center space-x-1">
+                            {rankChange > 0 ? (
+                              <>
+                                <ArrowUp className="w-4 h-4 text-green-400" />
+                                <span className="text-green-400 font-medium">{rankChange}</span>
+                              </>
+                            ) : (
+                              <>
+                                <ArrowDown className="w-4 h-4 text-red-400" />
+                                <span className="text-red-400 font-medium">{Math.abs(rankChange)}</span>
+                              </>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-slate-500">—</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="space-y-4">
+              {leaderboardData.map((player) => (
+                <div
+                  key={player.username}
+                  className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
+                    player.rank === 1
+                      ? 'bg-gradient-to-r from-yellow-600/20 to-yellow-800/20 border border-yellow-600/30' 
+                      : player.rank === 2
+                      ? 'bg-gradient-to-r from-gray-400/20 to-gray-600/20 border border-gray-400/30'
+                      : player.rank === 3
+                      ? 'bg-gradient-to-r from-amber-600/20 to-amber-800/20 border border-amber-600/30'
+                      : 'bg-slate-700/50 hover:bg-slate-700/70'
+                  }`}
+                >
+                  <div className="flex items-center space-x-4">
+                    <Badge 
+                      variant="outline" 
+                      className={
+                        player.rank === 1
+                          ? 'rank-badge rank-1-badge' 
+                          : player.rank === 2
+                          ? 'rank-badge rank-2-badge'
+                          : player.rank === 3
+                          ? 'rank-badge rank-3-badge'
+                          : 'rank-badge rank-border'
+                      }
+                    >
+                      #{player.rank || '—'}
+                    </Badge>
+                    <Link 
+                      to={`/clan-member/${usernameToUrl(player.username)}`}
+                      className="text-lg font-semibold hover:text-theme-accent-light transition-colors"
+                    >
+                      <Username
+                        username={player.username}
+                        clanRank={clanMembers.find(m => m.username === player.username)?.clan_rank}
+                      />
+                    </Link>
+                    {player.rank && player.rank <= 3 && (
+                      <span className="text-lg">
+                        {player.rank === 1 ? '🥇' : player.rank === 2 ? '🥈' : '🥉'}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center space-x-6">
+                    <div className="text-right">
+                      <p className="text-sm text-slate-400">Completed</p>
+                      <p className="text-lg font-bold text-green-400">
+                        {player.squares_completed || 0} / {player.total_squares || 0}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-slate-400">Progress</p>
+                      <p className="text-lg font-bold text-purple-400">
+                        {player.completion_percentage || 0}%
+                      </p>
+                    </div>
+                    {player.bingos !== undefined && player.bingos > 0 && (
+                      <div className="text-right">
+                        <p className="text-sm text-slate-400">Bingos</p>
+                        <p className="text-lg font-bold text-yellow-400">
+                          {player.bingos}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
 
               {/* Pagination Controls */}
