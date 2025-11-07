@@ -193,19 +193,14 @@ export const RankTrackingTab = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-white">Rank Tracking &amp; Longevity</h2>
-        <div className="flex items-center space-x-2">
-          <Badge className="bg-[#be9a55] text-white">
-            {dueForPromotionCount} Due for Promotion
-          </Badge>
-        </div>
       </div>
 
       {/* Promotion Notification Card */}
       {dueForPromotionCount > 0 && (
-        <Card className="bg-yellow-500/15 border border-yellow-500">
+        <Card className="bg-[#ffb74d]/15 border border-[#ffb74d]">
           <CardContent className="p-3">
-            <div className="flex items-center text-sm text-yellow-200">
-              <AlertCircle className="w-4 h-4 text-yellow-500 mr-2 shrink-0" />
+            <div className="flex items-center justify-center text-sm text-white">
+              <AlertCircle className="w-4 h-4 text-white mr-2 shrink-0" />
               <span>
                 {dueForPromotionCount} {dueForPromotionCount === 1 ? 'member is' : 'members are'} due for a promotion. Please resolve in-game.
               </span>
@@ -257,12 +252,9 @@ export const RankTrackingTab = () => {
                 {dueForPromotionMembers.map((tracking) => (
                   <TableRow key={tracking.username} className="border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50">
                     <TableCell className="py-3">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center gap-1">
                         <span className="text-white font-medium">{tracking.username}</span>
-                        <Badge className="bg-[#be9a55] text-white">
-                          <TrendingUp className="w-3 h-3 mr-1" />
-                          Due
-                        </Badge>
+                        <AlertCircle className="w-4 h-4 text-[#ffb74d] shrink-0" />
                       </div>
                     </TableCell>
                     <TableCell className="py-3">
@@ -363,7 +355,7 @@ export const RankTrackingTab = () => {
                       <div className="flex items-center gap-1">
                         <span className="text-white font-medium">{tracking.username}</span>
                         {dueForPromotionSet.has(tracking.username) && (
-                          <AlertCircle className="w-4 h-4 text-yellow-400 shrink-0" />
+                          <AlertCircle className="w-4 h-4 text-[#ffb74d] shrink-0" />
                         )}
                       </div>
                     </TableCell>
@@ -466,9 +458,9 @@ export const RankTrackingTab = () => {
         <Card className="bg-slate-700/30 border-slate-600">
           <CardHeader>
             <CardTitle className="text-white flex items-center space-x-2">
-              <Crown className="w-5 h-5 text-[#be9a55]" />
+              <Crown className="w-5 h-5 text-[#ffb74d]" />
               <span>Leadership Ranks</span>
-              <Badge className="bg-[#be9a55] text-white ml-2">
+              <Badge className="bg-[#ffb74d] text-white ml-2">
                 {leadershipMembers.length}
               </Badge>
             </CardTitle>
@@ -495,7 +487,7 @@ export const RankTrackingTab = () => {
                       {renderRankBadge(tracking.actualRank, tracking.username)}
                     </TableCell>
                     <TableCell className="py-3">
-                      <Badge className="bg-[#be9a55] text-white pointer-events-none">Leadership</Badge>
+                      <Badge className="bg-[#ffb74d] text-white pointer-events-none">Leadership</Badge>
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-slate-300">
