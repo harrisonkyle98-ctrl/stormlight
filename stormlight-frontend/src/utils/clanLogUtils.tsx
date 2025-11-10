@@ -9,7 +9,7 @@ import { getRankColor } from './ranks'
 export const JOIN_COLOR = '#22c55e' // green-500
 export const LEAVE_COLOR = '#ef4444' // red-500
 export const DEMOTION_COLOR = '#ef4444' // red-500
-export const COMPETITION_COLOR = '#5789c1' // Steel blue (same as Skill-related Activity Logs)
+export const COMPETITION_COLOR = '#8c5aab' // Purple
 
 /**
  * Normalize event type to lowercase standard format
@@ -98,34 +98,14 @@ export function getLogVisual(entry: ClanLogEntry, getRankIcon?: (rank: string) =
       return {
         color: COMPETITION_COLOR,
         Icon: Trophy,
-        message: (
-          <span className="flex items-center gap-1">
-            <Link 
-              to={`/competitions/${entry.old_rank}`} 
-              className="text-white hover:text-blue-300 transition-colors underline"
-            >
-              {entry.username}
-            </Link>
-            <span>has started</span>
-          </span>
-        )
+        message: 'has started'
       }
 
     case 'competition_end':
       return {
         color: COMPETITION_COLOR,
         Icon: Trophy,
-        message: (
-          <span className="flex items-center gap-1">
-            <Link 
-              to={`/competitions/${entry.old_rank}`} 
-              className="text-white hover:text-blue-300 transition-colors underline"
-            >
-              {entry.username}
-            </Link>
-            <span>has ended</span>
-          </span>
-        )
+        message: 'has ended'
       }
 
     default:

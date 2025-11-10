@@ -22,6 +22,11 @@ export function ClanLogRow({
   className = 'bg-slate-700/50'
 }: ClanLogRowProps) {
   const { color, Icon, message } = getLogVisual(entry, getRankIcon)
+  
+  const isCompetitionEvent = entry.event_type === 'competition_start' || entry.event_type === 'competition_end'
+  const linkPath = isCompetitionEvent 
+    ? `/competitions/${entry.old_rank}` 
+    : `/clan-member/${usernameToUrl(entry.username)}`
 
   return (
     <div
@@ -41,13 +46,17 @@ export function ClanLogRow({
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 flex-wrap">
             <Link
-              to={`/clan-member/${usernameToUrl(entry.username)}`}
+              to={linkPath}
               className="text-white font-medium hover:text-blue-300 transition-colors"
             >
-              <Username
-                username={entry.username}
-                clanRank={entry.new_rank || entry.old_rank}
-              />
+              {isCompetitionEvent ? (
+                <span>{entry.username}</span>
+              ) : (
+                <Username
+                  username={entry.username}
+                  clanRank={entry.new_rank || entry.old_rank}
+                />
+              )}
             </Link>
             <span className="text-slate-300">{message}</span>
           </div>
