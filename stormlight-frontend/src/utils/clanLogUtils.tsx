@@ -1,6 +1,5 @@
 import { ReactNode } from 'react'
 import { ArrowBigUp, ArrowBigDown, UserCheck, UserRoundX, Trophy, LucideIcon } from 'lucide-react'
-import { Link } from 'react-router-dom'
 import { getRankColor } from './ranks'
 
 /**
