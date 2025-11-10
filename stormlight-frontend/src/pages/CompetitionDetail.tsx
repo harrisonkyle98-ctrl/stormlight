@@ -131,6 +131,21 @@ const CompetitionDetail = () => {
         
         if (data.top_10) {
           setTop10Data(data.top_10)
+          
+          if (data.type === 'XP_GAIN') {
+            const now = new Date().toISOString()
+            const startDate = data.startDate
+            const seededTimeline: any = {}
+            
+            data.top_10.forEach((player: CompetitionLeaderboard) => {
+              seededTimeline[player.username] = [
+                { timestamp: startDate, xp_gain: 0 },
+                { timestamp: now, xp_gain: player.xp_gain || 0 }
+              ]
+            })
+            
+            setTimelineData(seededTimeline)
+          }
         }
         
         // Store first place player data for BingoBoard
@@ -161,7 +176,7 @@ const CompetitionDetail = () => {
     if (!id || !competition || competition.type !== 'XP_GAIN') return
     
     try {
-      const response = await fetch(`${API_URL}/api/competitions/${id}/live?page=${currentPage}&per_page=25`)
+      const response = await fetch(`${API_URL}/api/competitions/${id}?page=${currentPage}&per_page=25`)
       if (response.ok) {
         const data = await response.json()
         
@@ -180,10 +195,31 @@ const CompetitionDetail = () => {
         
         if (data.top_10) {
           setTop10Data(data.top_10)
-        }
-        
-        if (data.timeline) {
-          setTimelineData(data.timeline)
+          
+          const now = new Date().toISOString()
+          setTimelineData((prev: any) => {
+            if (!prev) return prev
+            
+            const updated = { ...prev }
+            data.top_10.forEach((player: CompetitionLeaderboard) => {
+              if (!updated[player.username]) {
+                updated[player.username] = [
+                  { timestamp: competition.startDate, xp_gain: 0 },
+                  { timestamp: now, xp_gain: player.xp_gain || 0 }
+                ]
+              } else {
+                const lastPoint = updated[player.username][updated[player.username].length - 1]
+                if (lastPoint.timestamp !== now) {
+                  updated[player.username] = [
+                    ...updated[player.username],
+                    { timestamp: now, xp_gain: player.xp_gain || 0 }
+                  ]
+                }
+              }
+            })
+            
+            return updated
+          })
         }
         
         if (data.pagination) {
@@ -192,9 +228,7 @@ const CompetitionDetail = () => {
           setTotalParticipants(data.pagination.total)
         }
         
-        if (data.last_updated) {
-          setLastUpdated(data.last_updated)
-        }
+        setLastUpdated(new Date().toISOString())
       }
     } catch (error) {
       console.error('Error fetching live competition data:', error)
