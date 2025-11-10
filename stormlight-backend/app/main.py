@@ -2933,14 +2933,17 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         usernames = [entry.username for entry in entries_to_process]
         
         async with conn:
-            all_snapshots = await conn.fetch("""
-                SELECT username, snapshot_date, stats
-                FROM player_daily_snapshots
-                WHERE username = ANY($1::text[])
-                  AND snapshot_date >= $2
-                  AND snapshot_date <= $3
-                ORDER BY username, snapshot_date ASC
-            """, usernames, competition.startDate.date(), now.date())
+            async with conn.cursor() as cur:
+                await cur.execute("""
+                    SELECT username, snapshot_date, stats
+                    FROM player_daily_snapshots
+                    WHERE username = ANY(%s)
+                      AND snapshot_date >= %s
+                      AND snapshot_date <= %s
+                    ORDER BY username, snapshot_date ASC
+                """, (usernames, competition.startDate.date(), now.date()))
+                
+                all_snapshots = await cur.fetchall()
         
         snapshots_by_user = {}
         for row in all_snapshots:
