@@ -2947,10 +2947,16 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         
         snapshots_by_user = {}
         for row in all_snapshots:
-            username = row['username']
+            username = row[0]
+            snapshot_date = row[1]
+            stats = row[2]
             if username not in snapshots_by_user:
                 snapshots_by_user[username] = []
-            snapshots_by_user[username].append(row)
+            snapshots_by_user[username].append({
+                'username': username,
+                'snapshot_date': snapshot_date,
+                'stats': stats
+            })
         
         leaderboard = []
         timeline_data = {}
