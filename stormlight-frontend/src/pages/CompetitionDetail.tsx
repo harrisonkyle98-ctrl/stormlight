@@ -10,7 +10,7 @@ import { getSkillIcon } from '../utils/skillIcons'
 import { fetchClanMembers } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
 import { Username } from '../components/ui/username'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { BingoBoard } from '../components/BingoBoard'
 
 interface CompetitionLeaderboard {
@@ -59,7 +59,6 @@ const CompetitionDetail = () => {
   const [top10Data, setTop10Data] = useState<CompetitionLeaderboard[]>([])
   const [leaderboardData, setLeaderboardData] = useState<CompetitionLeaderboard[]>([])
   const [firstPlaceData, setFirstPlaceData] = useState<CompetitionLeaderboard | null>(null)
-  const [timelineData, setTimelineData] = useState<any>(null)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const [isLive, setIsLive] = useState(false)
   const [previousRanks, setPreviousRanks] = useState<Map<string, number>>(new Map())
@@ -131,21 +130,6 @@ const CompetitionDetail = () => {
         
         if (data.top_10) {
           setTop10Data(data.top_10)
-          
-          if (data.type === 'XP_GAIN') {
-            const now = new Date().toISOString()
-            const startDate = data.startDate
-            const seededTimeline: any = {}
-            
-            data.top_10.forEach((player: CompetitionLeaderboard) => {
-              seededTimeline[player.username] = [
-                { timestamp: startDate, xp_gain: 0 },
-                { timestamp: now, xp_gain: player.xp_gain || 0 }
-              ]
-            })
-            
-            setTimelineData(seededTimeline)
-          }
         }
         
         // Store first place player data for BingoBoard
@@ -195,31 +179,6 @@ const CompetitionDetail = () => {
         
         if (data.top_10) {
           setTop10Data(data.top_10)
-          
-          const now = new Date().toISOString()
-          setTimelineData((prev: any) => {
-            if (!prev) return prev
-            
-            const updated = { ...prev }
-            data.top_10.forEach((player: CompetitionLeaderboard) => {
-              if (!updated[player.username]) {
-                updated[player.username] = [
-                  { timestamp: competition.startDate, xp_gain: 0 },
-                  { timestamp: now, xp_gain: player.xp_gain || 0 }
-                ]
-              } else {
-                const lastPoint = updated[player.username][updated[player.username].length - 1]
-                if (lastPoint.timestamp !== now) {
-                  updated[player.username] = [
-                    ...updated[player.username],
-                    { timestamp: now, xp_gain: player.xp_gain || 0 }
-                  ]
-                }
-              }
-            })
-            
-            return updated
-          })
         }
         
         if (data.pagination) {
@@ -297,49 +256,6 @@ const CompetitionDetail = () => {
     if (diffMinutes < 60) return `${diffMinutes}m ago`
     const diffHours = Math.floor(diffMinutes / 60)
     return `${diffHours}h ago`
-  }
-
-  const prepareLineChartData = () => {
-    if (!timelineData || !top10Data || top10Data.length === 0) return []
-    
-    const allTimestamps = new Set<string>()
-    Object.values(timelineData).forEach((timeline: any) => {
-      timeline.forEach((point: any) => {
-        allTimestamps.add(point.timestamp)
-      })
-    })
-    
-    const sortedTimestamps = Array.from(allTimestamps).sort()
-    
-    return sortedTimestamps.map(timestamp => {
-      const dataPoint: any = {
-        timestamp: new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-      }
-      
-      top10Data.forEach(player => {
-        const playerTimeline = timelineData[player.username] || []
-        const point = playerTimeline.find((p: any) => p.timestamp === timestamp)
-        dataPoint[player.username] = point ? point.xp_gain : null
-      })
-      
-      return dataPoint
-    })
-  }
-
-  const getLineColor = (index: number) => {
-    const colors = [
-      '#fbbf24', // gold
-      '#9ca3af', // silver
-      '#f59e0b', // bronze
-      '#10b981', // green
-      '#3b82f6', // blue
-      '#8b5cf6', // purple
-      '#ec4899', // pink
-      '#f97316', // orange
-      '#06b6d4', // cyan
-      '#84cc16'  // lime
-    ]
-    return colors[index % colors.length]
   }
 
 
@@ -513,7 +429,7 @@ const CompetitionDetail = () => {
         </Card>
       )}
 
-      {competition.type === 'XP_GAIN' && top10Data.length > 0 && timelineData && (
+      {competition.type === 'XP_GAIN' && top10Data.length > 0 && (
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader>
             <CardTitle className="text-white flex items-center justify-between">
@@ -530,13 +446,15 @@ const CompetitionDetail = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={400}>
-              <LineChart data={prepareLineChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={top10Data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis 
-                  dataKey="timestamp" 
+                  dataKey="username" 
                   stroke="#9ca3af"
-                  tick={{ fontSize: 12 }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
                 />
                 <YAxis 
                   stroke="#9ca3af"
@@ -552,23 +470,12 @@ const CompetitionDetail = () => {
                   labelStyle={{ color: '#f1f5f9' }}
                   formatter={(value: any) => [formatNumber(value), 'XP Gained']}
                 />
-                <Legend 
-                  wrapperStyle={{ paddingTop: '20px' }}
-                  iconType="line"
-                />
-                {top10Data.map((player, index) => (
-                  <Line
-                    key={player.username}
-                    type="monotone"
-                    dataKey={player.username}
-                    stroke={getLineColor(index)}
-                    strokeWidth={2}
-                    dot={{ r: 3 }}
-                    activeDot={{ r: 5 }}
-                    connectNulls
-                  />
-                ))}
-              </LineChart>
+                <Bar dataKey="xp_gain" radius={[8, 8, 0, 0]}>
+                  {top10Data.map((_entry, index) => (
+                    <Cell key={`cell-${index}`} fill={index === 0 ? '#fbbf24' : index === 1 ? '#9ca3af' : index === 2 ? '#f59e0b' : '#10b981'} />
+                  ))}
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
