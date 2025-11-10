@@ -8,7 +8,7 @@ import { getRankColor } from './ranks'
 export const JOIN_COLOR = '#22c55e' // green-500
 export const LEAVE_COLOR = '#ef4444' // red-500
 export const DEMOTION_COLOR = '#ef4444' // red-500
-export const COMPETITION_COLOR = '#8c5aab' // Purple
+export const COMPETITION_COLOR = '#8254a0' // Purple
 
 /**
  * Normalize event type to lowercase standard format
