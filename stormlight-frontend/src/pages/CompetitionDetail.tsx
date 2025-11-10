@@ -467,9 +467,26 @@ const CompetitionDetail = () => {
                   }}
                 />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569' }}
-                  labelStyle={{ color: '#f1f5f9' }}
+                  contentStyle={{ 
+                    background: 'rgba(0, 0, 0, 0.13)',
+                    border: '1px solid rgb(54, 57, 73)',
+                    borderRadius: '14px',
+                    padding: '15px 10px',
+                    backdropFilter: 'blur(10px)',
+                    fontSize: '13px'
+                  }}
+                  labelStyle={{ 
+                    color: 'rgb(153, 153, 153)',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    marginBottom: '5px'
+                  }}
+                  itemStyle={{
+                    color: 'rgb(153, 153, 153)',
+                    fontSize: '13px'
+                  }}
                   formatter={(value: any) => [formatNumber(value), 'XP Gained']}
+                  cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
                 />
                 <Bar dataKey="xp_gain" radius={[8, 8, 0, 0]}>
                   {top10Data.map((_entry, index) => (
