@@ -239,45 +239,15 @@ const CompetitionDetail = () => {
     try {
       setPaginationLoading(true)
       
-      if (isLive && competition?.type === 'XP_GAIN') {
-        const response = await fetch(`${API_URL}/api/competitions/${id}/live?page=${page}&per_page=25`)
-        if (response.ok) {
-          const data = await response.json()
-          
-          const newRanks = new Map<string, number>()
-          const updatedLeaderboard = data.leaderboard.map((player: CompetitionLeaderboard) => {
-            const prevRank = previousRanks.get(player.username)
-            newRanks.set(player.username, player.rank || 0)
-            return {
-              ...player,
-              previousRank: prevRank
-            }
-          })
-          
-          setLeaderboardData(updatedLeaderboard)
-          setPreviousRanks(newRanks)
-          
-          if (data.pagination) {
-            setCurrentPage(data.pagination.page)
-            setTotalPages(data.pagination.total_pages)
-            setTotalParticipants(data.pagination.total)
-          }
-          
-          if (data.last_updated) {
-            setLastUpdated(data.last_updated)
-          }
-        }
-      } else {
-        const response = await fetch(`${API_URL}/api/competitions/${id}?page=${page}&per_page=25`)
-        if (response.ok) {
-          const data = await response.json()
-          setLeaderboardData(data.leaderboard || [])
-          
-          if (data.pagination) {
-            setCurrentPage(data.pagination.page)
-            setTotalPages(data.pagination.total_pages)
-            setTotalParticipants(data.pagination.total)
-          }
+      const response = await fetch(`${API_URL}/api/competitions/${id}?page=${page}&per_page=25`)
+      if (response.ok) {
+        const data = await response.json()
+        setLeaderboardData(data.leaderboard || [])
+        
+        if (data.pagination) {
+          setCurrentPage(data.pagination.page)
+          setTotalPages(data.pagination.total_pages)
+          setTotalParticipants(data.pagination.total)
         }
       }
     } catch (error) {
