@@ -165,29 +165,34 @@
 }
 
 .center-circle {
-  width: 72px;
-  height: 72px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
   padding: 0;
   background: var(--color-button);
   border: 3px solid var(--navbar-border);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(80px - 48px + 8px);
   z-index: 20;
-  transform: translateY(22%);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 
+    0 0 0 3px color-mix(in srgb, var(--navbar-glow) 40%, transparent),
+    0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .center-circle:hover {
-  transform: translateY(22%) scale(1.05);
+  transform: translateX(-50%) scale(1.05);
   box-shadow: 
-    0 0 0 4px color-mix(in srgb, var(--navbar-glow) 30%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--navbar-glow) 40%, transparent),
+    0 0 0 6px color-mix(in srgb, var(--navbar-glow) 20%, transparent),
     0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 .center-circle:active {
-  transform: translateY(22%) scale(0.98);
+  transform: translateX(-50%) scale(0.98);
 }
 
 .avatar-inner {
@@ -216,17 +221,17 @@
   }
   
   .center-circle {
-    width: 56px;
-    height: 56px;
-    transform: translateY(18%);
+    width: 64px;
+    height: 64px;
+    bottom: calc(70px - 32px + 6px);
   }
   
   .center-circle:hover {
-    transform: translateY(18%) scale(1.05);
+    transform: translateX(-50%) scale(1.05);
   }
   
   .center-circle:active {
-    transform: translateY(18%) scale(0.98);
+    transform: translateX(-50%) scale(0.98);
   }
   
   .nav-link span {
