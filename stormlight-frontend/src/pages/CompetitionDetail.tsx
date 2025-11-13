@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
-import { ArrowLeft, Trophy, Calendar, Users, TrendingUp, BarChart3, ArrowUp, ArrowDown, Radio } from 'lucide-react'
+import { ArrowLeft, Trophy, Calendar, Users, TrendingUp, BarChart3, Radio } from 'lucide-react'
 import { Spinner } from '../components/ui/spinner'
 import { getSkillIcon } from '../utils/skillIcons'
 import { fetchClanMembers } from '../utils/gradientUtils'
@@ -16,6 +16,8 @@ import { BingoBoard } from '../components/BingoBoard'
 interface CompetitionLeaderboard {
   username: string
   xp_gain?: number
+  starting_xp?: number
+  ending_xp?: number
   squares_completed?: number
   total_squares?: number
   completion_percentage?: number
@@ -540,16 +542,13 @@ const CompetitionDetail = () => {
                 <TableRow className="border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50">
                   <TableHead className="text-slate-400 font-medium py-3 h-auto">Rank</TableHead>
                   <TableHead className="text-slate-400 font-medium py-3 h-auto">Player</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Starting XP</TableHead>
+                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Ending XP</TableHead>
                   <TableHead className="text-slate-400 font-medium py-3 h-auto">XP Gained</TableHead>
-                  <TableHead className="text-slate-400 font-medium py-3 h-auto text-center">Change</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {leaderboardData.map((player) => {
-                  const rankChange = player.previousRank && player.rank 
-                    ? player.previousRank - player.rank 
-                    : null
-                  
                   return (
                     <TableRow 
                       key={player.username} 
@@ -560,18 +559,29 @@ const CompetitionDetail = () => {
                       }`}
                     >
                       <TableCell className="py-3">
+                        <Badge 
+                          variant="outline" 
+                          className={
+                            player.rank === 1 ? 'rank-badge rank-1-badge' :
+                            player.rank === 2 ? 'rank-badge rank-2-badge' :
+                            player.rank === 3 ? 'rank-badge rank-3-badge' :
+                            'rank-badge rank-border'
+                          }
+                        >
+                          #{player.rank || '—'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-3">
                         <div className="flex items-center space-x-2">
-                          <Badge 
-                            variant="outline" 
-                            className={
-                              player.rank === 1 ? 'rank-badge rank-1-badge' :
-                              player.rank === 2 ? 'rank-badge rank-2-badge' :
-                              player.rank === 3 ? 'rank-badge rank-3-badge' :
-                              'rank-badge rank-border'
-                            }
+                          <Link 
+                            to={`/clan-member/${usernameToUrl(player.username)}`}
+                            className="font-medium hover:text-theme-accent-light transition-colors"
                           >
-                            #{player.rank || '—'}
-                          </Badge>
+                            <Username
+                              username={player.username}
+                              clanRank={clanMembers.find(m => m.username === player.username)?.clan_rank}
+                            />
+                          </Link>
                           {player.rank && player.rank <= 3 && (
                             <span className="text-lg">
                               {player.rank === 1 ? '🥇' : player.rank === 2 ? '🥈' : '🥉'}
@@ -580,39 +590,19 @@ const CompetitionDetail = () => {
                         </div>
                       </TableCell>
                       <TableCell className="py-3">
-                        <Link 
-                          to={`/clan-member/${usernameToUrl(player.username)}`}
-                          className="font-medium hover:text-theme-accent-light transition-colors"
-                        >
-                          <Username
-                            username={player.username}
-                            clanRank={clanMembers.find(m => m.username === player.username)?.clan_rank}
-                          />
-                        </Link>
+                        <span className="text-slate-300">
+                          {player.starting_xp !== undefined ? formatFullNumber(player.starting_xp) : '—'} XP
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-3">
+                        <span className="text-slate-300">
+                          {player.ending_xp !== undefined ? formatFullNumber(player.ending_xp) : '—'} XP
+                        </span>
                       </TableCell>
                       <TableCell className="py-3">
                         <span className="text-green-400 font-bold">
                           {formatFullNumber(player.xp_gain || 0)} XP
                         </span>
-                      </TableCell>
-                      <TableCell className="py-3 text-center">
-                        {rankChange !== null && rankChange !== 0 ? (
-                          <div className="flex items-center justify-center space-x-1">
-                            {rankChange > 0 ? (
-                              <>
-                                <ArrowUp className="w-4 h-4 text-green-400" />
-                                <span className="text-green-400 font-medium">{rankChange}</span>
-                              </>
-                            ) : (
-                              <>
-                                <ArrowDown className="w-4 h-4 text-red-400" />
-                                <span className="text-red-400 font-medium">{Math.abs(rankChange)}</span>
-                              </>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-slate-500">—</span>
-                        )}
                       </TableCell>
                     </TableRow>
                   )

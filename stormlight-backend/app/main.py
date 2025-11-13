@@ -2677,6 +2677,8 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                         leaderboard.append({
                             'username': entry.username,
                             'xp_gain': xp_gain,
+                            'starting_xp': int(entry.xpStart or 0),
+                            'ending_xp': int(entry.xpStart or 0) + xp_gain,
                             'skill': competition.skill
                         })
                 
@@ -3006,6 +3008,8 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
                     leaderboard.append({
                         'username': entry.username,
                         'xp_gain': live_xp_gain,
+                        'starting_xp': xp_start,
+                        'ending_xp': current_xp,
                         'skill': skill
                     })
                     
