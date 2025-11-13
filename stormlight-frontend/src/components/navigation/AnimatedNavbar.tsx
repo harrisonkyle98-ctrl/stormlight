@@ -22,7 +22,9 @@ const AnimatedNavbar = () => {
       {/* SVG Curved Background */}
       <svg 
         className="nav-bg-svg" 
-        viewBox="0 0 1440 240" 
+        width="100%" 
+        height="170" 
+        viewBox="0 0 1200 170" 
         preserveAspectRatio="none"
         xmlns="http://www.w3.org/2000/svg"
       >
@@ -35,7 +37,7 @@ const AnimatedNavbar = () => {
         </defs>
         
         <path
-          d="M0 0 L1440 0 L1440 80 C1100 80 900 230 720 230 C540 230 340 80 0 80 Z"
+          d="M0,0 H1200 V90 C1020,90 930,90 820,120 C740,145 660,170 600,170 C540,170 460,145 380,120 C270,90 180,90 0,90 Z"
           fill="url(#navGradient)"
           stroke="var(--navbar-border)"
           strokeWidth="1"
