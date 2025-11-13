@@ -165,8 +165,8 @@
 }
 
 .center-circle {
-  width: 96px;
-  height: 96px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   padding: 0;
   background: var(--color-button);
@@ -176,7 +176,7 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(80px - 48px + 8px);
+  bottom: -20px;
   z-index: 20;
   box-shadow: 
     0 0 0 3px color-mix(in srgb, var(--navbar-glow) 40%, transparent),
@@ -221,9 +221,9 @@
   }
   
   .center-circle {
-    width: 64px;
-    height: 64px;
-    bottom: calc(70px - 32px + 6px);
+    width: 60px;
+    height: 60px;
+    bottom: -15px;
   }
   
   .center-circle:hover {
