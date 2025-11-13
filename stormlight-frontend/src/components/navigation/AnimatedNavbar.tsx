@@ -35,7 +35,7 @@ const AnimatedNavbar = () => {
         </defs>
         
         <path
-          d="M 0 12 H 520 Q 560 2 600 0 Q 640 2 680 12 H 1200 V 80 H 0 Z"
+          d="M 0 0 H 1200 L 1200 68 Q 900 80 600 80 Q 300 80 0 68 Z"
           fill="url(#navGradient)"
           stroke="var(--navbar-border)"
           strokeWidth="1"
