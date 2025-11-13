@@ -32,10 +32,11 @@
   height: 100%;
   pointer-events: none;
   z-index: 2;
+  overflow-x: hidden;
   background: linear-gradient(
     120deg,
     transparent 35%,
-    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.12) 50%,
     transparent 65%
   );
   background-size: 200% 100%;
@@ -174,19 +175,19 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   z-index: 20;
-  transform: translateY(35%);
+  transform: translateY(22%);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .center-circle:hover {
-  transform: translateY(35%) scale(1.05);
+  transform: translateY(22%) scale(1.05);
   box-shadow: 
     0 0 0 4px color-mix(in srgb, var(--navbar-glow) 30%, transparent),
     0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 .center-circle:active {
-  transform: translateY(35%) scale(0.98);
+  transform: translateY(22%) scale(0.98);
 }
 
 .avatar-inner {
@@ -217,15 +218,15 @@
   .center-circle {
     width: 56px;
     height: 56px;
-    transform: translateY(30%);
+    transform: translateY(18%);
   }
   
   .center-circle:hover {
-    transform: translateY(30%) scale(1.05);
+    transform: translateY(18%) scale(1.05);
   }
   
   .center-circle:active {
-    transform: translateY(30%) scale(0.98);
+    transform: translateY(18%) scale(0.98);
   }
   
   .nav-link span {
