@@ -7530,95 +7530,152 @@ async def daily_clan_member_refresh():
         traceback.print_exc()
 
 
-async def update_today_gains_for_all_members():
-    """Calculate and update Today XP gains for all active clan members (hourly background job)"""
+async def update_today_gains_for_all_members_strict():
+    """
+    Calculate and update Today XP gains for ALL active clan members (hourly background job).
+    Processes members one-at-a-time sequentially with delays to avoid rate limits.
+    NEVER skips any members - every member is re-checked every hour.
+    """
     try:
         from datetime import datetime, timezone
+        import random
         try:
             from .database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before, upsert_today_gain
         except ImportError:
             from database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before, upsert_today_gain
         
+        start_time = time_module.monotonic()
+        now = datetime.now(timezone.utc)
+        today = now.date()
+        current_hour = now.hour
+        
+        lock_key = f"today_gains_{today.isoformat()}_{current_hour:02d}"
+        lock_hash = hash(lock_key) % (2**31)  # Convert to positive 32-bit int
+        
         conn = await get_db_connection()
         async with conn:
-            cursor = await conn.execute("SELECT pg_try_advisory_lock(123456789)")
+            cursor = await conn.execute(f"SELECT pg_try_advisory_lock({lock_hash})")
             lock_acquired = (await cursor.fetchone())[0]
             
             if not lock_acquired:
-                print("[Today Gains Job] Another instance is already running (advisory lock not acquired). Skipping.")
+                print(f"[Today Gains Strict] Another instance is already running for hour {current_hour} (advisory lock not acquired). Skipping.")
                 return 0
             
             try:
-                today = datetime.now(timezone.utc).date()
-                
                 clan_members = await fetch_clan_members()
                 active_members = [m for m in clan_members if m.get('active', True)]
-                print(f"[Today Gains Job] Found {len(active_members)} active clan members")
+                total_members = len(active_members)
+                print(f"[Today Gains Strict] Starting sequential processing of {total_members} active clan members at {now.isoformat()}Z")
                 
-                BATCH_SIZE = 10
+                processed_count = 0
                 updated_count = 0
+                failed_count = 0
                 
-                for i in range(0, len(active_members), BATCH_SIZE):
-                    batch = active_members[i:i + BATCH_SIZE]
-                    batch_num = (i // BATCH_SIZE) + 1
-                    print(f"[Today Gains Job] Processing batch {batch_num} ({len(batch)} members)")
+                for idx, member in enumerate(active_members, 1):
+                    username = member['username']
+                    display_username = member['username']  # Already properly cased from API
                     
-                    async def process_one_member(member: dict):
-                        username = member['username']
-                        display_username = member['username']  # Already properly cased from API
+                    try:
+                        live_stats = await asyncio.wait_for(
+                            fetch_player_stats(username, max_retries=2, timeout=8.0),
+                            timeout=10.0
+                        )
                         
-                        try:
-                            live_stats = await asyncio.wait_for(
-                                fetch_player_stats(username, max_retries=1, timeout=3.0),
-                                timeout=3.0
-                            )
-                            
-                            if not live_stats or 'stats' not in live_stats or 'overall' not in live_stats['stats']:
-                                return None
-                            
-                            live_total_xp = live_stats['stats']['overall'].get('xp', 0)
-                            
-                            baseline_json = await get_snapshot_json_on_date(conn, username, today)
-                            if not baseline_json:
-                                baseline_json = await get_snapshot_json_on_or_before(conn, username, today)
-                            
-                            if baseline_json and 'overall' in baseline_json:
-                                baseline_xp = baseline_json['overall'].get('xp', 0)
-                            else:
-                                baseline_xp = 0
-                            
-                            xp_gained_today = max(0, live_total_xp - baseline_xp)
-                            
-                            if xp_gained_today > 0:
-                                await upsert_today_gain(conn, username, display_username, xp_gained_today, today)
-                                return username
-                            return None
+                        if not live_stats or 'stats' not in live_stats or 'overall' not in live_stats['stats']:
+                            await upsert_today_gain(conn, username, display_username, 0, today)
+                            processed_count += 1
+                            if idx % 25 == 0:
+                                print(f"[Today Gains Strict] Progress: {idx}/{total_members} processed ({updated_count} with gains)")
+                            continue
                         
-                        except asyncio.TimeoutError:
-                            print(f"[Today Gains Job] Timeout fetching {username}")
-                            return None
-                        except Exception as e:
-                            print(f"[Today Gains Job] Error processing {username}: {e}")
-                            return None
-                    
-                    tasks = [process_one_member(member) for member in batch]
-                    results = await asyncio.gather(*tasks, return_exceptions=True)
-                    
-                    for result in results:
-                        if result and not isinstance(result, Exception):
+                        live_total_xp = live_stats['stats']['overall'].get('xp', 0)
+                        
+                        baseline_json = await get_snapshot_json_on_date(conn, username, today)
+                        if not baseline_json:
+                            # Fallback to most recent snapshot on or before today
+                            baseline_json = await get_snapshot_json_on_or_before(conn, username, today)
+                        
+                        if baseline_json and 'overall' in baseline_json:
+                            baseline_xp = baseline_json['overall'].get('xp', 0)
+                        else:
+                            baseline_xp = 0
+                        
+                        # Calculate today's XP gain (never negative)
+                        xp_gained_today = max(0, live_total_xp - baseline_xp)
+                        
+                        await upsert_today_gain(conn, username, display_username, xp_gained_today, today)
+                        processed_count += 1
+                        
+                        if xp_gained_today > 0:
                             updated_count += 1
+                        
+                        if idx % 25 == 0:
+                            elapsed = time_module.monotonic() - start_time
+                            print(f"[Today Gains Strict] Progress: {idx}/{total_members} processed ({updated_count} with gains, {failed_count} failed) - {elapsed:.1f}s elapsed")
                     
-                    await asyncio.sleep(0.5)
+                    except asyncio.TimeoutError:
+                        failed_count += 1
+                        try:
+                            await upsert_today_gain(conn, username, display_username, 0, today)
+                        except:
+                            pass
+                        if failed_count <= 10:
+                            print(f"[Today Gains Strict] Timeout fetching {username} (#{idx})")
+                    except Exception as e:
+                        failed_count += 1
+                        try:
+                            await upsert_today_gain(conn, username, display_username, 0, today)
+                        except:
+                            pass
+                        if failed_count <= 10:
+                            print(f"[Today Gains Strict] Error processing {username} (#{idx}): {e}")
+                    
+                    if idx < total_members:
+                        delay = 3.0 + random.uniform(-0.3, 0.3)
+                        await asyncio.sleep(delay)
                 
-                print(f"[Today Gains Job] Completed: {updated_count} members updated with XP gains")
+                elapsed = time_module.monotonic() - start_time
+                print(f"[Today Gains Strict] Completed in {elapsed:.1f}s: {processed_count}/{total_members} processed, {updated_count} with XP gains, {failed_count} failed")
                 return updated_count
             
             finally:
-                await conn.execute("SELECT pg_advisory_unlock(123456789)")
-                print("[Today Gains Job] Advisory lock released")
+                await conn.execute(f"SELECT pg_advisory_unlock({lock_hash})")
+                print(f"[Today Gains Strict] Advisory lock released for hour {current_hour}")
     
     except Exception as e:
-        print(f"[Today Gains Job] Fatal error: {e}")
+        print(f"[Today Gains Strict] Fatal error: {e}")
+        import traceback
+        traceback.print_exc()
+        return 0
+
+
+async def reset_today_gains_table():
+    """
+    Daily reset at 00:00 UTC - delete old player_today_gains records.
+    Only keeps records for the current day.
+    """
+    try:
+        from datetime import datetime, timezone
+        try:
+            from .database import get_db_connection
+        except ImportError:
+            from database import get_db_connection
+        
+        today = datetime.now(timezone.utc).date()
+        
+        conn = await get_db_connection()
+        async with conn:
+            cursor = await conn.execute("""
+                DELETE FROM player_today_gains 
+                WHERE snapshot_date < %s
+            """, (today,))
+            
+            deleted_count = cursor.rowcount if hasattr(cursor, 'rowcount') else 0
+            print(f"[Today Gains Reset] Deleted {deleted_count} old records from player_today_gains (keeping only {today.isoformat()})")
+            return deleted_count
+    
+    except Exception as e:
+        print(f"[Today Gains Reset] Error resetting table: {e}")
         import traceback
         traceback.print_exc()
         return 0
@@ -7754,6 +7811,15 @@ async def startup_event():
                         if current_hour == 0 and not has_run_today:
                             print(f"🚀 [Scheduler][DAILY] Entering midnight snapshot branch at {now.isoformat()}Z (machine: {machine_id})")
                             
+                            print(f"🗑️ [Scheduler][DAILY] Resetting player_today_gains table at {now.isoformat()}Z")
+                            try:
+                                deleted_count = await reset_today_gains_table()
+                                print(f"✅ [Scheduler][DAILY] Reset completed: {deleted_count} old records deleted")
+                            except Exception as e:
+                                print(f"❌ [Scheduler][DAILY] Error resetting today gains table: {e}")
+                                import traceback
+                                traceback.print_exc()
+                            
                             async def run_daily_snapshots():
                                 try:
                                     try:
@@ -7826,6 +7892,16 @@ async def startup_event():
                             import traceback
                             traceback.print_exc()
                         
+                        print(f"📊 [Scheduler][HOURLY] Starting Today XP gains calculation at {now.isoformat()}Z (machine: {machine_id})")
+                        try:
+                            updated_count = await update_today_gains_for_all_members_strict()
+                            completion_time = datetime.now(timezone.utc).isoformat()
+                            print(f"✅ [Scheduler][HOURLY] Today XP gains calculation completed at {completion_time}Z: {updated_count} members with gains (machine: {machine_id})")
+                        except Exception as e:
+                            print(f"❌ [Scheduler][HOURLY] Error calculating Today XP gains: {e} (machine: {machine_id})")
+                            import traceback
+                            traceback.print_exc()
+                        
                         last_sync_hour = current_hour
                         print(f"✅ [Scheduler][HOURLY] All hourly tasks completed for hour {current_hour}. Next run: {(current_hour + 1) % 24}:00 UTC")
                     
@@ -7838,38 +7914,6 @@ async def startup_event():
         
         asyncio.create_task(hourly_scheduler())
         print("✅ [Scheduler] Hourly scheduler task has been created and started")
-        
-        async def thirty_minute_scheduler():
-            """30-minute scheduler for updating today's XP gains for all members"""
-            print("🚀 [Scheduler] 30-minute Today Gains scheduler task created, waiting 60s before first run...")
-            await asyncio.sleep(60)
-            print("✅ [Scheduler] 30-minute scheduler initial wait complete, starting loop")
-            
-            while True:
-                try:
-                    from datetime import timezone
-                    now = datetime.now(timezone.utc)
-                    machine_id = os.getenv('FLY_MACHINE_ID', 'local')
-                    
-                    print(f"🔄 [Scheduler][30MIN] Starting Today XP gains calculation at {now.isoformat()}Z (machine: {machine_id})")
-                    try:
-                        updated_count = await update_today_gains_for_all_members()
-                        completion_time = datetime.now(timezone.utc).isoformat()
-                        print(f"✅ [Scheduler][30MIN] Today XP gains calculation completed at {completion_time}Z: {updated_count} members updated (machine: {machine_id})")
-                    except Exception as e:
-                        print(f"❌ [Scheduler][30MIN] Error calculating Today XP gains: {e} (machine: {machine_id})")
-                        import traceback
-                        traceback.print_exc()
-                    
-                except Exception as e:
-                    print(f"❌ [Scheduler][30MIN] Critical error in 30-minute scheduler: {e}")
-                    import traceback
-                    traceback.print_exc()
-                
-                await asyncio.sleep(1800)
-        
-        asyncio.create_task(thirty_minute_scheduler())
-        print("✅ [Scheduler] 30-minute Today Gains scheduler task has been created and started")
         
     except Exception as e:
         print(f"❌ Error during startup: {e}")
