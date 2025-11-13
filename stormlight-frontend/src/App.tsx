@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
-import Navbar from './components/Navbar'
+import AnimatedNavbar from './components/navigation/AnimatedNavbar'
 import Home from './pages/Home'
 import Hiscores from './pages/Hiscores'
 import Members from './pages/Members'
@@ -36,7 +36,7 @@ function AppContent() {
 
   return (
     <div>
-      <Navbar />
+      <AnimatedNavbar />
       <main className="w-full px-6 py-4">
         <div className="max-w-7xl mx-auto">
           <Routes>

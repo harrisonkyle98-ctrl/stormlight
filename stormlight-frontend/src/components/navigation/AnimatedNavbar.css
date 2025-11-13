@@ -1,0 +1,246 @@
+/* Animated Navbar Styles */
+
+.animated-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  height: 80px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  overflow: visible;
+}
+
+/* SVG Background Layer */
+.nav-bg-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Animated Gradient Sheen */
+.nav-sheen {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.04) 50%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 2;
+  animation: sheen-slide 8s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes sheen-slide {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(50%);
+  }
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .nav-sheen {
+    animation: none;
+  }
+  
+  .nav-link,
+  .center-circle {
+    transition: none !important;
+  }
+}
+
+/* Container */
+.nav-container {
+  position: relative;
+  z-index: 3;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  height: 100%;
+}
+
+/* Grid Layout */
+.nav-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: 100%;
+  gap: 2rem;
+}
+
+/* Navigation Sections */
+.nav-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-left {
+  justify-content: flex-start;
+}
+
+.nav-right {
+  justify-content: flex-end;
+}
+
+/* Brand Logo */
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: 1rem;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.nav-brand:hover {
+  transform: scale(1.02);
+}
+
+.nav-brand-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+}
+
+/* Navigation Links */
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--navbar-link);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.nav-link:hover {
+  color: var(--navbar-link-hover);
+  transform: scale(1.03);
+  text-shadow: 0 0 8px var(--navbar-glow);
+}
+
+.nav-link-active {
+  background-color: var(--color-button);
+  color: white;
+}
+
+.nav-link-active:hover {
+  background-color: var(--color-button-hover);
+  color: white;
+  text-shadow: none;
+}
+
+/* Center Circle */
+.nav-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.center-circle {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  padding: 0;
+  background: var(--color-button);
+  border: 3px solid var(--navbar-border);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 10;
+  transform: translateY(-20%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.center-circle:hover {
+  transform: translateY(-20%) scale(1.05);
+  box-shadow: 
+    0 0 0 4px color-mix(in srgb, var(--navbar-glow) 30%, transparent),
+    0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.center-circle:active {
+  transform: translateY(-20%) scale(0.98);
+}
+
+.avatar-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .animated-navbar {
+    height: 70px;
+  }
+  
+  .nav-grid {
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.5rem;
+  }
+  
+  .nav-section {
+    gap: 0.5rem;
+  }
+  
+  .nav-brand-text {
+    display: none;
+  }
+  
+  .center-circle {
+    width: 40px;
+    height: 40px;
+    transform: translateY(-15%);
+  }
+  
+  .center-circle:hover {
+    transform: translateY(-15%) scale(1.05);
+  }
+  
+  .center-circle:active {
+    transform: translateY(-15%) scale(0.98);
+  }
+  
+  .nav-link span {
+    display: none;
+  }
+  
+  .nav-link {
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .nav-container {
+    padding: 0 0.5rem;
+  }
+  
+  .nav-grid {
+    gap: 0.25rem;
+  }
+}
+
+/* Ensure dropdown doesn't get clipped */
+[data-radix-popper-content-wrapper] {
+  z-index: 100 !important;
+}
