@@ -2532,7 +2532,7 @@ async def get_competitions(status: Optional[str] = None):
         if PRISMA_AVAILABLE and prisma:
             competitions = await prisma.competition.find_many(
                 order={'startDate': 'desc'},
-                include={'entries': True}
+                include={'entries': {'include': {'member': True}}}
             )
             
             from datetime import timezone
@@ -2549,6 +2549,12 @@ async def get_competitions(status: Optional[str] = None):
                 
                 if status is None or comp_status == status:
                     try:
+                        active_entries_count = 0
+                        if comp.entries:
+                            for entry in comp.entries:
+                                if entry.member and entry.member.active:
+                                    active_entries_count += 1
+                        
                         comp_dict = {
                             'id': comp.id,
                             'name': comp.name,
@@ -2568,7 +2574,7 @@ async def get_competitions(status: Optional[str] = None):
                             'createdAt': comp.createdAt.isoformat() if comp.createdAt else None,
                             'updatedAt': comp.updatedAt.isoformat() if comp.updatedAt else None,
                             'status': comp_status,
-                            'participantCount': len(comp.entries) if comp.entries else 0
+                            'participantCount': active_entries_count
                         }
                         competition_list.append(comp_dict)
                     except Exception as e:
@@ -2639,7 +2645,7 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
         if PRISMA_AVAILABLE and prisma:
             competition = await prisma.competition.find_unique(
                 where={'id': competition_id},
-                include={'entries': True}
+                include={'entries': {'include': {'member': True}}}
             )
             
             if not competition:
@@ -2660,6 +2666,8 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                 conn = await get_db_connection()
                 async with conn:
                     for entry in competition.entries:
+                        if not entry.member or not entry.member.active:
+                            continue
                         xp_gain = 0
                         ending_xp = 0
                         
@@ -2734,6 +2742,8 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                 
                 async with conn:
                     for entry in competition.entries:
+                        if not entry.member or not entry.member.active:
+                            continue
                         completed_count = 0
                         completed_positions = []
                         try:
@@ -2884,9 +2894,12 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         
         entries = await prisma.competitionentry.find_many(
             where={'competitionId': competition_id, 'isActive': True},
+            include={'member': True},
             order={'xpGained': 'desc'},
             take=100
         )
+        
+        entries = [e for e in entries if e.member and e.member.active]
         
         print(f"[Live Competition] Found {len(entries)} entries for competition {competition_id}")
         
