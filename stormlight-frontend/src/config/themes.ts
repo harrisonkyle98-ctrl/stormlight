@@ -451,10 +451,4 @@ export function applyTheme(theme: Theme) {
   root.style.setProperty('--gradient', theme.gradient)
   root.style.setProperty('--page-bg', theme.pageBg)
   root.style.setProperty('--background-gradient', theme.pageBg)
-  
-  root.style.setProperty('--navbar-bg', cardColors.cardBg)
-  root.style.setProperty('--navbar-border', cardColors.cardBorder)
-  root.style.setProperty('--navbar-glow', theme.colors.accent)
-  root.style.setProperty('--navbar-link', textColors.textPrimary)
-  root.style.setProperty('--navbar-link-hover', theme.colors.accentLight)
 }

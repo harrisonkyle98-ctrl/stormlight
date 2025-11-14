@@ -334,8 +334,6 @@ html[data-theme='sunset'] {
 @layer base {
   /* Apply gradient background to html and body for seamless coverage on all page sizes */
   html, body {
-    margin: 0;
-    padding: 0;
     min-height: 100vh;
     background: var(--background-gradient) fixed center top / cover no-repeat !important;
     background-repeat: no-repeat !important;
