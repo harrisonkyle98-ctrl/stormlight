@@ -2550,10 +2550,13 @@ async def get_competitions(status: Optional[str] = None):
                 if status is None or comp_status == status:
                     try:
                         active_entries_count = 0
+                        total_entries_count = len(comp.entries) if comp.entries else 0
                         if comp.entries:
                             for entry in comp.entries:
                                 if entry.member and entry.member.active:
                                     active_entries_count += 1
+                        
+                        print(f"[Competition {comp.name}] Total entries: {total_entries_count}, Active entries: {active_entries_count}")
                         
                         comp_dict = {
                             'id': comp.id,
