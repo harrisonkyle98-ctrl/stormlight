@@ -2653,32 +2653,43 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                 except ImportError:
                     from database import get_db_connection, get_snapshot_json_on_or_before
                 
+                from datetime import timezone
+                now = datetime.now(timezone.utc)
+                competition_ended = now >= competition.endDate
+                
                 conn = await get_db_connection()
                 async with conn:
                     for entry in competition.entries:
                         xp_gain = 0
-                        try:
-                            end_snapshot = await get_snapshot_json_on_or_before(
-                                conn, entry.username, competition.endDate.date()
-                            )
-                            
-                            if end_snapshot:
-                                skill = competition.skill or 'overall'
-                                if skill and skill.lower() == 'overall':
-                                    xp_end = sum(s.get('xp', 0) for s in end_snapshot.values() if isinstance(s, dict))
-                                else:
-                                    xp_end = end_snapshot.get(skill, {}).get('xp', 0)
+                        ending_xp = 0
+                        
+                        if competition_ended:
+                            try:
+                                end_snapshot = await get_snapshot_json_on_or_before(
+                                    conn, entry.username, competition.endDate.date()
+                                )
                                 
-                                xp_gain = max(0, xp_end - entry.xpStart)
-                        except Exception as e:
-                            print(f"Error calculating XP for {entry.username}: {e}")
-                            xp_gain = 0
+                                if end_snapshot:
+                                    skill = competition.skill or 'overall'
+                                    if skill and skill.lower() == 'overall':
+                                        xp_end = end_snapshot.get('overall', {}).get('xp', 0)
+                                        if xp_end == 0:
+                                            xp_end = sum(s.get('xp', 0) for k, s in end_snapshot.items() if isinstance(s, dict) and k != 'overall')
+                                    else:
+                                        xp_end = end_snapshot.get(skill, {}).get('xp', 0)
+                                    
+                                    ending_xp = xp_end
+                                    xp_gain = max(0, xp_end - entry.xpStart)
+                            except Exception as e:
+                                print(f"Error calculating XP for {entry.username}: {e}")
+                                xp_gain = 0
+                                ending_xp = 0
                         
                         leaderboard.append({
                             'username': entry.username,
                             'xp_gain': xp_gain,
                             'starting_xp': int(entry.xpStart or 0),
-                            'ending_xp': int(entry.xpStart or 0) + xp_gain,
+                            'ending_xp': ending_xp,
                             'skill': competition.skill
                         })
                 
@@ -5378,12 +5389,6 @@ async def create_admin_competition(
             start_date = datetime.fromisoformat(competition_data['start_date'].replace('Z', '+00:00'))
             end_date = datetime.fromisoformat(competition_data['end_date'].replace('Z', '+00:00'))
             
-            if not validate_midnight_utc(start_date) or not validate_midnight_utc(end_date):
-                raise HTTPException(
-                    status_code=400,
-                    detail="Competition start and end times must be at midnight UTC (00:00:00)"
-                )
-            
             comp_type = competition_data['type'].upper()
             if comp_type in ['XP', 'SKILLING']:
                 comp_type = 'XP_GAIN'
@@ -5442,7 +5447,10 @@ async def create_admin_competition(
                             if start_snapshot:
                                 skill = competition_data.get('skill', 'overall')
                                 if skill and skill.lower() == 'overall':
-                                    xp_start = sum(s.get('xp', 0) for s in start_snapshot.values() if isinstance(s, dict))
+                                    xp_start = start_snapshot.get('overall', {}).get('xp', 0)
+                                    # Fallback: if 'overall' key missing, sum all skills excluding 'overall'
+                                    if xp_start == 0:
+                                        xp_start = sum(s.get('xp', 0) for k, s in start_snapshot.items() if isinstance(s, dict) and k != 'overall')
                                 else:
                                     xp_start = start_snapshot.get(skill, {}).get('xp', 0)
                             
@@ -5526,20 +5534,10 @@ async def update_admin_competition(
             update_data = {}
             if 'start_date' in competition_data:
                 start_date = datetime.fromisoformat(competition_data['start_date'].replace('Z', '+00:00'))
-                if not validate_midnight_utc(start_date):
-                    raise HTTPException(
-                        status_code=400,
-                        detail="Start time must be at midnight UTC (00:00:00)"
-                    )
                 update_data['startDate'] = start_date
             
             if 'end_date' in competition_data:
                 end_date = datetime.fromisoformat(competition_data['end_date'].replace('Z', '+00:00'))
-                if not validate_midnight_utc(end_date):
-                    raise HTTPException(
-                        status_code=400,
-                        detail="End time must be at midnight UTC (00:00:00)"
-                    )
                 update_data['endDate'] = end_date
             
             if not competition_started:

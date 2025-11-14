@@ -42,7 +42,9 @@ export const CompetitionManagementTab = () => {
     reward_third_gp?: string
     reward_badge_id?: string
     startDate: string
+    startTime: string
     endDate: string
+    endTime: string
   }>({
     name: '',
     description: '',
@@ -50,7 +52,9 @@ export const CompetitionManagementTab = () => {
     skill: '',
     boss: '',
     startDate: '',
-    endDate: ''
+    startTime: '00:00',
+    endDate: '',
+    endTime: '00:00'
   })
   const [showGridBuilder, setShowGridBuilder] = useState(false)
   const [gridSize, setGridSize] = useState<3 | 5 | 7 | 9 | 11>(5)
@@ -148,8 +152,8 @@ export const CompetitionManagementTab = () => {
         name: formData.name,
         description: formData.description,
         type: typeMapping[formData.type] || formData.type,
-        start_date: formData.startDate + 'T00:00:00.000Z',
-        end_date: formData.endDate + 'T00:00:00.000Z',
+        start_date: `${formData.startDate}T${formData.startTime}:00.000Z`,
+        end_date: `${formData.endDate}T${formData.endTime}:00.000Z`,
         reward_first_gp: formData.reward_first_gp ? parseInt(formData.reward_first_gp) : null,
         reward_second_gp: formData.reward_second_gp ? parseInt(formData.reward_second_gp) : null,
         reward_third_gp: formData.reward_third_gp ? parseInt(formData.reward_third_gp) : null,
@@ -193,7 +197,9 @@ export const CompetitionManagementTab = () => {
           skill: '',
           boss: '',
           startDate: '',
+          startTime: '00:00',
           endDate: '',
+          endTime: '00:00',
           reward_first_gp: '',
           reward_second_gp: '',
           reward_third_gp: '',
@@ -237,6 +243,9 @@ export const CompetitionManagementTab = () => {
                            competition.type === 'BOSS_KILLS' ? 'DROPS' : 
                            competition.type) as 'XP' | 'DROPS'
     
+    const startDateTime = new Date(competition.startDate)
+    const endDateTime = new Date(competition.endDate)
+    
     setFormData({
       name: competition.name,
       description: competition.description,
@@ -244,7 +253,9 @@ export const CompetitionManagementTab = () => {
       skill: competition.skill || '',
       boss: competition.boss || '',
       startDate: competition.startDate.split('T')[0],
-      endDate: competition.endDate.split('T')[0]
+      startTime: startDateTime.toISOString().substring(11, 16),
+      endDate: competition.endDate.split('T')[0],
+      endTime: endDateTime.toISOString().substring(11, 16)
     })
     setShowCreateForm(true)
   }
@@ -263,7 +274,8 @@ export const CompetitionManagementTab = () => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
+      timeZone: 'UTC'
     })
   }
 
@@ -525,12 +537,40 @@ export const CompetitionManagementTab = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Start Time (UTC)
+                  </label>
+                  <Input
+                    type="time"
+                    value={formData.startTime}
+                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                    required
+                    className="bg-slate-600 border-slate-500 text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     End Date
                   </label>
                   <Input
                     type="date"
                     value={formData.endDate}
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                    required
+                    className="bg-slate-600 border-slate-500 text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    End Time (UTC)
+                  </label>
+                  <Input
+                    type="time"
+                    value={formData.endTime}
+                    onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
                     required
                     className="bg-slate-600 border-slate-500 text-white"
                   />
@@ -633,7 +673,9 @@ export const CompetitionManagementTab = () => {
                       skill: '',
                       boss: '',
                       startDate: '',
+                      startTime: '00:00',
                       endDate: '',
+                      endTime: '00:00',
                       reward_first_gp: '',
                       reward_second_gp: '',
                       reward_third_gp: '',
