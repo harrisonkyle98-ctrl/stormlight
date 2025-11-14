@@ -5655,6 +5655,36 @@ async def get_admin_members(admin_id: str = Depends(verify_admin_access)):
         print(f"Error fetching admin members: {e}")
         raise HTTPException(status_code=500, detail="Error fetching members")
 
+@api_router.get("/admin/verify-active-flags")
+async def verify_active_flags(admin_id: str = Depends(verify_admin_access)):
+    """Verify database active flags against live RuneScape API"""
+    try:
+        clan_members_live = await fetch_clan_members()
+        live_usernames = {m['username'].lower() for m in clan_members_live}
+        
+        if PRISMA_AVAILABLE and prisma:
+            db_members = await prisma.clanmember.find_many()
+            db_active = [m for m in db_members if m.active]
+            db_inactive = [m for m in db_members if not m.active]
+            
+            db_active_but_not_live = [m.username for m in db_active if m.username.lower() not in live_usernames]
+            db_inactive_but_in_live = [m.username for m in db_inactive if m.username.lower() in live_usernames]
+            
+            return {
+                "live_count": len(live_usernames),
+                "db_active_count": len(db_active),
+                "db_inactive_count": len(db_inactive),
+                "stale_active_flags": db_active_but_not_live,
+                "stale_inactive_flags": db_inactive_but_in_live,
+                "summary": f"Database has {len(db_active_but_not_live)} stale active flags (active in DB but not in live API)"
+            }
+        return {"error": "Database not available"}
+    except Exception as e:
+        print(f"Error verifying active flags: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.get("/admin/rank-tracking")
 async def get_rank_tracking(admin_id: str = Depends(verify_admin_access)):
     """Get rank tracking data"""
