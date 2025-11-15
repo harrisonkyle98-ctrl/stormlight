@@ -3473,8 +3473,8 @@ async def get_highest_placement(username: str):
                             from database import get_db_connection, get_snapshot_json_on_or_before
                         
                         from datetime import datetime, timezone
-                        now = datetime.now(timezone.utc).date()
-                        is_active = comp.endDate.date() >= now
+                        now = datetime.now(timezone.utc)
+                        is_active = comp.endDate >= now
                         
                         conn = await get_db_connection()
                         async with conn:
@@ -3484,7 +3484,7 @@ async def get_highest_placement(username: str):
                                 try:
                                     if is_active:
                                         end_snapshot = await get_snapshot_json_on_or_before(
-                                            conn, e.username, now
+                                            conn, e.username, now.date()
                                         )
                                     else:
                                         end_snapshot = await get_snapshot_json_on_or_before(
@@ -5573,7 +5573,7 @@ async def create_admin_competition(
         elif "skill" in error_msg.lower() and "required" in error_msg.lower():
             error_msg = "Missing required skill selection for XP competition."
         elif "start_date" in error_msg or "end_date" in error_msg:
-            error_msg = "Invalid competition dates. Dates must be at midnight UTC."
+            error_msg = "Invalid competition dates. Please ensure dates are in valid UTC format."
         else:
             error_msg = f"Failed to create competition: {error_msg}"
         
