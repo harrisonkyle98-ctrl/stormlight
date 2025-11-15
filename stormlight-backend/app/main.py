@@ -8571,12 +8571,13 @@ async def apply_skill_gains_migration():
                 ON player_today_skill_gains(skill)
             """)
             
-            result = await conn.fetchval("""
+            cursor = await conn.execute("""
                 SELECT EXISTS (
                     SELECT FROM information_schema.tables 
                     WHERE table_name = 'player_today_skill_gains'
                 )
             """)
+            result = (await cursor.fetchone())[0]
             
             return {
                 "status": "success",
