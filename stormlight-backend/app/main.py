@@ -2530,6 +2530,9 @@ async def get_competitions(status: Optional[str] = None):
     """Get all competitions with optional status filtering"""
     try:
         if PRISMA_AVAILABLE and prisma:
+            live_active_set, is_from_live = await get_live_active_set()
+            print(f"[get_competitions] Using {'live API' if is_from_live else 'DB fallback'} active set with {len(live_active_set)} members")
+            
             competitions = await prisma.competition.find_many(
                 order={'startDate': 'desc'},
                 include={'entries': {'include': {'member': True}}}
@@ -2550,13 +2553,12 @@ async def get_competitions(status: Optional[str] = None):
                 if status is None or comp_status == status:
                     try:
                         active_entries_count = 0
-                        total_entries_count = len(comp.entries) if comp.entries else 0
                         if comp.entries:
                             for entry in comp.entries:
-                                if entry.member and entry.member.active:
+                                if normalize_username(entry.username) in live_active_set:
                                     active_entries_count += 1
                         
-                        print(f"[Competition {comp.name}] Total entries: {total_entries_count}, Active entries: {active_entries_count}")
+                        print(f"[Competition {comp.name}] Total entries: {len(comp.entries) if comp.entries else 0}, Active entries (live filtered): {active_entries_count}")
                         
                         comp_dict = {
                             'id': comp.id,
@@ -2646,6 +2648,9 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
     """Get specific competition with leaderboard (on-demand calculation)"""
     try:
         if PRISMA_AVAILABLE and prisma:
+            live_active_set, is_from_live = await get_live_active_set()
+            print(f"[get_competition] Using {'live API' if is_from_live else 'DB fallback'} active set with {len(live_active_set)} members")
+            
             competition = await prisma.competition.find_unique(
                 where={'id': competition_id},
                 include={'entries': {'include': {'member': True}}}
@@ -2669,7 +2674,7 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                 conn = await get_db_connection()
                 async with conn:
                     for entry in competition.entries:
-                        if not entry.member or not entry.member.active:
+                        if normalize_username(entry.username) not in live_active_set:
                             continue
                         xp_gain = 0
                         ending_xp = 0
@@ -2745,7 +2750,7 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                 
                 async with conn:
                     for entry in competition.entries:
-                        if not entry.member or not entry.member.active:
+                        if normalize_username(entry.username) not in live_active_set:
                             continue
                         completed_count = 0
                         completed_positions = []
@@ -2885,6 +2890,9 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         if not PRISMA_AVAILABLE or not prisma:
             raise HTTPException(status_code=503, detail="Database not available")
         
+        live_active_set, is_from_live = await get_live_active_set()
+        print(f"[get_competition_live] Using {'live API' if is_from_live else 'DB fallback'} active set with {len(live_active_set)} members")
+        
         competition = await prisma.competition.find_unique(
             where={'id': competition_id}
         )
@@ -2902,7 +2910,7 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
             take=100
         )
         
-        entries = [e for e in entries if e.member and e.member.active]
+        entries = [e for e in entries if normalize_username(e.username) in live_active_set]
         
         print(f"[Live Competition] Found {len(entries)} entries for competition {competition_id}")
         
@@ -3585,6 +3593,14 @@ async def get_highest_placement(username: str):
             'competition_name': None
         }
 
+def normalize_username(username: str) -> str:
+    """Normalize username for comparison - handles NBSP, whitespace, and case"""
+    if not username:
+        return ""
+    normalized = username.replace('\u00A0', ' ')
+    normalized = ' '.join(normalized.split())
+    return normalized.lower()
+
 async def fetch_clan_members() -> List[Dict[str, Any]]:
     """Fetch clan members from RuneScape Clan API"""
     try:
@@ -3626,6 +3642,39 @@ async def fetch_clan_members() -> List[Dict[str, Any]]:
     except Exception as e:
         print(f"Error fetching clan members: {e}")
         return []
+
+async def get_live_active_set() -> tuple[set[str], bool]:
+    """Get set of normalized usernames from live RuneScape API
+    Returns: (set of normalized usernames, is_from_live_api)
+    """
+    try:
+        live_members = await fetch_clan_members()
+        if live_members:
+            live_set = {normalize_username(m['username']) for m in live_members}
+            print(f"[Live Active Set] Fetched {len(live_set)} members from live API")
+            return live_set, True
+        else:
+            print("[Live Active Set] Live API returned empty, falling back to DB")
+            if PRISMA_AVAILABLE and prisma:
+                db_members = await prisma.clanmember.find_many(
+                    where={'active': True},
+                    select={'username': True}
+                )
+                db_set = {normalize_username(m.username) for m in db_members}
+                print(f"[Live Active Set] Using DB fallback with {len(db_set)} active members")
+                return db_set, False
+            return set(), False
+    except Exception as e:
+        print(f"[Live Active Set] Error fetching live set: {e}, falling back to DB")
+        if PRISMA_AVAILABLE and prisma:
+            db_members = await prisma.clanmember.find_many(
+                where={'active': True},
+                select={'username': True}
+            )
+            db_set = {normalize_username(m.username) for m in db_members}
+            print(f"[Live Active Set] Using DB fallback with {len(db_set)} active members")
+            return db_set, False
+        return set(), False
 
 def get_rank_priority(rank: str) -> int:
     """Get rank priority for sorting (lower number = higher rank)"""
@@ -5443,7 +5492,12 @@ async def create_admin_competition(
             
             competition = await prisma.competition.create(create_data)
             
+            live_active_set, is_from_live = await get_live_active_set()
+            print(f"[create_admin_competition] Using {'live API' if is_from_live else 'DB fallback'} active set with {len(live_active_set)} members for enrollment")
+            
             members = await prisma.clanmember.find_many(where={'active': True})
+            members = [m for m in members if normalize_username(m.username) in live_active_set]
+            print(f"[create_admin_competition] Enrolling {len(members)} members after live filtering")
             
             if comp_type == 'XP_GAIN':
                 try:
@@ -5660,15 +5714,15 @@ async def verify_active_flags(admin_id: str = Depends(verify_admin_access)):
     """Verify database active flags against live RuneScape API"""
     try:
         clan_members_live = await fetch_clan_members()
-        live_usernames = {m['username'].lower() for m in clan_members_live}
+        live_usernames = {normalize_username(m['username']) for m in clan_members_live}
         
         if PRISMA_AVAILABLE and prisma:
             db_members = await prisma.clanmember.find_many()
             db_active = [m for m in db_members if m.active]
             db_inactive = [m for m in db_members if not m.active]
             
-            db_active_but_not_live = [m.username for m in db_active if m.username.lower() not in live_usernames]
-            db_inactive_but_in_live = [m.username for m in db_inactive if m.username.lower() in live_usernames]
+            db_active_but_not_live = [m.username for m in db_active if normalize_username(m.username) not in live_usernames]
+            db_inactive_but_in_live = [m.username for m in db_inactive if normalize_username(m.username) in live_usernames]
             
             return {
                 "live_count": len(live_usernames),
@@ -5681,6 +5735,52 @@ async def verify_active_flags(admin_id: str = Depends(verify_admin_access)):
         return {"error": "Database not available"}
     except Exception as e:
         print(f"Error verifying active flags: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/admin/fix-stale-active-flags")
+async def fix_stale_active_flags(admin_id: str = Depends(verify_admin_access)):
+    """Fix stale active flags by setting active=False for members not in live API"""
+    try:
+        clan_members_live = await fetch_clan_members()
+        live_usernames = {normalize_username(m['username']) for m in clan_members_live}
+        
+        if PRISMA_AVAILABLE and prisma:
+            db_members = await prisma.clanmember.find_many(where={'active': True})
+            
+            stale_members = [m for m in db_members if normalize_username(m.username) not in live_usernames]
+            
+            if not stale_members:
+                return {
+                    "updated_count": 0,
+                    "updated_usernames": [],
+                    "message": "No stale active flags found"
+                }
+            
+            updated_usernames = []
+            for member in stale_members:
+                await prisma.clanmember.update(
+                    where={'id': member.id},
+                    data={'active': False}
+                )
+                updated_usernames.append(member.username)
+                print(f"[Fix Stale Flags] Updated {member.username} to active=False")
+            
+            await log_admin_action(
+                admin_id=admin_id,
+                action="fix_stale_active_flags",
+                details=f"Updated {len(updated_usernames)} members to active=False: {', '.join(updated_usernames)}"
+            )
+            
+            return {
+                "updated_count": len(updated_usernames),
+                "updated_usernames": updated_usernames,
+                "message": f"Successfully updated {len(updated_usernames)} members to active=False"
+            }
+        return {"error": "Database not available"}
+    except Exception as e:
+        print(f"Error fixing stale active flags: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
