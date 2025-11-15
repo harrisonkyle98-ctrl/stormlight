@@ -713,11 +713,33 @@ async def upsert_today_gain(conn, username: str, display_username: str, xp_gain:
         INSERT INTO player_today_gains (username, snapshot_date, overall_gain, display_username, updated_at)
         VALUES (%s, %s, %s, %s, NOW())
         ON CONFLICT (username, snapshot_date)
-        DO UPDATE SET 
+        DO UPDATE SET
             overall_gain = EXCLUDED.overall_gain,
             display_username = EXCLUDED.display_username,
             updated_at = NOW()
     """, (username, date_utc, xp_gain, display_username))
+
+async def upsert_today_skill_gain(conn, username: str, skill: str, current_xp: int, xp_gain: int, timestamp):
+    """
+    Upsert today's per-skill XP gain for a player into player_today_skill_gains table.
+    
+    Args:
+        conn: Database connection
+        username: Username (mixed-case, used for PRIMARY KEY)
+        skill: Skill name (lowercase, e.g., 'attack', 'overall')
+        current_xp: Current live XP for this skill
+        xp_gain: XP gained today for this skill
+        timestamp: Timestamp of the update
+    """
+    await conn.execute("""
+        INSERT INTO player_today_skill_gains (username, skill, current_xp, xp_gain, last_updated)
+        VALUES (%s, %s, %s, %s, %s)
+        ON CONFLICT (username, skill)
+        DO UPDATE SET
+            current_xp = EXCLUDED.current_xp,
+            xp_gain = EXCLUDED.xp_gain,
+            last_updated = EXCLUDED.last_updated
+    """, (username, skill, current_xp, xp_gain, timestamp))
 
 async def get_player_stats_for_periods(conn, username: str, period1: str, period2: str):
     """Get player stats comparison between two time periods using consolidated snapshots"""

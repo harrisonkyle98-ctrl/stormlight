@@ -3233,35 +3233,36 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
             from database import get_db_connection, get_snapshot_json_on_or_before
         
         skill = competition.skill or 'overall'
+        skill_normalized = skill.lower()
         
         entries_to_process = entries[:50]
-        
-        semaphore = asyncio.Semaphore(8)
-        
-        async def fetch_with_timeout(entry):
-            async with semaphore:
-                try:
-                    stats = await asyncio.wait_for(fetch_player_stats(entry.username), timeout=6.0)
-                    return entry, stats
-                except asyncio.TimeoutError:
-                    print(f"Timeout fetching stats for {entry.username}")
-                    return entry, None
-                except Exception as e:
-                    print(f"Error fetching stats for {entry.username}: {e}")
-                    return entry, None
-        
-        results = await asyncio.gather(*[fetch_with_timeout(entry) for entry in entries_to_process])
-        
-        stats_map = {}
-        for entry, stats in results:
-            if stats and 'stats' in stats:
-                stats_map[entry.username] = stats
         
         conn = await get_db_connection()
         usernames = [entry.username for entry in entries_to_process]
         
+        skill_gains_map = {}
+        snapshots_by_user = {}
+        
         async with conn:
             async with conn.cursor() as cur:
+                await cur.execute("""
+                    SELECT username, current_xp, xp_gain, last_updated
+                    FROM player_today_skill_gains
+                    WHERE username = ANY(%s) AND skill = %s
+                """, (usernames, skill_normalized))
+                
+                skill_gains_rows = await cur.fetchall()
+                for row in skill_gains_rows:
+                    username = row[0]
+                    current_xp = row[1]
+                    xp_gain = row[2]
+                    last_updated = row[3]
+                    skill_gains_map[username] = {
+                        'current_xp': current_xp,
+                        'xp_gain': xp_gain,
+                        'last_updated': last_updated
+                    }
+                
                 await cur.execute("""
                     SELECT username, snapshot_date, stats
                     FROM player_daily_snapshots
@@ -3273,7 +3274,6 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
                 
                 all_snapshots = await cur.fetchall()
         
-        snapshots_by_user = {}
         for row in all_snapshots:
             username = row[0]
             snapshot_date = row[1]
@@ -3292,17 +3292,10 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         for entry in entries_to_process:
             try:
                 xp_start = int(entry.xpStart or 0)
-                current_stats = stats_map.get(entry.username)
+                skill_gain_data = skill_gains_map.get(entry.username)
                 
-                if current_stats:
-                    if skill.lower() == 'overall':
-                        current_xp = sum(s.get('xp', 0) for s in current_stats['stats'].values() if isinstance(s, dict))
-                    else:
-                        skill_data = current_stats['stats'].get(skill.lower(), {})
-                        if not skill_data:
-                            skill_data = current_stats['stats'].get(skill, {})
-                        current_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
-                    
+                if skill_gain_data:
+                    current_xp = skill_gain_data['current_xp']
                     live_xp_gain = max(0, current_xp - xp_start)
                     
                     user_timeline = [{
@@ -8088,6 +8081,123 @@ async def update_today_gains_for_all_members_strict():
         return 0
 
 
+async def update_today_skill_gains_for_all_members():
+    """
+    Calculate and update per-skill XP gains for ALL active clan members (hourly background job).
+    Processes members one-at-a-time sequentially with delays to avoid rate limits.
+    Collects all 29 skills + overall for each member.
+    """
+    try:
+        from datetime import datetime, timezone
+        import random
+        try:
+            from .database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before, upsert_today_skill_gain
+        except ImportError:
+            from database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before, upsert_today_skill_gain
+        
+        start_time = time_module.monotonic()
+        now = datetime.now(timezone.utc)
+        today = now.date()
+        current_hour = now.hour
+        
+        lock_key = f"today_skill_gains_{today.isoformat()}_{current_hour:02d}"
+        lock_hash = hash(lock_key) % (2**31)
+        
+        conn = await get_db_connection()
+        async with conn:
+            cursor = await conn.execute(f"SELECT pg_try_advisory_lock({lock_hash})")
+            lock_acquired = (await cursor.fetchone())[0]
+            
+            if not lock_acquired:
+                print(f"[Today Skill Gains] Another instance is already running for hour {current_hour} (advisory lock not acquired). Skipping.")
+                return 0
+            
+            try:
+                clan_members = await fetch_clan_members()
+                active_members = [m for m in clan_members if m.get('active', True)]
+                total_members = len(active_members)
+                print(f"[Today Skill Gains] Starting sequential processing of {total_members} active clan members at {now.isoformat()}Z")
+                
+                processed_count = 0
+                updated_count = 0
+                failed_count = 0
+                
+                for idx, member in enumerate(active_members, 1):
+                    username = member['username']
+                    
+                    try:
+                        live_stats = await asyncio.wait_for(
+                            fetch_player_stats(username, max_retries=2, timeout=8.0),
+                            timeout=10.0
+                        )
+                        
+                        if not live_stats or 'stats' not in live_stats:
+                            processed_count += 1
+                            if idx % 25 == 0:
+                                print(f"[Today Skill Gains] Progress: {idx}/{total_members} processed ({updated_count} with gains)")
+                            continue
+                        
+                        baseline_json = await get_snapshot_json_on_date(conn, username, today)
+                        if not baseline_json:
+                            baseline_json = await get_snapshot_json_on_or_before(conn, username, today)
+                        
+                        if not baseline_json:
+                            baseline_json = {}
+                        
+                        skills_processed = 0
+                        for skill_key, skill_data in live_stats['stats'].items():
+                            if not isinstance(skill_data, dict):
+                                continue
+                            
+                            skill_name = skill_key.lower()
+                            current_xp = skill_data.get('xp', 0)
+                            
+                            baseline_skill = baseline_json.get(skill_key, {})
+                            if not isinstance(baseline_skill, dict):
+                                baseline_skill = baseline_json.get(skill_name, {})
+                            baseline_xp = baseline_skill.get('xp', 0) if isinstance(baseline_skill, dict) else 0
+                            
+                            xp_gain = max(0, current_xp - baseline_xp)
+                            
+                            await upsert_today_skill_gain(conn, username, skill_name, current_xp, xp_gain, now)
+                            skills_processed += 1
+                        
+                        processed_count += 1
+                        if skills_processed > 0:
+                            updated_count += 1
+                        
+                        if idx % 25 == 0:
+                            elapsed = time_module.monotonic() - start_time
+                            print(f"[Today Skill Gains] Progress: {idx}/{total_members} processed ({updated_count} with gains, {failed_count} failed) - {elapsed:.1f}s elapsed")
+                    
+                    except asyncio.TimeoutError:
+                        failed_count += 1
+                        if failed_count <= 10:
+                            print(f"[Today Skill Gains] Timeout fetching {username} (#{idx})")
+                    except Exception as e:
+                        failed_count += 1
+                        if failed_count <= 10:
+                            print(f"[Today Skill Gains] Error processing {username} (#{idx}): {e}")
+                    
+                    if idx < total_members:
+                        delay = 3.0 + random.uniform(-0.3, 0.3)
+                        await asyncio.sleep(delay)
+                
+                elapsed = time_module.monotonic() - start_time
+                print(f"[Today Skill Gains] Completed in {elapsed:.1f}s: {processed_count}/{total_members} processed, {updated_count} with XP gains, {failed_count} failed")
+                return updated_count
+            
+            finally:
+                await conn.execute(f"SELECT pg_advisory_unlock({lock_hash})")
+                print(f"[Today Skill Gains] Advisory lock released for hour {current_hour}")
+    
+    except Exception as e:
+        print(f"[Today Skill Gains] Fatal error: {e}")
+        import traceback
+        traceback.print_exc()
+        return 0
+
+
 async def reset_today_gains_table():
     """
     Daily reset at 00:00 UTC - delete old player_today_gains records.
@@ -8350,6 +8460,16 @@ async def startup_event():
                             import traceback
                             traceback.print_exc()
                         
+                        print(f"📊 [Scheduler][HOURLY] Starting per-skill XP gains calculation at {now.isoformat()}Z (machine: {machine_id})")
+                        try:
+                            skill_updated_count = await update_today_skill_gains_for_all_members()
+                            skill_completion_time = datetime.now(timezone.utc).isoformat()
+                            print(f"✅ [Scheduler][HOURLY] Per-skill XP gains calculation completed at {skill_completion_time}Z: {skill_updated_count} members with gains (machine: {machine_id})")
+                        except Exception as e:
+                            print(f"❌ [Scheduler][HOURLY] Error calculating per-skill XP gains: {e} (machine: {machine_id})")
+                            import traceback
+                            traceback.print_exc()
+                        
                         last_sync_hour = current_hour
                         print(f"✅ [Scheduler][HOURLY] All hourly tasks completed for hour {current_hour}. Next run: {(current_hour + 1) % 24}:00 UTC")
                     
@@ -8543,52 +8663,6 @@ async def get_members_active_today(
         import traceback
         traceback.print_exc()
         return {"active_members": [], "total_active": 0, "last_updated": None}
-
-@app.post("/api/admin/apply-skill-gains-migration")
-async def apply_skill_gains_migration():
-    """Apply player_today_skill_gains table migration (admin only, one-time use)"""
-    try:
-        try:
-            from .database import get_db_connection
-        except ImportError:
-            from database import get_db_connection
-        
-        conn = await get_db_connection()
-        async with conn:
-            await conn.execute("""
-                CREATE TABLE IF NOT EXISTS player_today_skill_gains (
-                    username TEXT NOT NULL,
-                    skill TEXT NOT NULL,
-                    current_xp BIGINT NOT NULL,
-                    xp_gain BIGINT NOT NULL,
-                    last_updated TIMESTAMPTZ NOT NULL,
-                    PRIMARY KEY (username, skill)
-                )
-            """)
-            
-            await conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_skill_gains_skill 
-                ON player_today_skill_gains(skill)
-            """)
-            
-            cursor = await conn.execute("""
-                SELECT EXISTS (
-                    SELECT FROM information_schema.tables 
-                    WHERE table_name = 'player_today_skill_gains'
-                )
-            """)
-            result = (await cursor.fetchone())[0]
-            
-            return {
-                "status": "success",
-                "message": "Migration applied successfully",
-                "table_exists": result
-            }
-    except Exception as e:
-        print(f"Error applying migration: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/admin/refresh-today-gains")
 async def admin_refresh_today_gains(limit: int = Query(None, ge=1, le=500)):
