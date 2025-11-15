@@ -8544,6 +8544,51 @@ async def get_members_active_today(
         traceback.print_exc()
         return {"active_members": [], "total_active": 0, "last_updated": None}
 
+@app.post("/api/admin/apply-skill-gains-migration")
+async def apply_skill_gains_migration():
+    """Apply player_today_skill_gains table migration (admin only, one-time use)"""
+    try:
+        try:
+            from .database import get_db_connection
+        except ImportError:
+            from database import get_db_connection
+        
+        conn = await get_db_connection()
+        async with conn:
+            await conn.execute("""
+                CREATE TABLE IF NOT EXISTS player_today_skill_gains (
+                    username TEXT NOT NULL,
+                    skill TEXT NOT NULL,
+                    current_xp BIGINT NOT NULL,
+                    xp_gain BIGINT NOT NULL,
+                    last_updated TIMESTAMPTZ NOT NULL,
+                    PRIMARY KEY (username, skill)
+                )
+            """)
+            
+            await conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_skill_gains_skill 
+                ON player_today_skill_gains(skill)
+            """)
+            
+            result = await conn.fetchval("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'player_today_skill_gains'
+                )
+            """)
+            
+            return {
+                "status": "success",
+                "message": "Migration applied successfully",
+                "table_exists": result
+            }
+    except Exception as e:
+        print(f"Error applying migration: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/admin/refresh-today-gains")
 async def admin_refresh_today_gains(limit: int = Query(None, ge=1, le=500)):
     """Admin endpoint to manually trigger today's XP gains refresh for all members"""
