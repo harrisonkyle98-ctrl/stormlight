@@ -467,6 +467,291 @@ async def check_and_log_competition_events():
         import traceback
         traceback.print_exc()
 
+async def capture_competition_start_xp(competition_id: str):
+    """Capture exact starting XP for all active members at competition start time"""
+    try:
+        if not PRISMA_AVAILABLE or not prisma:
+            return
+        
+        existing_log = await prisma.adminlog.find_first(
+            where={
+                'action': 'capture_competition_start_xp',
+                'details': {'contains': competition_id}
+            }
+        )
+        if existing_log:
+            print(f"[XP Capture] Start XP already captured for competition {competition_id}")
+            return
+        
+        competition = await prisma.competition.find_unique(
+            where={'id': competition_id},
+            include={'entries': True}
+        )
+        if not competition or competition.type != 'XP_GAIN':
+            return
+        
+        try:
+            from .database import get_db_connection
+        except ImportError:
+            from database import get_db_connection
+        
+        conn = await get_db_connection()
+        lock_id = f"comp_start_capture:{competition_id}"
+        
+        async with conn:
+            acquired = await try_acquire_advisory_lock(conn, lock_id)
+            if not acquired:
+                print(f"[XP Capture] Could not acquire lock for start capture of {competition_id}")
+                return
+            
+            try:
+                print(f"[XP Capture] Starting XP capture for competition {competition.name} ({competition_id})")
+                
+                live_active_set, is_from_live = await get_live_active_set()
+                print(f"[XP Capture] Found {len(live_active_set)} active members")
+                
+                all_members = await prisma.clanmember.find_many(where={'active': True})
+                active_members = [m for m in all_members if normalize_username(m.username) in live_active_set]
+                
+                existing_entries = {normalize_username(e.username): e for e in competition.entries}
+                members_to_add = []
+                for member in active_members:
+                    norm_username = normalize_username(member.username)
+                    if norm_username not in existing_entries:
+                        members_to_add.append(member)
+                
+                for member in members_to_add:
+                    await prisma.competitionentry.create({
+                        'competitionId': competition_id,
+                        'memberId': member.id,
+                        'username': member.username,
+                        'xpStart': 0,
+                        'xpEnd': None
+                    })
+                    print(f"[XP Capture] Created entry for new member {member.username}")
+                
+                all_entries = await prisma.competitionentry.find_many(
+                    where={'competitionId': competition_id}
+                )
+                
+                updated_count = 0
+                failed_count = 0
+                skill = competition.skill or 'overall'
+                
+                for entry in all_entries:
+                    norm_username = normalize_username(entry.username)
+                    if norm_username not in live_active_set:
+                        continue
+                    
+                    try:
+                        stats = None
+                        for attempt in range(2):
+                            try:
+                                stats = await fetch_player_stats(entry.username)
+                                if stats and 'stats' in stats:
+                                    break
+                                await asyncio.sleep(0.5)
+                            except Exception as e:
+                                if attempt == 0:
+                                    await asyncio.sleep(1)
+                                else:
+                                    raise
+                        
+                        if stats and 'stats' in stats:
+                            if skill.lower() == 'overall':
+                                xp_value = stats['stats'].get('overall', {}).get('xp', 0)
+                                if xp_value == 0:
+                                    xp_value = sum(s.get('xp', 0) for s in stats['stats'].values() if isinstance(s, dict))
+                            else:
+                                xp_value = stats['stats'].get(skill.lower(), {}).get('xp', 0)
+                            
+                            await prisma.competitionentry.update(
+                                where={'id': entry.id},
+                                data={'xpStart': xp_value}
+                            )
+                            updated_count += 1
+                            print(f"[XP Capture] Updated {entry.username}: xpStart = {xp_value:,}")
+                        else:
+                            failed_count += 1
+                            print(f"[XP Capture] Failed to fetch stats for {entry.username}")
+                        
+                        await asyncio.sleep(0.4)
+                    
+                    except Exception as e:
+                        failed_count += 1
+                        print(f"[XP Capture] Error capturing XP for {entry.username}: {e}")
+                
+                await log_admin_action(
+                    admin_id="system",
+                    admin_username="system",
+                    action="capture_competition_start_xp",
+                    details=f"Competition {competition_id} ({competition.name}): {updated_count} updated, {failed_count} failed",
+                    prisma_client=prisma,
+                    prisma_available=PRISMA_AVAILABLE
+                )
+                
+                print(f"[XP Capture] Start capture completed for {competition.name}: {updated_count} updated, {failed_count} failed")
+            
+            finally:
+                await release_advisory_lock(conn, lock_id)
+    
+    except Exception as e:
+        print(f"[XP Capture] Error in capture_competition_start_xp: {e}")
+        import traceback
+        traceback.print_exc()
+
+async def capture_competition_end_xp(competition_id: str):
+    """Capture exact ending XP for all active members at competition end time"""
+    try:
+        if not PRISMA_AVAILABLE or not prisma:
+            return
+        
+        existing_log = await prisma.adminlog.find_first(
+            where={
+                'action': 'capture_competition_end_xp',
+                'details': {'contains': competition_id}
+            }
+        )
+        if existing_log:
+            print(f"[XP Capture] End XP already captured for competition {competition_id}")
+            return
+        
+        competition = await prisma.competition.find_unique(
+            where={'id': competition_id},
+            include={'entries': True}
+        )
+        if not competition or competition.type != 'XP_GAIN':
+            return
+        
+        try:
+            from .database import get_db_connection
+        except ImportError:
+            from database import get_db_connection
+        
+        conn = await get_db_connection()
+        lock_id = f"comp_end_capture:{competition_id}"
+        
+        async with conn:
+            acquired = await try_acquire_advisory_lock(conn, lock_id)
+            if not acquired:
+                print(f"[XP Capture] Could not acquire lock for end capture of {competition_id}")
+                return
+            
+            try:
+                print(f"[XP Capture] Starting end XP capture for competition {competition.name} ({competition_id})")
+                
+                live_active_set, is_from_live = await get_live_active_set()
+                print(f"[XP Capture] Found {len(live_active_set)} active members")
+                
+                updated_count = 0
+                failed_count = 0
+                skill = competition.skill or 'overall'
+                
+                for entry in competition.entries:
+                    norm_username = normalize_username(entry.username)
+                    if norm_username not in live_active_set:
+                        continue
+                    
+                    try:
+                        stats = None
+                        for attempt in range(2):
+                            try:
+                                stats = await fetch_player_stats(entry.username)
+                                if stats and 'stats' in stats:
+                                    break
+                                await asyncio.sleep(0.5)
+                            except Exception as e:
+                                if attempt == 0:
+                                    await asyncio.sleep(1)
+                                else:
+                                    raise
+                        
+                        if stats and 'stats' in stats:
+                            if skill.lower() == 'overall':
+                                xp_value = stats['stats'].get('overall', {}).get('xp', 0)
+                                if xp_value == 0:
+                                    xp_value = sum(s.get('xp', 0) for s in stats['stats'].values() if isinstance(s, dict))
+                            else:
+                                xp_value = stats['stats'].get(skill.lower(), {}).get('xp', 0)
+                            
+                            await prisma.competitionentry.update(
+                                where={'id': entry.id},
+                                data={'xpEnd': xp_value}
+                            )
+                            updated_count += 1
+                            print(f"[XP Capture] Updated {entry.username}: xpEnd = {xp_value:,}")
+                        else:
+                            failed_count += 1
+                            print(f"[XP Capture] Failed to fetch stats for {entry.username}")
+                        
+                        await asyncio.sleep(0.4)
+                    
+                    except Exception as e:
+                        failed_count += 1
+                        print(f"[XP Capture] Error capturing end XP for {entry.username}: {e}")
+                
+                await log_admin_action(
+                    admin_id="system",
+                    admin_username="system",
+                    action="capture_competition_end_xp",
+                    details=f"Competition {competition_id} ({competition.name}): {updated_count} updated, {failed_count} failed",
+                    prisma_client=prisma,
+                    prisma_available=PRISMA_AVAILABLE
+                )
+                
+                print(f"[XP Capture] End capture completed for {competition.name}: {updated_count} updated, {failed_count} failed")
+            
+            finally:
+                await release_advisory_lock(conn, lock_id)
+    
+    except Exception as e:
+        print(f"[XP Capture] Error in capture_competition_end_xp: {e}")
+        import traceback
+        traceback.print_exc()
+
+async def check_and_capture_competition_xp():
+    """Check for competitions that need XP capture and trigger captures"""
+    try:
+        if not PRISMA_AVAILABLE or not prisma:
+            return
+        
+        from datetime import timezone
+        now = datetime.now(timezone.utc)
+        
+        competitions = await prisma.competition.find_many(
+            where={
+                'type': 'XP_GAIN',
+                'startDate': {'lte': now}
+            }
+        )
+        
+        for comp in competitions:
+            start_log = await prisma.adminlog.find_first(
+                where={
+                    'action': 'capture_competition_start_xp',
+                    'details': {'contains': comp.id}
+                }
+            )
+            if not start_log:
+                print(f"[XP Capture Check] Competition {comp.name} needs start XP capture")
+                await capture_competition_start_xp(comp.id)
+            
+            if comp.endDate <= now:
+                end_log = await prisma.adminlog.find_first(
+                    where={
+                        'action': 'capture_competition_end_xp',
+                        'details': {'contains': comp.id}
+                    }
+                )
+                if not end_log:
+                    print(f"[XP Capture Check] Competition {comp.name} needs end XP capture")
+                    await capture_competition_end_xp(comp.id)
+    
+    except Exception as e:
+        print(f"[XP Capture Check] Error: {e}")
+        import traceback
+        traceback.print_exc()
+
 
 def is_rate_limited(client_ip: str, endpoint: str) -> bool:
     """Check if client is rate limited for profile endpoints"""
@@ -2676,35 +2961,41 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                     for entry in competition.entries:
                         if normalize_username(entry.username) not in live_active_set:
                             continue
-                        xp_gain = 0
+                        
+                        starting_xp = int(entry.xpStart or 0)
                         ending_xp = 0
+                        xp_gain = 0
                         
                         if competition_ended:
-                            try:
-                                end_snapshot = await get_snapshot_json_on_or_before(
-                                    conn, entry.username, competition.endDate.date()
-                                )
-                                
-                                if end_snapshot:
-                                    skill = competition.skill or 'overall'
-                                    if skill and skill.lower() == 'overall':
-                                        xp_end = end_snapshot.get('overall', {}).get('xp', 0)
-                                        if xp_end == 0:
-                                            xp_end = sum(s.get('xp', 0) for k, s in end_snapshot.items() if isinstance(s, dict) and k != 'overall')
-                                    else:
-                                        xp_end = end_snapshot.get(skill, {}).get('xp', 0)
+                            if entry.xpEnd is not None:
+                                ending_xp = int(entry.xpEnd)
+                                xp_gain = max(0, ending_xp - starting_xp)
+                            else:
+                                try:
+                                    end_snapshot = await get_snapshot_json_on_or_before(
+                                        conn, entry.username, competition.endDate.date()
+                                    )
                                     
-                                    ending_xp = xp_end
-                                    xp_gain = max(0, xp_end - entry.xpStart)
-                            except Exception as e:
-                                print(f"Error calculating XP for {entry.username}: {e}")
-                                xp_gain = 0
-                                ending_xp = 0
+                                    if end_snapshot:
+                                        skill = competition.skill or 'overall'
+                                        if skill and skill.lower() == 'overall':
+                                            xp_end = end_snapshot.get('overall', {}).get('xp', 0)
+                                            if xp_end == 0:
+                                                xp_end = sum(s.get('xp', 0) for k, s in end_snapshot.items() if isinstance(s, dict) and k != 'overall')
+                                        else:
+                                            xp_end = end_snapshot.get(skill, {}).get('xp', 0)
+                                        
+                                        ending_xp = xp_end
+                                        xp_gain = max(0, xp_end - starting_xp)
+                                except Exception as e:
+                                    print(f"Error calculating XP for {entry.username}: {e}")
+                                    xp_gain = 0
+                                    ending_xp = 0
                         
                         leaderboard.append({
                             'username': entry.username,
                             'xp_gain': xp_gain,
-                            'starting_xp': int(entry.xpStart or 0),
+                            'starting_xp': starting_xp,
                             'ending_xp': ending_xp,
                             'skill': competition.skill
                         })
@@ -8037,6 +8328,15 @@ async def startup_event():
                             print(f"✅ [Scheduler][HOURLY] Competition event check completed")
                         except Exception as e:
                             print(f"❌ [Scheduler][HOURLY] Error checking competition events: {e}")
+                            import traceback
+                            traceback.print_exc()
+                        
+                        print(f"📊 [Scheduler][HOURLY] Checking competition XP captures at {now.isoformat()}Z")
+                        try:
+                            await check_and_capture_competition_xp()
+                            print(f"✅ [Scheduler][HOURLY] Competition XP capture check completed")
+                        except Exception as e:
+                            print(f"❌ [Scheduler][HOURLY] Error checking competition XP captures: {e}")
                             import traceback
                             traceback.print_exc()
                         
