@@ -2837,13 +2837,9 @@ async def get_competitions(status: Optional[str] = None):
                 
                 if status is None or comp_status == status:
                     try:
-                        active_entries_count = 0
-                        if comp.entries:
-                            for entry in comp.entries:
-                                if normalize_username(entry.username) in live_active_set:
-                                    active_entries_count += 1
+                        total_entries_count = len(comp.entries) if comp.entries else 0
                         
-                        print(f"[Competition {comp.name}] Total entries: {len(comp.entries) if comp.entries else 0}, Active entries (live filtered): {active_entries_count}")
+                        print(f"[Competition {comp.name}] Total enrolled entries: {total_entries_count}")
                         
                         comp_dict = {
                             'id': comp.id,
@@ -2864,7 +2860,7 @@ async def get_competitions(status: Optional[str] = None):
                             'createdAt': comp.createdAt.isoformat() if comp.createdAt else None,
                             'updatedAt': comp.updatedAt.isoformat() if comp.updatedAt else None,
                             'status': comp_status,
-                            'participantCount': active_entries_count
+                            'participantCount': total_entries_count
                         }
                         competition_list.append(comp_dict)
                     except Exception as e:
@@ -2959,9 +2955,6 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                 conn = await get_db_connection()
                 async with conn:
                     for entry in competition.entries:
-                        if normalize_username(entry.username) not in live_active_set:
-                            continue
-                        
                         starting_xp = int(entry.xpStart or 0)
                         ending_xp = 0
                         xp_gain = 0
@@ -3041,8 +3034,6 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                 
                 async with conn:
                     for entry in competition.entries:
-                        if normalize_username(entry.username) not in live_active_set:
-                            continue
                         completed_count = 0
                         completed_positions = []
                         try:
@@ -3197,11 +3188,8 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         entries = await prisma.competitionentry.find_many(
             where={'competitionId': competition_id, 'isActive': True},
             include={'member': True},
-            order={'xpGained': 'desc'},
-            take=100
+            order={'xpGained': 'desc'}
         )
-        
-        entries = [e for e in entries if normalize_username(e.username) in live_active_set]
         
         print(f"[Live Competition] Found {len(entries)} entries for competition {competition_id}")
         
