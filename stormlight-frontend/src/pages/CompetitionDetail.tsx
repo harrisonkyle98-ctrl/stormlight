@@ -162,7 +162,16 @@ const CompetitionDetail = () => {
     if (!id || !competition || competition.type !== 'XP_GAIN') return
     
     try {
-      const response = await fetch(`${API_URL}/api/competitions/${id}?page=${currentPage}&per_page=25`)
+      const now = new Date()
+      const start = new Date(competition.startDate)
+      const end = new Date(competition.endDate)
+      const isActive = now >= start && now <= end
+      
+      const endpoint = isActive 
+        ? `${API_URL}/api/competitions/${id}/live?page=${currentPage}&per_page=25`
+        : `${API_URL}/api/competitions/${id}?page=${currentPage}&per_page=25`
+      
+      const response = await fetch(endpoint)
       if (response.ok) {
         const data = await response.json()
         
@@ -189,7 +198,11 @@ const CompetitionDetail = () => {
           setTotalParticipants(data.pagination.total)
         }
         
-        setLastUpdated(new Date().toISOString())
+        if (data.last_updated) {
+          setLastUpdated(data.last_updated)
+        } else {
+          setLastUpdated(new Date().toISOString())
+        }
       }
     } catch (error) {
       console.error('Error fetching live competition data:', error)
@@ -200,7 +213,16 @@ const CompetitionDetail = () => {
     try {
       setPaginationLoading(true)
       
-      const response = await fetch(`${API_URL}/api/competitions/${id}?page=${page}&per_page=25`)
+      const now = new Date()
+      const start = new Date(competition?.startDate || '')
+      const end = new Date(competition?.endDate || '')
+      const isActive = competition?.type === 'XP_GAIN' && now >= start && now <= end
+      
+      const endpoint = isActive
+        ? `${API_URL}/api/competitions/${id}/live?page=${page}&per_page=25`
+        : `${API_URL}/api/competitions/${id}?page=${page}&per_page=25`
+      
+      const response = await fetch(endpoint)
       if (response.ok) {
         const data = await response.json()
         setLeaderboardData(data.leaderboard || [])
@@ -209,6 +231,10 @@ const CompetitionDetail = () => {
           setCurrentPage(data.pagination.page)
           setTotalPages(data.pagination.total_pages)
           setTotalParticipants(data.pagination.total)
+        }
+        
+        if (data.last_updated) {
+          setLastUpdated(data.last_updated)
         }
       }
     } catch (error) {

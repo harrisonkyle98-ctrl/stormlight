@@ -3235,7 +3235,13 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         skill = competition.skill or 'overall'
         skill_normalized = skill.lower()
         
-        entries_to_process = entries[:50]
+        is_active = now < competition.endDate
+        
+        # Paginate entries before processing
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        total_entries = len(entries)
+        entries_to_process = entries[start_idx:end_idx]
         
         conn = await get_db_connection()
         usernames = [entry.username for entry in entries_to_process]
@@ -3245,23 +3251,30 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         
         async with conn:
             async with conn.cursor() as cur:
-                await cur.execute("""
-                    SELECT username, current_xp, xp_gain, last_updated
-                    FROM player_today_skill_gains
-                    WHERE username = ANY(%s) AND skill = %s
-                """, (usernames, skill_normalized))
-                
-                skill_gains_rows = await cur.fetchall()
-                for row in skill_gains_rows:
-                    username = row[0]
-                    current_xp = row[1]
-                    xp_gain = row[2]
-                    last_updated = row[3]
-                    skill_gains_map[username] = {
-                        'current_xp': current_xp,
-                        'xp_gain': xp_gain,
-                        'last_updated': last_updated
-                    }
+                if is_active:
+                    await cur.execute("""
+                        SELECT username, current_xp, xp_gain, last_updated
+                        FROM player_today_skill_gains
+                        WHERE username = ANY(%s) AND skill = %s
+                    """, (usernames, skill_normalized))
+                    
+                    skill_gains_rows = await cur.fetchall()
+                    staleness_threshold = timedelta(minutes=90)
+                    
+                    for row in skill_gains_rows:
+                        username = row[0]
+                        current_xp = row[1]
+                        xp_gain = row[2]
+                        last_updated = row[3]
+                        
+                        is_stale = (now - last_updated) > staleness_threshold if last_updated else True
+                        
+                        skill_gains_map[username] = {
+                            'current_xp': current_xp,
+                            'xp_gain': xp_gain,
+                            'last_updated': last_updated,
+                            'is_stale': is_stale
+                        }
                 
                 await cur.execute("""
                     SELECT username, snapshot_date, stats
@@ -3286,17 +3299,73 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
                 'stats': stats
             })
         
+        # For active competitions with missing/stale data, fetch from RuneScape API
+        if is_active:
+            missing_usernames = []
+            for entry in entries_to_process:
+                skill_gain_data = skill_gains_map.get(entry.username)
+                if not skill_gain_data or skill_gain_data.get('is_stale', True):
+                    missing_usernames.append(entry.username)
+            
+            if missing_usernames:
+                print(f"[Live Competition] Fetching live XP for {len(missing_usernames)} members with missing/stale data")
+                semaphore = asyncio.Semaphore(8)
+                
+                async def fetch_with_timeout(username):
+                    async with semaphore:
+                        try:
+                            stats = await asyncio.wait_for(fetch_player_stats(username), timeout=6.0)
+                            return username, stats
+                        except asyncio.TimeoutError:
+                            print(f"[Live Competition] Timeout fetching stats for {username}")
+                            return username, None
+                        except Exception as e:
+                            print(f"[Live Competition] Error fetching stats for {username}: {e}")
+                            return username, None
+                
+                results = await asyncio.gather(*[fetch_with_timeout(username) for username in missing_usernames])
+                
+                for username, stats in results:
+                    if stats and 'stats' in stats:
+                        if skill_normalized == 'overall':
+                            overall_data = stats['stats'].get('overall', {})
+                            if isinstance(overall_data, dict) and 'xp' in overall_data:
+                                current_xp = overall_data.get('xp', 0)
+                            else:
+                                current_xp = sum(s.get('xp', 0) for s in stats['stats'].values() if isinstance(s, dict))
+                        else:
+                            skill_data = stats['stats'].get(skill_normalized, {})
+                            if not skill_data:
+                                skill_data = stats['stats'].get(skill, {})
+                            current_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
+                        
+                        skill_gains_map[username] = {
+                            'current_xp': current_xp,
+                            'xp_gain': 0,  # Not used
+                            'last_updated': now,
+                            'is_stale': False
+                        }
+        
         leaderboard = []
         timeline_data = {}
         
         for entry in entries_to_process:
             try:
                 xp_start = int(entry.xpStart or 0)
-                skill_gain_data = skill_gains_map.get(entry.username)
+                xp_end = int(entry.xpEnd or 0)
                 
-                if skill_gain_data:
-                    current_xp = skill_gain_data['current_xp']
-                    live_xp_gain = max(0, current_xp - xp_start)
+                if not is_active and xp_end > 0:
+                    current_xp = xp_end
+                    live_xp_gain = max(0, xp_end - xp_start)
+                else:
+                    skill_gain_data = skill_gains_map.get(entry.username)
+                    
+                    if skill_gain_data:
+                        current_xp = skill_gain_data['current_xp']
+                        live_xp_gain = max(0, current_xp - xp_start)
+                    else:
+                        current_xp = xp_start
+                        live_xp_gain = 0
                     
                     user_timeline = [{
                         'timestamp': competition.startDate.isoformat(),
@@ -3343,10 +3412,35 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         for idx, entry in enumerate(leaderboard, 1):
             entry['rank'] = idx
         
-        start_idx = (page - 1) * per_page
-        end_idx = start_idx + per_page
-        total_participants = len(leaderboard)
-        top_10 = leaderboard[:10]
+        all_entries_for_top10 = entries[:50]  # Limit to first 50 for performance
+        top_10_leaderboard = []
+        
+        for entry in all_entries_for_top10:
+            xp_start = int(entry.xpStart or 0)
+            xp_end = int(entry.xpEnd or 0)
+            
+            if not is_active and xp_end > 0:
+                current_xp = xp_end
+                xp_gain = max(0, xp_end - xp_start)
+            else:
+                skill_gain_data = skill_gains_map.get(entry.username)
+                if skill_gain_data:
+                    current_xp = skill_gain_data['current_xp']
+                    xp_gain = max(0, current_xp - xp_start)
+                else:
+                    current_xp = xp_start
+                    xp_gain = 0
+            
+            top_10_leaderboard.append({
+                'username': entry.username,
+                'xp_gain': xp_gain,
+                'starting_xp': xp_start,
+                'ending_xp': current_xp,
+                'skill': skill
+            })
+        
+        top_10_leaderboard.sort(key=lambda x: x['xp_gain'], reverse=True)
+        top_10 = top_10_leaderboard[:10]
         
         top_10_timeline = {username: timeline_data.get(username, []) for username in [p['username'] for p in top_10]}
         
@@ -3358,14 +3452,14 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
             "skill": competition.skill,
             "startDate": competition.startDate.isoformat(),
             "endDate": competition.endDate.isoformat(),
-            "leaderboard": leaderboard[start_idx:end_idx],
+            "leaderboard": leaderboard,
             "top_10": top_10,
             "timeline": top_10_timeline,
             "pagination": {
                 "page": page,
                 "per_page": per_page,
-                "total": total_participants,
-                "total_pages": (total_participants + per_page - 1) // per_page
+                "total": total_entries,
+                "total_pages": (total_entries + per_page - 1) // per_page
             },
             "last_updated": now.isoformat()
         }
