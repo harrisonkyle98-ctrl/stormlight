@@ -2828,9 +2828,16 @@ async def get_competitions(status: Optional[str] = None):
             competition_list = []
             
             for comp in competitions:
-                if now < comp.startDate:
+                comp_start = comp.startDate
+                comp_end = comp.endDate
+                if comp_start and comp_start.tzinfo is None:
+                    comp_start = comp_start.replace(tzinfo=timezone.utc)
+                if comp_end and comp_end.tzinfo is None:
+                    comp_end = comp_end.replace(tzinfo=timezone.utc)
+                
+                if now < comp_start:
                     comp_status = 'upcoming'
-                elif now > comp.endDate:
+                elif now > comp_end:
                     comp_status = 'ended'
                 else:
                     comp_status = 'active'
@@ -2957,8 +2964,16 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                 
                 from datetime import timezone, timedelta
                 now = datetime.now(timezone.utc)
-                competition_ended = now >= competition.endDate
-                competition_started = now >= competition.startDate
+                
+                comp_start = competition.startDate
+                comp_end = competition.endDate
+                if comp_start and comp_start.tzinfo is None:
+                    comp_start = comp_start.replace(tzinfo=timezone.utc)
+                if comp_end and comp_end.tzinfo is None:
+                    comp_end = comp_end.replace(tzinfo=timezone.utc)
+                
+                competition_ended = now >= comp_end if comp_end else False
+                competition_started = now >= comp_start if comp_start else False
                 is_active = competition_started and not competition_ended
                 
                 conn = await get_db_connection()
@@ -2987,6 +3002,9 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                                 username = row[0]
                                 xp_gain = row[1]
                                 last_updated = row[2]
+                                
+                                if last_updated and last_updated.tzinfo is None:
+                                    last_updated = last_updated.replace(tzinfo=timezone.utc)
                                 
                                 is_stale = (now - last_updated) > staleness_threshold if last_updated else True
                                 
