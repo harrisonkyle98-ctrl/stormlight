@@ -7515,15 +7515,28 @@ async def get_player_stats_with_history(
                             })
                             changes_data[skill_name] = cd
                     
-                    if 'overall' in changes_data and changes_data['overall'].get('xp_gain_period1', 0) > 0:
-                        try:
-                            from .database import upsert_today_gain
-                        except ImportError:
-                            from database import upsert_today_gain
-                        
-                        overall_xp_gain = changes_data['overall']['xp_gain_period1']
-                        await upsert_today_gain(conn, decoded_username, decoded_username, overall_xp_gain, today)
-                        print(f"[History] Upserted today's gain to player_today_gains: {decoded_username} = {overall_xp_gain:,} XP")
+                    try:
+                        from .database import upsert_today_skill_gains_unified
+                        from .skill_mapping import SKILL_NAMES
+                    except ImportError:
+                        from database import upsert_today_skill_gains_unified
+                        from skill_mapping import SKILL_NAMES
+                    
+                    skill_gains = {}
+                    for skill in SKILL_NAMES:
+                        gain = changes_data.get(skill, {}).get('xp_gain_period1', 0) or 0
+                        skill_gains[skill] = max(0, int(gain))
+                    
+                    # Handle overall gain
+                    overall_gain = changes_data.get('overall', {}).get('xp_gain_period1')
+                    if overall_gain is None:
+                        overall_gain = sum(skill_gains.values())
+                    skill_gains['overall'] = max(0, int(overall_gain))
+                    
+                    non_zero_count = sum(1 for v in skill_gains.values() if v > 0)
+                    
+                    await upsert_today_skill_gains_unified(conn, decoded_username, decoded_username, today, skill_gains)
+                    print(f"[History] Upserted all skill gains to player_today_gains: {decoded_username} = {non_zero_count} skills with gains, overall={skill_gains['overall']:,} XP")
                         
         except Exception as db_error:
             print(f"Database error fetching changes (historical tracking disabled): {db_error}")
