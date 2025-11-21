@@ -11,7 +11,7 @@ import { DropSearchModal } from './DropSearchModal'
 import { getSkillIcon } from '../../utils/skillIcons'
 
 interface Competition {
-  id: number
+  id: string
   name: string
   description: string
   type: 'XP' | 'DROPS' | 'XP_GAIN' | 'BOSS_KILLS'
@@ -218,7 +218,7 @@ export const CompetitionManagementTab = () => {
     }
   }
 
-  const handleDelete = async (competitionId: number) => {
+  const handleDelete = async (competitionId: string) => {
     if (!confirm('Are you sure you want to delete this competition?')) return
 
     try {
