@@ -3237,28 +3237,33 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         skill_gains_map = {}
         snapshots_by_user = {}
         
+        try:
+            from .skill_mapping import get_column_name
+        except ImportError:
+            from skill_mapping import get_column_name
+        
+        skill_column = get_column_name(skill_normalized)
+        
         async with conn:
             async with conn.cursor() as cur:
                 if is_active:
-                    await cur.execute("""
-                        SELECT username, current_xp, xp_gain, last_updated
-                        FROM player_today_skill_gains
-                        WHERE username = ANY(%s) AND skill = %s
-                    """, (usernames, skill_normalized))
+                    await cur.execute(f"""
+                        SELECT username, {skill_column}, updated_at
+                        FROM player_today_gains
+                        WHERE username = ANY(%s) AND snapshot_date = CURRENT_DATE
+                    """, (usernames,))
                     
                     skill_gains_rows = await cur.fetchall()
                     staleness_threshold = timedelta(minutes=90)
                     
                     for row in skill_gains_rows:
                         username = row[0]
-                        current_xp = row[1]
-                        xp_gain = row[2]
-                        last_updated = row[3]
+                        xp_gain = row[1]
+                        last_updated = row[2]
                         
                         is_stale = (now - last_updated) > staleness_threshold if last_updated else True
                         
                         skill_gains_map[username] = {
-                            'current_xp': current_xp,
                             'xp_gain': xp_gain,
                             'last_updated': last_updated,
                             'is_stale': is_stale
@@ -3318,18 +3323,33 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
                         if skill_normalized == 'overall':
                             overall_data = stats['stats'].get('overall', {})
                             if isinstance(overall_data, dict) and 'xp' in overall_data:
-                                current_xp = overall_data.get('xp', 0)
+                                live_xp = overall_data.get('xp', 0)
                             else:
-                                current_xp = sum(s.get('xp', 0) for s in stats['stats'].values() if isinstance(s, dict))
+                                live_xp = sum(s.get('xp', 0) for s in stats['stats'].values() if isinstance(s, dict))
                         else:
                             skill_data = stats['stats'].get(skill_normalized, {})
                             if not skill_data:
                                 skill_data = stats['stats'].get(skill, {})
-                            current_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
+                            live_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
+                        
+                        today_snapshot = snapshots_by_user.get(username, [])
+                        baseline_xp = 0
+                        if today_snapshot:
+                            latest_snapshot = today_snapshot[-1]
+                            snapshot_stats = latest_snapshot['stats']
+                            if skill_normalized == 'overall':
+                                baseline_xp = sum(s.get('xp', 0) for s in snapshot_stats.values() if isinstance(s, dict))
+                            else:
+                                skill_data = snapshot_stats.get(skill_normalized, {})
+                                if not skill_data:
+                                    skill_data = snapshot_stats.get(skill, {})
+                                baseline_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
+                        
+                        xp_gain = max(0, live_xp - baseline_xp)
                         
                         skill_gains_map[username] = {
-                            'current_xp': current_xp,
-                            'xp_gain': 0,  # Not used
+                            'xp_gain': xp_gain,
+                            'baseline_xp': baseline_xp,
                             'last_updated': now,
                             'is_stale': False
                         }
@@ -3349,11 +3369,26 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
                     skill_gain_data = skill_gains_map.get(entry.username)
                     
                     if skill_gain_data:
-                        current_xp = skill_gain_data['current_xp']
+                        baseline_xp = skill_gain_data.get('baseline_xp', 0)
+                        xp_gain_today = skill_gain_data.get('xp_gain', 0)
+                        current_xp = baseline_xp + xp_gain_today
                         live_xp_gain = max(0, current_xp - xp_start)
                     else:
-                        current_xp = xp_start
-                        live_xp_gain = 0
+                        user_snapshots = snapshots_by_user.get(entry.username, [])
+                        if user_snapshots:
+                            latest_snapshot = user_snapshots[-1]
+                            snapshot_stats = latest_snapshot['stats']
+                            if skill_normalized == 'overall':
+                                current_xp = sum(s.get('xp', 0) for s in snapshot_stats.values() if isinstance(s, dict))
+                            else:
+                                skill_data = snapshot_stats.get(skill_normalized, {})
+                                if not skill_data:
+                                    skill_data = snapshot_stats.get(skill, {})
+                                current_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
+                            live_xp_gain = max(0, current_xp - xp_start)
+                        else:
+                            current_xp = xp_start
+                            live_xp_gain = 0
                     
                     user_timeline = [{
                         'timestamp': competition.startDate.isoformat(),
@@ -8168,14 +8203,15 @@ async def update_today_skill_gains_for_all_members():
     Calculate and update per-skill XP gains for ALL active clan members (hourly background job).
     Processes members one-at-a-time sequentially with delays to avoid rate limits.
     Collects all 29 skills + overall for each member.
+    Now writes to unified player_today_gains table (one row per user).
     """
     try:
         from datetime import datetime, timezone
         import random
         try:
-            from .database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before, upsert_today_skill_gain
+            from .database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before, upsert_today_skill_gains_unified
         except ImportError:
-            from database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before, upsert_today_skill_gain
+            from database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before, upsert_today_skill_gains_unified
         
         start_time = time_module.monotonic()
         now = datetime.now(timezone.utc)
@@ -8226,26 +8262,34 @@ async def update_today_skill_gains_for_all_members():
                         if not baseline_json:
                             baseline_json = {}
                         
-                        skills_processed = 0
+                        skill_gains = {}
+                        overall_xp_live = 0
+                        overall_xp_baseline = 0
+                        
                         for skill_key, skill_data in live_stats['stats'].items():
                             if not isinstance(skill_data, dict):
                                 continue
                             
                             skill_name = skill_key.lower()
                             current_xp = skill_data.get('xp', 0)
+                            overall_xp_live += current_xp
                             
                             baseline_skill = baseline_json.get(skill_key, {})
                             if not isinstance(baseline_skill, dict):
                                 baseline_skill = baseline_json.get(skill_name, {})
                             baseline_xp = baseline_skill.get('xp', 0) if isinstance(baseline_skill, dict) else 0
+                            overall_xp_baseline += baseline_xp
                             
                             xp_gain = max(0, current_xp - baseline_xp)
-                            
-                            await upsert_today_skill_gain(conn, username, skill_name, current_xp, xp_gain, now)
-                            skills_processed += 1
+                            skill_gains[skill_name] = xp_gain
+                        
+                        # Calculate overall gain
+                        skill_gains['overall'] = max(0, overall_xp_live - overall_xp_baseline)
+                        
+                        await upsert_today_skill_gains_unified(conn, username, username, today, skill_gains)
                         
                         processed_count += 1
-                        if skills_processed > 0:
+                        if len(skill_gains) > 0:
                             updated_count += 1
                         
                         if idx % 25 == 0:

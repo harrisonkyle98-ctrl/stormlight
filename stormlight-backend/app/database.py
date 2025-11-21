@@ -130,6 +130,38 @@ async def init_database():
                 -- Add display_username column for proper capitalization (migration)
                 ALTER TABLE player_today_gains ADD COLUMN IF NOT EXISTS display_username TEXT;
                 CREATE INDEX IF NOT EXISTS idx_today_gains_display ON player_today_gains(display_username);
+                
+                -- Add 29 skill gain columns to unify live XP tracking (migration)
+                ALTER TABLE player_today_gains
+                    ADD COLUMN IF NOT EXISTS attack_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS defence_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS strength_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS constitution_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS ranged_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS prayer_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS magic_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS cooking_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS woodcutting_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS fletching_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS fishing_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS firemaking_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS crafting_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS smithing_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS mining_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS herblore_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS agility_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS thieving_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS slayer_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS farming_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS runecrafting_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS hunter_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS construction_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS summoning_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS dungeoneering_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS divination_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS invention_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS archaeology_gain BIGINT NOT NULL DEFAULT 0,
+                    ADD COLUMN IF NOT EXISTS necromancy_gain BIGINT NOT NULL DEFAULT 0;
             """)
             print("Database schema initialized successfully")
     except Exception as e:
@@ -719,27 +751,49 @@ async def upsert_today_gain(conn, username: str, display_username: str, xp_gain:
             updated_at = NOW()
     """, (username, date_utc, xp_gain, display_username))
 
-async def upsert_today_skill_gain(conn, username: str, skill: str, current_xp: int, xp_gain: int, timestamp):
+async def upsert_today_skill_gains_unified(conn, username: str, display_username: str, snapshot_date, skill_gains: dict):
     """
-    Upsert today's per-skill XP gain for a player into player_today_skill_gains table.
+    Upsert all skill XP gains for a player into the unified player_today_gains table.
+    This replaces the old per-skill-row approach with a single-row-per-user approach.
     
     Args:
         conn: Database connection
         username: Username (mixed-case, used for PRIMARY KEY)
-        skill: Skill name (lowercase, e.g., 'attack', 'overall')
-        current_xp: Current live XP for this skill
-        xp_gain: XP gained today for this skill
-        timestamp: Timestamp of the update
+        display_username: Properly capitalized username for display
+        snapshot_date: Date for the snapshot (usually today's date)
+        skill_gains: Dictionary mapping skill names to XP gains
+                     e.g., {'attack': 1000, 'defence': 500, 'overall': 5000}
     """
-    await conn.execute("""
-        INSERT INTO player_today_skill_gains (username, skill, current_xp, xp_gain, last_updated)
-        VALUES (%s, %s, %s, %s, %s)
-        ON CONFLICT (username, skill)
-        DO UPDATE SET
-            current_xp = EXCLUDED.current_xp,
-            xp_gain = EXCLUDED.xp_gain,
-            last_updated = EXCLUDED.last_updated
-    """, (username, skill, current_xp, xp_gain, timestamp))
+    try:
+        from .skill_mapping import SKILL_NAMES, get_column_name
+    except ImportError:
+        from skill_mapping import SKILL_NAMES, get_column_name
+    
+    columns = ['username', 'snapshot_date', 'display_username', 'updated_at']
+    values = [username, snapshot_date, display_username, 'NOW()']
+    update_parts = ['display_username = EXCLUDED.display_username', 'updated_at = NOW()']
+    
+    for skill in SKILL_NAMES + ['overall']:
+        column_name = get_column_name(skill)
+        gain_value = max(0, skill_gains.get(skill, 0))
+        columns.append(column_name)
+        values.append(str(gain_value))
+        update_parts.append(f"{column_name} = EXCLUDED.{column_name}")
+    
+    columns_str = ', '.join(columns)
+    placeholders = ', '.join(['%s' if v != 'NOW()' else 'NOW()' for v in values])
+    update_str = ', '.join(update_parts)
+    
+    param_values = [v for v in values if v != 'NOW()']
+    
+    sql = f"""
+        INSERT INTO player_today_gains ({columns_str})
+        VALUES ({placeholders})
+        ON CONFLICT (username, snapshot_date)
+        DO UPDATE SET {update_str}
+    """
+    
+    await conn.execute(sql, param_values)
 
 async def get_player_stats_for_periods(conn, username: str, period1: str, period2: str):
     """Get player stats comparison between two time periods using consolidated snapshots"""
