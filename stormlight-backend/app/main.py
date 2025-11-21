@@ -2928,6 +2928,8 @@ async def calculate_drop_leaderboard(competition, members):
 async def get_competition(competition_id: str, page: int = 1, per_page: int = 25):
     """Get specific competition with leaderboard (on-demand calculation)"""
     try:
+        print(f"[get_competition] Received competition_id='{competition_id}' (type={type(competition_id).__name__})")
+        
         if PRISMA_AVAILABLE and prisma:
             live_active_set, is_from_live = await get_live_active_set()
             print(f"[get_competition] Using {'live API' if is_from_live else 'DB fallback'} active set with {len(live_active_set)} members")
@@ -2937,7 +2939,10 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                 include={'entries': {'include': {'member': True}}}
             )
             
+            print(f"[get_competition] Prisma lookup result: {'FOUND' if competition else 'NOT FOUND'}")
+            
             if not competition:
+                print(f"[get_competition] Competition '{competition_id}' not found in database")
                 raise HTTPException(status_code=404, detail="Competition not found")
             
             leaderboard = []
