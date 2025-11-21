@@ -2944,16 +2944,66 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
             
             if competition.type == 'XP_GAIN':
                 try:
-                    from .database import get_db_connection, get_snapshot_json_on_or_before
+                    from .database import get_db_connection, get_snapshot_json_on_or_before, get_snapshot_json_on_date
+                    from .skill_mapping import get_column_name
                 except ImportError:
-                    from database import get_db_connection, get_snapshot_json_on_or_before
+                    from database import get_db_connection, get_snapshot_json_on_or_before, get_snapshot_json_on_date
+                    from skill_mapping import get_column_name
                 
-                from datetime import timezone
+                from datetime import timezone, timedelta
                 now = datetime.now(timezone.utc)
                 competition_ended = now >= competition.endDate
+                competition_started = now >= competition.startDate
+                is_active = competition_started and not competition_ended
                 
                 conn = await get_db_connection()
                 async with conn:
+                    skill = competition.skill or 'overall'
+                    skill_normalized = skill.lower()
+                    skill_column = get_column_name(skill_normalized)
+                    
+                    skill_gains_map = {}
+                    snapshots_by_user = {}
+                    
+                    if is_active:
+                        usernames = [entry.username for entry in competition.entries]
+                        
+                        async with conn.cursor() as cur:
+                            await cur.execute(f"""
+                                SELECT username, {skill_column}, updated_at
+                                FROM player_today_gains
+                                WHERE username = ANY(%s) AND snapshot_date = CURRENT_DATE
+                            """, (usernames,))
+                            
+                            skill_gains_rows = await cur.fetchall()
+                            staleness_threshold = timedelta(minutes=90)
+                            
+                            for row in skill_gains_rows:
+                                username = row[0]
+                                xp_gain = row[1]
+                                last_updated = row[2]
+                                
+                                is_stale = (now - last_updated) > staleness_threshold if last_updated else True
+                                
+                                skill_gains_map[username] = {
+                                    'xp_gain': xp_gain,
+                                    'is_stale': is_stale
+                                }
+                            
+                            await cur.execute("""
+                                SELECT username, stats
+                                FROM player_daily_snapshots
+                                WHERE username = ANY(%s) AND snapshot_date = CURRENT_DATE
+                            """, (usernames,))
+                            
+                            snapshot_rows = await cur.fetchall()
+                            for row in snapshot_rows:
+                                username = row[0]
+                                stats = row[1]
+                                if username not in snapshots_by_user:
+                                    snapshots_by_user[username] = []
+                                snapshots_by_user[username].append({'stats': stats})
+                    
                     for entry in competition.entries:
                         starting_xp = int(entry.xpStart or 0)
                         ending_xp = 0
@@ -2970,13 +3020,12 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                                     )
                                     
                                     if end_snapshot:
-                                        skill = competition.skill or 'overall'
-                                        if skill and skill.lower() == 'overall':
+                                        if skill_normalized == 'overall':
                                             xp_end = end_snapshot.get('overall', {}).get('xp', 0)
                                             if xp_end == 0:
                                                 xp_end = sum(s.get('xp', 0) for k, s in end_snapshot.items() if isinstance(s, dict) and k != 'overall')
                                         else:
-                                            xp_end = end_snapshot.get(skill, {}).get('xp', 0)
+                                            xp_end = end_snapshot.get(skill_normalized, {}).get('xp', 0)
                                         
                                         ending_xp = xp_end
                                         xp_gain = max(0, xp_end - starting_xp)
@@ -2984,6 +3033,31 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                                     print(f"Error calculating XP for {entry.username}: {e}")
                                     xp_gain = 0
                                     ending_xp = 0
+                        
+                        elif is_active:
+                            skill_gain_data = skill_gains_map.get(entry.username)
+                            
+                            if skill_gain_data and not skill_gain_data['is_stale']:
+                                user_snapshots = snapshots_by_user.get(entry.username, [])
+                                if user_snapshots:
+                                    latest_snapshot = user_snapshots[-1]
+                                    snapshot_stats = latest_snapshot['stats']
+                                    if skill_normalized == 'overall':
+                                        baseline_xp = sum(s.get('xp', 0) for s in snapshot_stats.values() if isinstance(s, dict))
+                                    else:
+                                        skill_data = snapshot_stats.get(skill_normalized, {})
+                                        baseline_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
+                                    
+                                    xp_gain_today = skill_gain_data.get('xp_gain', 0)
+                                    current_xp = baseline_xp + xp_gain_today
+                                    ending_xp = current_xp
+                                    xp_gain = max(0, current_xp - starting_xp)
+                                else:
+                                    ending_xp = 0
+                                    xp_gain = 0
+                            else:
+                                ending_xp = 0
+                                xp_gain = 0
                         
                         leaderboard.append({
                             'username': entry.username,
@@ -8498,15 +8572,6 @@ async def startup_event():
                         
                         if current_hour == 0 and not has_run_today:
                             print(f"🚀 [Scheduler][DAILY] Entering midnight snapshot branch at {now.isoformat()}Z (machine: {machine_id})")
-                            
-                            print(f"🗑️ [Scheduler][DAILY] Resetting player_today_gains table at {now.isoformat()}Z")
-                            try:
-                                deleted_count = await reset_today_gains_table()
-                                print(f"✅ [Scheduler][DAILY] Reset completed: {deleted_count} old records deleted")
-                            except Exception as e:
-                                print(f"❌ [Scheduler][DAILY] Error resetting today gains table: {e}")
-                                import traceback
-                                traceback.print_exc()
                             
                             async def run_daily_snapshots():
                                 try:
