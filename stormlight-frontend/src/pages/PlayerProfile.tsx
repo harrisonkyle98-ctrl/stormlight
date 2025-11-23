@@ -367,6 +367,35 @@ const PlayerProfile = () => {
     }
   }
 
+  const accountStats = useMemo(() => {
+    if (!playerData?.stats?.overall) return null
+    
+    const allBadges = questData ? checkPlayerMilestones(
+      playerData.stats, 
+      questData, 
+      playerData.clan_rank, 
+      urlToUsername(username || ''), 
+      playerData.league_points
+    ) : []
+    const leagueBadge = allBadges.find(badge => badge.id.startsWith('league-'))
+    const leagueIcon = leagueBadge?.icon || '/assets/icons/league_points.png'
+    
+    return {
+      combatLevel: playerData.stats.overall.combatlevel,
+      totalLevel: playerData.stats.overall.level,
+      questPoints: playerData.quest_points || 0,
+      runescore: playerData.runescore,
+      citadelCaps: citadelCaps,
+      leaguePoints: playerData.league_points,
+      leagueRank: playerData.league_rank,
+      leagueIcon: leagueIcon,
+      overallRank: playerData.stats.overall.rank || undefined,
+      totalXp: playerData.stats.overall.xp,
+      clanRank: playerData.clan_rank_number || undefined,
+      clanXp: playerData.clan_xp
+    }
+  }, [playerData, questData, citadelCaps, username])
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-96 gap-4">
@@ -438,37 +467,6 @@ const PlayerProfile = () => {
       }] as [string, any]
     })
 
-  const overallStats = playerData.stats.overall
-  
-  const accountStats = useMemo(() => {
-    if (!playerData || !overallStats) return null
-    
-    const allBadges = checkPlayerMilestones(
-      playerData.stats, 
-      questData, 
-      playerData.clan_rank, 
-      urlToUsername(username || ''), 
-      playerData.league_points
-    )
-    const leagueBadge = allBadges.find(badge => badge.id.startsWith('league-'))
-    const leagueIcon = leagueBadge?.icon || '/assets/icons/league_points.png'
-    
-    return {
-      combatLevel: overallStats.combatlevel,
-      totalLevel: overallStats.level,
-      questPoints: playerData.quest_points || 0,
-      runescore: playerData.runescore,
-      citadelCaps: citadelCaps,
-      leaguePoints: playerData.league_points,
-      leagueRank: playerData.league_rank,
-      leagueIcon: leagueIcon,
-      overallRank: overallStats.rank || undefined,
-      totalXp: overallStats.xp,
-      clanRank: playerData.clan_rank_number || undefined,
-      clanXp: playerData.clan_xp
-    }
-  }, [playerData, overallStats, questData, citadelCaps, username])
-  
   const getLevelBadgeStyle = (skill: string, level: number, xp: number) => {
     if (skill === 'overall') {
       if (xp >= 5800000000) {
