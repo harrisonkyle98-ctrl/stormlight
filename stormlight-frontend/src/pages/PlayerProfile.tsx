@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
@@ -22,6 +22,7 @@ import { QuestsTab } from '../components/tabs/QuestsTab'
 import { AnalyticsTab } from '../components/tabs/AnalyticsTab'
 import { CompetitionsTab } from '../components/tabs/CompetitionsTab'
 import { LogTab } from '../components/tabs/LogTab'
+import { AccountStatsCard } from '../components/profile/AccountStatsCard'
 
 interface CustomBadge {
   id: string
@@ -439,6 +440,35 @@ const PlayerProfile = () => {
 
   const overallStats = playerData.stats.overall
   
+  const accountStats = useMemo(() => {
+    if (!playerData || !overallStats) return null
+    
+    const allBadges = checkPlayerMilestones(
+      playerData.stats, 
+      questData, 
+      playerData.clan_rank, 
+      urlToUsername(username || ''), 
+      playerData.league_points
+    )
+    const leagueBadge = allBadges.find(badge => badge.id.startsWith('league-'))
+    const leagueIcon = leagueBadge?.icon || '/assets/icons/league_points.png'
+    
+    return {
+      combatLevel: overallStats.combatlevel,
+      totalLevel: overallStats.level,
+      questPoints: playerData.quest_points || 0,
+      runescore: playerData.runescore,
+      citadelCaps: citadelCaps,
+      leaguePoints: playerData.league_points,
+      leagueRank: playerData.league_rank,
+      leagueIcon: leagueIcon,
+      overallRank: overallStats.rank || undefined,
+      totalXp: overallStats.xp,
+      clanRank: playerData.clan_rank_number || undefined,
+      clanXp: playerData.clan_xp
+    }
+  }, [playerData, overallStats, questData, citadelCaps, username])
+  
   const getLevelBadgeStyle = (skill: string, level: number, xp: number) => {
     if (skill === 'overall') {
       if (xp >= 5800000000) {
@@ -651,6 +681,11 @@ const PlayerProfile = () => {
         </div>
       </div>
 
+      {/* Account Stats Card - Horizontal Layout */}
+      {accountStats && (
+        <AccountStatsCard {...accountStats} />
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-[30%_70%] gap-6">
         
         <div className="space-y-6">
@@ -767,188 +802,6 @@ const PlayerProfile = () => {
                   </div>
                 ) : null
               })()}
-
-              {overallStats && (
-                <div className="flex flex-col gap-2 mt-4">
-                  {/* Combat Level */}
-                  <Tooltip content="Combat Level">
-                    <div className="flex items-stretch overflow-hidden rounded-lg">
-                      <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
-                        <img 
-                          src="/assets/icons/combat_level.png" 
-                          alt="Combat Level"
-                          className="w-5 h-5"
-                        />
-                      </div>
-                      <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
-                        <span className="text-lg font-bold text-white">
-                          {overallStats.combatlevel}
-                        </span>
-                      </div>
-                    </div>
-                  </Tooltip>
-
-                  {/* Total Level */}
-                  <Tooltip content="Total Level">
-                    <div className="flex items-stretch overflow-hidden rounded-lg">
-                      <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
-                        <img 
-                          src="/assets/icons/total_level.png" 
-                          alt="Total Level"
-                          className="w-5 h-5"
-                        />
-                      </div>
-                      <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
-                        <span className="text-lg font-bold text-white">
-                          {overallStats.level}
-                        </span>
-                      </div>
-                    </div>
-                  </Tooltip>
-
-                  {/* Quest Points */}
-                  <Tooltip content="Quest Points">
-                    <div className="flex items-stretch overflow-hidden rounded-lg">
-                      <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
-                        <img 
-                          src="/assets/icons/quest_points.png" 
-                          alt="Quest Points"
-                          className="w-5 h-5"
-                        />
-                      </div>
-                      <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
-                        <span className="text-lg font-bold text-white">
-                          {playerData.quest_points || 0}
-                        </span>
-                      </div>
-                    </div>
-                  </Tooltip>
-
-                  {/* RuneScore */}
-                  <Tooltip content="RuneScore">
-                    <div className="flex items-stretch overflow-hidden rounded-lg">
-                      <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
-                        <img 
-                          src="/assets/icons/runescore.png" 
-                          alt="RuneScore"
-                          className="w-5 h-5"
-                        />
-                      </div>
-                      <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
-                        <span className="text-lg font-bold text-white">
-                          {playerData.runescore?.toLocaleString() || '—'}
-                        </span>
-                      </div>
-                    </div>
-                  </Tooltip>
-
-                  {/* Total Caps - only show if value exists */}
-                  {citadelCaps !== null && citadelCaps > 0 && (
-                    <Tooltip content="Total Caps">
-                      <div className="flex items-stretch overflow-hidden rounded-lg">
-                        <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
-                          <img 
-                            src="/assets/icons/clan_citadel.png" 
-                            alt="Total Caps"
-                            className="w-5 h-5"
-                          />
-                        </div>
-                        <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
-                          <span className="text-lg font-bold text-white">
-                            {citadelCaps.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    </Tooltip>
-                  )}
-
-                  {/* League Points - only show if value exists */}
-                  {playerData.league_points !== null && playerData.league_points !== undefined && (() => {
-                    const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''), playerData.league_points)
-                    const leagueBadge = allBadges.find(badge => badge.id.startsWith('league-'))
-                    const leagueIcon = leagueBadge?.icon || '/assets/icons/league_points.png'
-                    
-                    return (
-                      <Tooltip content="League Points">
-                        <div className="flex items-stretch overflow-hidden rounded-lg">
-                          <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
-                            <img 
-                              src={leagueIcon} 
-                              alt="League Points"
-                              className="w-5 h-5"
-                            />
-                          </div>
-                          <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
-                            <span className="text-lg font-bold text-white">
-                              {playerData.league_points.toLocaleString()}
-                            </span>
-                          </div>
-                        </div>
-                      </Tooltip>
-                    )
-                  })()}
-
-                  {/* League Rank - only show if value exists */}
-                  {playerData.league_rank !== null && playerData.league_rank !== undefined && (
-                    <Tooltip content="League Rank">
-                      <div className="flex items-stretch overflow-hidden rounded-lg">
-                        <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
-                          <img 
-                            src="/assets/icons/league_rank.png" 
-                            alt="League Rank"
-                            className="w-5 h-5"
-                          />
-                        </div>
-                        <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
-                          <span className="text-lg font-bold text-white">
-                            #{playerData.league_rank.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    </Tooltip>
-                  )}
-
-                  {/* XP and Rank Stats */}
-                  <div className="mt-3 flex flex-col gap-2">
-                    <div className="grid grid-cols-2 gap-4 bg-slate-700/30 rounded-lg px-4 py-3">
-                      {overallStats.rank && (
-                        <div className="text-center">
-                          <p className="text-xs text-slate-400 mb-1">Overall Rank</p>
-                          <p className="text-xl font-bold text-theme-accent-light">
-                            #{overallStats.rank.toLocaleString()}
-                          </p>
-                        </div>
-                      )}
-                      <div className="text-center">
-                        <p className="text-xs text-slate-400 mb-1">Total XP</p>
-                        <p className="text-xl font-bold text-green-400">
-                          {overallStats.xp.toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                    {(playerData.clan_xp !== undefined && playerData.clan_xp !== null) || playerData.clan_rank_number ? (
-                      <div className="grid grid-cols-2 gap-4 bg-slate-700/30 rounded-lg px-4 py-3">
-                        {playerData.clan_rank_number && (
-                          <div className="text-center">
-                            <p className="text-xs text-slate-400 mb-1">Clan Rank</p>
-                            <p className="text-xl font-bold text-theme-accent-light">
-                              #{playerData.clan_rank_number.toLocaleString()}
-                            </p>
-                          </div>
-                        )}
-                        {playerData.clan_xp !== undefined && playerData.clan_xp !== null && (
-                          <div className="text-center">
-                            <p className="text-xs text-slate-400 mb-1">Clan XP</p>
-                            <p className="text-xl font-bold text-green-400">
-                              {playerData.clan_xp.toLocaleString()}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
 
