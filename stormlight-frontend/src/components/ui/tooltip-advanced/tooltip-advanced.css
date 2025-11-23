@@ -1,0 +1,279 @@
+/* Tooltip Advanced Styles */
+.tooltip-advanced {
+  position: relative;
+  z-index: 50;
+  max-width: 320px;
+  background-color: var(--tooltip-bg);
+  border: 1px solid var(--tooltip-border);
+  border-radius: 12px;
+  box-shadow: var(--tooltip-shadow);
+  overflow: hidden;
+  animation: tooltip-fade-in 0.2s ease-out;
+}
+
+@keyframes tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Progress Bar */
+.tooltip-progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0%;
+  background-color: var(--tooltip-progress);
+  z-index: 10;
+}
+
+.tooltip-progress-bar.active {
+  animation: tooltip-progress linear forwards;
+}
+
+@keyframes tooltip-progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+/* Close Button */
+.tooltip-close-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 20;
+  background: transparent;
+  border: none;
+  color: var(--tooltip-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.tooltip-close-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--tooltip-text);
+}
+
+/* Content Container */
+.tooltip-content {
+  padding: 16px;
+  padding-top: 20px;
+}
+
+/* Header */
+.tooltip-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.tooltip-image {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background-color: var(--tooltip-image-bg);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.tooltip-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tooltip-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.tooltip-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--tooltip-title);
+  margin: 0;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.tooltip-description {
+  font-size: 13px;
+  color: var(--tooltip-text);
+  line-height: 1.5;
+}
+
+/* Rows */
+.tooltip-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tooltip-row-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  background-color: var(--tooltip-row-icon-bg);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.tooltip-row-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tooltip-row-content {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tooltip-row-label {
+  font-size: 13px;
+  color: var(--tooltip-text-muted);
+  white-space: nowrap;
+}
+
+.tooltip-row-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tooltip-text);
+  white-space: nowrap;
+}
+
+/* Footer */
+.tooltip-footer {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background-color: var(--tooltip-footer-bg);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tooltip-footer-text);
+  text-align: center;
+  cursor: default;
+}
+
+/* Arrow */
+.tooltip-arrow {
+  fill: var(--tooltip-bg);
+}
+
+/* Theme-specific CSS Variables */
+[data-theme="blue"] {
+  --tooltip-bg: rgba(30, 41, 59, 0.95);
+  --tooltip-border: rgba(59, 130, 246, 0.3);
+  --tooltip-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.1);
+  --tooltip-progress: #3b82f6;
+  --tooltip-title: #f1f5f9;
+  --tooltip-text: #cbd5e1;
+  --tooltip-text-muted: #94a3b8;
+  --tooltip-image-bg: rgba(51, 65, 85, 0.5);
+  --tooltip-row-icon-bg: rgba(51, 65, 85, 0.5);
+  --tooltip-footer-bg: rgba(59, 130, 246, 0.15);
+  --tooltip-footer-text: #60a5fa;
+}
+
+[data-theme="crimson"] {
+  --tooltip-bg: rgba(45, 18, 18, 0.95);
+  --tooltip-border: rgba(220, 38, 38, 0.3);
+  --tooltip-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(220, 38, 38, 0.1);
+  --tooltip-progress: #dc2626;
+  --tooltip-title: #fef2f2;
+  --tooltip-text: #fecaca;
+  --tooltip-text-muted: #fca5a5;
+  --tooltip-image-bg: rgba(69, 10, 10, 0.5);
+  --tooltip-row-icon-bg: rgba(69, 10, 10, 0.5);
+  --tooltip-footer-bg: rgba(220, 38, 38, 0.15);
+  --tooltip-footer-text: #ef4444;
+}
+
+[data-theme="emerald"] {
+  --tooltip-bg: rgba(15, 46, 38, 0.95);
+  --tooltip-border: rgba(16, 185, 129, 0.3);
+  --tooltip-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(16, 185, 129, 0.1);
+  --tooltip-progress: #10b981;
+  --tooltip-title: #ecfdf5;
+  --tooltip-text: #d1fae5;
+  --tooltip-text-muted: #a7f3d0;
+  --tooltip-image-bg: rgba(6, 78, 59, 0.5);
+  --tooltip-row-icon-bg: rgba(6, 78, 59, 0.5);
+  --tooltip-footer-bg: rgba(16, 185, 129, 0.15);
+  --tooltip-footer-text: #34d399;
+}
+
+[data-theme="obsidian"] {
+  --tooltip-bg: rgba(15, 23, 42, 0.95);
+  --tooltip-border: rgba(100, 116, 139, 0.3);
+  --tooltip-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(100, 116, 139, 0.1);
+  --tooltip-progress: #64748b;
+  --tooltip-title: #f1f5f9;
+  --tooltip-text: #e2e8f0;
+  --tooltip-text-muted: #cbd5e1;
+  --tooltip-image-bg: rgba(51, 65, 85, 0.5);
+  --tooltip-row-icon-bg: rgba(51, 65, 85, 0.5);
+  --tooltip-footer-bg: rgba(100, 116, 139, 0.15);
+  --tooltip-footer-text: #94a3b8;
+}
+
+[data-theme="amethyst"] {
+  --tooltip-bg: rgba(46, 30, 71, 0.95);
+  --tooltip-border: rgba(168, 85, 247, 0.3);
+  --tooltip-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(168, 85, 247, 0.1);
+  --tooltip-progress: #a855f7;
+  --tooltip-title: #faf5ff;
+  --tooltip-text: #f3e8ff;
+  --tooltip-text-muted: #e9d5ff;
+  --tooltip-image-bg: rgba(88, 28, 135, 0.5);
+  --tooltip-row-icon-bg: rgba(88, 28, 135, 0.5);
+  --tooltip-footer-bg: rgba(168, 85, 247, 0.15);
+  --tooltip-footer-text: #c084fc;
+}
+
+[data-theme="sunset"] {
+  --tooltip-bg: rgba(58, 28, 13, 0.95);
+  --tooltip-border: rgba(249, 115, 22, 0.3);
+  --tooltip-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(249, 115, 22, 0.1);
+  --tooltip-progress: #f97316;
+  --tooltip-title: #ffedd5;
+  --tooltip-text: #fed7aa;
+  --tooltip-text-muted: #fdba74;
+  --tooltip-image-bg: rgba(124, 45, 18, 0.5);
+  --tooltip-row-icon-bg: rgba(124, 45, 18, 0.5);
+  --tooltip-footer-bg: rgba(249, 115, 22, 0.15);
+  --tooltip-footer-text: #fb923c;
+}

@@ -906,22 +906,20 @@ const PlayerProfile = () => {
                     {skillsAt99.map((skill) => (
                       <Tooltip
                         key={skill.name}
-                        content={
-                          <div>
-                            <div className="font-semibold text-white">
-                              {skill.name.charAt(0).toUpperCase() + skill.name.slice(1)}
-                            </div>
-                            <div className="text-green-400">
-                              Level {playerData.stats[skill.name]?.level || 0}
-                            </div>
-                            <div className="text-theme-accent-light">
-                              {(playerData.stats[skill.name]?.xp || 0).toLocaleString()} XP
-                            </div>
-                            <div className="text-yellow-400">
-                              Rank #{(playerData.stats[skill.name]?.rank || 0).toLocaleString()}
-                            </div>
-                          </div>
-                        }
+                        title={skill.name.charAt(0).toUpperCase() + skill.name.slice(1)}
+                        imageSrc={skill.icon || undefined}
+                        rows={[
+                          {
+                            label: 'Level:',
+                            value: String(playerData.stats[skill.name]?.level || 0)
+                          },
+                          {
+                            label: 'XP:',
+                            value: (playerData.stats[skill.name]?.xp || 0).toLocaleString()
+                          }
+                        ]}
+                        footerText={`Rank: #${(playerData.stats[skill.name]?.rank || 0).toLocaleString()}`}
+                        placement="top"
                       >
                         <div
                           className="flex items-center justify-center p-2 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors cursor-help"
@@ -969,22 +967,20 @@ const PlayerProfile = () => {
                     {skillsAt120Plus.map((skill) => (
                       <Tooltip
                         key={skill.name}
-                        content={
-                          <div>
-                            <div className="font-semibold text-white">
-                              {skill.name.charAt(0).toUpperCase() + skill.name.slice(1)}
-                            </div>
-                            <div className="text-green-400">
-                              Level {playerData.stats[skill.name]?.level || 0}
-                            </div>
-                            <div className="text-theme-accent-light">
-                              {(playerData.stats[skill.name]?.xp || 0).toLocaleString()} XP
-                            </div>
-                            <div className="text-yellow-400">
-                              Rank #{(playerData.stats[skill.name]?.rank || 0).toLocaleString()}
-                            </div>
-                          </div>
-                        }
+                        title={skill.name.charAt(0).toUpperCase() + skill.name.slice(1)}
+                        imageSrc={skill.icon || undefined}
+                        rows={[
+                          {
+                            label: 'Level:',
+                            value: String(playerData.stats[skill.name]?.level || 0)
+                          },
+                          {
+                            label: 'XP:',
+                            value: (playerData.stats[skill.name]?.xp || 0).toLocaleString()
+                          }
+                        ]}
+                        footerText={`Rank: #${(playerData.stats[skill.name]?.rank || 0).toLocaleString()}`}
+                        placement="top"
                       >
                         <div
                           className="flex items-center justify-center p-2 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors cursor-help"
@@ -1032,22 +1028,20 @@ const PlayerProfile = () => {
                     {skillsAt200m.map((skill) => (
                       <Tooltip
                         key={skill.name}
-                        content={
-                          <div>
-                            <div className="font-semibold text-white">
-                              {skill.name.charAt(0).toUpperCase() + skill.name.slice(1)}
-                            </div>
-                            <div className="text-green-400">
-                              Level {playerData.stats[skill.name]?.level || 0}
-                            </div>
-                            <div className="text-theme-accent-light">
-                              {(playerData.stats[skill.name]?.xp || 0).toLocaleString()} XP
-                            </div>
-                            <div className="text-yellow-400">
-                              Rank #{(playerData.stats[skill.name]?.rank || 0).toLocaleString()}
-                            </div>
-                          </div>
-                        }
+                        title={skill.name.charAt(0).toUpperCase() + skill.name.slice(1)}
+                        imageSrc={skill.icon || undefined}
+                        rows={[
+                          {
+                            label: 'Level:',
+                            value: String(playerData.stats[skill.name]?.level || 0)
+                          },
+                          {
+                            label: 'XP:',
+                            value: (playerData.stats[skill.name]?.xp || 0).toLocaleString()
+                          }
+                        ]}
+                        footerText={`Rank: #${(playerData.stats[skill.name]?.rank || 0).toLocaleString()}`}
+                        placement="top"
                       >
                         <div
                           className="flex items-center justify-center p-2 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors cursor-help"
