@@ -3066,7 +3066,14 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                                     latest_snapshot = user_snapshots[-1]
                                     snapshot_stats = latest_snapshot['stats']
                                     if skill_normalized == 'overall':
-                                        baseline_xp = sum(s.get('xp', 0) for s in snapshot_stats.values() if isinstance(s, dict))
+                                        baseline_xp = 0
+                                        if isinstance(snapshot_stats.get('overall'), dict):
+                                            baseline_xp = snapshot_stats['overall'].get('xp', 0) or 0
+                                        if baseline_xp == 0:
+                                            baseline_xp = sum(
+                                                s.get('xp', 0) for k, s in snapshot_stats.items()
+                                                if isinstance(s, dict) and k != 'overall'
+                                            )
                                     else:
                                         skill_data = snapshot_stats.get(skill_normalized, {})
                                         baseline_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
@@ -8373,28 +8380,29 @@ async def update_today_skill_gains_for_all_members():
                             baseline_json = {}
                         
                         skill_gains = {}
-                        overall_xp_live = 0
-                        overall_xp_baseline = 0
                         
                         for skill_key, skill_data in live_stats['stats'].items():
                             if not isinstance(skill_data, dict):
                                 continue
                             
                             skill_name = skill_key.lower()
+                            
+                            if skill_name == 'overall':
+                                continue
+                            
                             current_xp = skill_data.get('xp', 0)
-                            overall_xp_live += current_xp
                             
                             baseline_skill = baseline_json.get(skill_key, {})
                             if not isinstance(baseline_skill, dict):
                                 baseline_skill = baseline_json.get(skill_name, {})
                             baseline_xp = baseline_skill.get('xp', 0) if isinstance(baseline_skill, dict) else 0
-                            overall_xp_baseline += baseline_xp
                             
                             xp_gain = max(0, current_xp - baseline_xp)
                             skill_gains[skill_name] = xp_gain
                         
-                        # Calculate overall gain
-                        skill_gains['overall'] = max(0, overall_xp_live - overall_xp_baseline)
+                        overall_live = live_stats['stats'].get('overall', {}).get('xp', 0) if isinstance(live_stats['stats'].get('overall'), dict) else 0
+                        overall_baseline = baseline_json.get('overall', {}).get('xp', 0) if isinstance(baseline_json.get('overall'), dict) else 0
+                        skill_gains['overall'] = max(0, overall_live - overall_baseline)
                         
                         await upsert_today_skill_gains_unified(conn, username, username, today, skill_gains)
                         
