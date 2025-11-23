@@ -190,11 +190,17 @@
 
 /* Arrow */
 .tooltip-arrow {
-  fill: var(--tooltip-bg);
+  fill: rgba(30, 41, 59, 0.95) !important;
 }
 
-/* Theme-specific CSS Variables */
-[data-theme="blue"] {
+/* Unified Tooltip Styles - Sapphire Theme Colors Applied Globally */
+:root,
+[data-theme="blue"],
+[data-theme="crimson"],
+[data-theme="emerald"],
+[data-theme="obsidian"],
+[data-theme="amethyst"],
+[data-theme="sunset"] {
   --tooltip-bg: rgba(30, 41, 59, 0.95);
   --tooltip-border: rgba(59, 130, 246, 0.3);
   --tooltip-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.1);
@@ -206,74 +212,4 @@
   --tooltip-row-icon-bg: rgba(51, 65, 85, 0.5);
   --tooltip-footer-bg: rgba(59, 130, 246, 0.15);
   --tooltip-footer-text: #60a5fa;
-}
-
-[data-theme="crimson"] {
-  --tooltip-bg: rgba(45, 18, 18, 0.95);
-  --tooltip-border: rgba(220, 38, 38, 0.3);
-  --tooltip-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(220, 38, 38, 0.1);
-  --tooltip-progress: #dc2626;
-  --tooltip-title: #fef2f2;
-  --tooltip-text: #fecaca;
-  --tooltip-text-muted: #fca5a5;
-  --tooltip-image-bg: rgba(69, 10, 10, 0.5);
-  --tooltip-row-icon-bg: rgba(69, 10, 10, 0.5);
-  --tooltip-footer-bg: rgba(220, 38, 38, 0.15);
-  --tooltip-footer-text: #ef4444;
-}
-
-[data-theme="emerald"] {
-  --tooltip-bg: rgba(15, 46, 38, 0.95);
-  --tooltip-border: rgba(16, 185, 129, 0.3);
-  --tooltip-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(16, 185, 129, 0.1);
-  --tooltip-progress: #10b981;
-  --tooltip-title: #ecfdf5;
-  --tooltip-text: #d1fae5;
-  --tooltip-text-muted: #a7f3d0;
-  --tooltip-image-bg: rgba(6, 78, 59, 0.5);
-  --tooltip-row-icon-bg: rgba(6, 78, 59, 0.5);
-  --tooltip-footer-bg: rgba(16, 185, 129, 0.15);
-  --tooltip-footer-text: #34d399;
-}
-
-[data-theme="obsidian"] {
-  --tooltip-bg: rgba(15, 23, 42, 0.95);
-  --tooltip-border: rgba(100, 116, 139, 0.3);
-  --tooltip-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(100, 116, 139, 0.1);
-  --tooltip-progress: #64748b;
-  --tooltip-title: #f1f5f9;
-  --tooltip-text: #e2e8f0;
-  --tooltip-text-muted: #cbd5e1;
-  --tooltip-image-bg: rgba(51, 65, 85, 0.5);
-  --tooltip-row-icon-bg: rgba(51, 65, 85, 0.5);
-  --tooltip-footer-bg: rgba(100, 116, 139, 0.15);
-  --tooltip-footer-text: #94a3b8;
-}
-
-[data-theme="amethyst"] {
-  --tooltip-bg: rgba(46, 30, 71, 0.95);
-  --tooltip-border: rgba(168, 85, 247, 0.3);
-  --tooltip-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(168, 85, 247, 0.1);
-  --tooltip-progress: #a855f7;
-  --tooltip-title: #faf5ff;
-  --tooltip-text: #f3e8ff;
-  --tooltip-text-muted: #e9d5ff;
-  --tooltip-image-bg: rgba(88, 28, 135, 0.5);
-  --tooltip-row-icon-bg: rgba(88, 28, 135, 0.5);
-  --tooltip-footer-bg: rgba(168, 85, 247, 0.15);
-  --tooltip-footer-text: #c084fc;
-}
-
-[data-theme="sunset"] {
-  --tooltip-bg: rgba(58, 28, 13, 0.95);
-  --tooltip-border: rgba(249, 115, 22, 0.3);
-  --tooltip-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(249, 115, 22, 0.1);
-  --tooltip-progress: #f97316;
-  --tooltip-title: #ffedd5;
-  --tooltip-text: #fed7aa;
-  --tooltip-text-muted: #fdba74;
-  --tooltip-image-bg: rgba(124, 45, 18, 0.5);
-  --tooltip-row-icon-bg: rgba(124, 45, 18, 0.5);
-  --tooltip-footer-bg: rgba(249, 115, 22, 0.15);
-  --tooltip-footer-text: #fb923c;
 }
