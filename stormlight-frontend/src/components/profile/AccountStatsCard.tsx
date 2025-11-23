@@ -23,7 +23,7 @@ export const AccountStatsCard = ({
   leagueIcon
 }: AccountStatsCardProps) => {
   return (
-    <Card className="bg-slate-800/50 border-slate-700">
+    <Card className="w-full bg-slate-800/50 border-slate-700">
       <CardContent className="p-3 sm:p-4">
         <div className="flex flex-nowrap items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 overflow-x-auto">
           {/* Combat Level */}

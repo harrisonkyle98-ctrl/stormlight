@@ -675,12 +675,13 @@ const PlayerProfile = () => {
         </div>
       </div>
 
-      {/* Account Stats Card - Horizontal Layout */}
-      {accountStats && (
-        <AccountStatsCard {...accountStats} />
-      )}
-
       <div className="grid grid-cols-1 lg:grid-cols-[30%_70%] gap-6">
+        {/* Account Stats Card - Horizontal Layout */}
+        {accountStats && (
+          <div className="lg:col-span-2">
+            <AccountStatsCard {...accountStats} />
+          </div>
+        )}
         
         <div className="space-y-6">
           
