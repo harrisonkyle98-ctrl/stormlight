@@ -190,10 +190,10 @@
 
 /* Arrow */
 .tooltip-arrow {
-  fill: rgba(30, 41, 59, 0.95) !important;
+  fill: var(--tooltip-bg) !important;
 }
 
-/* Unified Tooltip Styles - Sapphire Theme Colors Applied Globally */
+/* Unified Tooltip Styles - Neutral Grey Background + Theme-Reactive Accents */
 :root,
 [data-theme="blue"],
 [data-theme="crimson"],
@@ -201,15 +201,18 @@
 [data-theme="obsidian"],
 [data-theme="amethyst"],
 [data-theme="sunset"] {
+  /* Theme-independent neutral grey background */
   --tooltip-bg: rgba(30, 41, 59, 0.95);
-  --tooltip-border: rgba(59, 130, 246, 0.3);
-  --tooltip-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.1);
-  --tooltip-progress: #3b82f6;
   --tooltip-title: #f1f5f9;
   --tooltip-text: #cbd5e1;
   --tooltip-text-muted: #94a3b8;
   --tooltip-image-bg: rgba(51, 65, 85, 0.5);
   --tooltip-row-icon-bg: rgba(51, 65, 85, 0.5);
-  --tooltip-footer-bg: rgba(59, 130, 246, 0.15);
-  --tooltip-footer-text: #60a5fa;
+  
+  /* Theme-reactive accent colors */
+  --tooltip-border: rgba(var(--color-accent-rgb), 0.3);
+  --tooltip-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(var(--color-accent-rgb), 0.1);
+  --tooltip-progress: var(--color-accent);
+  --tooltip-footer-bg: rgba(var(--color-accent-rgb), 0.15);
+  --tooltip-footer-text: var(--color-accent);
 }

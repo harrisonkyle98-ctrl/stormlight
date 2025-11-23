@@ -411,6 +411,7 @@ export function applyTheme(theme: Theme) {
   root.style.setProperty('--color-accent-hover', theme.colors.accentHover)
   root.style.setProperty('--color-accent-light', theme.colors.accentLight)
   root.style.setProperty('--color-accent-dark', theme.colors.accentDark)
+  root.style.setProperty('--color-accent-rgb', hexToRgb(theme.colors.accent))
   
   root.style.setProperty('--color-button', theme.colors.button)
   root.style.setProperty('--color-button-hover', theme.colors.buttonHover)
