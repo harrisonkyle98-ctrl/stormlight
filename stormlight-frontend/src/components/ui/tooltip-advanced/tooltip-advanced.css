@@ -210,9 +210,9 @@
   --tooltip-row-icon-bg: rgba(51, 65, 85, 0.5);
   
   /* Theme-reactive accent colors */
-  --tooltip-border: rgba(var(--color-accent-rgb), 0.3);
-  --tooltip-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(var(--color-accent-rgb), 0.1);
+  --tooltip-border: rgb(var(--color-accent-rgb, 59 130 246) / 0.30);
+  --tooltip-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgb(var(--color-accent-rgb, 59 130 246) / 0.10);
   --tooltip-progress: var(--color-accent);
-  --tooltip-footer-bg: rgba(var(--color-accent-rgb), 0.15);
+  --tooltip-footer-bg: rgb(var(--color-accent-rgb, 59 130 246) / 0.15);
   --tooltip-footer-text: var(--color-accent);
 }
