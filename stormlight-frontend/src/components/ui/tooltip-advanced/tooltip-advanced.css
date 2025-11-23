@@ -11,6 +11,13 @@
   animation: tooltip-fade-in 0.2s ease-out;
 }
 
+/* Inner wrapper to clip content inside rounded corners while allowing carat to render outside */
+.tooltip-inner {
+  position: relative;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
 @keyframes tooltip-fade-in {
   from {
     opacity: 0;
