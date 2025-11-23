@@ -77,7 +77,7 @@ export const AccountStatsCard = ({
           </Tooltip>
 
           {/* RuneScore */}
-          {runescore !== undefined && runescore !== null && (
+          {typeof runescore === 'number' && (
             <Tooltip content="RuneScore">
               <div className="inline-flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap bg-slate-700/30 rounded-lg px-2 py-1 sm:px-3 sm:py-1.5">
                 <img 
@@ -93,7 +93,7 @@ export const AccountStatsCard = ({
           )}
 
           {/* Total Caps - only show if value exists */}
-          {citadelCaps !== null && citadelCaps !== undefined && citadelCaps > 0 && (
+          {typeof citadelCaps === 'number' && citadelCaps > 0 && (
             <Tooltip content="Total Caps">
               <div className="inline-flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap bg-slate-700/30 rounded-lg px-2 py-1 sm:px-3 sm:py-1.5">
                 <img 
@@ -109,7 +109,7 @@ export const AccountStatsCard = ({
           )}
 
           {/* League Points - only show if value exists */}
-          {leaguePoints !== null && leaguePoints !== undefined && (
+          {typeof leaguePoints === 'number' && (
             <Tooltip content="League Points">
               <div className="inline-flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap bg-slate-700/30 rounded-lg px-2 py-1 sm:px-3 sm:py-1.5">
                 <img 
@@ -125,7 +125,7 @@ export const AccountStatsCard = ({
           )}
 
           {/* League Rank - only show if value exists */}
-          {leagueRank !== null && leagueRank !== undefined && (
+          {typeof leagueRank === 'number' && (
             <Tooltip content="League Rank">
               <div className="inline-flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap bg-slate-700/30 rounded-lg px-2 py-1 sm:px-3 sm:py-1.5">
                 <img 
@@ -141,7 +141,7 @@ export const AccountStatsCard = ({
           )}
 
           {/* Overall Rank */}
-          {overallRank && (
+          {typeof overallRank === 'number' && (
             <Tooltip content="Overall Rank">
               <div className="inline-flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap bg-slate-700/30 rounded-lg px-2 py-1 sm:px-3 sm:py-1.5">
                 <span className="text-xs text-slate-400">Rank</span>
@@ -163,7 +163,7 @@ export const AccountStatsCard = ({
           </Tooltip>
 
           {/* Clan Rank */}
-          {clanRank && (
+          {typeof clanRank === 'number' && (
             <Tooltip content="Clan Rank">
               <div className="inline-flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap bg-slate-700/30 rounded-lg px-2 py-1 sm:px-3 sm:py-1.5">
                 <span className="text-xs text-slate-400">Clan</span>
@@ -175,7 +175,7 @@ export const AccountStatsCard = ({
           )}
 
           {/* Clan XP */}
-          {clanXp !== undefined && clanXp !== null && (
+          {typeof clanXp === 'number' && (
             <Tooltip content="Clan XP">
               <div className="inline-flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap bg-slate-700/30 rounded-lg px-2 py-1 sm:px-3 sm:py-1.5">
                 <span className="text-xs text-slate-400">Clan XP</span>
