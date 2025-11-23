@@ -28,7 +28,6 @@ export function useHoverPersist({
   
   const timerRef = useRef<number | null>(null)
   const delayRef = useRef<number | null>(null)
-  const panelRef = useRef<HTMLElement | null>(null)
 
   const setOpen = useCallback((newOpen: boolean) => {
     setOpenState(newOpen)
@@ -78,29 +77,6 @@ export function useHoverPersist({
     }
   }, [open])
 
-  useEffect(() => {
-    if (persisted && open) {
-      const handleOutsideClick = (e: MouseEvent) => {
-        if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-          setOpen(false)
-          setPersisted(false)
-        }
-      }
-
-      const handleScroll = () => {
-        setOpen(false)
-        setPersisted(false)
-      }
-
-      window.addEventListener('mousedown', handleOutsideClick, true)
-      window.addEventListener('scroll', handleScroll, true)
-
-      return () => {
-        window.removeEventListener('mousedown', handleOutsideClick, true)
-        window.removeEventListener('scroll', handleScroll, true)
-      }
-    }
-  }, [persisted, open, setOpen])
 
   useEffect(() => {
     return () => {

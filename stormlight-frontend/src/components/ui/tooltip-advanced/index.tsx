@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef, useMemo } from 'react'
 import {
   useFloating,
   offset,
@@ -31,7 +31,6 @@ export interface AdvancedTooltipProps {
   imageSrc?: string
   className?: string
   onOpenChange?: (open: boolean) => void
-  showCloseButton?: boolean
 }
 
 export const AdvancedTooltip: React.FC<AdvancedTooltipProps> = ({
@@ -45,10 +44,12 @@ export const AdvancedTooltip: React.FC<AdvancedTooltipProps> = ({
   persistMs = 3000,
   imageSrc,
   className = '',
-  onOpenChange,
-  showCloseButton = false
+  onOpenChange
 }) => {
-  const arrowRef = React.useRef<SVGSVGElement>(null)
+  const arrowRef = useRef<SVGSVGElement>(null)
+  const triggerRef = useRef<HTMLDivElement>(null)
+  const cursorRef = useRef<{x: number; y: number} | null>(null)
+  const rafRef = useRef<number | null>(null)
 
   const {
     open,
@@ -63,7 +64,25 @@ export const AdvancedTooltip: React.FC<AdvancedTooltipProps> = ({
     onOpenChange
   })
 
-  const { refs, floatingStyles, context } = useFloating({
+  const virtualRef = useMemo(() => ({
+    getBoundingClientRect: () => {
+      const x = cursorRef.current?.x ?? 0
+      const y = cursorRef.current?.y ?? 0
+      return {
+        width: 0,
+        height: 0,
+        x,
+        y,
+        top: y,
+        left: x,
+        right: x,
+        bottom: y,
+        toJSON: () => {}
+      } as DOMRect
+    }
+  }), [])
+
+  const { refs, floatingStyles, context, update } = useFloating({
     open,
     onOpenChange: setOpen,
     placement: placement as Placement,
@@ -79,6 +98,15 @@ export const AdvancedTooltip: React.FC<AdvancedTooltipProps> = ({
   })
 
   useEffect(() => {
+    if (open && cursorRef.current) {
+      refs.setReference(virtualRef as any)
+      update()
+    } else if (triggerRef.current) {
+      refs.setReference(triggerRef.current)
+    }
+  }, [open, refs, update, virtualRef])
+
+  useEffect(() => {
     if (persisted && open) {
       const handleEscape = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
@@ -90,11 +118,58 @@ export const AdvancedTooltip: React.FC<AdvancedTooltipProps> = ({
     }
   }, [persisted, open, setOpen])
 
+  useEffect(() => {
+    if (!persisted || !open) return
+    
+    const handleOutsideClick = (e: MouseEvent) => {
+      const floating = refs.floating.current
+      const reference = triggerRef.current
+      if (
+        floating &&
+        !floating.contains(e.target as Node) &&
+        reference &&
+        !reference.contains(e.target as Node)
+      ) {
+        setOpen(false)
+      }
+    }
+    
+    document.addEventListener('mousedown', handleOutsideClick, true)
+    return () => document.removeEventListener('mousedown', handleOutsideClick, true)
+  }, [persisted, open, refs, setOpen])
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+      }
+    }
+  }, [])
+
+  const handleMouseEnter = (e: React.MouseEvent) => {
+    cursorRef.current = { x: e.clientX, y: e.clientY }
+    onMouseEnter()
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!open || persisted) return
+    
+    cursorRef.current = { x: e.clientX, y: e.clientY }
+    
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current)
+    }
+    rafRef.current = requestAnimationFrame(() => {
+      update()
+    })
+  }
+
   return (
     <>
       <div
-        ref={refs.setReference}
-        onMouseEnter={onMouseEnter}
+        ref={triggerRef}
+        onMouseEnter={handleMouseEnter}
+        onMouseMove={handleMouseMove}
         onMouseLeave={onMouseLeave}
         className="contents"
       >
@@ -117,8 +192,8 @@ export const AdvancedTooltip: React.FC<AdvancedTooltipProps> = ({
             }}
           />
 
-          {/* Close Button */}
-          {showCloseButton && (
+          {/* Close Button - Only show on persistent tooltips */}
+          {persisted && (
             <button
               onClick={() => setOpen(false)}
               className="tooltip-close-button"
