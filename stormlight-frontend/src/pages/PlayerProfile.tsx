@@ -388,11 +388,7 @@ const PlayerProfile = () => {
       citadelCaps: citadelCaps,
       leaguePoints: playerData.league_points,
       leagueRank: playerData.league_rank,
-      leagueIcon: leagueIcon,
-      overallRank: playerData.stats.overall.rank || undefined,
-      totalXp: playerData.stats.overall.xp,
-      clanRank: playerData.clan_rank_number || undefined,
-      clanXp: playerData.clan_xp
+      leagueIcon: leagueIcon
     }
   }, [playerData, questData, citadelCaps, username])
 
@@ -800,6 +796,46 @@ const PlayerProfile = () => {
                   </div>
                 ) : null
               })()}
+
+              {/* XP and Rank Stats */}
+              <div className="mt-3 flex flex-col gap-2">
+                <div className="grid grid-cols-2 gap-4 bg-slate-700/30 rounded-lg px-4 py-3">
+                  {playerData.stats.overall.rank && (
+                    <div className="text-center">
+                      <p className="text-xs text-slate-400 mb-1">Overall Rank</p>
+                      <p className="text-xl font-bold text-theme-accent-light">
+                        #{playerData.stats.overall.rank.toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+                  <div className="text-center">
+                    <p className="text-xs text-slate-400 mb-1">Total XP</p>
+                    <p className="text-xl font-bold text-green-400">
+                      {playerData.stats.overall.xp.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+                {(playerData.clan_xp !== undefined && playerData.clan_xp !== null) || playerData.clan_rank_number ? (
+                  <div className="grid grid-cols-2 gap-4 bg-slate-700/30 rounded-lg px-4 py-3">
+                    {playerData.clan_rank_number && (
+                      <div className="text-center">
+                        <p className="text-xs text-slate-400 mb-1">Clan Rank</p>
+                        <p className="text-xl font-bold text-theme-accent-light">
+                          #{playerData.clan_rank_number.toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                    {playerData.clan_xp !== undefined && playerData.clan_xp !== null && (
+                      <div className="text-center">
+                        <p className="text-xs text-slate-400 mb-1">Clan XP</p>
+                        <p className="text-xl font-bold text-green-400">
+                          {playerData.clan_xp.toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
             </CardContent>
           </Card>
 

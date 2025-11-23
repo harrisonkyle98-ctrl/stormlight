@@ -10,10 +10,6 @@ interface AccountStatsCardProps {
   leaguePoints?: number | null
   leagueRank?: number | null
   leagueIcon?: string
-  overallRank?: number | null
-  totalXp: number
-  clanRank?: number | null
-  clanXp?: number | null
 }
 
 export const AccountStatsCard = ({
@@ -24,11 +20,7 @@ export const AccountStatsCard = ({
   citadelCaps,
   leaguePoints,
   leagueRank,
-  leagueIcon,
-  overallRank,
-  totalXp,
-  clanRank,
-  clanXp
+  leagueIcon
 }: AccountStatsCardProps) => {
   return (
     <Card className="bg-slate-800/50 border-slate-700">
@@ -135,52 +127,6 @@ export const AccountStatsCard = ({
                 />
                 <span className="text-sm sm:text-base font-bold text-white">
                   #{leagueRank.toLocaleString()}
-                </span>
-              </div>
-            </Tooltip>
-          )}
-
-          {/* Overall Rank */}
-          {typeof overallRank === 'number' && (
-            <Tooltip content="Overall Rank">
-              <div className="inline-flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap bg-slate-700/30 rounded-lg px-2 py-1 sm:px-3 sm:py-1.5">
-                <span className="text-xs text-slate-400">Rank</span>
-                <span className="text-sm sm:text-base font-bold text-theme-accent-light">
-                  #{overallRank.toLocaleString()}
-                </span>
-              </div>
-            </Tooltip>
-          )}
-
-          {/* Total XP */}
-          <Tooltip content="Total XP">
-            <div className="inline-flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap bg-slate-700/30 rounded-lg px-2 py-1 sm:px-3 sm:py-1.5">
-              <span className="text-xs text-slate-400">XP</span>
-              <span className="text-sm sm:text-base font-bold text-green-400">
-                {totalXp.toLocaleString()}
-              </span>
-            </div>
-          </Tooltip>
-
-          {/* Clan Rank */}
-          {typeof clanRank === 'number' && (
-            <Tooltip content="Clan Rank">
-              <div className="inline-flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap bg-slate-700/30 rounded-lg px-2 py-1 sm:px-3 sm:py-1.5">
-                <span className="text-xs text-slate-400">Clan</span>
-                <span className="text-sm sm:text-base font-bold text-theme-accent-light">
-                  #{clanRank.toLocaleString()}
-                </span>
-              </div>
-            </Tooltip>
-          )}
-
-          {/* Clan XP */}
-          {typeof clanXp === 'number' && (
-            <Tooltip content="Clan XP">
-              <div className="inline-flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap bg-slate-700/30 rounded-lg px-2 py-1 sm:px-3 sm:py-1.5">
-                <span className="text-xs text-slate-400">Clan XP</span>
-                <span className="text-sm sm:text-base font-bold text-green-400">
-                  {clanXp.toLocaleString()}
                 </span>
               </div>
             </Tooltip>
