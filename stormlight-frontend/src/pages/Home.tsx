@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { Users, Trophy, TrendingUp, User, Settings, Calendar, Activity } from 'lucide-react'
+import { Users, Trophy, TrendingUp, User, Calendar, Activity, Link2, Palette, Award } from 'lucide-react'
 import { fetchClanMembers, checkPlayerMilestones } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
@@ -134,6 +134,7 @@ interface ActivityResponse {
 
 const Home = () => {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [clanStats, setClanStats] = useState<ClanStats | null>(null)
   const [activities, setActivities] = useState<Activity[]>([])
   const [activityLoading, setActivityLoading] = useState(true)
@@ -152,7 +153,7 @@ const Home = () => {
   const [activeMembersLoading, setActiveMembersLoading] = useState(false)
   const [highestPlacement, setHighestPlacement] = useState<any>(null)
   const [highestPlacementLoading, setHighestPlacementLoading] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsSection, setSettingsSection] = useState<'account' | 'badges' | 'appearance' | null>(null)
   const [eligibleBadges, setEligibleBadges] = useState<CustomBadge[]>([])
   const [selectedBadgeId, setSelectedBadgeId] = useState<string | null>(null)
   const [accountLinkRequests, setAccountLinkRequests] = useState<any[]>([])
@@ -752,14 +753,12 @@ const Home = () => {
   }
 
   useEffect(() => {
-    if (settingsOpen) {
+    if (settingsSection !== null) {
       fetchAccountLinkRequests()
       fetchLinkedAccounts()
       fetchEligibleBadges()
     }
-  }, [settingsOpen])
-
-  const overallStats = playerData?.stats?.overall
+  }, [settingsSection])
 
   return (
     <div className="space-y-8">
@@ -923,16 +922,7 @@ const Home = () => {
               {/* Left Column: Avatar (30% width) */}
               <div className="lg:w-[30%] flex-shrink-0 flex flex-col gap-6">
                 {/* Avatar Section */}
-                <div className="bg-slate-700/30 rounded-lg p-6 relative">
-                  <Tooltip content="User Settings">
-                    <button
-                      onClick={() => setSettingsOpen(true)}
-                      className="absolute top-4 right-4 hover:opacity-70 transition-opacity cursor-pointer"
-                    >
-                      <Settings className="w-5 h-5 text-slate-400" />
-                    </button>
-                  </Tooltip>
-
+                <div className="bg-slate-700/30 rounded-lg p-6">
                   <div className="flex flex-col items-center space-y-4">
                     <Avatar className="w-20 h-20">
                       <AvatarImage
@@ -982,78 +972,40 @@ const Home = () => {
                 </div>
               </div>
 
-              {/* Middle Column: Stats Section (40% width) */}
-              {overallStats && (
-                <div className="flex-1 lg:max-w-[40%] flex flex-col justify-between">
-                <Tooltip content="Combat Level">
-                  <div className="flex items-stretch overflow-hidden rounded-lg">
-                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
-                      <img
-                        src="/assets/icons/combat_level.png"
-                        alt="Combat Level"
-                        className="w-5 h-5"
-                      />
-                    </div>
-                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
-                      <span className="text-lg font-bold text-white">
-                        {overallStats.combatlevel}
-                      </span>
-                    </div>
-                  </div>
-                </Tooltip>
+              {/* Middle Column: Action Buttons (40% width) */}
+              <div className="flex-1 lg:max-w-[40%] flex flex-col justify-between gap-2">
+                <Button
+                  onClick={() => setSettingsSection('account')}
+                  className="w-full justify-start gap-3 bg-slate-700/50 hover:bg-slate-700 text-white border-0"
+                >
+                  <Link2 className="w-5 h-5" />
+                  <span>Link Account</span>
+                </Button>
 
-                <Tooltip content="Total Level">
-                  <div className="flex items-stretch overflow-hidden rounded-lg">
-                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
-                      <img
-                        src="/assets/icons/total_level.png"
-                        alt="Total Level"
-                        className="w-5 h-5"
-                      />
-                    </div>
-                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
-                      <span className="text-lg font-bold text-white">
-                        {overallStats.level}
-                      </span>
-                    </div>
-                  </div>
-                </Tooltip>
+                <Button
+                  onClick={() => setSettingsSection('appearance')}
+                  className="w-full justify-start gap-3 bg-slate-700/50 hover:bg-slate-700 text-white border-0"
+                >
+                  <Palette className="w-5 h-5" />
+                  <span>Change Theme</span>
+                </Button>
 
-                <Tooltip content="Quest Points">
-                  <div className="flex items-stretch overflow-hidden rounded-lg">
-                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
-                      <img
-                        src="/assets/icons/quest_points.png"
-                        alt="Quest Points"
-                        className="w-5 h-5"
-                      />
-                    </div>
-                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
-                      <span className="text-lg font-bold text-white">
-                        {playerData.quest_points || 0}
-                      </span>
-                    </div>
-                  </div>
-                </Tooltip>
+                <Button
+                  onClick={() => setSettingsSection('badges')}
+                  className="w-full justify-start gap-3 bg-slate-700/50 hover:bg-slate-700 text-white border-0"
+                >
+                  <Award className="w-5 h-5" />
+                  <span>Badges</span>
+                </Button>
 
-                <Tooltip content="RuneScore">
-                  <div className="flex items-stretch overflow-hidden rounded-lg">
-                    <div className="bg-slate-800/70 flex items-center justify-center px-3 py-2">
-                      <img
-                        src="/assets/icons/runescore.png"
-                        alt="RuneScore"
-                        className="w-5 h-5"
-                      />
-                    </div>
-                    <div className="flex-1 flex items-center justify-end bg-slate-700/30 px-4 py-2">
-                      <span className="text-lg font-bold text-white">
-                        {playerData.runescore?.toLocaleString() || '—'}
-                      </span>
-                    </div>
-                  </div>
-                </Tooltip>
-                </div>
-              )}
+                <Button
+                  onClick={() => navigate(`/clan-member/${usernameToUrl(user.username)}`)}
+                  className="w-full justify-start gap-3 bg-slate-700/50 hover:bg-slate-700 text-white border-0"
+                >
+                  <User className="w-5 h-5" />
+                  <span>View My Profile</span>
+                </Button>
+              </div>
 
               {/* Right Column: Highest Competition Placement (30% width) */}
               <div className="flex-1 lg:max-w-[30%] flex flex-col justify-center">
@@ -1378,21 +1330,25 @@ const Home = () => {
       </div>
 
       {/* User Settings Modal */}
-      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+      <Dialog open={settingsSection !== null} onOpenChange={(open) => !open && setSettingsSection(null)}>
         <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white text-xl">User Settings</DialogTitle>
+            <DialogTitle className="text-white text-xl">
+              {settingsSection === 'account' && 'Link Account'}
+              {settingsSection === 'badges' && 'Username Color Badge'}
+              {settingsSection === 'appearance' && 'Change Theme'}
+            </DialogTitle>
             <DialogDescription className="text-slate-400">
-              Manage your account and preferences
+              {settingsSection === 'account' && 'Manage your linked RuneScape accounts'}
+              {settingsSection === 'badges' && 'Select a badge to apply its color to your username'}
+              {settingsSection === 'appearance' && 'Customize the appearance of the site'}
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-6 py-4">
             {/* Account Section */}
+            {settingsSection === 'account' && (
             <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-2">
-                Account
-              </h3>
               
               <div className="space-y-2">
                 {linkedAccounts.map((account, index) => {
@@ -1518,13 +1474,11 @@ const Home = () => {
                 </div>
               </div>
             </div>
+            )}
 
             {/* Badge Username Color Section */}
-            {eligibleBadges.length > 0 && (
+            {settingsSection === 'badges' && eligibleBadges.length > 0 && (
               <div className="space-y-3">
-                <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-2">
-                  Username Color Badge
-                </h3>
                 <div className="bg-slate-700/30 rounded-lg p-4">
                   <div className="space-y-4">
                     <p className="text-sm text-slate-300 mb-3">
@@ -1567,10 +1521,8 @@ const Home = () => {
             )}
 
             {/* Appearance Section */}
+            {settingsSection === 'appearance' && (
             <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-2">
-                Appearance
-              </h3>
               <div className="bg-slate-700/30 rounded-lg p-4">
                 <div className="space-y-4">
                   <div>
@@ -1605,6 +1557,7 @@ const Home = () => {
                 </div>
               </div>
             </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
