@@ -3,7 +3,7 @@
  * Used to display category tags in skill tooltips
  */
 
-export type SkillCategory = 'combat' | 'artisan' | 'gathering' | 'support';
+export type SkillCategory = 'combat' | 'artisan' | 'gathering' | 'support' | 'elite';
 
 export interface SkillCategoryInfo {
   category: SkillCategory;
@@ -43,6 +43,8 @@ const SKILL_CATEGORIES: Record<string, SkillCategoryInfo> = {
   dungeoneering: { category: 'support', label: 'Support', className: 'tooltip-skill-tag--support' },
   slayer: { category: 'support', label: 'Support', className: 'tooltip-skill-tag--support' },
   thieving: { category: 'support', label: 'Support', className: 'tooltip-skill-tag--support' },
+
+  invention: { category: 'elite', label: 'Elite', className: 'tooltip-skill-tag--elite' },
 };
 
 /**
