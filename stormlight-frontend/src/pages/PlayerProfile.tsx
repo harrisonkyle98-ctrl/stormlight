@@ -830,7 +830,7 @@ const PlayerProfile = () => {
                               size={96}
                               strokeWidth={8}
                               progressColor="#2ecc71"
-                              remainingColor="#e74c3c"
+                              remainingColor="#1b8a4a"
                             />
                           </div>
                           <div className="text-center text-xs text-slate-400">
