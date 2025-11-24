@@ -1,5 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
+interface UserActivityLog {
+  username: string
+  text: string
+  timestamp: number
+}
+
 interface User {
   id: string
   username: string
@@ -11,6 +17,7 @@ interface User {
   isLinked: boolean
   requiresLinking?: boolean
   discordId: string
+  activityLogs?: UserActivityLog[]
 }
 
 interface AuthContextType {

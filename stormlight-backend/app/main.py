@@ -1976,6 +1976,26 @@ async def get_current_user(
             )
             
             if linked_member:
+                # Fetch user's recent activity logs
+                activity_logs = []
+                try:
+                    activities_from_db = await prisma.clanactivity.find_many(
+                        where={'username': linked_member['username']},
+                        order={'activityTimestamp': 'asc'},  # oldest first so logs[length-1] is newest
+                        take=10
+                    )
+                    for activity in activities_from_db:
+                        ts = int(activity.activityTimestamp) if activity.activityTimestamp is not None else 0
+                        if ts > 1000000000000:
+                            ts = ts // 1000
+                        activity_logs.append({
+                            'username': activity.username,
+                            'text': activity.text,
+                            'timestamp': ts
+                        })
+                except Exception as e:
+                    print(f"❌ Error fetching user activity logs in get_current_user: {e}")
+                
                 result = {
                     'id': user_id,
                     'username': linked_member['username'],
@@ -1984,7 +2004,8 @@ async def get_current_user(
                     'isLinked': True,
                     'requiresLinking': False,
                     'discordId': user_id,
-                    'theme': theme
+                    'theme': theme,
+                    'activityLogs': activity_logs
                 }
                 users_db[user_id] = result
                 return result

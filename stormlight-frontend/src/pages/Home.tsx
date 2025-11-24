@@ -989,9 +989,11 @@ const Home = () => {
               {/* Right Column: Recent Activity (30% width) */}
               <div className="flex-1 lg:max-w-[30%] flex flex-col justify-center">
                 {(() => {
-                  const userActivity = activities.find(a => a.username === user.username)
+                  // Use activity logs from user object (oldest first, so last item is newest)
+                  const logs = user.activityLogs ?? []
+                  const recentActivity = logs.length ? logs[logs.length - 1] : null
                   
-                  if (!userActivity) {
+                  if (!recentActivity) {
                     return (
                       <div
                         className="bg-slate-700/30 rounded-lg p-6 h-full flex items-center justify-center border-2 cursor-default"
@@ -1013,7 +1015,9 @@ const Home = () => {
                     )
                   }
                   
-                  const { color, Icon } = getActivityVisual(userActivity)
+                  // Cast to ActivityEntry type for getActivityVisual
+                  const activityEntry = { ...recentActivity } as { username: string; text: string; timestamp: number }
+                  const { color, Icon } = getActivityVisual(activityEntry)
                   
                   return (
                     <div
@@ -1029,7 +1033,7 @@ const Home = () => {
                         </div>
                         <div>
                           <p className="text-xs text-slate-400 mb-1">Recent Activity</p>
-                          <p className="text-sm text-white">{userActivity.text}</p>
+                          <p className="text-sm text-white">{recentActivity.text}</p>
                         </div>
                       </div>
                     </div>
