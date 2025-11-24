@@ -24,6 +24,7 @@ import { AnalyticsTab } from '../components/tabs/AnalyticsTab'
 import { CompetitionsTab } from '../components/tabs/CompetitionsTab'
 import { LogTab } from '../components/tabs/LogTab'
 import { AccountStatsCard } from '../components/profile/AccountStatsCard'
+import { CircularClanXPGraph } from '../components/ui/CircularClanXPGraph'
 
 interface CustomBadge {
   id: string
@@ -818,24 +819,49 @@ const PlayerProfile = () => {
                   </div>
                 </div>
                 {(playerData.clan_xp !== undefined && playerData.clan_xp !== null) || playerData.clan_rank_number ? (
-                  <div className="grid grid-cols-2 gap-4 bg-slate-700/30 rounded-lg px-4 py-3">
-                    {playerData.clan_rank_number && (
-                      <div className="text-center">
-                        <p className="text-xs text-slate-400 mb-1">Clan Rank</p>
-                        <p className="text-xl font-bold text-theme-accent-light">
-                          #{playerData.clan_rank_number.toLocaleString()}
-                        </p>
-                      </div>
-                    )}
-                    {playerData.clan_xp !== undefined && playerData.clan_xp !== null && (
-                      <div className="text-center">
-                        <p className="text-xs text-slate-400 mb-1">Clan XP</p>
-                        <p className="text-xl font-bold text-green-400">
-                          {playerData.clan_xp.toLocaleString()}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  <Tooltip
+                    title="Clan XP Contribution"
+                    description={
+                      playerData.clan_xp !== undefined && playerData.clan_xp !== null && playerData.stats.overall.xp > 0 ? (
+                        <div className="flex flex-col items-center gap-3 pt-2">
+                          <div className="relative">
+                            <CircularClanXPGraph
+                              percentage={(playerData.clan_xp / playerData.stats.overall.xp) * 100}
+                              size={96}
+                              strokeWidth={8}
+                              progressColor="#2ecc71"
+                              remainingColor="#e74c3c"
+                            />
+                          </div>
+                          <div className="text-center text-xs text-slate-400">
+                            {playerData.clan_xp.toLocaleString()} / {playerData.stats.overall.xp.toLocaleString()} XP
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center text-slate-400">No clan XP data available</div>
+                      )
+                    }
+                    placement="top"
+                  >
+                    <div className="grid grid-cols-2 gap-4 bg-slate-700/30 rounded-lg px-4 py-3 cursor-help hover:bg-slate-700/50 transition-colors">
+                      {playerData.clan_rank_number && (
+                        <div className="text-center">
+                          <p className="text-xs text-slate-400 mb-1">Clan Rank</p>
+                          <p className="text-xl font-bold text-theme-accent-light">
+                            #{playerData.clan_rank_number.toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                      {playerData.clan_xp !== undefined && playerData.clan_xp !== null && (
+                        <div className="text-center">
+                          <p className="text-xs text-slate-400 mb-1">Clan XP</p>
+                          <p className="text-xl font-bold text-green-400">
+                            {playerData.clan_xp.toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </Tooltip>
                 ) : null}
               </div>
             </CardContent>
