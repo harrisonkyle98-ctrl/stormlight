@@ -25,6 +25,7 @@ import { CompetitionsTab } from '../components/tabs/CompetitionsTab'
 import { LogTab } from '../components/tabs/LogTab'
 import { AccountStatsCard } from '../components/profile/AccountStatsCard'
 import { CircularClanXPGraph } from '../components/ui/CircularClanXPGraph'
+import { getBadgeTooltipConfig } from '../utils/badgeTooltipConfig'
 
 interface CustomBadge {
   id: string
@@ -767,19 +768,18 @@ const PlayerProfile = () => {
                 const allBadges = [...nonRankBadges, ...customBadges]
                 return allBadges.length > 0 ? (
                   <div className="mt-4 flex flex-col gap-2">
-                    {allBadges.map((badge) => (
+                    {allBadges.map((badge) => {
+                      const tooltipConfig = getBadgeTooltipConfig(badge, playerData, questData)
+                      return (
                         <Tooltip
                           key={badge.id}
-                          content={
-                            <div>
-                              <div className="font-semibold text-white">{badge.name}</div>
-                              {badge.id.startsWith('league-') && playerData.league_points && (
-                                <div className="text-theme-accent-light text-sm mt-1">
-                                  League Points: {playerData.league_points.toLocaleString()}
-                                </div>
-                              )}
-                            </div>
-                          }
+                          className={tooltipConfig.className}
+                          title={tooltipConfig.title}
+                          imageSrc={tooltipConfig.imageSrc}
+                          headerTag={tooltipConfig.headerTag}
+                          rows={tooltipConfig.rows}
+                          footerText={tooltipConfig.footerText}
+                          placement="top"
                         >
                           <div
                             className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white relative group cursor-help"
@@ -787,15 +787,16 @@ const PlayerProfile = () => {
                               background: badge.gradientBackground || badge.backgroundColor
                             }}
                           >
-                          <img
-                            src={badge.icon}
-                            alt={badge.name}
-                            className="w-4 h-4"
-                          />
-                          <span>{badge.name}</span>
+                            <img
+                              src={badge.icon}
+                              alt={badge.name}
+                              className="w-4 h-4"
+                            />
+                            <span>{badge.name}</span>
                           </div>
                         </Tooltip>
-                    ))}
+                      )
+                    })}
                   </div>
                 ) : null
               })()}
