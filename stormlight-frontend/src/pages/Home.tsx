@@ -3,17 +3,17 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { Users, Trophy, TrendingUp, User, Calendar, Activity, Link2, Palette, Award } from 'lucide-react'
+import { Users, Trophy, TrendingUp, User, Calendar, Activity, Link2, Palette, Award, Info } from 'lucide-react'
 import { fetchClanMembers, checkPlayerMilestones } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { usernameToUrl } from '../utils/urlUtils'
-import { Tooltip } from '../components/ui/tooltip'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog'
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts'
 import { themes } from '../config/themes'
 import { ClanLogRow } from '../components/clanLogs/ClanLogRow'
 import { ActivityLogRow } from '../components/activityLogs/ActivityLogRow'
+import { getActivityVisual } from '../utils/activityLogUtils'
 import { Username } from '../components/ui/username'
 
 const getRankIcon = (rank: string): string => {
@@ -151,8 +151,6 @@ const Home = () => {
   const [recentProgressLoading, setRecentProgressLoading] = useState(false)
   const [activeMembers, setActiveMembers] = useState<any>(null)
   const [activeMembersLoading, setActiveMembersLoading] = useState(false)
-  const [highestPlacement, setHighestPlacement] = useState<any>(null)
-  const [highestPlacementLoading, setHighestPlacementLoading] = useState(false)
   const [settingsSection, setSettingsSection] = useState<'account' | 'badges' | 'appearance' | null>(null)
   const [eligibleBadges, setEligibleBadges] = useState<CustomBadge[]>([])
   const [selectedBadgeId, setSelectedBadgeId] = useState<string | null>(null)
@@ -206,8 +204,7 @@ const Home = () => {
           await Promise.all([
             fetchPlayerStats(),
             fetchQuestData(),
-            fetchRecentProgress(),
-            fetchHighestPlacement()
+            fetchRecentProgress()
           ])
         } finally {
           setProfileLoading(false)
@@ -509,24 +506,6 @@ const Home = () => {
       console.error('Error fetching active members:', error)
     } finally {
       setActiveMembersLoading(false)
-    }
-  }
-
-  const fetchHighestPlacement = async () => {
-    if (!user?.username) return
-
-    setHighestPlacementLoading(true)
-    try {
-      const encodedUsername = encodeURIComponent(user.username)
-      const response = await fetch(`${API_URL}/api/player/${encodedUsername}/highest-placement`)
-      if (response.ok) {
-        const data = await response.json()
-        setHighestPlacement(data)
-      }
-    } catch (error) {
-      console.error('Error fetching highest placement:', error)
-    } finally {
-      setHighestPlacementLoading(false)
     }
   }
 
@@ -1007,53 +986,55 @@ const Home = () => {
                 </Button>
               </div>
 
-              {/* Right Column: Highest Competition Placement (30% width) */}
+              {/* Right Column: Recent Activity (30% width) */}
               <div className="flex-1 lg:max-w-[30%] flex flex-col justify-center">
-                {highestPlacementLoading ? (
-                  <div className="bg-slate-700/30 rounded-lg p-6 h-full flex items-center justify-center">
-                    <div className="animate-pulse text-slate-400">Loading...</div>
-                  </div>
-                ) : (
-                  <Tooltip content={highestPlacement?.has_placement ? highestPlacement.competition_name : "No competition history yet."}>
-                    <div
-                      className={`bg-slate-700/30 rounded-lg p-6 h-full flex items-center justify-center relative overflow-hidden ${
-                        highestPlacement?.has_placement ? 'cursor-pointer hover:bg-slate-700/50 transition-colors' : ''
-                      }`}
-                      onClick={() => {
-                        if (highestPlacement?.has_placement && highestPlacement.competition_id) {
-                          window.location.href = `/competitions/${highestPlacement.competition_id}`
-                        }
-                      }}
-                    >
-                      {/* Faint Trophy Icon Background */}
-                      <div className="absolute inset-0 flex items-center justify-center opacity-10">
-                        <Trophy 
-                          className={`w-32 h-32 ${
-                            !highestPlacement?.has_placement ? 'text-slate-500' :
-                            highestPlacement.placement === 1 ? 'text-yellow-400' :
-                            highestPlacement.placement === 2 ? 'text-slate-300' :
-                            highestPlacement.placement === 3 ? 'text-amber-600' :
-                            'text-slate-500'
-                          }`}
-                        />
+                {(() => {
+                  const userActivity = activities.find(a => a.username === user.username)
+                  
+                  if (!userActivity) {
+                    return (
+                      <div
+                        className="bg-slate-700/30 rounded-lg p-6 h-full flex items-center justify-center border-2 cursor-default"
+                        style={{ borderColor: '#6b7280' }}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div
+                            className="flex items-center justify-center rounded-lg flex-shrink-0"
+                            style={{ backgroundColor: '#6b7280', width: '48px', height: '48px' }}
+                          >
+                            <Info className="w-6 h-6 text-white" />
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xs text-slate-400 mb-1">Recent Activity</p>
+                            <p className="text-sm text-slate-400">No recent activity.</p>
+                          </div>
+                        </div>
                       </div>
-                      
-                      {/* Placement Number or --- */}
-                      <div className="relative z-10 text-center">
-                        <p className="text-xs text-slate-400 mb-2">Highest Placement</p>
-                        <p className={`text-4xl font-bold ${
-                          !highestPlacement?.has_placement ? 'text-slate-400' :
-                          highestPlacement.placement === 1 ? 'text-yellow-400' :
-                          highestPlacement.placement === 2 ? 'text-slate-300' :
-                          highestPlacement.placement === 3 ? 'text-amber-600' :
-                          'text-white'
-                        }`}>
-                          {highestPlacement?.has_placement ? `#${highestPlacement.placement}` : '---'}
-                        </p>
+                    )
+                  }
+                  
+                  const { color, Icon } = getActivityVisual(userActivity)
+                  
+                  return (
+                    <div
+                      className="bg-slate-700/30 rounded-lg p-6 h-full flex items-center justify-center border-2 cursor-default"
+                      style={{ borderColor: color }}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div
+                          className="flex items-center justify-center rounded-lg flex-shrink-0"
+                          style={{ backgroundColor: color, width: '48px', height: '48px' }}
+                        >
+                          <Icon className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-400 mb-1">Recent Activity</p>
+                          <p className="text-sm text-white">{userActivity.text}</p>
+                        </div>
                       </div>
                     </div>
-                  </Tooltip>
-                )}
+                  )
+                })()}
               </div>
             </div>
           </CardContent>
