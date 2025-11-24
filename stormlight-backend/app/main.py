@@ -1955,7 +1955,8 @@ async def get_current_user(
     """Get current user info"""
     if not refresh and user_id in users_db:
         cached = users_db[user_id]
-        if cached.get('isLinked') and cached.get('requiresLinking') is False:
+        # Only return cached data if it has activityLogs (added in recent update)
+        if cached.get('isLinked') and cached.get('requiresLinking') is False and 'activityLogs' in cached:
             return cached
     
     try:
