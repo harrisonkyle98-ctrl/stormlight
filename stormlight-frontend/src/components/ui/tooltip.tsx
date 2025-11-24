@@ -39,6 +39,8 @@ interface TooltipProps {
   footerText?: string;
   imageSrc?: string;
   placement?: 'top' | 'bottom';
+  className?: string;
+  headerTag?: React.ReactNode;
 }
 
 export const Tooltip = ({ 
@@ -49,7 +51,9 @@ export const Tooltip = ({
   rows,
   footerText,
   imageSrc,
-  placement = 'top'
+  placement = 'top',
+  className,
+  headerTag
 }: TooltipProps) => {
   if (title || rows || footerText) {
     return (
@@ -60,6 +64,8 @@ export const Tooltip = ({
         footerText={footerText}
         imageSrc={imageSrc}
         placement={placement}
+        className={className}
+        headerTag={headerTag}
       >
         {children}
       </AdvancedTooltip>
@@ -71,6 +77,7 @@ export const Tooltip = ({
       title=""
       description={content}
       placement={placement}
+      className={className}
     >
       {children}
     </AdvancedTooltip>

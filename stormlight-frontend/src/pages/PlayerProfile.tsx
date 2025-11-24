@@ -15,6 +15,7 @@ import { Username } from '../components/ui/username'
 import { useAuth } from '../contexts/AuthContext'
 import { useProfileGains } from '../contexts/ProfileGainsContext'
 import { Tooltip } from '../components/ui/tooltip'
+import { getSkillCategory } from '../utils/skillCategory'
 import { BadgeAssignmentModal } from '../components/ui/badge-assignment-modal'
 import { DropsTab } from '../components/tabs/DropsTab'
 import { ActivityTab } from '../components/tabs/ActivityTab'
@@ -903,35 +904,44 @@ const PlayerProfile = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                    {skillsAt99.map((skill) => (
-                      <Tooltip
-                        key={skill.name}
-                        title={skill.name.charAt(0).toUpperCase() + skill.name.slice(1)}
-                        imageSrc={skill.icon || undefined}
-                        rows={[
-                          {
-                            label: 'Level:',
-                            value: String(playerData.stats[skill.name]?.level || 0)
-                          },
-                          {
-                            label: 'XP:',
-                            value: (playerData.stats[skill.name]?.xp || 0).toLocaleString()
-                          }
-                        ]}
-                        footerText={`Rank: #${(playerData.stats[skill.name]?.rank || 0).toLocaleString()}`}
-                        placement="top"
-                      >
-                        <div
-                          className="flex items-center justify-center p-2 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors cursor-help"
+                    {skillsAt99.map((skill) => {
+                      const categoryInfo = getSkillCategory(skill.name);
+                      return (
+                        <Tooltip
+                          key={skill.name}
+                          className="skill-tooltip"
+                          title={skill.name.charAt(0).toUpperCase() + skill.name.slice(1)}
+                          imageSrc={skill.icon || undefined}
+                          headerTag={categoryInfo && (
+                            <span className={`tooltip-skill-tag ${categoryInfo.className}`}>
+                              {categoryInfo.label}
+                            </span>
+                          )}
+                          rows={[
+                            {
+                              label: 'Level:',
+                              value: String(playerData.stats[skill.name]?.level || 0)
+                            },
+                            {
+                              label: 'XP:',
+                              value: (playerData.stats[skill.name]?.xp || 0).toLocaleString()
+                            }
+                          ]}
+                          footerText={`Rank: #${(playerData.stats[skill.name]?.rank || 0).toLocaleString()}`}
+                          placement="top"
                         >
-                          <img
-                            src={skill.icon!}
-                            alt={skill.name}
-                            className="w-6 h-6"
-                          />
-                        </div>
-                      </Tooltip>
-                    ))}
+                          <div
+                            className="flex items-center justify-center p-2 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors cursor-help"
+                          >
+                            <img
+                              src={skill.icon!}
+                              alt={skill.name}
+                              className="w-6 h-6"
+                            />
+                          </div>
+                        </Tooltip>
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
@@ -964,35 +974,44 @@ const PlayerProfile = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                    {skillsAt120Plus.map((skill) => (
-                      <Tooltip
-                        key={skill.name}
-                        title={skill.name.charAt(0).toUpperCase() + skill.name.slice(1)}
-                        imageSrc={skill.icon || undefined}
-                        rows={[
-                          {
-                            label: 'Level:',
-                            value: String(playerData.stats[skill.name]?.level || 0)
-                          },
-                          {
-                            label: 'XP:',
-                            value: (playerData.stats[skill.name]?.xp || 0).toLocaleString()
-                          }
-                        ]}
-                        footerText={`Rank: #${(playerData.stats[skill.name]?.rank || 0).toLocaleString()}`}
-                        placement="top"
-                      >
-                        <div
-                          className="flex items-center justify-center p-2 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors cursor-help"
+                    {skillsAt120Plus.map((skill) => {
+                      const categoryInfo = getSkillCategory(skill.name);
+                      return (
+                        <Tooltip
+                          key={skill.name}
+                          className="skill-tooltip"
+                          title={skill.name.charAt(0).toUpperCase() + skill.name.slice(1)}
+                          imageSrc={skill.icon || undefined}
+                          headerTag={categoryInfo && (
+                            <span className={`tooltip-skill-tag ${categoryInfo.className}`}>
+                              {categoryInfo.label}
+                            </span>
+                          )}
+                          rows={[
+                            {
+                              label: 'Level:',
+                              value: String(playerData.stats[skill.name]?.level || 0)
+                            },
+                            {
+                              label: 'XP:',
+                              value: (playerData.stats[skill.name]?.xp || 0).toLocaleString()
+                            }
+                          ]}
+                          footerText={`Rank: #${(playerData.stats[skill.name]?.rank || 0).toLocaleString()}`}
+                          placement="top"
                         >
-                          <img
-                            src={skill.icon!}
-                            alt={skill.name}
-                            className="w-6 h-6"
-                          />
-                        </div>
-                      </Tooltip>
-                    ))}
+                          <div
+                            className="flex items-center justify-center p-2 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors cursor-help"
+                          >
+                            <img
+                              src={skill.icon!}
+                              alt={skill.name}
+                              className="w-6 h-6"
+                            />
+                          </div>
+                        </Tooltip>
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
@@ -1025,35 +1044,44 @@ const PlayerProfile = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                    {skillsAt200m.map((skill) => (
-                      <Tooltip
-                        key={skill.name}
-                        title={skill.name.charAt(0).toUpperCase() + skill.name.slice(1)}
-                        imageSrc={skill.icon || undefined}
-                        rows={[
-                          {
-                            label: 'Level:',
-                            value: String(playerData.stats[skill.name]?.level || 0)
-                          },
-                          {
-                            label: 'XP:',
-                            value: (playerData.stats[skill.name]?.xp || 0).toLocaleString()
-                          }
-                        ]}
-                        footerText={`Rank: #${(playerData.stats[skill.name]?.rank || 0).toLocaleString()}`}
-                        placement="top"
-                      >
-                        <div
-                          className="flex items-center justify-center p-2 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors cursor-help"
+                    {skillsAt200m.map((skill) => {
+                      const categoryInfo = getSkillCategory(skill.name);
+                      return (
+                        <Tooltip
+                          key={skill.name}
+                          className="skill-tooltip"
+                          title={skill.name.charAt(0).toUpperCase() + skill.name.slice(1)}
+                          imageSrc={skill.icon || undefined}
+                          headerTag={categoryInfo && (
+                            <span className={`tooltip-skill-tag ${categoryInfo.className}`}>
+                              {categoryInfo.label}
+                            </span>
+                          )}
+                          rows={[
+                            {
+                              label: 'Level:',
+                              value: String(playerData.stats[skill.name]?.level || 0)
+                            },
+                            {
+                              label: 'XP:',
+                              value: (playerData.stats[skill.name]?.xp || 0).toLocaleString()
+                            }
+                          ]}
+                          footerText={`Rank: #${(playerData.stats[skill.name]?.rank || 0).toLocaleString()}`}
+                          placement="top"
                         >
-                          <img
-                            src={skill.icon!}
-                            alt={skill.name}
-                            className="w-6 h-6"
-                          />
-                        </div>
-                      </Tooltip>
-                    ))}
+                          <div
+                            className="flex items-center justify-center p-2 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors cursor-help"
+                          >
+                            <img
+                              src={skill.icon!}
+                              alt={skill.name}
+                              className="w-6 h-6"
+                            />
+                          </div>
+                        </Tooltip>
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>

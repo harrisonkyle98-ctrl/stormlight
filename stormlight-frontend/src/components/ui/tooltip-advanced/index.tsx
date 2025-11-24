@@ -30,6 +30,7 @@ export interface AdvancedTooltipProps {
   persistMs?: number
   imageSrc?: string
   className?: string
+  headerTag?: React.ReactNode
   onOpenChange?: (open: boolean) => void
 }
 
@@ -44,6 +45,7 @@ export const AdvancedTooltip: React.FC<AdvancedTooltipProps> = ({
   persistMs = 3000,
   imageSrc,
   className = '',
+  headerTag,
   onOpenChange
 }) => {
   const arrowRef = useRef<SVGSVGElement>(null)
@@ -216,6 +218,7 @@ export const AdvancedTooltip: React.FC<AdvancedTooltipProps> = ({
                 )}
                 <div className="tooltip-header-text">
                   <h3 className="tooltip-title">{title}</h3>
+                  {headerTag && headerTag}
                   {description && (
                     <div className="tooltip-description">{description}</div>
                   )}
