@@ -2054,6 +2054,28 @@ async def get_current_user(
                 member_row = await member_cursor.fetchone()
                 
                 if member_row:
+                    print(f"🔍 [get_current_user FALLBACK] Using direct DB for user: {member_row[0]}")
+                    # Fetch activity logs using direct SQL
+                    activity_logs = []
+                    try:
+                        activity_cursor = await conn.execute(
+                            "SELECT username, text, activity_timestamp FROM clan_activities WHERE username = %s ORDER BY activity_timestamp ASC LIMIT 10",
+                            (member_row[0],)
+                        )
+                        activity_rows = await activity_cursor.fetchall()
+                        print(f"🔍 [get_current_user FALLBACK] Found {len(activity_rows)} activities")
+                        for row in activity_rows:
+                            ts = int(row[2]) if row[2] is not None else 0
+                            if ts > 1000000000000:
+                                ts = ts // 1000
+                            activity_logs.append({
+                                'username': row[0],
+                                'text': row[1],
+                                'timestamp': ts
+                            })
+                    except Exception as e:
+                        print(f"❌ Error fetching activity logs in fallback: {e}")
+                    
                     result = {
                         'id': user_id,
                         'username': member_row[0],
@@ -2062,7 +2084,8 @@ async def get_current_user(
                         'isLinked': True,
                         'requiresLinking': False,
                         'discordId': user_id,
-                        'theme': theme
+                        'theme': theme,
+                        'activityLogs': activity_logs
                     }
                     users_db[user_id] = result
                     return result
