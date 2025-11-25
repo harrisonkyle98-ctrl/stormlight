@@ -90,6 +90,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.ok) {
         const userData = await response.json()
+        console.log('[AuthContext] USER DATA from /api/user/me:', userData)
+        console.log('[AuthContext] activityLogs:', userData.activityLogs)
         setUser(userData)
       } else {
         localStorage.removeItem('access_token')
@@ -138,6 +140,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             
             if (userResponse.ok) {
               const userData = await userResponse.json()
+              console.log('[AuthContext] LOGIN: USER DATA from /api/user/me?refresh=true:', userData)
+              console.log('[AuthContext] LOGIN: activityLogs:', userData.activityLogs)
               setUser(userData)
             } else {
               setUser(data.user)
