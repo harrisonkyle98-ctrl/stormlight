@@ -996,20 +996,18 @@ const Home = () => {
                   if (!recentActivity) {
                     return (
                       <div
-                        className="bg-slate-700/30 rounded-lg p-6 h-full flex items-center justify-center border-2 cursor-default"
+                        className="bg-slate-700/30 rounded-lg p-6 h-full flex items-center justify-center border-2 cursor-default relative overflow-hidden"
                         style={{ borderColor: '#6b7280' }}
                       >
-                        <div className="flex items-center gap-4">
-                          <div
-                            className="flex items-center justify-center rounded-lg flex-shrink-0"
-                            style={{ backgroundColor: '#6b7280', width: '48px', height: '48px' }}
-                          >
-                            <Info className="w-6 h-6 text-white" />
-                          </div>
-                          <div className="text-center">
-                            <p className="text-xs text-slate-400 mb-1">Recent Activity</p>
-                            <p className="text-sm text-slate-400">No recent activity.</p>
-                          </div>
+                        {/* Background icon - large, faint, decorative */}
+                        <Info 
+                          className="absolute right-4 top-1/2 -translate-y-1/2 w-24 h-24 pointer-events-none"
+                          style={{ opacity: 0.08, color: '#6b7280', zIndex: 1 }}
+                        />
+                        {/* Text content - on top */}
+                        <div className="relative z-10 text-center">
+                          <p className="text-xs text-slate-400 mb-1">Recent Activity</p>
+                          <p className="text-sm text-slate-400">No recent activity.</p>
                         </div>
                       </div>
                     )
@@ -1021,20 +1019,18 @@ const Home = () => {
                   
                   return (
                     <div
-                      className="bg-slate-700/30 rounded-lg p-6 h-full flex items-center justify-center border-2 cursor-default"
+                      className="bg-slate-700/30 rounded-lg p-6 h-full flex items-center justify-center border-2 cursor-default relative overflow-hidden"
                       style={{ borderColor: color }}
                     >
-                      <div className="flex items-center gap-4">
-                        <div
-                          className="flex items-center justify-center rounded-lg flex-shrink-0"
-                          style={{ backgroundColor: color, width: '48px', height: '48px' }}
-                        >
-                          <Icon className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-400 mb-1">Recent Activity</p>
-                          <p className="text-sm text-white">{recentActivity.text}</p>
-                        </div>
+                      {/* Background icon - large, faint, decorative */}
+                      <Icon 
+                        className="absolute right-4 top-1/2 -translate-y-1/2 w-24 h-24 pointer-events-none"
+                        style={{ opacity: 0.08, color: color, zIndex: 1 }}
+                      />
+                      {/* Text content - on top */}
+                      <div className="relative z-10 text-center">
+                        <p className="text-xs text-slate-400 mb-1">Recent Activity</p>
+                        <p className="text-sm text-white">{recentActivity.text}</p>
                       </div>
                     </div>
                   )
