@@ -1,4 +1,4 @@
-import { LucideIcon, Compass, BarChart4, Castle, Package, Sword, Dices } from 'lucide-react'
+import { LucideIcon, Compass, BarChart4, Castle, Package, Sword, Dices, Music } from 'lucide-react'
 
 export interface ActivityEntry {
   username: string
@@ -17,8 +17,16 @@ export interface ActivityVisual {
  * Categorizes activity text based on RuneMetrics categories
  * Reference: https://runescape.wiki/w/RuneMetrics/Adventurer%27s_Log
  */
-export function categorizeActivity(text: string): 'quest' | 'skill' | 'minigame' | 'item' | 'monster' | 'citadel' {
+export function categorizeActivity(text: string): 'quest' | 'skill' | 'minigame' | 'item' | 'monster' | 'citadel' | 'song' {
   const lowerText = text.toLowerCase()
+  
+  // Song unlocks - check early before item fallback
+  if (
+    lowerText.includes('song unlocked') ||
+    lowerText.includes('songs unlocked')
+  ) {
+    return 'song'
+  }
   
   if (
     lowerText.includes('capped') ||
@@ -113,6 +121,12 @@ export function getActivityVisual(activity: ActivityEntry): ActivityVisual {
       return {
         color: '#af4f4f', // Red
         Icon: Sword
+      }
+    
+    case 'song':
+      return {
+        color: '#83cca9', // Teal/mint green
+        Icon: Music
       }
   }
 }
