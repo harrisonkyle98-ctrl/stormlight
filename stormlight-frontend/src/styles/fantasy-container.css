@@ -52,11 +52,13 @@
 
 /* Pure CSS Ribbon Banner */
 .fantasy-banner {
-  --banner-color: #3c7dff;
+  --banner-color-top: #3b66d1;    /* twilight blue */
+  --banner-color-middle: #3156b5; /* royal storm blue */
+  --banner-color-bottom: #29479c; /* deep fantasy blue */
   --s: 2.2em; /* ribbon side width */
   --d: 1.0em; /* depth / drop */
   --c: 1em;   /* cutout */
-  --overhang: 53px; /* how far to extend beyond container on each side */
+  --overhang: 56px; /* how far to extend beyond container on each side */
 
   position: relative;
   display: block;
@@ -79,9 +81,11 @@
      #0000 25%, #0008 0 37.5%, #0004 0) 0 / 50% 100% no-repeat,
     /* Ribbon fold shading - right side */
     conic-gradient(at right var(--s) bottom var(--d),
-     #0004 62.5%, #0008 0 75%, #0000 0) 100% / 50% 100% no-repeat;
+     #0004 62.5%, #0008 0 75%, #0000 0) 100% / 50% 100% no-repeat,
+    /* Base gradient - darker fantasy blue */
+    linear-gradient(to bottom, var(--banner-color-top), var(--banner-color-middle) 35%, var(--banner-color-bottom));
 
-  background-color: var(--banner-color);
+  background-blend-mode: normal, normal, normal, normal, normal;
 
   clip-path: polygon(
     0 var(--d),
