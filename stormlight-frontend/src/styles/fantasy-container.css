@@ -1,0 +1,233 @@
+/* Fantasy Container Styles */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&display=swap');
+
+/* Unified Page Container */
+.fantasy-container {
+  position: relative;
+  margin: 4%;
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+  border: 2px solid rgba(100, 116, 139, 0.4);
+  box-shadow: 
+    inset 0 0 0 1px rgba(148, 163, 184, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Subtle texture overlay */
+.fantasy-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ambient top lighting */
+.fantasy-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 150px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Fantasy Banner Header */
+.fantasy-banner {
+  position: relative;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%);
+  border-bottom: 3px solid rgba(30, 64, 175, 0.8);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+  padding: 1rem 2rem;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* Banner cloth/parchment texture */
+.fantasy-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+/* Banner embossed highlight */
+.fantasy-banner::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+/* Banner title */
+.fantasy-banner-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(147, 197, 253, 0.3);
+  position: relative;
+  z-index: 1;
+  letter-spacing: 0.1em;
+}
+
+/* Background icon behind banner title */
+.fantasy-banner-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  opacity: 0.05;
+  color: white;
+  z-index: 0;
+}
+
+/* Container content area */
+.fantasy-content {
+  position: relative;
+  z-index: 1;
+  padding: 1.5rem;
+}
+
+/* Section dividers */
+.fantasy-section {
+  position: relative;
+  padding: 1.5rem;
+  background: rgba(30, 41, 59, 0.3);
+  border: 1px solid rgba(100, 116, 139, 0.2);
+  margin-bottom: 1.5rem;
+}
+
+/* Section top highlight */
+.fantasy-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.2), transparent);
+}
+
+/* Section ambient lighting */
+.fantasy-section::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Stats row styling */
+.fantasy-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+/* Individual stat item */
+.fantasy-stat-item {
+  position: relative;
+  padding: 1rem 1.25rem;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(100, 116, 139, 0.25);
+  transition: background-color 0.2s ease;
+}
+
+.fantasy-stat-item:hover {
+  background: rgba(30, 41, 59, 0.7);
+}
+
+/* Stat item top highlight */
+.fantasy-stat-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.15), transparent);
+}
+
+/* Section title styling */
+.fantasy-section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #e2e8f0;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+/* Thin divider between sections */
+.fantasy-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(100, 116, 139, 0.3), transparent);
+  margin: 1.5rem 0;
+}
+
+/* Double border effect for emphasis */
+.fantasy-double-border {
+  border: 2px solid rgba(100, 116, 139, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(100, 116, 139, 0.15);
+}
+
+/* Grid layouts within fantasy container */
+.fantasy-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .fantasy-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.fantasy-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .fantasy-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .fantasy-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { Users, Trophy, TrendingUp, User, Calendar, Activity, Link2, Palette, Award, Info } from 'lucide-react'
+import { Users, Trophy, TrendingUp, User, Calendar, Activity, Link2, Palette, Award, Info, Home as HomeIcon } from 'lucide-react'
+import '../styles/fantasy-container.css'
 import { fetchClanMembers, checkPlayerMilestones } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
@@ -740,161 +740,166 @@ const Home = () => {
   }, [settingsSection])
 
   return (
-    <div className="space-y-8">
-      {/* Stats Cards Grid - Top Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* 1. Total Members */}
-        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Total Members</CardTitle>
-            <Users className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-2 animate-pulse">
-                <div className="h-8 bg-slate-700/50 rounded w-20"></div>
-                <div className="h-3 bg-slate-700/30 rounded w-32"></div>
-              </div>
-            ) : (
-              <>
-                <div className="text-2xl font-bold text-white">
-                  {clanStats?.total_members || 0}
-                </div>
-                <p className="text-xs text-slate-400">Friends to play with</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* 2. Total Clan XP */}
-        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Total Clan XP</CardTitle>
-            <TrendingUp className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-2 animate-pulse">
-                <div className="h-8 bg-slate-700/50 rounded w-24"></div>
-                <div className="h-3 bg-slate-700/30 rounded w-28"></div>
-              </div>
-            ) : (
-              <>
-                <div className="text-2xl font-bold text-white">
-                  {formatNumber(clanStats?.total_xp || 0)}
-                </div>
-                <p className="text-xs text-slate-400">Combined clan XP</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* 3. Time Spent in Clan */}
-        {user?.username && user?.isLinked ? (
-          <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-300">Time Spent in Clan</CardTitle>
-              <Calendar className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
-            </CardHeader>
-            <CardContent>
-              {loading || !playerData ? (
-                <div className="space-y-2 animate-pulse">
-                  <div className="h-8 bg-slate-700/50 rounded w-28"></div>
-                  <div className="h-3 bg-slate-700/30 rounded w-32"></div>
-                </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold text-white">
-                    {calculateDaysInClan() !== null ? `${calculateDaysInClan()} days` : 'N/A'}
-                  </div>
-                  <p className="text-xs text-slate-400">Days as clan member</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        ) : null}
-
-        {/* 4. Competitions */}
-        <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Competitions</CardTitle>
-            <Trophy className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-2 animate-pulse">
-                <div className="h-8 bg-slate-700/50 rounded w-12"></div>
-                <div className="h-3 bg-slate-700/30 rounded w-36"></div>
-              </div>
-            ) : (
-              <>
-                <div className="text-2xl font-bold text-white">
-                  {activeCompetitionsCount}
-                </div>
-                <p className="text-xs text-slate-400">Active competitions</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+    <div className="fantasy-container">
+      {/* Fantasy Banner Header */}
+      <div className="fantasy-banner">
+        <HomeIcon className="fantasy-banner-icon" />
+        <h1 className="fantasy-banner-title">Home</h1>
       </div>
 
-      {/* Personal Profile Card */}
-      {user?.username && user?.isLinked && (profileError ? (
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardContent className="p-6">
-              <div className="text-center py-8">
-                <p className="text-red-400 mb-4">{profileError}</p>
-                {!user?.requiresLinking && (
-                  <Button
-                    onClick={fetchPlayerStats}
-                    className="bg-theme-button hover:bg-theme-button-hover"
-                  >
-                    Retry
-                  </Button>
+      {/* Main Content Area */}
+      <div className="fantasy-content">
+        {/* Stats Section */}
+        <div className="fantasy-section">
+          <div className="fantasy-grid-4">
+            {/* 1. Total Members */}
+            <div className="fantasy-stat-item">
+              <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <span className="text-sm font-medium text-slate-300">Total Members</span>
+                <Users className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
+              </div>
+              <div>
+                {loading ? (
+                  <div className="space-y-2 animate-pulse">
+                    <div className="h-8 bg-slate-700/50 rounded w-20"></div>
+                    <div className="h-3 bg-slate-700/30 rounded w-32"></div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-white">
+                      {clanStats?.total_members || 0}
+                    </div>
+                    <p className="text-xs text-slate-400">Friends to play with</p>
+                  </>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        ) : profileLoading || !playerData ? (
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardContent className="p-6">
-              <div className="flex flex-col lg:flex-row gap-4 animate-pulse">
-                {/* Left Column Skeleton (30%) */}
-                <div className="lg:w-[30%] flex-shrink-0">
-                  <div className="bg-slate-700/30 rounded-lg p-6">
-                    <div className="flex flex-col items-center space-y-4">
-                      <div className="w-20 h-20 bg-slate-700/50 rounded-full"></div>
-                      <div className="space-y-2 w-full">
-                        <div className="h-6 bg-slate-700/50 rounded w-3/4 mx-auto"></div>
-                        <div className="h-4 bg-slate-700/30 rounded w-1/2 mx-auto"></div>
-                      </div>
-                    </div>
+            </div>
+
+            {/* 2. Total Clan XP */}
+            <div className="fantasy-stat-item">
+              <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <span className="text-sm font-medium text-slate-300">Total Clan XP</span>
+                <TrendingUp className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
+              </div>
+              <div>
+                {loading ? (
+                  <div className="space-y-2 animate-pulse">
+                    <div className="h-8 bg-slate-700/50 rounded w-24"></div>
+                    <div className="h-3 bg-slate-700/30 rounded w-28"></div>
                   </div>
-                </div>
-                {/* Middle Column Skeleton (40%) */}
-                <div className="flex-1 lg:max-w-[40%] space-y-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="flex items-stretch overflow-hidden rounded-lg">
-                      <div className="bg-slate-800/70 w-12 h-12"></div>
-                      <div className="flex-1 bg-slate-700/30 h-12"></div>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-white">
+                      {formatNumber(clanStats?.total_xp || 0)}
                     </div>
-                  ))}
+                    <p className="text-xs text-slate-400">Combined clan XP</p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* 3. Time Spent in Clan */}
+            {user?.username && user?.isLinked ? (
+              <div className="fantasy-stat-item">
+                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <span className="text-sm font-medium text-slate-300">Time Spent in Clan</span>
+                  <Calendar className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
                 </div>
-                {/* Right Column Skeleton (30%) */}
-                <div className="flex-1 lg:max-w-[30%]">
-                  <div className="bg-slate-700/30 rounded-lg p-6 h-full flex items-center justify-center">
+                <div>
+                  {loading || !playerData ? (
+                    <div className="space-y-2 animate-pulse">
+                      <div className="h-8 bg-slate-700/50 rounded w-28"></div>
+                      <div className="h-3 bg-slate-700/30 rounded w-32"></div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-2xl font-bold text-white">
+                        {calculateDaysInClan() !== null ? `${calculateDaysInClan()} days` : 'N/A'}
+                      </div>
+                      <p className="text-xs text-slate-400">Days as clan member</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            ) : null}
+
+            {/* 4. Competitions */}
+            <div className="fantasy-stat-item">
+              <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <span className="text-sm font-medium text-slate-300">Competitions</span>
+                <Trophy className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
+              </div>
+              <div>
+                {loading ? (
+                  <div className="space-y-2 animate-pulse">
+                    <div className="h-8 bg-slate-700/50 rounded w-12"></div>
+                    <div className="h-3 bg-slate-700/30 rounded w-36"></div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-white">
+                      {activeCompetitionsCount}
+                    </div>
+                    <p className="text-xs text-slate-400">Active competitions</p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Personal Profile Section */}
+        {user?.username && user?.isLinked && (profileError ? (
+          <div className="fantasy-section">
+            <div className="text-center py-8">
+              <p className="text-red-400 mb-4">{profileError}</p>
+              {!user?.requiresLinking && (
+                <Button
+                  onClick={fetchPlayerStats}
+                  className="bg-theme-button hover:bg-theme-button-hover"
+                >
+                  Retry
+                </Button>
+              )}
+            </div>
+          </div>
+        ) : profileLoading || !playerData ? (
+          <div className="fantasy-section">
+            <div className="flex flex-col lg:flex-row gap-4 animate-pulse">
+              {/* Left Column Skeleton (30%) */}
+              <div className="lg:w-[30%] flex-shrink-0">
+                <div className="bg-slate-700/30 p-6">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="w-20 h-20 bg-slate-700/50 rounded-full"></div>
                     <div className="space-y-2 w-full">
-                      <div className="h-4 bg-slate-700/50 rounded w-3/4 mx-auto"></div>
-                      <div className="h-12 bg-slate-700/50 rounded w-full"></div>
+                      <div className="h-6 bg-slate-700/50 rounded w-3/4 mx-auto"></div>
+                      <div className="h-4 bg-slate-700/30 rounded w-1/2 mx-auto"></div>
                     </div>
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              {/* Middle Column Skeleton (40%) */}
+              <div className="flex-1 lg:max-w-[40%] space-y-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex items-stretch overflow-hidden">
+                    <div className="bg-slate-800/70 w-12 h-12"></div>
+                    <div className="flex-1 bg-slate-700/30 h-12"></div>
+                  </div>
+                ))}
+              </div>
+              {/* Right Column Skeleton (30%) */}
+              <div className="flex-1 lg:max-w-[30%]">
+                <div className="bg-slate-700/30 p-6 h-full flex items-center justify-center">
+                  <div className="space-y-2 w-full">
+                    <div className="h-4 bg-slate-700/50 rounded w-3/4 mx-auto"></div>
+                    <div className="h-12 bg-slate-700/50 rounded w-full"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         ) : playerData && (
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardContent className="p-6">
+        <div className="fantasy-section">
             {/* Horizontal layout with responsive stacking - Three columns */}
             <div className="flex flex-col lg:flex-row gap-4">
 
@@ -1037,22 +1042,16 @@ const Home = () => {
                 })()}
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
         ))}
 
-      {/* Your Recent Progress & Members Active Today Cards */}
-      {user?.username && user?.isLinked && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Your Recent Progress Card */}
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white">Your Recent Progress</CardTitle>
-              <CardDescription className="text-slate-400">
-                Your XP gains over the last 30 days
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+        {/* Your Recent Progress & Members Active Today Section */}
+        {user?.username && user?.isLinked && (
+          <div className="fantasy-grid-2">
+            {/* Your Recent Progress */}
+            <div className="fantasy-section">
+              <h3 className="fantasy-section-title">Your Recent Progress</h3>
+              <p className="text-slate-400 text-sm mb-4">Your XP gains over the last 30 days</p>
               {recentProgressLoading ? (
                 <div className="space-y-4 animate-pulse">
                   <div className="h-32 bg-slate-700/50 rounded"></div>
@@ -1153,18 +1152,12 @@ const Home = () => {
               ) : (
                 <p className="text-center text-slate-400 py-8">No progress data available</p>
               )}
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Members Active Today Card */}
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white">Members Active Today</CardTitle>
-              <CardDescription className="text-slate-400">
-                Clanmates who gained XP today
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+            {/* Members Active Today */}
+            <div className="fantasy-section">
+              <h3 className="fantasy-section-title">Members Active Today</h3>
+              <p className="text-slate-400 text-sm mb-4">Clanmates who gained XP today</p>
               {activeMembersLoading ? (
                 <div className="space-y-3 animate-pulse">
                   {[1, 2, 3, 4, 5].map((i) => (
@@ -1217,20 +1210,16 @@ const Home = () => {
               ) : (
                 <p className="text-center text-slate-400 py-8">No active members today</p>
               )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            </div>
+          </div>
+        )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="bg-slate-800/50 border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-white">Clan Log</CardTitle>
-          <CardDescription className="text-slate-400">
-            Recent clan activity
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        {/* Clan Log & Recent Activity Section */}
+        <div className="fantasy-grid-2">
+          {/* Clan Log */}
+          <div className="fantasy-section">
+            <h3 className="fantasy-section-title">Clan Log</h3>
+            <p className="text-slate-400 text-sm mb-4">Recent clan activity</p>
           {clanLogLoading ? (
             <div className="space-y-3 animate-pulse">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
@@ -1263,17 +1252,12 @@ const Home = () => {
             )}
           </div>
           )}
-        </CardContent>
-      </Card>
+          </div>
 
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white">Recent Activity</CardTitle>
-          <CardDescription className="text-slate-400">
-            Latest clan member activity
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          {/* Recent Activity */}
+          <div className="fantasy-section">
+            <h3 className="fantasy-section-title">Recent Activity</h3>
+            <p className="text-slate-400 text-sm mb-4">Latest clan member activity</p>
           {activityLoading ? (
             <div className="space-y-3 animate-pulse">
               {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -1306,9 +1290,10 @@ const Home = () => {
             )}
           </div>
           )}
-        </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
+      {/* End fantasy-content */}
 
       {/* User Settings Modal */}
       <Dialog open={settingsSection !== null} onOpenChange={(open) => !open && setSettingsSection(null)}>
