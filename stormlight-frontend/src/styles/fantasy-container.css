@@ -72,8 +72,8 @@
   line-height: 2.2;
 
   background:
-    /* Top highlight - light source from above */
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0) 25%),
+    /* Top highlight - subtle thin top-edge highlight */
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.04) 3%, rgba(255, 255, 255, 0) 8%),
     /* Ambient fantasy glow - subtle magical sheen */
     radial-gradient(circle at center, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 70%),
     /* Ribbon fold shading - left side */
