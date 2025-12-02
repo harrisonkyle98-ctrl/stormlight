@@ -40,18 +40,28 @@
   z-index: 0;
 }
 
+/* Fantasy Banner Header - Wrapper for positioning ribbons */
+.fantasy-banner-wrapper {
+  position: relative;
+  margin: 0 -16px; /* Extend beyond container for ribbon effect */
+  padding: 0 16px;
+  z-index: 10;
+}
+
 /* Fantasy Banner Header */
 .fantasy-banner {
   position: relative;
-  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%);
-  border-bottom: 3px solid rgba(30, 64, 175, 0.8);
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 30%, #1d4ed8 70%, #1e40af 100%);
+  border-bottom: 3px solid rgba(30, 64, 175, 0.9);
   box-shadow: 
-    inset 0 1px 0 rgba(255, 255, 255, 0.15),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
-    0 4px 12px rgba(0, 0, 0, 0.3);
-  padding: 1rem 2rem;
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.15),
+    inset 4px 0 8px rgba(0, 0, 0, 0.1),
+    inset -4px 0 8px rgba(0, 0, 0, 0.1),
+    0 6px 16px rgba(0, 0, 0, 0.4);
+  padding: 1.25rem 2rem;
   text-align: center;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Banner cloth/parchment texture */
@@ -67,16 +77,86 @@
   pointer-events: none;
 }
 
-/* Banner embossed highlight */
+/* Banner top highlight line */
 .fantasy-banner::after {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+  height: 2px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.3) 20%, 
+    rgba(255, 255, 255, 0.4) 50%, 
+    rgba(255, 255, 255, 0.3) 80%, 
+    transparent 100%);
   pointer-events: none;
+}
+
+/* Left ribbon extension */
+.fantasy-banner-ribbon-left {
+  position: absolute;
+  left: -16px;
+  top: 0;
+  width: 16px;
+  height: 100%;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+    -2px 4px 8px rgba(0, 0, 0, 0.3);
+  z-index: -1;
+}
+
+/* Left ribbon fold/tail */
+.fantasy-banner-ribbon-left::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 16px solid #1e3a8a;
+  border-bottom: 12px solid transparent;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4));
+}
+
+/* Right ribbon extension */
+.fantasy-banner-ribbon-right {
+  position: absolute;
+  right: -16px;
+  top: 0;
+  width: 16px;
+  height: 100%;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+    2px 4px 8px rgba(0, 0, 0, 0.3);
+  z-index: -1;
+}
+
+/* Right ribbon fold/tail */
+.fantasy-banner-ribbon-right::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-right: 16px solid #1e3a8a;
+  border-bottom: 12px solid transparent;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4));
+}
+
+/* Banner inner content wrapper for embossed effect */
+.fantasy-banner-inner {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 50%, rgba(0, 0, 0, 0.05) 100%);
+  margin: -1.25rem -2rem;
+  padding: 1.25rem 2rem;
 }
 
 /* Banner title */

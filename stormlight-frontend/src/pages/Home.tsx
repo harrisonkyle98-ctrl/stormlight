@@ -741,10 +741,16 @@ const Home = () => {
 
   return (
     <div className="fantasy-container">
-      {/* Fantasy Banner Header */}
-      <div className="fantasy-banner">
-        <HomeIcon className="fantasy-banner-icon" />
-        <h1 className="fantasy-banner-title">Home</h1>
+      {/* Fantasy Banner Header with Ribbons */}
+      <div className="fantasy-banner-wrapper">
+        <div className="fantasy-banner-ribbon-left"></div>
+        <div className="fantasy-banner-ribbon-right"></div>
+        <div className="fantasy-banner">
+          <div className="fantasy-banner-inner">
+            <HomeIcon className="fantasy-banner-icon" />
+            <h1 className="fantasy-banner-title">Home</h1>
+          </div>
+        </div>
       </div>
 
       {/* Main Content Area */}
