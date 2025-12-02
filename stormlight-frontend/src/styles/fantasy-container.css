@@ -5,6 +5,7 @@
 .fantasy-container {
   position: relative;
   margin: 4%;
+  overflow: visible; /* Allow ribbon to extend outside container */
   background: linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
   border: 2px solid rgba(100, 116, 139, 0.4);
   box-shadow: 
@@ -43,7 +44,8 @@
 /* Fantasy Banner Header - Wrapper for positioning */
 .fantasy-banner-wrapper {
   position: relative;
-  margin: 0 -20px; /* Extend beyond container edges for ribbon ends */
+  overflow: visible; /* Allow ribbon to extend outside */
+  margin: 0;
   padding: 0;
   z-index: 10;
 }
@@ -54,11 +56,16 @@
   --s: 2.2em; /* ribbon side width */
   --d: 1.0em; /* depth / drop */
   --c: 1em;   /* cutout */
+  --overhang: 60px; /* how far to extend beyond container on each side */
   
   position: relative;
-  width: 100%;
   display: block;
   text-align: center;
+  
+  /* Width is container width + overhang on both sides */
+  width: calc(100% + var(--overhang) * 2);
+  margin-left: calc(var(--overhang) * -1);
+  
   padding: 0 calc(var(--s) + 0.5em) var(--d);
   line-height: 2.2;
   
