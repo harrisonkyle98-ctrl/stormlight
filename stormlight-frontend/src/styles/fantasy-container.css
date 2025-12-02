@@ -45,7 +45,7 @@
 .fantasy-banner-wrapper {
   position: relative;
   overflow: visible; /* Allow ribbon to extend outside */
-  margin: 0;
+  margin: -3px 0 0 0; /* Nudge upward by 3px for flush alignment */
   padding: 0;
   z-index: 10;
 }
