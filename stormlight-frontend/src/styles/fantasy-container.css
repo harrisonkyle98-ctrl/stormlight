@@ -40,143 +40,82 @@
   z-index: 0;
 }
 
-/* Fantasy Banner Header - Wrapper for positioning ribbons */
+/* Fantasy Banner Header - Wrapper for positioning */
 .fantasy-banner-wrapper {
   position: relative;
-  margin: 0 -6px; /* Small overhang over container edges */
-  padding: 0 6px;
-  z-index: 1;
+  margin: 0 -20px; /* Extend beyond container edges for ribbon ends */
+  padding: 0;
+  z-index: 10;
 }
 
-/* Fantasy Banner Header */
+/* Pure CSS Ribbon Banner */
 .fantasy-banner {
+  --banner-color: #3c7dff;
+  --s: 2.2em; /* ribbon side width */
+  --d: 1.0em; /* depth / drop */
+  --c: 1em;   /* cutout */
+  
   position: relative;
-  z-index: 3; /* Banner on top of ribbons */
-  padding: 1.25rem 2rem;
+  width: 100%;
+  display: block;
   text-align: center;
-  overflow: visible;
-  background: linear-gradient(180deg, #1d4ed8 0%, #2563eb 25%, #1d4ed8 50%, #1e40af 100%);
-  box-shadow:
-    inset 0 2px 0 rgba(191, 219, 254, 0.35),   /* top accent line */
-    inset 0 -2px 0 rgba(15, 23, 42, 0.6),      /* bottom accent line */
-    inset 0 -6px 12px rgba(15, 23, 42, 0.4),   /* inner bottom shading */
-    inset 0 6px 12px rgba(15, 23, 42, 0.2),    /* inner top shading */
-    0 8px 18px rgba(0, 0, 0, 0.55);            /* drop shadow */
+  padding: 0 calc(var(--s) + 0.5em) var(--d);
+  line-height: 2.2;
+  
+  background:
+    conic-gradient(at left var(--s) bottom var(--d),
+     #0000 25%, #0008 0 37.5%, #0004 0) 0 / 50% 100% no-repeat,
+    conic-gradient(at right var(--s) bottom var(--d),
+     #0004 62.5%, #0008 0 75%, #0000 0) 100% / 50% 100% no-repeat;
+  
+  background-color: var(--banner-color);
+  
+  clip-path: polygon(
+    0 var(--d),
+    var(--s) var(--d),
+    var(--s) 0,
+    calc(100% - var(--s)) 0,
+    calc(100% - var(--s)) var(--d),
+    100% var(--d),
+    calc(100% - var(--c)) calc(50% + var(--d)/2),
+    100% 100%,
+    calc(100% - var(--s) - var(--d)) 100%,
+    calc(100% - var(--s) - var(--d)) calc(100% - var(--d)),
+    calc(var(--s) + var(--d)) calc(100% - var(--d)),
+    calc(var(--s) + var(--d)) 100%,
+    0 100%,
+    var(--c) calc(50% + var(--d)/2)
+  );
+  
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
 }
 
-/* Cloth sheen highlight across middle of banner */
-.fantasy-banner::before {
-  content: '';
-  position: absolute;
-  inset: 3px 2px;
-  background: radial-gradient(ellipse 80% 50% at 50% 30%,
-    rgba(255, 255, 255, 0.25),
-    transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Subtle noise texture */
-.fantasy-banner::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  opacity: 0.06;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* -------- SIDE RIBBONS WITH HORIZONTAL EXTENSION + V-CUT FOLD -------- */
-
+/* Hidden - no longer needed with pure CSS ribbon */
 .fantasy-banner-ribbon-left,
 .fantasy-banner-ribbon-right {
-  position: absolute;
-  top: 0;
-  width: 70px;   /* horizontal extension width */
-  height: 55px;  /* overall ribbon block including fold */
-  z-index: 2;
-  pointer-events: none;
+  display: none;
 }
 
-/* Left ribbon extends outward from left edge */
-.fantasy-banner-ribbon-left {
-  left: 0;
-  transform: translateX(-85%);
-}
-
-/* Right ribbon mirrors the left */
-.fantasy-banner-ribbon-right {
-  right: 0;
-  transform: translateX(85%) scaleX(-1);
-}
-
-/* Underside fold (darker, V-cut) - ::before */
-.fantasy-banner-ribbon-left::before,
-.fantasy-banner-ribbon-right::before {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 30px;
-  background: linear-gradient(180deg, #1e3a8a 0%, #0f172a 100%);
-  clip-path: polygon(
-    15% 0,    /* inner top (near banner) */
-    100% 0,   /* outer top */
-    70% 100%, /* outer bottom tip (V-cut) */
-    0 100%    /* inner bottom */
-  );
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-  z-index: 1;
-}
-
-/* Front horizontal ribbon extension - ::after */
-.fantasy-banner-ribbon-left::after,
-.fantasy-banner-ribbon-right::after {
-  content: '';
-  position: absolute;
-  top: 8px;
-  left: 0;
-  right: 0;
-  height: 24px;
-  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%);
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    80% 100%,  /* angled outer end where it meets fold */
-    0 100%
-  );
-  box-shadow:
-    inset 0 1px 0 rgba(191, 219, 254, 0.35),
-    inset 0 -2px 0 rgba(15, 23, 42, 0.5);
-  z-index: 2;
-}
-
-/* Banner inner content wrapper for embossed effect */
+/* Banner inner content wrapper - simplified for CSS ribbon */
 .fantasy-banner-inner {
   position: relative;
   z-index: 1;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 50%, rgba(0, 0, 0, 0.05) 100%);
-  margin: -1.25rem -2rem;
-  padding: 1.25rem 2rem;
+  display: inline-block;
 }
 
-/* Banner title */
+/* Banner title - styled for CSS ribbon */
 .fantasy-banner-title {
   font-family: 'Cinzel', serif;
-  font-size: 1.75rem;
-  font-weight: 600;
+  font-size: 28px;
+  font-weight: bold;
   color: #ffffff;
   text-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.4),
     0 0 20px rgba(147, 197, 253, 0.3);
   position: relative;
   z-index: 1;
   letter-spacing: 0.1em;
+  margin: 0;
 }
 
 /* Background icon behind banner title */
@@ -190,6 +129,7 @@
   opacity: 0.05;
   color: white;
   z-index: 0;
+  pointer-events: none;
 }
 
 /* Container content area */
