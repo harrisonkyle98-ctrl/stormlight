@@ -56,7 +56,7 @@
   --s: 2.2em; /* ribbon side width */
   --d: 1.0em; /* depth / drop */
   --c: 1em;   /* cutout */
-  --overhang: 50px; /* how far to extend beyond container on each side */
+  --overhang: 52px; /* how far to extend beyond container on each side */
   
   position: relative;
   display: block;
