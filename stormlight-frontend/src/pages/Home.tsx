@@ -741,8 +741,8 @@ const Home = () => {
   }, [settingsSection])
 
   return (
-    <div className="fantasy-container">
-      {/* Profile Crest - Gold-themed collapsible card above banner */}
+    <>
+      {/* Profile Crest - Gold-themed collapsible card OUTSIDE container */}
       {user?.username && user?.isLinked && (profileError ? (
         <div className="profile-crest">
           <div className="profile-crest-header" style={{ cursor: 'default' }}>
@@ -751,7 +751,7 @@ const Home = () => {
           <div className="profile-crest-body profile-crest-body--expanded">
             <div className="profile-crest-panel">
               <div className="text-center py-4">
-                <p style={{ color: '#1a1a1a' }} className="mb-4">{profileError}</p>
+                <p className="text-red-400 mb-4">{profileError}</p>
                 {!user?.requiresLinking && (
                   <Button
                     onClick={fetchPlayerStats}
@@ -767,8 +767,8 @@ const Home = () => {
       ) : profileLoading || !playerData ? (
         <div className="profile-crest">
           <div className="profile-crest-header" style={{ cursor: 'default' }}>
-            <div className="w-12 h-12 bg-black/20 rounded-full animate-pulse"></div>
-            <div className="w-32 h-5 bg-black/20 rounded animate-pulse"></div>
+            <div className="w-12 h-12 bg-gold-shadow/20 rounded-full animate-pulse"></div>
+            <div className="w-32 h-5 bg-gold-shadow/20 rounded animate-pulse"></div>
           </div>
         </div>
       ) : playerData && (
@@ -900,15 +900,14 @@ const Home = () => {
                       return (
                         <div
                           className="profile-crest-activity rounded-lg p-6 h-full flex items-center justify-center border-2 cursor-default relative overflow-hidden"
-                          style={{ borderColor: 'rgba(255, 255, 255, 0.3)' }}
                         >
                           <Info 
                             className="absolute right-4 top-1/2 -translate-y-1/2 w-24 h-24 pointer-events-none"
-                            style={{ opacity: 0.08, color: '#1a1a1a', zIndex: 1 }}
+                            style={{ opacity: 0.08, color: '#F7E27B', zIndex: 1 }}
                           />
                           <div className="relative z-10 text-center">
-                            <p className="text-xs mb-1" style={{ color: '#1a1a1a' }}>Recent Activity</p>
-                            <p className="text-sm" style={{ color: '#1a1a1a' }}>No recent activity.</p>
+                            <p className="text-xs text-slate-400 mb-1">Recent Activity</p>
+                            <p className="text-sm text-slate-300">No recent activity.</p>
                           </div>
                         </div>
                       )
@@ -927,8 +926,8 @@ const Home = () => {
                           style={{ opacity: 0.08, color: color, zIndex: 1 }}
                         />
                         <div className="relative z-10 text-center">
-                          <p className="text-xs mb-1" style={{ color: '#1a1a1a' }}>Recent Activity</p>
-                          <p className="text-sm" style={{ color: '#1a1a1a' }}>{recentActivity.text}</p>
+                          <p className="text-xs text-slate-400 mb-1">Recent Activity</p>
+                          <p className="text-sm text-white">{recentActivity.text}</p>
                         </div>
                       </div>
                     )
@@ -940,8 +939,9 @@ const Home = () => {
         </div>
       ))}
 
-      {/* Fantasy Banner Header with Ribbons */}
-      <div className="fantasy-banner-wrapper">
+      <div className="fantasy-container">
+        {/* Fantasy Banner Header with Ribbons */}
+        <div className="fantasy-banner-wrapper">
         <div className="fantasy-banner-ribbon-left"></div>
         <div className="fantasy-banner-ribbon-right"></div>
         <div className="fantasy-banner">
@@ -1534,7 +1534,8 @@ const Home = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </>
   )
 }
 

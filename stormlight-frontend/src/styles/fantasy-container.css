@@ -311,6 +311,7 @@
 
 /* ========================================
    PROFILE CREST - Gold-themed collapsible card
+   Matches fantasy-section panel styling with gold colors
    ======================================== */
 
 /* Gold color palette */
@@ -319,91 +320,93 @@
   --gold-shadow: #A88728;
   --gold-highlight: #F7E27B;
   --gold-soft: #E3C663;
+  --gold-border: rgba(212, 175, 55, 0.4);
+  --gold-border-highlight: rgba(247, 226, 123, 0.2);
   
   position: relative;
-  margin: 0 auto 10px auto; /* Default collapsed spacing */
-  max-width: 900px;
-  z-index: 15; /* Above banner */
-}
-
-.profile-crest--expanded {
-  margin-bottom: 20px; /* Expanded spacing to banner */
-}
-
-.profile-crest--collapsed {
-  margin-bottom: 10px; /* Collapsed spacing to banner */
+  /* Match fantasy-container width and centering */
+  margin: 0 4% 10px 4%;
+  z-index: 5;
 }
 
 /* Crest header - always visible (collapsed state content) */
+/* Styled like fantasy-section but with gold colors */
 .profile-crest-header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  padding: 0.75rem 1.5rem;
+  padding: 1rem 1.5rem;
   cursor: pointer;
-  border: none;
   width: 100%;
   
-  /* Gold gradient background */
-  background:
-    /* Subtle cloth texture - warm-toned */
-    repeating-linear-gradient(
-      0deg,
-      rgba(247, 226, 123, 0.03) 0px,
-      rgba(247, 226, 123, 0.03) 1px,
-      transparent 1px,
-      transparent 3px
-    ),
-    /* Top highlight */
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 20%),
-    /* Base gold gradient */
-    linear-gradient(to bottom, var(--gold-highlight), var(--gold-base) 40%, var(--gold-shadow) 100%);
-  
-  /* Thin metallic gold border */
-  border: 1px solid rgba(247, 226, 123, 0.7);
-  
-  /* Shadows and glow */
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.3),
-    inset 0 0 10px rgba(247, 226, 123, 0.2);
-  
-  transition: background 0.2s ease, box-shadow 0.2s ease;
+  /* Match fantasy-section background style - gold variant */
+  background: rgba(168, 135, 40, 0.3);
+  border: 1px solid var(--gold-border);
+}
+
+/* Top highlight - matches fantasy-section::before */
+.profile-crest-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-border-highlight), transparent);
+}
+
+/* Ambient lighting - matches fantasy-section::after */
+.profile-crest-header::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(180deg, rgba(247, 226, 123, 0.03) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .profile-crest-header:hover {
-  box-shadow:
-    0 6px 16px rgba(0, 0, 0, 0.35),
-    inset 0 0 12px rgba(247, 226, 123, 0.3);
+  background: rgba(168, 135, 40, 0.4);
 }
 
 /* Avatar in header */
 .profile-crest-header .profile-crest-avatar {
+  position: relative;
+  z-index: 1;
   width: 48px;
   height: 48px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
+  border: 2px solid var(--gold-border);
   border-radius: 50%;
 }
 
 /* Username in header */
 .profile-crest-header .profile-crest-username {
+  position: relative;
+  z-index: 1;
   font-family: 'Cinzel', serif;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #1a1a1a;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+  color: var(--gold-highlight);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 /* Rank badge in header */
 .profile-crest-header .profile-crest-rank {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.25rem 0.75rem;
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--gold-border);
   font-size: 0.85rem;
-  color: #1a1a1a;
+  color: var(--gold-soft);
 }
 
 .profile-crest-header .profile-crest-rank img {
@@ -413,10 +416,12 @@
 
 /* Chevron icon */
 .profile-crest-header .profile-crest-chevron {
+  position: relative;
+  z-index: 1;
   width: 24px;
   height: 24px;
-  color: #1a1a1a;
-  opacity: 0.7;
+  color: var(--gold-soft);
+  opacity: 0.8;
   transition: transform 0.3s ease;
 }
 
@@ -439,65 +444,73 @@
 }
 
 /* Crest panel - gold-themed content area */
+/* Styled like fantasy-section but with gold colors */
 .profile-crest-panel {
+  position: relative;
   padding: 1.5rem;
-  margin-top: 2px; /* Small gap from header */
   
-  /* Gold gradient background - slightly darker than header */
-  background:
-    /* Subtle cloth texture */
-    repeating-linear-gradient(
-      0deg,
-      rgba(247, 226, 123, 0.02) 0px,
-      rgba(247, 226, 123, 0.02) 1px,
-      transparent 1px,
-      transparent 3px
-    ),
-    /* Base gradient - darker gold */
-    linear-gradient(to bottom, var(--gold-base), var(--gold-shadow) 100%);
-  
-  /* Thin metallic gold border */
-  border: 1px solid rgba(247, 226, 123, 0.6);
+  /* Match fantasy-section background style - gold variant */
+  background: rgba(168, 135, 40, 0.25);
+  border: 1px solid var(--gold-border);
   border-top: none;
-  
-  /* Shadows and glow */
-  box-shadow:
-    0 6px 12px rgba(0, 0, 0, 0.35),
-    inset 0 0 12px rgba(247, 226, 123, 0.15);
+}
+
+/* Top highlight for panel */
+.profile-crest-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-border-highlight), transparent);
+}
+
+/* Ambient lighting for panel */
+.profile-crest-panel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(180deg, rgba(247, 226, 123, 0.02) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Override button styles inside gold panel */
 .profile-crest-panel .profile-crest-button {
-  background: rgba(0, 0, 0, 0.2) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  color: #1a1a1a !important;
+  background: rgba(168, 135, 40, 0.4) !important;
+  border: 1px solid var(--gold-border) !important;
+  color: var(--gold-highlight) !important;
   transition: background 0.2s ease;
 }
 
 .profile-crest-panel .profile-crest-button:hover {
-  background: rgba(0, 0, 0, 0.3) !important;
+  background: rgba(168, 135, 40, 0.6) !important;
 }
 
 .profile-crest-panel .profile-crest-button svg {
-  color: #1a1a1a !important;
+  color: var(--gold-soft) !important;
 }
 
 /* Recent activity box inside gold panel */
 .profile-crest-panel .profile-crest-activity {
-  background: rgba(0, 0, 0, 0.15);
-  border-color: rgba(255, 255, 255, 0.3) !important;
+  background: rgba(168, 135, 40, 0.2);
+  border-color: var(--gold-border) !important;
 }
 
 .profile-crest-panel .profile-crest-activity p {
-  color: #1a1a1a !important;
+  color: #e2e8f0 !important;
 }
 
 /* Avatar section inside panel */
 .profile-crest-panel .profile-crest-avatar-section {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(168, 135, 40, 0.15);
 }
 
 .profile-crest-panel .profile-crest-avatar-section h1,
 .profile-crest-panel .profile-crest-avatar-section a {
-  color: #1a1a1a !important;
+  color: var(--gold-highlight) !important;
 }
