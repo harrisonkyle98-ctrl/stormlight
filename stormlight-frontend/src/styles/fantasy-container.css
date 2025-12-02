@@ -116,10 +116,55 @@
   display: none;
 }
 
+/* Cloth fiber grain + ripple/drape effect overlay */
+.fantasy-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+
+  background:
+    /* Cloth fiber grain - subtle vertical woven texture */
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.015) 0px,
+      rgba(255, 255, 255, 0.015) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    /* Ripple bulge highlight - cloth drape center */
+    radial-gradient(
+      ellipse at center,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0) 70%
+    ),
+    /* Vertical fade from top - drape shadow */
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.10) 0%,
+      rgba(255, 255, 255, 0) 30%
+    );
+}
+
+/* Stitching lines - faint vertical lines near banner edges */
+.fantasy-banner::after {
+  content: "";
+  position: absolute;
+  top: 10%;
+  bottom: 10%;
+  left: var(--s);
+  right: var(--s);
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  pointer-events: none;
+  z-index: 2;
+}
+
 /* Banner inner content wrapper - simplified for CSS ribbon */
 .fantasy-banner-inner {
   position: relative;
-  z-index: 1;
+  z-index: 4; /* Above grain, ripple, and stitching overlays */
   display: inline-block;
 }
 
