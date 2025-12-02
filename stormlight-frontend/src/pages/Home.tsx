@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { Users, Trophy, TrendingUp, User, Calendar, Activity, Link2, Palette, Award, Info, Home as HomeIcon } from 'lucide-react'
+import { Users, Trophy, TrendingUp, User, Calendar, Activity, Link2, Palette, Award, Info } from 'lucide-react'
 import '../styles/fantasy-container.css'
 import { fetchClanMembers, checkPlayerMilestones } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
@@ -747,7 +747,6 @@ const Home = () => {
         <div className="fantasy-banner-ribbon-right"></div>
         <div className="fantasy-banner">
           <div className="fantasy-banner-inner">
-            <HomeIcon className="fantasy-banner-icon" />
             <h1 className="fantasy-banner-title">Home</h1>
           </div>
         </div>
