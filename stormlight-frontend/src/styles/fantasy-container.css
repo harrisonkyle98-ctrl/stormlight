@@ -327,7 +327,7 @@
 
 /* Gold ribbon inside profile header should match panel width (no overhang) */
 .profile-header-section .fantasy-banner.fantasy-banner--gold {
-  --overhang: 0px;
+  --overhang: 51px;
 }
 
 /* Gold ribbon wrapper - positioned above profile panel */
@@ -362,7 +362,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     0 4px 20px rgba(0, 0, 0, 0.4);
   padding: 1.5rem;
-  margin-top: -1em; /* Pull up to touch gold ribbon bottom (matches --d: 1em drop) */
+  margin-top: calc(-1em - 1px); /* Pull up 1px more so gold ribbon covers panel top border */
 }
 
 /* Subtle texture overlay for profile panel - matches fantasy-container */
@@ -400,7 +400,7 @@
 
 /* When profile header section is present, blue ribbon attaches directly below */
 .profile-header-section + .fantasy-banner-wrapper {
-  margin-top: calc(-1em - 1px); /* Pull blue ribbon up to touch profile panel + 1px to cover container border */
+  margin-top: calc(-1em - 2px); /* Pull blue ribbon up to touch profile panel bottom */
 }
 
 .profile-header-section + .fantasy-banner-wrapper + .fantasy-container {
