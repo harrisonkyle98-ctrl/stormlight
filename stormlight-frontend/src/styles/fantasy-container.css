@@ -324,9 +324,14 @@
   --gold-border-highlight: rgba(247, 226, 123, 0.2);
   
   position: relative;
-  /* Match fantasy-container width and centering */
-  margin: 0 4% 10px 4%;
+  /* Match fantasy-container width and centering, zero bottom margin for flush alignment */
+  margin: 4% 4% 0 4%;
   z-index: 5;
+}
+
+/* When profile crest is present, remove top margin from fantasy-container */
+.profile-crest + .fantasy-container {
+  margin-top: 0;
 }
 
 /* Crest header - always visible (collapsed state content) */
@@ -341,9 +346,16 @@
   cursor: pointer;
   width: 100%;
   
+  /* Match banner height (~78px) */
+  min-height: 78px;
+  box-sizing: border-box;
+  
   /* Match fantasy-section background style - gold variant */
   background: rgba(168, 135, 40, 0.3);
   border: 1px solid var(--gold-border);
+  
+  /* Remove focus ring/outline */
+  outline: none;
 }
 
 /* Top highlight - matches fantasy-section::before */
@@ -372,6 +384,14 @@
 
 .profile-crest-header:hover {
   background: rgba(168, 135, 40, 0.4);
+}
+
+/* Remove all focus styling - no blue ring */
+.profile-crest-header:focus,
+.profile-crest-header:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: var(--gold-border) !important;
 }
 
 /* Avatar in header */
@@ -443,30 +463,30 @@
   transform: translateY(0);
 }
 
-/* Crest panel - gold-themed content area */
-/* Styled like fantasy-section but with gold colors */
+/* Crest panel - uses unified-content styling (same as fantasy-section) */
+/* Only the top gold bar should be gold - expanded content matches other panels */
 .profile-crest-panel {
   position: relative;
   padding: 1.5rem;
   
-  /* Match fantasy-section background style - gold variant */
-  background: rgba(168, 135, 40, 0.25);
-  border: 1px solid var(--gold-border);
+  /* Match fantasy-section background style exactly */
+  background: rgba(30, 41, 59, 0.3);
+  border: 1px solid rgba(100, 116, 139, 0.2);
   border-top: none;
 }
 
-/* Top highlight for panel */
+/* Top highlight for panel - matches fantasy-section::before */
 .profile-crest-panel::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--gold-border-highlight), transparent);
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.2), transparent);
 }
 
-/* Ambient lighting for panel */
+/* Ambient lighting for panel - matches fantasy-section::after */
 .profile-crest-panel::after {
   content: '';
   position: absolute;
@@ -474,43 +494,43 @@
   left: 0;
   right: 0;
   height: 60px;
-  background: linear-gradient(180deg, rgba(247, 226, 123, 0.02) 0%, transparent 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
   pointer-events: none;
   z-index: 0;
 }
 
-/* Override button styles inside gold panel */
+/* Button styles inside panel - match theme styling */
 .profile-crest-panel .profile-crest-button {
-  background: rgba(168, 135, 40, 0.4) !important;
-  border: 1px solid var(--gold-border) !important;
-  color: var(--gold-highlight) !important;
+  background: rgba(30, 41, 59, 0.5) !important;
+  border: 1px solid rgba(100, 116, 139, 0.25) !important;
+  color: #e2e8f0 !important;
   transition: background 0.2s ease;
 }
 
 .profile-crest-panel .profile-crest-button:hover {
-  background: rgba(168, 135, 40, 0.6) !important;
+  background: rgba(30, 41, 59, 0.7) !important;
 }
 
 .profile-crest-panel .profile-crest-button svg {
-  color: var(--gold-soft) !important;
+  color: #94a3b8 !important;
 }
 
-/* Recent activity box inside gold panel */
+/* Recent activity box inside panel - match unified styling */
 .profile-crest-panel .profile-crest-activity {
-  background: rgba(168, 135, 40, 0.2);
-  border-color: var(--gold-border) !important;
+  background: rgba(30, 41, 59, 0.5);
+  border-color: rgba(100, 116, 139, 0.25) !important;
 }
 
 .profile-crest-panel .profile-crest-activity p {
   color: #e2e8f0 !important;
 }
 
-/* Avatar section inside panel */
+/* Avatar section inside panel - match unified styling */
 .profile-crest-panel .profile-crest-avatar-section {
-  background: rgba(168, 135, 40, 0.15);
+  background: rgba(30, 41, 59, 0.5);
 }
 
 .profile-crest-panel .profile-crest-avatar-section h1,
 .profile-crest-panel .profile-crest-avatar-section a {
-  color: var(--gold-highlight) !important;
+  color: #ffffff !important;
 }
