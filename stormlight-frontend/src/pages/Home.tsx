@@ -767,7 +767,7 @@ const Home = () => {
       ) : profileLoading || !playerData ? (
         <div className="profile-crest">
           <div className="profile-crest-header" style={{ cursor: 'default' }}>
-            <div className="w-12 h-12 bg-gold-shadow/20 rounded-full animate-pulse"></div>
+            <div className="w-8 h-8 bg-gold-shadow/20 rounded-full animate-pulse"></div>
             <div className="w-32 h-5 bg-gold-shadow/20 rounded animate-pulse"></div>
           </div>
         </div>
@@ -784,13 +784,24 @@ const Home = () => {
               alt={user.username}
               className="profile-crest-avatar"
             />
-            <span className="profile-crest-username">{user.username}</span>
-            {playerData.clan_rank && (
-              <span className="profile-crest-rank">
-                <img src={getRankIcon(playerData.clan_rank)} alt={playerData.clan_rank} />
-                <span>{playerData.clan_rank}</span>
-              </span>
-            )}
+            <span className="profile-crest-username">
+              <Username username={user.username} clanRank={playerData.clan_rank} />
+            </span>
+            {playerData.stats && (() => {
+              const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, user.username, playerData.league_points)
+              const rankBadge = allBadges.find(badge => badge.id.startsWith('rank-'))
+              return rankBadge ? (
+                <span className="profile-crest-rank">
+                  <div
+                    className="inline-flex items-center space-x-2 px-3 py-1 text-sm font-semibold rounded-md text-white"
+                    style={{ background: rankBadge.gradientBackground || rankBadge.backgroundColor }}
+                  >
+                    <img src={rankBadge.icon} alt={rankBadge.name} className="w-4 h-4" />
+                    <span>{rankBadge.name}</span>
+                  </div>
+                </span>
+              ) : null
+            })()}
             {isProfileExpanded ? (
               <ChevronUp className="profile-crest-chevron" />
             ) : (
