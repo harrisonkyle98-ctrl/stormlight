@@ -342,6 +342,7 @@
 .profile-header-section {
   position: relative;
   margin: 4% 4% 0 4%;
+  margin-bottom: 0; /* No gap below profile section */
   z-index: 5;
 }
 
@@ -356,7 +357,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     0 4px 20px rgba(0, 0, 0, 0.4);
   padding: 1.5rem;
-  margin-top: -2px; /* Overlap slightly with gold ribbon bottom */
+  margin-top: -1em; /* Pull up to touch gold ribbon bottom (matches --d: 1em drop) */
 }
 
 /* Subtle texture overlay for profile panel - matches fantasy-container */
@@ -392,7 +393,11 @@
   z-index: 1;
 }
 
-/* When profile header section is present, adjust fantasy-container margin */
+/* When profile header section is present, blue ribbon attaches directly below */
+.profile-header-section + .fantasy-banner-wrapper {
+  margin-top: 0; /* No gap between profile panel and blue ribbon */
+}
+
 .profile-header-section + .fantasy-banner-wrapper + .fantasy-container {
   margin-top: 0;
 }
