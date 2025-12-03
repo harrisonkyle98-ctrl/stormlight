@@ -160,7 +160,7 @@ const Home = () => {
   const [linkRequestLoading, setLinkRequestLoading] = useState(false)
   const { theme: selectedTheme, setTheme: handleThemeChange } = useTheme()
     const [themeTooltip, setThemeTooltip] = useState<string | null>(null)
-    const [isProfileExpanded, setIsProfileExpanded] = useState(true)
+    const [isProfileExpanded, setIsProfileExpanded] = useState(false)
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
