@@ -814,7 +814,7 @@ const Home = () => {
             <div className="fantasy-banner fantasy-banner--gold">
               <div className="fantasy-banner-inner relative flex items-center justify-center">
                 <h1 className="fantasy-banner-title">{user.username}</h1>
-                <div className="absolute right-6 flex items-center">
+                <div className="absolute inset-y-0 right-8 flex items-center justify-center z-10">
                   {profileExpanded ? (
                     <ChevronUp className="w-5 h-5 text-white/80" />
                   ) : (
@@ -890,7 +890,7 @@ const Home = () => {
                   </div>
 
                   {/* Middle Column: Action Buttons (Link Account, Badges, View My Profile) */}
-                  <div className="lg:flex-1 flex flex-col justify-between gap-2">
+                  <div className="lg:flex-1 flex flex-col gap-2">
                     <Button
                       onClick={() => setSettingsSection('account')}
                       className="profile-button w-full justify-start gap-3"
@@ -917,7 +917,7 @@ const Home = () => {
                   </div>
 
                   {/* Right Column: Change Theme, Admin Panel (admins only), Log Out */}
-                  <div className="lg:flex-1 flex flex-col justify-between gap-2">
+                  <div className="lg:flex-1 flex flex-col gap-2">
                     <Button
                       onClick={() => setSettingsSection('appearance')}
                       className="profile-button w-full justify-start gap-3"

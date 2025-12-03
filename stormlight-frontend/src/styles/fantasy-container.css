@@ -401,17 +401,32 @@
 /* Profile panel animation - smooth collapse/expand */
 .profile-header-panel-anim {
   overflow: hidden;
-  transition: max-height 300ms ease-in-out, opacity 300ms ease-in-out;
+  transition: 
+    max-height 300ms ease-in-out, 
+    opacity 300ms ease-in-out,
+    padding 300ms ease-in-out,
+    margin-top 300ms ease-in-out,
+    border-width 300ms ease-in-out;
 }
 
 .profile-header-panel-anim--collapsed {
   max-height: 0;
   opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  border-top-width: 0;
+  border-bottom-width: 0;
 }
 
 .profile-header-panel-anim--expanded {
   max-height: 600px; /* Large enough to fit all content */
   opacity: 1;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+  margin-top: calc(-2em - 1px);
+  border-top-width: 2px;
+  border-bottom-width: 2px;
 }
 
 /* When profile header section is present, remove gap above fantasy-container */
