@@ -812,21 +812,29 @@ const Home = () => {
             aria-expanded={profileExpanded}
           >
             <div className="fantasy-banner fantasy-banner--gold">
-              <div className="fantasy-banner-inner flex items-center justify-center gap-2">
+              <div className="fantasy-banner-inner relative flex items-center justify-center">
                 <h1 className="fantasy-banner-title">{user.username}</h1>
-                {profileExpanded ? (
-                  <ChevronUp className="w-5 h-5 text-white/80" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-white/80" />
-                )}
+                <div className="absolute right-6 flex items-center">
+                  {profileExpanded ? (
+                    <ChevronUp className="w-5 h-5 text-white/80" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-white/80" />
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Profile Panel - collapsible, collapsed by default */}
-          {profileExpanded && (
-            <div className="profile-header-panel">
-              <div className="profile-header-panel-content">
+          {/* Profile Panel - collapsible with smooth animation */}
+          <div 
+            className={`profile-header-panel profile-header-panel-anim ${
+              profileExpanded 
+                ? 'profile-header-panel-anim--expanded' 
+                : 'profile-header-panel-anim--collapsed'
+            }`}
+            aria-hidden={!profileExpanded}
+          >
+            <div className="profile-header-panel-content">
                 {/* Three column layout - equal widths */}
                 <div className="flex flex-col lg:flex-row gap-4">
                   {/* Left Column: Avatar with rank badge - reduced spacing */}
@@ -940,7 +948,6 @@ const Home = () => {
                 </div>
               </div>
             </div>
-          )}
         </section>
       ))}
 

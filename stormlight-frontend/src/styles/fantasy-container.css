@@ -398,6 +398,22 @@
   z-index: 1;
 }
 
+/* Profile panel animation - smooth collapse/expand */
+.profile-header-panel-anim {
+  overflow: hidden;
+  transition: max-height 300ms ease-in-out, opacity 300ms ease-in-out;
+}
+
+.profile-header-panel-anim--collapsed {
+  max-height: 0;
+  opacity: 0;
+}
+
+.profile-header-panel-anim--expanded {
+  max-height: 600px; /* Large enough to fit all content */
+  opacity: 1;
+}
+
 /* When profile header section is present, remove gap above fantasy-container */
 .profile-header-section + .fantasy-container {
   margin-top: 0; /* Remove the default 4% top margin */
