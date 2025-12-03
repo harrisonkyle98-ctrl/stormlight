@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { Users, Trophy, TrendingUp, User, Calendar, Activity, Link2, Palette, Award, Info } from 'lucide-react'
+import { Users, Trophy, TrendingUp, User, Calendar, Activity, Link2, Palette, Award, LogOut, Key, ChevronDown, ChevronUp } from 'lucide-react'
 import '../styles/fantasy-container.css'
 import { fetchClanMembers, checkPlayerMilestones } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
@@ -13,7 +13,6 @@ import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip as Recharts
 import { themes } from '../config/themes'
 import { ClanLogRow } from '../components/clanLogs/ClanLogRow'
 import { ActivityLogRow } from '../components/activityLogs/ActivityLogRow'
-import { getActivityVisual } from '../utils/activityLogUtils'
 import { Username } from '../components/ui/username'
 
 const getRankIcon = (rank: string): string => {
@@ -133,7 +132,7 @@ interface ActivityResponse {
 }
 
 const Home = () => {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [clanStats, setClanStats] = useState<ClanStats | null>(null)
   const [activities, setActivities] = useState<Activity[]>([])
@@ -158,10 +157,11 @@ const Home = () => {
   const [linkedAccounts, setLinkedAccounts] = useState<any[]>([])
   const [newUsername, setNewUsername] = useState('')
   const [linkRequestLoading, setLinkRequestLoading] = useState(false)
-  const { theme: selectedTheme, setTheme: handleThemeChange } = useTheme()
-    const [themeTooltip, setThemeTooltip] = useState<string | null>(null)
+    const { theme: selectedTheme, setTheme: handleThemeChange } = useTheme()
+      const [themeTooltip, setThemeTooltip] = useState<string | null>(null)
+      const [profileExpanded, setProfileExpanded] = useState(false) // collapsed by default
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      const API_URL= import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
   useEffect(() => {
     console.log('🔍 Home useEffect triggered - User state:', {
@@ -804,153 +804,143 @@ const Home = () => {
         </section>
       ) : playerData && (
         <section className="profile-header-section">
-          {/* Gold Ribbon with username */}
-          <div className="gold-banner-wrapper">
+          {/* Gold Ribbon with username - clickable to toggle collapse */}
+          <div 
+            className="gold-banner-wrapper cursor-pointer"
+            onClick={() => setProfileExpanded(prev => !prev)}
+            role="button"
+            aria-expanded={profileExpanded}
+          >
             <div className="fantasy-banner fantasy-banner--gold">
-              <div className="fantasy-banner-inner">
+              <div className="fantasy-banner-inner flex items-center justify-center gap-2">
                 <h1 className="fantasy-banner-title">{user.username}</h1>
+                {profileExpanded ? (
+                  <ChevronUp className="w-5 h-5 text-white/80" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-white/80" />
+                )}
               </div>
             </div>
           </div>
 
-          {/* Profile Panel - always visible, no collapse */}
-          <div className="profile-header-panel">
-            <div className="profile-header-panel-content">
-              {/* Three column layout */}
-              <div className="flex flex-col lg:flex-row gap-4">
-                {/* Left Column: Avatar with rank badge */}
-                <div className="lg:w-[30%] flex-shrink-0 flex flex-col gap-6">
-                  <div className="profile-avatar-section rounded-lg p-6">
-                    <div className="flex flex-col items-center space-y-4">
-                      <Avatar className="w-20 h-20">
-                        <AvatarImage
-                          src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(user.username)}/chat.png`}
-                          alt={user.username}
-                        />
-                        <AvatarFallback className="bg-theme-button text-white">
-                          <User className="w-10 h-10" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="text-center">
-                        <h1 className="text-2xl font-bold text-center">
-                          <Link
-                            to={`/clan-member/${usernameToUrl(user.username)}`}
-                            className="hover:opacity-80 transition-opacity"
-                          >
-                            <Username
-                              username={user.username}
-                              clanRank={playerData.clan_rank}
-                            />
-                          </Link>
-                        </h1>
+          {/* Profile Panel - collapsible, collapsed by default */}
+          {profileExpanded && (
+            <div className="profile-header-panel">
+              <div className="profile-header-panel-content">
+                {/* Three column layout - equal widths */}
+                <div className="flex flex-col lg:flex-row gap-4">
+                  {/* Left Column: Avatar with rank badge - reduced spacing */}
+                  <div className="lg:flex-1 flex flex-col">
+                    <div className="profile-avatar-section rounded-lg p-4">
+                      <div className="flex flex-col items-center space-y-2">
+                        <Avatar className="w-20 h-20">
+                          <AvatarImage
+                            src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(user.username)}/chat.png`}
+                            alt={user.username}
+                          />
+                          <AvatarFallback className="bg-theme-button text-white">
+                            <User className="w-10 h-10" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="text-center">
+                          <h1 className="text-2xl font-bold text-center">
+                            <Link
+                              to={`/clan-member/${usernameToUrl(user.username)}`}
+                              className="hover:opacity-80 transition-opacity"
+                            >
+                              <Username
+                                username={user.username}
+                                clanRank={playerData.clan_rank}
+                              />
+                            </Link>
+                          </h1>
 
-                        {playerData.stats && (() => {
-                          const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, user.username, playerData.league_points)
-                          const rankBadge = allBadges.find(badge => badge.id.startsWith('rank-'))
-                          return rankBadge ? (
-                            <div className="mt-3">
-                              <div
-                                className="inline-flex items-center space-x-2 px-3 py-1 text-sm font-semibold rounded-md text-white"
-                                style={{
-                                  background: rankBadge.gradientBackground || rankBadge.backgroundColor
-                                }}
-                              >
-                                <img
-                                  src={rankBadge.icon}
-                                  alt={rankBadge.name}
-                                  className="w-4 h-4"
-                                />
-                                <span>{rankBadge.name}</span>
+                          {playerData.stats && (() => {
+                            const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, user.username, playerData.league_points)
+                            const rankBadge = allBadges.find(badge => badge.id.startsWith('rank-'))
+                            return rankBadge ? (
+                              <div className="mt-1">
+                                <div
+                                  className="inline-flex items-center space-x-2 px-3 py-1 text-sm font-semibold rounded-md text-white"
+                                  style={{
+                                    background: rankBadge.gradientBackground || rankBadge.backgroundColor
+                                  }}
+                                >
+                                  <img
+                                    src={rankBadge.icon}
+                                    alt={rankBadge.name}
+                                    className="w-4 h-4"
+                                  />
+                                  <span>{rankBadge.name}</span>
+                                </div>
                               </div>
-                            </div>
-                          ) : null
-                        })()}
+                            ) : null
+                          })()}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Middle Column: Action Buttons */}
-                <div className="flex-1 lg:max-w-[40%] flex flex-col justify-between gap-2">
-                  <Button
-                    onClick={() => setSettingsSection('account')}
-                    className="profile-button w-full justify-start gap-3"
-                  >
-                    <Link2 className="w-5 h-5" />
-                    <span>Link Account</span>
-                  </Button>
+                  {/* Middle Column: Action Buttons (Link Account, Badges, View My Profile) */}
+                  <div className="lg:flex-1 flex flex-col justify-between gap-2">
+                    <Button
+                      onClick={() => setSettingsSection('account')}
+                      className="profile-button w-full justify-start gap-3"
+                    >
+                      <Link2 className="w-5 h-5" />
+                      <span>Link Account</span>
+                    </Button>
 
-                  <Button
-                    onClick={() => setSettingsSection('appearance')}
-                    className="profile-button w-full justify-start gap-3"
-                  >
-                    <Palette className="w-5 h-5" />
-                    <span>Change Theme</span>
-                  </Button>
+                    <Button
+                      onClick={() => setSettingsSection('badges')}
+                      className="profile-button w-full justify-start gap-3"
+                    >
+                      <Award className="w-5 h-5" />
+                      <span>Badges</span>
+                    </Button>
 
-                  <Button
-                    onClick={() => setSettingsSection('badges')}
-                    className="profile-button w-full justify-start gap-3"
-                  >
-                    <Award className="w-5 h-5" />
-                    <span>Badges</span>
-                  </Button>
+                    <Button
+                      onClick={() => navigate(`/clan-member/${usernameToUrl(user.username)}`)}
+                      className="profile-button w-full justify-start gap-3"
+                    >
+                      <User className="w-5 h-5" />
+                      <span>View My Profile</span>
+                    </Button>
+                  </div>
 
-                  <Button
-                    onClick={() => navigate(`/clan-member/${usernameToUrl(user.username)}`)}
-                    className="profile-button w-full justify-start gap-3"
-                  >
-                    <User className="w-5 h-5" />
-                    <span>View My Profile</span>
-                  </Button>
-                </div>
+                  {/* Right Column: Change Theme, Admin Panel (admins only), Log Out */}
+                  <div className="lg:flex-1 flex flex-col justify-between gap-2">
+                    <Button
+                      onClick={() => setSettingsSection('appearance')}
+                      className="profile-button w-full justify-start gap-3"
+                    >
+                      <Palette className="w-5 h-5" />
+                      <span>Change Theme</span>
+                    </Button>
 
-                {/* Right Column: Recent Activity */}
-                <div className="flex-1 lg:max-w-[30%] flex flex-col justify-center">
-                  {(() => {
-                    const logs = user.activityLogs ?? []
-                    const recentActivity = logs.length ? logs[logs.length - 1] : null
-                    
-                    if (!recentActivity) {
-                      return (
-                        <div
-                          className="profile-activity rounded-lg p-6 h-full flex items-center justify-center border-2 cursor-default relative overflow-hidden"
-                        >
-                          <Info 
-                            className="absolute right-4 top-1/2 -translate-y-1/2 w-24 h-24 pointer-events-none"
-                            style={{ opacity: 0.08, color: '#F7E27B', zIndex: 1 }}
-                          />
-                          <div className="relative z-10 text-center">
-                            <p className="text-xs text-slate-400 mb-1">Recent Activity</p>
-                            <p className="text-sm text-slate-300">No recent activity.</p>
-                          </div>
-                        </div>
-                      )
-                    }
-                    
-                    const activityEntry = { ...recentActivity } as { username: string; text: string; timestamp: number }
-                    const { color, Icon } = getActivityVisual(activityEntry)
-                    
-                    return (
-                      <div
-                        className="profile-activity rounded-lg p-6 h-full flex items-center justify-center border-2 cursor-default relative overflow-hidden"
-                        style={{ borderColor: color }}
+                    {/* Admin Panel - only visible for admins */}
+                    {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
+                      <Button
+                        onClick={() => navigate('/admin')}
+                        className="profile-button w-full justify-start gap-3"
                       >
-                        <Icon 
-                          className="absolute right-4 top-1/2 -translate-y-1/2 w-24 h-24 pointer-events-none"
-                          style={{ opacity: 0.08, color: color, zIndex: 1 }}
-                        />
-                        <div className="relative z-10 text-center">
-                          <p className="text-xs text-slate-400 mb-1">Recent Activity</p>
-                          <p className="text-sm text-white">{recentActivity.text}</p>
-                        </div>
-                      </div>
-                    )
-                  })()}
+                        <Key className="w-5 h-5" />
+                        <span>Admin Panel</span>
+                      </Button>
+                    )}
+
+                    <Button
+                      onClick={logout}
+                      className="profile-button w-full justify-start gap-3"
+                    >
+                      <LogOut className="w-5 h-5" />
+                      <span>Log Out</span>
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </section>
       ))}
 
