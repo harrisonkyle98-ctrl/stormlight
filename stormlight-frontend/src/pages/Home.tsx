@@ -773,41 +773,43 @@ const Home = () => {
         </div>
       ) : playerData && (
         <div className={`profile-crest ${isProfileExpanded ? 'profile-crest--expanded' : 'profile-crest--collapsed'}`}>
-          {/* Crest Header - Always visible (collapsed state) */}
-          <button
-            className="profile-crest-header"
-            onClick={() => setIsProfileExpanded(v => !v)}
-            aria-expanded={isProfileExpanded}
-          >
-            <img
-              src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(user.username)}/chat.png`}
-              alt={user.username}
-              className="profile-crest-avatar"
-            />
-            <span className="profile-crest-username">
-              <Username username={user.username} clanRank={playerData.clan_rank} />
-            </span>
-            {playerData.stats && (() => {
-              const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, user.username, playerData.league_points)
-              const rankBadge = allBadges.find(badge => badge.id.startsWith('rank-'))
-              return rankBadge ? (
-                <span className="profile-crest-rank">
-                  <div
-                    className="inline-flex items-center space-x-2 px-3 py-1 text-sm font-semibold rounded-md text-white"
-                    style={{ background: rankBadge.gradientBackground || rankBadge.backgroundColor }}
-                  >
-                    <img src={rankBadge.icon} alt={rankBadge.name} className="w-4 h-4" />
-                    <span>{rankBadge.name}</span>
-                  </div>
-                </span>
-              ) : null
-            })()}
-            {isProfileExpanded ? (
-              <ChevronUp className="profile-crest-chevron" />
-            ) : (
-              <ChevronDown className="profile-crest-chevron" />
-            )}
-          </button>
+          {/* Gold Header Frame - wraps only the gold bar */}
+          <div className="profile-crest-header-frame">
+            <button
+              className="profile-crest-header"
+              onClick={() => setIsProfileExpanded(v => !v)}
+              aria-expanded={isProfileExpanded}
+            >
+              <img
+                src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(user.username)}/chat.png`}
+                alt={user.username}
+                className="profile-crest-avatar"
+              />
+              <span className="profile-crest-username">
+                <Username username={user.username} clanRank={playerData.clan_rank} />
+              </span>
+              {playerData.stats && (() => {
+                const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, user.username, playerData.league_points)
+                const rankBadge = allBadges.find(badge => badge.id.startsWith('rank-'))
+                return rankBadge ? (
+                  <span className="profile-crest-rank">
+                    <div
+                      className="inline-flex items-center space-x-2 px-3 py-1 text-sm font-semibold rounded-md text-white"
+                      style={{ background: rankBadge.gradientBackground || rankBadge.backgroundColor }}
+                    >
+                      <img src={rankBadge.icon} alt={rankBadge.name} className="w-4 h-4" />
+                      <span>{rankBadge.name}</span>
+                    </div>
+                  </span>
+                ) : null
+              })()}
+              {isProfileExpanded ? (
+                <ChevronUp className="profile-crest-chevron" />
+              ) : (
+                <ChevronDown className="profile-crest-chevron" />
+              )}
+            </button>
+          </div>
 
           {/* Crest Body - Expandable content */}
           <div className={`profile-crest-body ${isProfileExpanded ? 'profile-crest-body--expanded' : ''}`}>

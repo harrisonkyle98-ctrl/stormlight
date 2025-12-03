@@ -45,7 +45,7 @@
 .fantasy-banner-wrapper {
   position: relative;
   overflow: visible; /* Allow ribbon to extend outside */
-  margin: -4px 0 0 0; /* Nudge upward by 4px to cover gold container bottom border */
+  margin: -5px 0 0 0; /* Nudge upward by 5px to cover gold container bottom border */
   padding: 0;
   z-index: 10;
 }
@@ -314,55 +314,30 @@
    Matches fantasy-section panel styling with gold colors
    ======================================== */
 
-/* Gold color palette */
+/* Gold color palette - more subtle values */
 .profile-crest {
-  --gold-base: #C8AA3C;
-  --gold-shadow: #9F8B2E;
-  --gold-highlight: rgba(247, 226, 123, 0.25);
-  --gold-soft: #E3C663;
-  --gold-border: rgba(200, 170, 60, 0.4);
-  --gold-border-highlight: rgba(247, 226, 123, 0.15);
+  --gold-base: #BFA64A;
+  --gold-shadow: #8C7830;
+  --gold-highlight: rgba(247, 226, 123, 0.18);
+  --gold-soft: #D4B85A;
+  --gold-border: rgba(191, 166, 74, 0.3);
   
   position: relative;
   /* Match fantasy-container width and centering, zero bottom margin for flush alignment */
   margin: 4% 4% 0 4%;
   z-index: 5;
   
-  /* Match fantasy-container OUTER styling - double borders, heavier shadow - GOLD variant (muted) */
+  /* Dark unified container styling - NO gold border here */
   background: linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
-  border: 2px solid var(--gold-base);
-  box-shadow:
-    inset 0 0 0 1px var(--gold-shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 4px 20px rgba(0, 0, 0, 0.4);
-  overflow: hidden;
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  overflow: visible; /* Allow header frame to show its border */
 }
 
-/* Subtle texture overlay - matches fantasy-container::before */
-.profile-crest::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.03;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Ambient top lighting - matches fantasy-container::after */
+/* Remove pseudo-elements from outer container */
+.profile-crest::before,
 .profile-crest::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 150px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%);
-  pointer-events: none;
-  z-index: 0;
+  content: none;
 }
 
 /* When profile crest is present, remove top margin from fantasy-container */
@@ -370,58 +345,55 @@
   margin-top: 0;
 }
 
+/* Gold Header Frame - wraps ONLY the gold bar, not the dropdown */
+.profile-crest-header-frame {
+  position: relative;
+  z-index: 2;
+  
+  /* Gold border ONLY on this frame */
+  border: 2px solid var(--gold-base);
+  box-shadow:
+    inset 0 0 0 1px var(--gold-shadow),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+  
+  /* Match banner height exactly */
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+}
+
 /* Crest header - always visible (collapsed state content) */
-/* Styled like fantasy-section but with gold colors */
+/* NO hover effects, NO pseudo-elements */
 .profile-crest-header {
   position: relative;
-  z-index: 1; /* Above pseudo-elements */
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  padding: 1rem 1.5rem;
+  padding: 0.75rem 1.5rem;
   cursor: pointer;
   width: 100%;
   
-  /* Match banner height (~78px) */
-  min-height: 78px;
+  /* Match banner height exactly - reduced padding for tighter fit */
+  min-height: 74px;
   box-sizing: border-box;
   
-  /* Match fantasy-section background style - gold variant */
-  background: rgba(168, 135, 40, 0.3);
-  border: none; /* No border on header since outer container has border */
-  border-bottom: 1px solid var(--gold-border); /* Only bottom border to separate from panel */
+  /* Subtle gold tint background - static, no hover change */
+  background: rgba(168, 135, 40, 0.25);
+  border: none;
   
   /* Remove focus ring/outline */
   outline: none;
 }
 
-/* Top highlight - matches fantasy-section::before */
-.profile-crest-header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--gold-border-highlight), transparent);
-}
-
-/* Ambient lighting - matches fantasy-section::after */
+/* Remove ALL pseudo-elements from header */
+.profile-crest-header::before,
 .profile-crest-header::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: linear-gradient(180deg, rgba(247, 226, 123, 0.03) 0%, transparent 100%);
-  pointer-events: none;
-  z-index: 0;
+  content: none;
 }
 
+/* NO hover effect - gold bar stays static */
 .profile-crest-header:hover {
-  background: rgba(168, 135, 40, 0.4);
+  background: rgba(168, 135, 40, 0.25); /* Same as default - no change */
 }
 
 /* Remove all focus styling - no blue ring */
@@ -490,39 +462,21 @@
   transform: translateY(0);
 }
 
-/* Crest panel - uses unified-content styling (same as fantasy-section) */
-/* Only the top gold bar should be gold - expanded content matches other panels */
+/* Crest panel - simple layout only, NO inner-panel styling */
+/* No rounded borders, no inner shadows, no gradients, no pseudo-elements */
 .profile-crest-panel {
   position: relative;
   padding: 1.5rem;
   
-  /* Match fantasy-section background style exactly */
-  background: rgba(30, 41, 59, 0.3);
-  /* No border needed - outer container has the frame border */
+  /* Simple transparent background - let outer container show through */
+  background: transparent;
+  border: none;
 }
 
-/* Top highlight for panel - matches fantasy-section::before */
-.profile-crest-panel::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.2), transparent);
-}
-
-/* Ambient lighting for panel - matches fantasy-section::after */
+/* Remove ALL pseudo-elements from panel */
+.profile-crest-panel::before,
 .profile-crest-panel::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
-  pointer-events: none;
-  z-index: 0;
+  content: none;
 }
 
 /* Button styles inside panel - match theme styling */
