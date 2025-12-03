@@ -362,7 +362,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     0 4px 20px rgba(0, 0, 0, 0.4);
   padding: 1.5rem;
-  margin-top: calc(-1em - 1px); /* Pull up 1px more so gold ribbon covers panel top border */
+  margin-top: calc(-2em - 1px); /* Pull up 1px more so gold ribbon covers panel top border */
 }
 
 /* Subtle texture overlay for profile panel - matches fantasy-container */
@@ -398,13 +398,14 @@
   z-index: 1;
 }
 
-/* When profile header section is present, blue ribbon attaches directly below */
-.profile-header-section + .fantasy-banner-wrapper {
-  margin-top: calc(-1em - 2px); /* Pull blue ribbon up to touch profile panel bottom */
+/* When profile header section is present, remove gap above fantasy-container */
+.profile-header-section + .fantasy-container {
+  margin-top: 0; /* Remove the default 4% top margin */
 }
 
-.profile-header-section + .fantasy-banner-wrapper + .fantasy-container {
-  margin-top: 0;
+/* Pull the blue ribbon up so its top edge meets the profile panel bottom */
+.profile-header-section + .fantasy-container .fantasy-banner-wrapper {
+  margin-top: calc(-1em - 2px); /* Compensate for ribbon drop (--d: 1em) plus border overlap */
 }
 
 /* Button styles inside profile panel - match theme styling */
