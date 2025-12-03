@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { Users, Trophy, TrendingUp, User, Calendar, Activity, Link2, Palette, Award, Info, ChevronDown, ChevronUp } from 'lucide-react'
+import { Users, Trophy, TrendingUp, User, Calendar, Activity, Link2, Palette, Award, Info } from 'lucide-react'
 import '../styles/fantasy-container.css'
 import { fetchClanMembers, checkPlayerMilestones } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
@@ -160,7 +160,6 @@ const Home = () => {
   const [linkRequestLoading, setLinkRequestLoading] = useState(false)
   const { theme: selectedTheme, setTheme: handleThemeChange } = useTheme()
     const [themeTooltip, setThemeTooltip] = useState<string | null>(null)
-    const [isProfileExpanded, setIsProfileExpanded] = useState(false)
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -742,20 +741,26 @@ const Home = () => {
 
   return (
     <>
-      {/* Profile Crest - Gold-themed collapsible card OUTSIDE container */}
+      {/* Profile Header Section - Gold Ribbon + Profile Panel */}
       {user?.username && user?.isLinked && (profileError ? (
-        <div className="profile-crest">
-          <div className="profile-crest-header" style={{ cursor: 'default' }}>
-            <span className="profile-crest-username">Profile Error</span>
+        <section className="profile-header-section">
+          {/* Gold Ribbon with username */}
+          <div className="gold-banner-wrapper">
+            <div className="fantasy-banner fantasy-banner--gold">
+              <div className="fantasy-banner-inner">
+                <h1 className="fantasy-banner-title">Profile Error</h1>
+              </div>
+            </div>
           </div>
-          <div className="profile-crest-body profile-crest-body--expanded">
-            <div className="profile-crest-panel">
+          {/* Profile Panel */}
+          <div className="profile-header-panel">
+            <div className="profile-header-panel-content">
               <div className="text-center py-4">
                 <p className="text-red-400 mb-4">{profileError}</p>
                 {!user?.requiresLinking && (
                   <Button
                     onClick={fetchPlayerStats}
-                    className="profile-crest-button"
+                    className="profile-button"
                   >
                     Retry
                   </Button>
@@ -763,62 +768,59 @@ const Home = () => {
               </div>
             </div>
           </div>
-        </div>
+        </section>
       ) : profileLoading || !playerData ? (
-        <div className="profile-crest">
-          <div className="profile-crest-header" style={{ cursor: 'default' }}>
-            <div className="w-8 h-8 bg-gold-shadow/20 rounded-full animate-pulse"></div>
-            <div className="w-32 h-5 bg-gold-shadow/20 rounded animate-pulse"></div>
+        <section className="profile-header-section">
+          {/* Gold Ribbon with loading state */}
+          <div className="gold-banner-wrapper">
+            <div className="fantasy-banner fantasy-banner--gold">
+              <div className="fantasy-banner-inner">
+                <div className="w-32 h-6 bg-white/20 rounded animate-pulse mx-auto"></div>
+              </div>
+            </div>
           </div>
-        </div>
+          {/* Profile Panel skeleton */}
+          <div className="profile-header-panel">
+            <div className="profile-header-panel-content">
+              <div className="flex flex-col lg:flex-row gap-4 animate-pulse">
+                <div className="lg:w-[30%] flex-shrink-0">
+                  <div className="rounded-lg p-6 bg-slate-700/30">
+                    <div className="w-20 h-20 bg-slate-600/50 rounded-full mx-auto mb-4"></div>
+                    <div className="w-24 h-5 bg-slate-600/50 rounded mx-auto"></div>
+                  </div>
+                </div>
+                <div className="flex-1 lg:max-w-[40%] space-y-2">
+                  <div className="h-10 bg-slate-700/30 rounded"></div>
+                  <div className="h-10 bg-slate-700/30 rounded"></div>
+                  <div className="h-10 bg-slate-700/30 rounded"></div>
+                  <div className="h-10 bg-slate-700/30 rounded"></div>
+                </div>
+                <div className="flex-1 lg:max-w-[30%]">
+                  <div className="h-32 bg-slate-700/30 rounded"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       ) : playerData && (
-        <div className={`profile-crest ${isProfileExpanded ? 'profile-crest--expanded' : 'profile-crest--collapsed'}`}>
-          {/* Gold Header Frame - wraps only the gold bar */}
-          <div className="profile-crest-header-frame">
-            <button
-              className="profile-crest-header"
-              onClick={() => setIsProfileExpanded(v => !v)}
-              aria-expanded={isProfileExpanded}
-            >
-              <img
-                src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(user.username)}/chat.png`}
-                alt={user.username}
-                className="profile-crest-avatar"
-              />
-              <span className="profile-crest-username">
-                <Username username={user.username} clanRank={playerData.clan_rank} />
-              </span>
-              {playerData.stats && (() => {
-                const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, user.username, playerData.league_points)
-                const rankBadge = allBadges.find(badge => badge.id.startsWith('rank-'))
-                return rankBadge ? (
-                  <span className="profile-crest-rank">
-                    <div
-                      className="inline-flex items-center space-x-2 px-3 py-1 text-sm font-semibold rounded-md text-white"
-                      style={{ background: rankBadge.gradientBackground || rankBadge.backgroundColor }}
-                    >
-                      <img src={rankBadge.icon} alt={rankBadge.name} className="w-4 h-4" />
-                      <span>{rankBadge.name}</span>
-                    </div>
-                  </span>
-                ) : null
-              })()}
-              {isProfileExpanded ? (
-                <ChevronUp className="profile-crest-chevron" />
-              ) : (
-                <ChevronDown className="profile-crest-chevron" />
-              )}
-            </button>
+        <section className="profile-header-section">
+          {/* Gold Ribbon with username */}
+          <div className="gold-banner-wrapper">
+            <div className="fantasy-banner fantasy-banner--gold">
+              <div className="fantasy-banner-inner">
+                <h1 className="fantasy-banner-title">{user.username}</h1>
+              </div>
+            </div>
           </div>
 
-          {/* Crest Body - Expandable content */}
-          <div className={`profile-crest-body ${isProfileExpanded ? 'profile-crest-body--expanded' : ''}`}>
-            <div className="profile-crest-panel">
+          {/* Profile Panel - always visible, no collapse */}
+          <div className="profile-header-panel">
+            <div className="profile-header-panel-content">
               {/* Three column layout */}
               <div className="flex flex-col lg:flex-row gap-4">
                 {/* Left Column: Avatar with rank badge */}
                 <div className="lg:w-[30%] flex-shrink-0 flex flex-col gap-6">
-                  <div className="profile-crest-avatar-section rounded-lg p-6">
+                  <div className="profile-avatar-section rounded-lg p-6">
                     <div className="flex flex-col items-center space-y-4">
                       <Avatar className="w-20 h-20">
                         <AvatarImage
@@ -872,7 +874,7 @@ const Home = () => {
                 <div className="flex-1 lg:max-w-[40%] flex flex-col justify-between gap-2">
                   <Button
                     onClick={() => setSettingsSection('account')}
-                    className="profile-crest-button w-full justify-start gap-3"
+                    className="profile-button w-full justify-start gap-3"
                   >
                     <Link2 className="w-5 h-5" />
                     <span>Link Account</span>
@@ -880,7 +882,7 @@ const Home = () => {
 
                   <Button
                     onClick={() => setSettingsSection('appearance')}
-                    className="profile-crest-button w-full justify-start gap-3"
+                    className="profile-button w-full justify-start gap-3"
                   >
                     <Palette className="w-5 h-5" />
                     <span>Change Theme</span>
@@ -888,7 +890,7 @@ const Home = () => {
 
                   <Button
                     onClick={() => setSettingsSection('badges')}
-                    className="profile-crest-button w-full justify-start gap-3"
+                    className="profile-button w-full justify-start gap-3"
                   >
                     <Award className="w-5 h-5" />
                     <span>Badges</span>
@@ -896,7 +898,7 @@ const Home = () => {
 
                   <Button
                     onClick={() => navigate(`/clan-member/${usernameToUrl(user.username)}`)}
-                    className="profile-crest-button w-full justify-start gap-3"
+                    className="profile-button w-full justify-start gap-3"
                   >
                     <User className="w-5 h-5" />
                     <span>View My Profile</span>
@@ -912,7 +914,7 @@ const Home = () => {
                     if (!recentActivity) {
                       return (
                         <div
-                          className="profile-crest-activity rounded-lg p-6 h-full flex items-center justify-center border-2 cursor-default relative overflow-hidden"
+                          className="profile-activity rounded-lg p-6 h-full flex items-center justify-center border-2 cursor-default relative overflow-hidden"
                         >
                           <Info 
                             className="absolute right-4 top-1/2 -translate-y-1/2 w-24 h-24 pointer-events-none"
@@ -931,7 +933,7 @@ const Home = () => {
                     
                     return (
                       <div
-                        className="profile-crest-activity rounded-lg p-6 h-full flex items-center justify-center border-2 cursor-default relative overflow-hidden"
+                        className="profile-activity rounded-lg p-6 h-full flex items-center justify-center border-2 cursor-default relative overflow-hidden"
                         style={{ borderColor: color }}
                       >
                         <Icon 
@@ -949,7 +951,7 @@ const Home = () => {
               </div>
             </div>
           </div>
-        </div>
+        </section>
       ))}
 
       <div className="fantasy-container">

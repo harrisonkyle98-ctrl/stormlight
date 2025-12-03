@@ -45,7 +45,7 @@
 .fantasy-banner-wrapper {
   position: relative;
   overflow: visible; /* Allow ribbon to extend outside */
-  margin: -5px 0 0 0; /* Nudge upward by 5px to cover gold container bottom border */
+  margin: 0;
   padding: 0;
   z-index: 10;
 }
@@ -314,203 +314,121 @@
    Matches fantasy-section panel styling with gold colors
    ======================================== */
 
-/* Gold color palette - more subtle values */
-.profile-crest {
-  --gold-base: #BFA64A;
-  --gold-shadow: #8C7830;
-  --gold-highlight: rgba(247, 226, 123, 0.18);
-  --gold-soft: #D4B85A;
-  --gold-border: rgba(191, 166, 74, 0.3);
-  
+/* ========================================
+   GOLD RIBBON BANNER (stacked above blue ribbon)
+   ======================================== */
+
+/* Gold Banner Modifier - reuses fantasy-banner structure with gold colors */
+.fantasy-banner--gold {
+  --banner-color-top: #D4AF37;    /* base gold */
+  --banner-color-middle: #C9A227; /* mid gold */
+  --banner-color-bottom: #A88728; /* shadow gold */
+}
+
+/* Gold ribbon wrapper - positioned above profile panel */
+.gold-banner-wrapper {
   position: relative;
-  /* Match fantasy-container width and centering, zero bottom margin for flush alignment */
+  overflow: visible;
+  margin: 0;
+  padding: 0;
+  z-index: 10;
+}
+
+/* ========================================
+   PROFILE HEADER SECTION
+   Contains: Gold Ribbon + Profile Panel
+   ======================================== */
+
+.profile-header-section {
+  position: relative;
   margin: 4% 4% 0 4%;
   z-index: 5;
-  
-  /* Dark unified container styling - NO gold border here */
+}
+
+/* Profile Header Panel - uses OUTER unified-container styling */
+/* Same as .fantasy-container: double border, dark slate, larger shadow, square corners */
+.profile-header-panel {
+  position: relative;
   background: linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
-  border: none;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  overflow: visible; /* Allow header frame to show its border */
+  border: 2px solid rgba(100, 116, 139, 0.4);
+  box-shadow:
+    inset 0 0 0 1px rgba(148, 163, 184, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 20px rgba(0, 0, 0, 0.4);
+  padding: 1.5rem;
+  margin-top: -2px; /* Overlap slightly with gold ribbon bottom */
 }
 
-/* Remove pseudo-elements from outer container */
-.profile-crest::before,
-.profile-crest::after {
-  content: none;
+/* Subtle texture overlay for profile panel - matches fantasy-container */
+.profile-header-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 0;
 }
 
-/* When profile crest is present, remove top margin from fantasy-container */
-.profile-crest + .fantasy-container {
+/* Ambient top lighting for profile panel - matches fantasy-container */
+.profile-header-panel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 150px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Profile panel content wrapper - above pseudo-elements */
+.profile-header-panel-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* When profile header section is present, adjust fantasy-container margin */
+.profile-header-section + .fantasy-banner-wrapper + .fantasy-container {
   margin-top: 0;
 }
 
-/* Gold Header Frame - wraps ONLY the gold bar, not the dropdown */
-.profile-crest-header-frame {
-  position: relative;
-  z-index: 2;
-  
-  /* Gold border ONLY on this frame */
-  border: 2px solid var(--gold-base);
-  box-shadow:
-    inset 0 0 0 1px var(--gold-shadow),
-    0 4px 12px rgba(0, 0, 0, 0.3);
-  
-  /* Match banner height exactly */
-  background: linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
-}
-
-/* Crest header - always visible (collapsed state content) */
-/* NO hover effects, NO pseudo-elements */
-.profile-crest-header {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 0.75rem 1.5rem;
-  cursor: pointer;
-  width: 100%;
-  
-  /* Match banner height exactly - reduced padding for tighter fit */
-  min-height: 74px;
-  box-sizing: border-box;
-  
-  /* Subtle gold tint background - static, no hover change */
-  background: rgba(168, 135, 40, 0.25);
-  border: none;
-  
-  /* Remove focus ring/outline */
-  outline: none;
-}
-
-/* Remove ALL pseudo-elements from header */
-.profile-crest-header::before,
-.profile-crest-header::after {
-  content: none;
-}
-
-/* NO hover effect - gold bar stays static */
-.profile-crest-header:hover {
-  background: rgba(168, 135, 40, 0.25); /* Same as default - no change */
-}
-
-/* Remove all focus styling - no blue ring */
-.profile-crest-header:focus,
-.profile-crest-header:focus-visible {
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-/* Avatar in header */
-.profile-crest-header .profile-crest-avatar {
-  position: relative;
-  z-index: 1;
-  width: 32px;
-  height: 32px;
-  border: 2px solid var(--gold-border);
-  border-radius: 50%;
-}
-
-/* Username in header - layout only, let Username component handle styling */
-.profile-crest-header .profile-crest-username {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-/* Rank badge in header - layout only, badge component handles styling */
-.profile-crest-header .profile-crest-rank {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-}
-
-/* Chevron icon */
-.profile-crest-header .profile-crest-chevron {
-  position: relative;
-  z-index: 1;
-  width: 24px;
-  height: 24px;
-  color: var(--gold-soft);
-  opacity: 0.8;
-  transition: transform 0.3s ease;
-}
-
-/* Crest body - expandable content */
-.profile-crest-body {
-  position: relative;
-  z-index: 1; /* Above pseudo-elements */
-  overflow: hidden;
-  max-height: 0;
-  opacity: 0;
-  transform: translateY(-8px);
-  transition:
-    max-height 0.3s ease,
-    opacity 0.3s ease,
-    transform 0.3s ease;
-}
-
-.profile-crest-body--expanded {
-  max-height: 600px; /* Large enough to fit content */
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Crest panel - simple layout only, NO inner-panel styling */
-/* No rounded borders, no inner shadows, no gradients, no pseudo-elements */
-.profile-crest-panel {
-  position: relative;
-  padding: 1.5rem;
-  
-  /* Simple transparent background - let outer container show through */
-  background: transparent;
-  border: none;
-}
-
-/* Remove ALL pseudo-elements from panel */
-.profile-crest-panel::before,
-.profile-crest-panel::after {
-  content: none;
-}
-
-/* Button styles inside panel - match theme styling */
-.profile-crest-panel .profile-crest-button {
+/* Button styles inside profile panel - match theme styling */
+.profile-header-panel .profile-button {
   background: rgba(30, 41, 59, 0.5) !important;
   border: 1px solid rgba(100, 116, 139, 0.25) !important;
   color: #e2e8f0 !important;
   transition: background 0.2s ease;
 }
 
-.profile-crest-panel .profile-crest-button:hover {
+.profile-header-panel .profile-button:hover {
   background: rgba(30, 41, 59, 0.7) !important;
 }
 
-.profile-crest-panel .profile-crest-button svg {
+.profile-header-panel .profile-button svg {
   color: #94a3b8 !important;
 }
 
 /* Recent activity box inside panel - match unified styling */
-.profile-crest-panel .profile-crest-activity {
+.profile-header-panel .profile-activity {
   background: rgba(30, 41, 59, 0.5);
   border-color: rgba(100, 116, 139, 0.25) !important;
 }
 
-.profile-crest-panel .profile-crest-activity p {
+.profile-header-panel .profile-activity p {
   color: #e2e8f0 !important;
 }
 
 /* Avatar section inside panel - match unified styling */
-.profile-crest-panel .profile-crest-avatar-section {
+.profile-header-panel .profile-avatar-section {
   background: rgba(30, 41, 59, 0.5);
 }
 
-.profile-crest-panel .profile-crest-avatar-section h1,
-.profile-crest-panel .profile-crest-avatar-section a {
+.profile-header-panel .profile-avatar-section h1,
+.profile-header-panel .profile-avatar-section a {
   color: #ffffff !important;
 }
