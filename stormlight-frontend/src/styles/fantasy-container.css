@@ -395,7 +395,7 @@
 
 /* When profile header section is present, blue ribbon attaches directly below */
 .profile-header-section + .fantasy-banner-wrapper {
-  margin-top: 0; /* No gap between profile panel and blue ribbon */
+  margin-top: -1em; /* Pull blue ribbon up to touch profile panel bottom */
 }
 
 .profile-header-section + .fantasy-banner-wrapper + .fantasy-container {
