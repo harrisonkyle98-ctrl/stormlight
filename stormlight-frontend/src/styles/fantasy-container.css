@@ -361,8 +361,14 @@
     inset 0 0 0 1px rgba(148, 163, 184, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     0 4px 20px rgba(0, 0, 0, 0.4);
-  padding: 1.5rem;
-  margin-top: calc(-2em - 1px); /* Pull up 1px more so gold ribbon covers panel top border */
+  /* Default to collapsed state to prevent flicker on initial render */
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  padding: 0 1.5rem;
+  margin-top: 0;
+  border-top-width: 0;
+  border-bottom-width: 0;
 }
 
 /* Subtle texture overlay for profile panel - matches fantasy-container */

@@ -160,6 +160,7 @@ const Home = () => {
     const { theme: selectedTheme, setTheme: handleThemeChange } = useTheme()
       const [themeTooltip, setThemeTooltip] = useState<string | null>(null)
       const [profileExpanded, setProfileExpanded] = useState(false) // collapsed by default
+      const [profileAnimReady, setProfileAnimReady] = useState(false) // disable transitions until mounted
 
       const API_URL= import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -225,6 +226,11 @@ const Home = () => {
 
   useEffect(() => {
     fetchActiveMembers()
+  }, [])
+
+  // Enable profile panel animations after initial mount to prevent flicker
+  useEffect(() => {
+    setProfileAnimReady(true)
   }, [])
 
   const loadClanMembers = async () => {
@@ -812,9 +818,9 @@ const Home = () => {
             aria-expanded={profileExpanded}
           >
             <div className="fantasy-banner fantasy-banner--gold">
-              <div className="fantasy-banner-inner relative flex items-center justify-center">
+              <div className="fantasy-banner-inner relative flex items-center justify-center pr-14">
                 <h1 className="fantasy-banner-title">{user.username}</h1>
-                <div className="absolute inset-y-0 right-8 flex items-center justify-center z-10">
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center justify-center z-10">
                   {profileExpanded ? (
                     <ChevronUp className="w-5 h-5 text-white/80" />
                   ) : (
@@ -827,7 +833,9 @@ const Home = () => {
 
           {/* Profile Panel - collapsible with smooth animation */}
           <div 
-            className={`profile-header-panel profile-header-panel-anim ${
+            className={`profile-header-panel ${
+              profileAnimReady ? 'profile-header-panel-anim ' : ''
+            }${
               profileExpanded 
                 ? 'profile-header-panel-anim--expanded' 
                 : 'profile-header-panel-anim--collapsed'
