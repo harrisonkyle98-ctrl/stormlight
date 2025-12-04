@@ -1307,7 +1307,7 @@ const Home = () => {
                   formatTimeAgo={formatTimeAgo}
                   usernameToUrl={usernameToUrl}
                   clanRank={clanMembers.find(m => m.username === activity.username)?.clan_rank}
-                  className="bg-slate-700/50"
+                  className="bg-slate-700/80"
                 />
               ))
             ) : (

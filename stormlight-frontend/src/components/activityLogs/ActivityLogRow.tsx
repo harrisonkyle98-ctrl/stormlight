@@ -19,14 +19,22 @@ export function ActivityLogRow({
   formatTimeAgo,
   usernameToUrl,
   clanRank,
-  className = 'bg-slate-700/50'
+  className = 'bg-slate-700/80'
 }: ActivityLogRowProps) {
   const { color, Icon } = getActivityVisual(activity)
 
+  // Convert hex color to rgba with 0.8 opacity for border
+  const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16)
+    const g = parseInt(hex.slice(3, 5), 16)
+    const b = parseInt(hex.slice(5, 7), 16)
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`
+  }
+
   return (
     <div
-      className={`flex items-stretch rounded-lg overflow-hidden ${className} border-2`}
-      style={{ borderColor: color }}
+      className={`flex items-stretch overflow-hidden ${className} border-2`}
+      style={{ borderColor: hexToRgba(color, 0.8) }}
     >
       {/* Left colored icon column */}
       <div
