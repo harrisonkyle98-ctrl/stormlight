@@ -1,5 +1,6 @@
 /* ========================================
    HANGING RIBBON NAVIGATION
+   Uses original ribbon geometry (without fold) with two angled triangle wings
    Matches header ribbon styling with cloth texture, lighting, and effects
    ======================================== */
 
@@ -18,7 +19,7 @@
 .ribbon-nav-bar {
   display: flex;
   justify-content: flex-start;
-  gap: 0.4rem; /* Tighter spacing between ribbons */
+  gap: 0.35rem; /* Tighter spacing between ribbons */
   pointer-events: none; /* Allow clicks to pass through to gold ribbon */
   padding-left: 40px; /* Shifted slightly left for better alignment */
 }
@@ -34,10 +35,11 @@
   pointer-events: none; /* Allow clicks to pass through decorative wrapper */
 }
 
-/* Individual hanging ribbon - simple tab wrapper */
+/* Individual hanging ribbon - uses original geometry variables */
 .nav-ribbon {
-  --notch-depth: 0.5em; /* V-cut notch depth at bottom */
-  --notch-width: 1em; /* V-cut notch width */
+  /* Original ribbon geometry variables (from reference code) */
+  --f: 0.4em; /* Controls the horizontal "hip" width of the wings */
+  --r: 0.8em; /* Controls the V-notch cutout depth */
   
   /* Color palette - matches blue header ribbon */
   --nav-ribbon-color-top: #3b66d1;
@@ -49,15 +51,20 @@
   pointer-events: none; /* Allow clicks to pass through decorative ribbon */
 }
 
-/* Hanging tab body - simple rectangular tab with V-cut notch at bottom */
+/* Hanging ribbon body - original geometry WITHOUT the folded top */
 .nav-ribbon-body {
   position: relative;
   
-  /* No margin - sits flush against yellow ribbon */
+  /* No margin or offset - sits flush against yellow ribbon (fold removed) */
   margin-top: 0;
   
-  padding: 0.6em 0.8em;
-  padding-bottom: calc(0.6em + var(--notch-depth));
+  /* Padding for icon content */
+  padding: 0.5em 0.7em;
+  padding-bottom: calc(0.5em + var(--r)); /* Extra padding for the V-notch depth */
+  
+  /* Transparent border to create space for the wing geometry */
+  border: solid transparent;
+  border-width: 0 0 var(--r) calc(2 * var(--f));
   
   /* Glossy ribbon background - matches header ribbons */
   background:
@@ -71,16 +78,21 @@
   background-color: var(--nav-ribbon-color-middle);
   
   /* Subtle rounding at top corners only */
-  border-radius: 0.25em 0.25em 0 0;
+  border-radius: var(--f) var(--f) 0 0;
   
-  /* Simple clip-path: flat top, centered V notch at bottom */
+  /* Original clip-path geometry WITHOUT the fold (last two points removed)
+     This creates:
+     - Flat top edge from (0,0) to (100%,0)
+     - Right edge down to bottom-right corner
+     - Right wing: slanted line from bottom-right to V-notch point
+     - Left wing: slanted line from V-notch to left bottom point
+     - Left bottom edge and left edge back to top */
   clip-path: polygon(
     0 0,
     100% 0,
     100% 100%,
-    calc(50% + var(--notch-width) / 2) 100%,
-    50% calc(100% - var(--notch-depth)),
-    calc(50% - var(--notch-width) / 2) 100%,
+    calc(50% + var(--f)) calc(100% - var(--r)),
+    calc(2 * var(--f)) 100%,
     0 100%
   );
   
@@ -146,14 +158,15 @@
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
-/* Hover state - subtle tug stretch animation (top edge static, bottom extends) */
+/* Hover state - very subtle tug animation (top edge static, bottom extends slightly)
+   Using small scale factor to minimize triangle distortion */
 .nav-ribbon-link:hover .nav-ribbon-body {
-  transform: scaleY(1.06); /* Subtle stretch - top stays fixed, bottom extends */
+  transform: scaleY(1.03); /* Very subtle stretch to minimize wing distortion */
 }
 
 /* Counter-scale inner wrapper so icon doesn't stretch */
 .nav-ribbon-link:hover .nav-ribbon-inner {
-  transform: scaleY(0.94); /* Inverse of 1.06 to keep icon visually static */
+  transform: scaleY(0.97); /* Inverse of 1.03 to keep icon visually static */
 }
 
 /* Exit animation - slightly slower ease-in */
