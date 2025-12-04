@@ -57,6 +57,9 @@
   border-inline: 0.5em solid transparent;
   padding: 0.5em 0.2em calc(var(--r) + 0.2em);
   
+  /* Rounded top corners only */
+  border-radius: 6px 6px 0 0;
+  
   /* SHAPE — DO NOT ALTER */
   clip-path: polygon(
     0 0,
@@ -69,6 +72,7 @@
   );
   
   /* Material styling - matches header ribbon (minus fold shading) */
+  /* Use border-box to fill entire element including transparent side borders */
   background:
     /* Top highlight - subtle thin top-edge highlight */
     linear-gradient(
@@ -76,20 +80,22 @@
       rgba(255, 255, 255, 0.10) 0%,
       rgba(255, 255, 255, 0.04) 3%,
       rgba(255, 255, 255, 0.00) 8%
-    ),
+    ) border-box,
     /* Ambient fantasy glow - subtle magical sheen */
     radial-gradient(
       circle at center,
       rgba(255, 255, 255, 0.12) 0%,
       rgba(255, 255, 255, 0.00) 70%
-    ),
+    ) border-box,
     /* Base gradient - fantasy color variant */
     linear-gradient(
       to bottom,
       var(--nav-color-top),
       var(--nav-color-mid) 35%,
       var(--nav-color-bot)
-    );
+    ) border-box;
+  background-origin: border-box;
+  background-clip: border-box;
   
   /* Same style of depth as banner */
   box-shadow:
@@ -112,6 +118,7 @@
   pointer-events: none;
   z-index: 1;
   
+  /* Use border-box to fill entire element including transparent side borders */
   background:
     /* Cloth fiber grain - barely visible vertical woven texture */
     repeating-linear-gradient(
@@ -120,19 +127,21 @@
       rgba(255, 255, 255, 0.006) 1px,
       transparent 1px,
       transparent 3px
-    ),
+    ) border-box,
     /* Ripple bulge highlight - cloth drape center */
     radial-gradient(
       ellipse at center,
       rgba(255, 255, 255, 0.08) 0%,
       rgba(255, 255, 255, 0.00) 70%
-    ),
+    ) border-box,
     /* Vertical fade from top - drape shadow */
     linear-gradient(
       to bottom,
       rgba(255, 255, 255, 0.10) 0%,
       rgba(255, 255, 255, 0.00) 30%
-    );
+    ) border-box;
+  background-origin: border-box;
+  background-clip: border-box;
 }
 
 /* Icon styling */
