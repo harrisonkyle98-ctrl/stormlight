@@ -1077,8 +1077,7 @@ const Home = () => {
           <div className="fantasy-grid-2">
             {/* Your Recent Progress */}
             <div className="fantasy-section">
-              <h3 className="fantasy-section-title">Your Recent Progress</h3>
-              <p className="text-slate-400 text-sm mb-4">Your XP gains over the last 30 days</p>
+                            <h3 className="fantasy-section-title">Your Recent Progress</h3>
               {recentProgressLoading ? (
                 <div className="space-y-4 animate-pulse">
                   <div className="h-32 bg-slate-700/50 rounded"></div>
@@ -1183,8 +1182,7 @@ const Home = () => {
 
             {/* Members Active Today */}
             <div className="fantasy-section">
-              <h3 className="fantasy-section-title">Members Active Today</h3>
-              <p className="text-slate-400 text-sm mb-4">Clanmates who gained XP today</p>
+                            <h3 className="fantasy-section-title">Members Active Today</h3>
               {activeMembersLoading ? (
                 <div className="space-y-3 animate-pulse">
                   {[1, 2, 3, 4, 5].map((i) => (
@@ -1245,8 +1243,7 @@ const Home = () => {
         <div className="fantasy-grid-2">
           {/* Clan Log */}
           <div className="fantasy-section">
-            <h3 className="fantasy-section-title">Clan Log</h3>
-            <p className="text-slate-400 text-sm mb-4">Recent clan activity</p>
+                        <h3 className="fantasy-section-title">Clan Log</h3>
           {clanLogLoading ? (
             <div className="space-y-3 animate-pulse">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
@@ -1283,8 +1280,7 @@ const Home = () => {
 
           {/* Recent Activity */}
           <div className="fantasy-section">
-            <h3 className="fantasy-section-title">Recent Activity</h3>
-            <p className="text-slate-400 text-sm mb-4">Latest clan member activity</p>
+                        <h3 className="fantasy-section-title">Recent Activity</h3>
           {activityLoading ? (
             <div className="space-y-3 animate-pulse">
               {[1, 2, 3, 4, 5, 6].map((i) => (
