@@ -1,0 +1,158 @@
+/* AnimatedHeader Styles */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&display=swap');
+
+/* Main header container */
+.animated-header {
+  position: relative;
+  height: 160px;
+  width: calc(100% - 8%);
+  margin: 0 4%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  background: transparent;
+}
+
+/* Shimmer layer - animated gradient background */
+.animated-header-shimmer {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--header-shimmer-gradient);
+  background-size: 200% 200%;
+  opacity: 0.45;
+  animation: shimmer 18s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Particle layer - subtle drifting dots */
+.animated-header-particles {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 2;
+  box-shadow:
+    /* Row 1 - scattered particles */
+    12px 20px 0 1px var(--header-particle-color),
+    45px 35px 0 0.5px var(--header-particle-color),
+    78px 15px 0 1px var(--header-particle-color),
+    112px 42px 0 0.5px var(--header-particle-color),
+    156px 28px 0 1px var(--header-particle-color),
+    189px 8px 0 0.5px var(--header-particle-color),
+    223px 38px 0 1px var(--header-particle-color),
+    267px 22px 0 0.5px var(--header-particle-color),
+    301px 45px 0 1px var(--header-particle-color),
+    345px 12px 0 0.5px var(--header-particle-color),
+    /* Row 2 */
+    28px 68px 0 0.5px var(--header-particle-color),
+    62px 85px 0 1px var(--header-particle-color),
+    98px 72px 0 0.5px var(--header-particle-color),
+    134px 95px 0 1px var(--header-particle-color),
+    178px 78px 0 0.5px var(--header-particle-color),
+    212px 62px 0 1px var(--header-particle-color),
+    256px 88px 0 0.5px var(--header-particle-color),
+    290px 75px 0 1px var(--header-particle-color),
+    334px 92px 0 0.5px var(--header-particle-color),
+    378px 65px 0 1px var(--header-particle-color),
+    /* Row 3 */
+    18px 118px 0 1px var(--header-particle-color),
+    52px 132px 0 0.5px var(--header-particle-color),
+    88px 125px 0 1px var(--header-particle-color),
+    124px 145px 0 0.5px var(--header-particle-color),
+    168px 128px 0 1px var(--header-particle-color),
+    202px 112px 0 0.5px var(--header-particle-color),
+    246px 138px 0 1px var(--header-particle-color),
+    280px 122px 0 0.5px var(--header-particle-color),
+    324px 148px 0 1px var(--header-particle-color),
+    368px 115px 0 0.5px var(--header-particle-color),
+    /* Additional scattered particles */
+    420px 25px 0 1px var(--header-particle-color),
+    465px 55px 0 0.5px var(--header-particle-color),
+    510px 18px 0 1px var(--header-particle-color),
+    555px 48px 0 0.5px var(--header-particle-color),
+    600px 32px 0 1px var(--header-particle-color),
+    645px 58px 0 0.5px var(--header-particle-color),
+    690px 22px 0 1px var(--header-particle-color),
+    735px 45px 0 0.5px var(--header-particle-color),
+    780px 15px 0 1px var(--header-particle-color),
+    825px 52px 0 0.5px var(--header-particle-color),
+    /* More particles for wider screens */
+    870px 28px 0 1px var(--header-particle-color),
+    915px 62px 0 0.5px var(--header-particle-color),
+    960px 35px 0 1px var(--header-particle-color),
+    1005px 55px 0 0.5px var(--header-particle-color),
+    1050px 18px 0 1px var(--header-particle-color),
+    1095px 42px 0 0.5px var(--header-particle-color),
+    1140px 28px 0 1px var(--header-particle-color),
+    1185px 58px 0 0.5px var(--header-particle-color),
+    1230px 12px 0 1px var(--header-particle-color),
+    1275px 48px 0 0.5px var(--header-particle-color);
+  animation: drift 45s linear infinite;
+}
+
+/* Title styling */
+.animated-header-title {
+  font-family: 'Cinzel', serif;
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #fffbf0;
+  text-shadow: 
+    var(--header-text-glow),
+    0 2px 4px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.25em;
+  position: relative;
+  z-index: 10;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+/* Shimmer animation keyframes */
+@keyframes shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Particle drift animation keyframes */
+@keyframes drift {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-200px);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .animated-header {
+    height: 120px;
+  }
+  
+  .animated-header-title {
+    font-size: 2.5rem;
+    letter-spacing: 0.15em;
+  }
+}
+
+@media (max-width: 480px) {
+  .animated-header {
+    height: 100px;
+  }
+  
+  .animated-header-title {
+    font-size: 1.8rem;
+    letter-spacing: 0.1em;
+  }
+}
