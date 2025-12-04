@@ -37,8 +37,8 @@
   margin: 0;
   
   /* Ribbon geometry variables */
-  --r: 0.85em; /* depth of center bottom cut */
-  --w: 0.28em; /* width of angled bottom sides */
+  --tail-depth: 0.85em;
+  --tail-width: 0.35em;
   
   /* Color palette - default blue */
   --nav-ribbon-color-top: #3b66d1;
@@ -58,7 +58,7 @@
   
   /* Sizing - padding for icon content */
   padding: 0.5em 0.7em;
-  padding-bottom: calc(0.5em + var(--r)); /* Extra padding for the pointed tail depth */
+  padding-bottom: calc(0.5em + var(--tail-depth)); /* Extra padding for the pointed tail depth */
   
   /* Glossy ribbon background */
   background:
@@ -78,11 +78,11 @@
   clip-path: polygon(
     0 0,
     100% 0,
-    100% calc(100% - var(--w)),
-    calc(50% + var(--w)) calc(100% - var(--r)),
+    100% calc(100% - var(--tail-width)),
+    calc(50% + var(--tail-width)) calc(100% - var(--tail-depth)),
     50% 100%,
-    calc(50% - var(--w)) calc(100% - var(--r)),
-    0 calc(100% - var(--w))
+    calc(50% - var(--tail-width)) calc(100% - var(--tail-depth)),
+    0 calc(100% - var(--tail-width))
   );
   
   /* Drop shadow + inner glow for depth */
