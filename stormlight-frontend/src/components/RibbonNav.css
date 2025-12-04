@@ -7,7 +7,7 @@
 /* Container for the ribbon navigation - positioned to hang from the gold ribbon */
 .ribbon-nav-container {
   position: absolute;
-  top: calc(-0.35rem + 1px); /* Moved down 1px to sit flush against yellow ribbon */
+  top: calc(-0.35rem + 3px); /* Moved down 2px more to sit flush against yellow ribbon */
   left: 0;
   right: 0;
   width: 100%;
@@ -19,7 +19,7 @@
 .ribbon-nav-bar {
   display: flex;
   justify-content: flex-start;
-  gap: 0.35rem; /* Tighter spacing between ribbons */
+  gap: 0.25rem; /* Reduced spacing between ribbons */
   pointer-events: none; /* Allow clicks to pass through to gold ribbon */
   padding-left: 40px; /* Shifted slightly left for better alignment */
 }
@@ -34,9 +34,9 @@
   --r: 0.8em; /* depth of center notch */
   
   /* Color stops - default blue (overridden by variants) */
-  --nav-color-top: #3b66d1;
-  --nav-color-mid: #3156b5;
-  --nav-color-bot: #29479c;
+  --nav-color-top: #4a8aff;
+  --nav-color-mid: #3f80ff;
+  --nav-color-bot: #3365d0;
   
   /* Layout */
   position: relative;
@@ -52,14 +52,14 @@
   border-inline: 0.5em solid transparent;
   padding: 0.5em 0.2em calc(var(--r) + 0.2em);
   
-  /* EXACT SHAPE — DO NOT MODIFY */
+  /* SHAPE — DO NOT ALTER */
   clip-path: polygon(
     0 0,
     100% 0,
     100% 100%,
-    calc(100% - 0.5em) 100%,
-    50% calc(100% - var(--r)),
-    0.5em 100%,
+    calc(100% - 0.5em) calc(100% - var(--r)),
+    50% 100%,
+    0.5em calc(100% - var(--r)),
     0 100%
   );
   
@@ -164,9 +164,9 @@
 
 /* Active state - slightly brighter */
 .nav-ribbon--active {
-  --nav-color-top: #4a7ae8;
-  --nav-color-mid: #3d6ad4;
-  --nav-color-bot: #3156b5;
+  --nav-color-top: #5a9aff;
+  --nav-color-mid: #4a8aff;
+  --nav-color-bot: #3f80ff;
 }
 
 .nav-ribbon--active .nav-ribbon-icon {
@@ -183,25 +183,25 @@
    COLOR VARIANTS
    ======================================== */
 
-/* Blue variant (Home) - Sapphire blue */
+/* Blue variant (Home) */
 .nav-ribbon--blue {
-  --nav-color-top: #3b66d1;
-  --nav-color-mid: #3156b5;
-  --nav-color-bot: #29479c;
+  --nav-color-top: #4a8aff;
+  --nav-color-mid: #3f80ff;
+  --nav-color-bot: #3365d0;
 }
 
 /* Magenta-red variant (Members) - Red-pink */
 .nav-ribbon--magenta {
-  --nav-color-top: #d4457a;
-  --nav-color-mid: #b13062;
-  --nav-color-bot: #851e46;
+  --nav-color-top: #e04882;
+  --nav-color-mid: #d12d6b;
+  --nav-color-bot: #a32352;
 }
 
 /* Green variant (Competitions) */
 .nav-ribbon--green {
-  --nav-color-top: #3fb96c;
-  --nav-color-mid: #2f8b52;
-  --nav-color-bot: #22663d;
+  --nav-color-top: #3ecf67;
+  --nav-color-mid: #34a853;
+  --nav-color-bot: #287f3f;
 }
 
 /* Gold variant (optional - for special ribbons) */
