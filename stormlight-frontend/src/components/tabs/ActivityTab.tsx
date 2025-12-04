@@ -108,7 +108,6 @@ export const ActivityTab = ({ username, playerData: _playerData, API_URL }: TabP
               activity={activity}
               formatTimeAgo={formatTimeAgo}
               usernameToUrl={usernameToUrl}
-              className="bg-slate-700/50"
             />
           ))}
           

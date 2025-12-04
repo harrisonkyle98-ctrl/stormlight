@@ -7,7 +7,6 @@ interface ClanLogRowProps {
   formatTimeAgo: (timestamp: number) => string
   getRankIcon?: (rank: string) => string
   usernameToUrl: (username: string) => string
-  className?: string
 }
 
 /**
@@ -18,8 +17,7 @@ export function ClanLogRow({
   entry,
   formatTimeAgo,
   getRankIcon,
-  usernameToUrl,
-  className = 'bg-slate-700/80'
+  usernameToUrl
 }: ClanLogRowProps) {
   const { color, Icon, message } = getLogVisual(entry, getRankIcon)
   
@@ -36,10 +34,13 @@ export function ClanLogRow({
     return `rgba(${r}, ${g}, ${b}, ${alpha})`
   }
 
+  // Slate-700 (#334155) with 0.8 opacity
+  const slateBackground = 'rgba(51, 65, 85, 0.8)'
+
   return (
     <div
-      className={`flex items-stretch overflow-hidden ${className} border-2`}
-      style={{ borderColor: hexToRgba(color, 0.8) }}
+      className="flex items-stretch overflow-hidden border-2"
+      style={{ borderColor: hexToRgba(color, 0.8), backgroundColor: slateBackground }}
     >
       {/* Left colored icon column */}
       <div

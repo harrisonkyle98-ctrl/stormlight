@@ -7,7 +7,6 @@ interface ActivityLogRowProps {
   formatTimeAgo: (timestamp: number) => string
   usernameToUrl: (username: string) => string
   clanRank?: string
-  className?: string
 }
 
 /**
@@ -18,8 +17,7 @@ export function ActivityLogRow({
   activity,
   formatTimeAgo,
   usernameToUrl,
-  clanRank,
-  className = 'bg-slate-700/80'
+  clanRank
 }: ActivityLogRowProps) {
   const { color, Icon } = getActivityVisual(activity)
 
@@ -31,10 +29,13 @@ export function ActivityLogRow({
     return `rgba(${r}, ${g}, ${b}, ${alpha})`
   }
 
+  // Slate-700 (#334155) with 0.8 opacity
+  const slateBackground = 'rgba(51, 65, 85, 0.8)'
+
   return (
     <div
-      className={`flex items-stretch overflow-hidden ${className} border-2`}
-      style={{ borderColor: hexToRgba(color, 0.8) }}
+      className="flex items-stretch overflow-hidden border-2"
+      style={{ borderColor: hexToRgba(color, 0.8), backgroundColor: slateBackground }}
     >
       {/* Left colored icon column */}
       <div

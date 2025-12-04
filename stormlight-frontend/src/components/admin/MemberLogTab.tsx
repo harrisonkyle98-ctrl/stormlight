@@ -152,7 +152,6 @@ export const MemberLogTab = () => {
                     entry={entry}
                     formatTimeAgo={formatTimeAgo}
                     usernameToUrl={usernameToUrl}
-                    className="bg-slate-600/30"
                   />
                 ))}
               </div>

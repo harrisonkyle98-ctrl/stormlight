@@ -135,7 +135,6 @@ export const LogTab = ({ username, playerData: _playerData, API_URL }: TabProps)
           formatTimeAgo={formatTimeAgo}
           getRankIcon={getRankIcon}
           usernameToUrl={usernameToUrl}
-          className="bg-slate-700/50"
         />
       ))}
     </div>
