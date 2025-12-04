@@ -29,7 +29,7 @@ const RibbonNav = () => {
           const isCurrentActive = isActive(item.path)
           
           return (
-            <Tooltip key={item.label} content={item.label} placement="bottom">
+            <Tooltip key={item.label} content={item.label} placement="bottom" className="nav-tooltip">
               <Link
                 to={item.path}
                 className="nav-ribbon-link"
@@ -41,8 +41,10 @@ const RibbonNav = () => {
                   role="menuitem"
                   aria-current={isCurrentActive ? 'page' : undefined}
                 >
-                  <div className="nav-ribbon-inner">
-                    <Icon className="nav-ribbon-icon" />
+                  <div className="nav-ribbon-body">
+                    <div className="nav-ribbon-inner">
+                      <Icon className="nav-ribbon-icon" />
+                    </div>
                   </div>
                 </div>
               </Link>

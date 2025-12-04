@@ -34,7 +34,7 @@
   pointer-events: none; /* Allow clicks to pass through decorative wrapper */
 }
 
-/* Individual hanging ribbon - uses same styling as header ribbons */
+/* Individual hanging ribbon - static wrapper with fold layer */
 .nav-ribbon {
   --f: 0.35em; /* control the folded part */
   --r: 0.6em; /* control the cutout */
@@ -44,6 +44,28 @@
   --nav-ribbon-color-middle: #3156b5;
   --nav-ribbon-color-bottom: #29479c;
   
+  position: relative;
+  display: inline-block;
+  pointer-events: none; /* Allow clicks to pass through decorative ribbon */
+}
+
+/* Static fold layer - does NOT animate */
+.nav-ribbon::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(2 * var(--f));
+  height: var(--f);
+  background: 
+    radial-gradient(50% 100% at bottom, rgba(0, 0, 0, 0.3) 98%, transparent 101%),
+    linear-gradient(to bottom, var(--nav-ribbon-color-top), var(--nav-ribbon-color-middle));
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Stretchable body layer - this is what animates */
+.nav-ribbon-body {
   position: relative;
   padding: 0.6em 0.8em;
   padding-bottom: calc(0.6em + var(--r));
@@ -85,14 +107,14 @@
     0 4px 8px rgba(0, 0, 0, 0.3),
     inset 0 0 8px rgba(255, 255, 255, 0.12);
   
-    /* Tug animation - stretch from top so ribbon extends downward */
-    transform-origin: top center;
+  /* Tug animation - stretch from top so ribbon extends downward */
+  transform-origin: top center;
   transition: transform 180ms ease-out;
-  pointer-events: none; /* Allow clicks to pass through decorative ribbon */
+  pointer-events: none; /* Allow clicks to pass through decorative body */
 }
 
 /* Cloth fiber grain + ripple effect overlay - matches header ribbon */
-.nav-ribbon::before {
+.nav-ribbon-body::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -142,8 +164,8 @@
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
-/* Hover state - tug stretch animation (ribbon body stretches, fold stays anchored) */
-.nav-ribbon-link:hover .nav-ribbon {
+/* Hover state - tug stretch animation (body stretches, fold stays anchored) */
+.nav-ribbon-link:hover .nav-ribbon-body {
   transform: scaleY(1.08);
 }
 
@@ -153,7 +175,7 @@
 }
 
 /* Exit animation - slightly slower ease-in */
-.nav-ribbon-link:not(:hover) .nav-ribbon {
+.nav-ribbon-link:not(:hover) .nav-ribbon-body {
   transition: transform 200ms ease-in;
 }
 

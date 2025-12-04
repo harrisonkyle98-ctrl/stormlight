@@ -282,3 +282,8 @@
   background: #be9a55;
   color: #fff;
 }
+
+/* Navigation ribbon tooltips - higher z-index to appear above all ribbons */
+.tooltip-advanced.nav-tooltip {
+  z-index: 200;
+}
