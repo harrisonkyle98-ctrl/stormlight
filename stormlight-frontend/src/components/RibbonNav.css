@@ -85,8 +85,8 @@
     0 4px 8px rgba(0, 0, 0, 0.3),
     inset 0 0 8px rgba(255, 255, 255, 0.12);
   
-  /* Tug animation - stretch from bottom so fold stays anchored */
-  transform-origin: bottom center;
+    /* Tug animation - stretch from top so ribbon extends downward */
+    transform-origin: top center;
   transition: transform 180ms ease-out;
   pointer-events: none; /* Allow clicks to pass through decorative ribbon */
 }
@@ -129,7 +129,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transform-origin: bottom center;
+  transform-origin: top center;
   transition: transform 180ms ease-out;
   pointer-events: auto; /* Only the icon area is clickable */
 }
