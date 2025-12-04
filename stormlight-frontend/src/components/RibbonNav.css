@@ -34,11 +34,11 @@
   border: none;
   clip-path: none;
   background: none;
-  border-radius: 0;
   margin: 0;
   
-  /* Ribbon geometry variable */
-  --r: 0.8em; /* Controls the V-notch cutout depth */
+  /* Ribbon geometry variables */
+  --r: 0.85em; /* depth of center bottom cut */
+  --w: 0.28em; /* width of angled bottom sides */
   
   /* Color palette - default blue */
   --nav-ribbon-color-top: #3b66d1;
@@ -53,9 +53,12 @@
   text-decoration: none;
   cursor: pointer;
   
+  /* Rounded top corners to simulate folded edge */
+  border-radius: 6px 6px 0 0;
+  
   /* Sizing - padding for icon content */
   padding: 0.5em 0.7em;
-  padding-bottom: calc(0.5em + var(--r)); /* Extra padding for the V-notch depth */
+  padding-bottom: calc(0.5em + var(--r)); /* Extra padding for the pointed tail depth */
   
   /* Glossy ribbon background */
   background:
@@ -68,19 +71,18 @@
   
   background-color: var(--nav-ribbon-color-middle);
   
-  /* Perfectly symmetrical V-notch clip-path
-     - Flat top edge
-     - Right edge down to 75% bottom
-     - V-notch centered at 50%
-     - Left edge from 25% bottom back to top */
+  /* Pointed bottom tail clip-path
+     - Symmetrical with pointed center tail
+     - Angled bottom sides
+     - Works with hover tug animation */
   clip-path: polygon(
     0 0,
     100% 0,
-    100% 100%,
-    75% 100%,
-    50% calc(100% - var(--r)),
-    25% 100%,
-    0 100%
+    100% calc(100% - var(--w)),
+    calc(50% + var(--w)) calc(100% - var(--r)),
+    50% 100%,
+    calc(50% - var(--w)) calc(100% - var(--r)),
+    0 calc(100% - var(--w))
   );
   
   /* Drop shadow + inner glow for depth */
