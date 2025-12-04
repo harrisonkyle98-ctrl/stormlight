@@ -1,7 +1,7 @@
 /* ========================================
    HANGING RIBBON NAVIGATION
-   Uses original ribbon geometry (without fold) with two angled triangle wings
-   Matches header ribbon styling with cloth texture, lighting, and effects
+   Single clean element per ribbon - no nested divs
+   Uses original bottom geometry (V-notch + angled wings)
    ======================================== */
 
 /* Container for the ribbon navigation - positioned to hang from the gold ribbon */
@@ -24,49 +24,41 @@
   padding-left: 40px; /* Shifted slightly left for better alignment */
 }
 
-/* Link/button wrapper - reset styles */
-.nav-ribbon-link {
-  display: block;
-  text-decoration: none;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  pointer-events: none; /* Allow clicks to pass through decorative wrapper */
-}
+/* ========================================
+   SINGLE RIBBON ELEMENT
+   The Link itself is the shaped ribbon
+   ======================================== */
 
-/* Individual hanging ribbon - uses original geometry variables */
 .nav-ribbon {
-  /* Original ribbon geometry variables (from reference code) */
+  /* RESET - prevent any inherited styles */
+  border: none;
+  clip-path: none;
+  background: none;
+  border-radius: 0;
+  margin: 0;
+  
+  /* Original ribbon geometry variables */
   --f: 0.4em; /* Controls the horizontal "hip" width of the wings */
   --r: 0.8em; /* Controls the V-notch cutout depth */
   
-  /* Color palette - matches blue header ribbon */
+  /* Color palette - default blue */
   --nav-ribbon-color-top: #3b66d1;
   --nav-ribbon-color-middle: #3156b5;
   --nav-ribbon-color-bottom: #29479c;
   
+  /* Layout */
   position: relative;
-  display: inline-block;
-  pointer-events: none; /* Allow clicks to pass through decorative ribbon */
-}
-
-/* Hanging ribbon body - original geometry WITHOUT the folded top */
-.nav-ribbon-body {
-  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
   
-  /* No margin or offset - sits flush against yellow ribbon (fold removed) */
-  margin-top: 0;
-  
-  /* Padding for icon content */
+  /* Sizing - padding for icon content */
   padding: 0.5em 0.7em;
   padding-bottom: calc(0.5em + var(--r)); /* Extra padding for the V-notch depth */
   
-  /* Transparent border to create space for the wing geometry */
-  border: solid transparent;
-  border-width: 0 0 var(--r) calc(2 * var(--f));
-  
-  /* Glossy ribbon background - matches header ribbons */
+  /* Glossy ribbon background */
   background:
     /* Top highlight - subtle thin top-edge highlight */
     linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 15%, transparent 30%),
@@ -77,16 +69,13 @@
   
   background-color: var(--nav-ribbon-color-middle);
   
-  /* Subtle rounding at top corners only */
-  border-radius: var(--f) var(--f) 0 0;
-  
-  /* Original clip-path geometry WITHOUT the fold (last two points removed)
-     This creates:
+  /* Original clip-path geometry - V-notch with angled wings
+     Creates:
      - Flat top edge from (0,0) to (100%,0)
      - Right edge down to bottom-right corner
      - Right wing: slanted line from bottom-right to V-notch point
      - Left wing: slanted line from V-notch to left bottom point
-     - Left bottom edge and left edge back to top */
+     - Left edge back to top */
   clip-path: polygon(
     0 0,
     100% 0,
@@ -96,7 +85,7 @@
     0 100%
   );
   
-  /* Drop shadow + inner glow for depth - matches header ribbon */
+  /* Drop shadow + inner glow for depth */
   box-shadow:
     0 4px 8px rgba(0, 0, 0, 0.3),
     inset 0 0 8px rgba(255, 255, 255, 0.12);
@@ -104,11 +93,13 @@
   /* Tug animation - stretch from top so only bottom extends downward */
   transform-origin: top center;
   transition: transform 180ms ease-out;
-  pointer-events: none; /* Allow clicks to pass through decorative body */
+  
+  /* Enable clicks on the ribbon */
+  pointer-events: auto;
 }
 
-/* Cloth fiber grain + ripple effect overlay - matches header ribbon */
-.nav-ribbon-body::before {
+/* Cloth fiber grain + ripple effect overlay */
+.nav-ribbon::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -138,43 +129,35 @@
     );
 }
 
-/* Inner content wrapper - counter-scales to keep icon stationary during tug */
-.nav-ribbon-inner {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform-origin: top center;
-  transition: transform 180ms ease-out;
-  pointer-events: auto; /* Only the icon area is clickable */
-}
-
 /* Icon styling */
 .nav-ribbon-icon {
+  position: relative;
+  z-index: 2;
   width: 1.25rem;
   height: 1.25rem;
   color: rgba(255, 255, 255, 0.9);
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  /* Prevent icon from stretching during tug animation */
+  transform-origin: top center;
+  transition: transform 180ms ease-out;
 }
 
-/* Hover state - very subtle tug animation (top edge static, bottom extends slightly)
-   Using small scale factor to minimize triangle distortion */
-.nav-ribbon-link:hover .nav-ribbon-body {
+/* Hover state - very subtle tug animation */
+.nav-ribbon:hover {
   transform: scaleY(1.03); /* Very subtle stretch to minimize wing distortion */
 }
 
-/* Counter-scale inner wrapper so icon doesn't stretch */
-.nav-ribbon-link:hover .nav-ribbon-inner {
+/* Counter-scale icon so it doesn't stretch */
+.nav-ribbon:hover .nav-ribbon-icon {
   transform: scaleY(0.97); /* Inverse of 1.03 to keep icon visually static */
 }
 
 /* Exit animation - slightly slower ease-in */
-.nav-ribbon-link:not(:hover) .nav-ribbon-body {
+.nav-ribbon:not(:hover) {
   transition: transform 200ms ease-in;
 }
 
-.nav-ribbon-link:not(:hover) .nav-ribbon-inner {
+.nav-ribbon:not(:hover) .nav-ribbon-icon {
   transition: transform 200ms ease-in;
 }
 
@@ -190,10 +173,14 @@
 }
 
 /* Focus state for accessibility */
-.nav-ribbon-link:focus-visible .nav-ribbon {
+.nav-ribbon:focus-visible {
   outline: 2px solid rgba(255, 255, 255, 0.5);
   outline-offset: 2px;
 }
+
+/* ========================================
+   COLOR VARIANTS
+   ======================================== */
 
 /* Blue variant (Home) */
 .nav-ribbon--blue {

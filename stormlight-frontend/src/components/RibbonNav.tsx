@@ -32,21 +32,12 @@ const RibbonNav = () => {
             <Tooltip key={item.label} content={item.label} placement="bottom" className="nav-tooltip">
               <Link
                 to={item.path}
-                className="nav-ribbon-link"
+                className={`nav-ribbon nav-ribbon--${item.variant} ${isCurrentActive ? 'nav-ribbon--active' : ''}`}
                 aria-label={item.label}
+                aria-current={isCurrentActive ? 'page' : undefined}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div 
-                  className={`nav-ribbon nav-ribbon--${item.variant} ${isCurrentActive ? 'nav-ribbon--active' : ''}`}
-                  role="menuitem"
-                  aria-current={isCurrentActive ? 'page' : undefined}
-                >
-                  <div className="nav-ribbon-body">
-                    <div className="nav-ribbon-inner">
-                      <Icon className="nav-ribbon-icon" />
-                    </div>
-                  </div>
-                </div>
+                <Icon className="nav-ribbon-icon" />
               </Link>
             </Tooltip>
           )
