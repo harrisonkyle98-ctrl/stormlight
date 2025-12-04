@@ -34,7 +34,7 @@
   pointer-events: none; /* Allow clicks to pass through decorative wrapper */
 }
 
-/* Individual hanging ribbon - static wrapper with fold layer */
+/* Individual hanging ribbon - wrapper container */
 .nav-ribbon {
   --f: 0.35em; /* control the folded part */
   --r: 0.6em; /* control the cutout */
@@ -49,36 +49,51 @@
   pointer-events: none; /* Allow clicks to pass through decorative ribbon */
 }
 
-/* Static fold layer - does NOT animate */
-.nav-ribbon::before {
-  content: "";
+/* Static fold layer - does NOT animate, reproduces original fold geometry */
+.nav-ribbon-fold {
   position: absolute;
-  left: 0;
   top: 0;
+  left: 0;
   width: calc(2 * var(--f));
   height: var(--f);
-  background: 
-    radial-gradient(50% 100% at bottom, rgba(0, 0, 0, 0.3) 98%, transparent 101%),
-    linear-gradient(to bottom, var(--nav-ribbon-color-top), var(--nav-ribbon-color-middle));
+  
+  /* Match the original top rounding */
+  border-radius: var(--f) var(--f) 0 0;
+  
+  /* Original fold-specific gradient from the old .nav-ribbon */
+  background:
+    radial-gradient(
+      50% 100% at bottom,
+      rgba(0, 0, 0, 0.3) 98%,
+      transparent 101%
+    )
+      0 0 / calc(2 * var(--f)) var(--f) no-repeat border-box,
+    linear-gradient(
+      to bottom,
+      var(--nav-ribbon-color-top),
+      var(--nav-ribbon-color-middle)
+    );
+  
   pointer-events: none;
   z-index: 3;
 }
 
-/* Stretchable body layer - this is what animates */
+/* Stretchable cloth body - starts below the fold, this is what animates */
 .nav-ribbon-body {
   position: relative;
+  
+  /* Sit just under the fold strip */
+  margin-top: var(--f);
+  
   padding: 0.6em 0.8em;
   padding-bottom: calc(0.6em + var(--r));
   
-  /* Transparent border for the folded effect */
+  /* Transparent border for the bottom cutout effect */
   border: solid transparent;
   border-width: 0 0 var(--r) calc(2 * var(--f));
   
-  /* Layered background matching header ribbon styling */
+  /* Cloth-only background (no fold-specific shadow here) */
   background:
-    /* Fold shadow at top-left corner */
-    radial-gradient(50% 100% at bottom, rgba(0, 0, 0, 0.3) 98%, transparent 101%) 
-      0 0 / calc(2 * var(--f)) var(--f) no-repeat border-box,
     /* Top highlight - subtle thin top-edge highlight */
     linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 15%, transparent 30%),
     /* Ambient fantasy glow - subtle magical sheen */
@@ -88,18 +103,17 @@
   
   background-color: var(--nav-ribbon-color-middle);
   
-  /* Rounded top corners */
-  border-radius: var(--f) var(--f) 0 0;
+  /* No top rounding - fold handles that */
+  border-radius: 0;
   
-  /* Clip path for hanging ribbon shape with bottom cutout */
+  /* Clip path for cloth only (no fold cut-out at the top) */
   clip-path: polygon(
     0 0,
     100% 0,
     100% 100%,
     calc(50% + var(--f)) calc(100% - var(--r)),
     calc(2 * var(--f)) 100%,
-    calc(2 * var(--f)) var(--f),
-    0 var(--f)
+    0 100%
   );
   
   /* Drop shadow + inner glow for depth - matches header ribbon */
@@ -107,7 +121,7 @@
     0 4px 8px rgba(0, 0, 0, 0.3),
     inset 0 0 8px rgba(255, 255, 255, 0.12);
   
-  /* Tug animation - stretch from top so ribbon extends downward */
+  /* Tug animation - stretch from top of cloth (just under fold) */
   transform-origin: top center;
   transition: transform 180ms ease-out;
   pointer-events: none; /* Allow clicks to pass through decorative body */
