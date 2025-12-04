@@ -51,12 +51,12 @@ export function ClanLogRow({
       </div>
 
       {/* Right content column */}
-      <div className="flex-1 p-3">
+      <div className="flex-1 p-3 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <Link
               to={linkPath}
-              className="text-white font-medium hover:text-blue-300 transition-colors"
+              className="text-white font-medium hover:text-blue-300 transition-colors flex-shrink-0"
             >
               {isCompetitionEvent ? (
                 <span>{entry.username}</span>
@@ -67,9 +67,9 @@ export function ClanLogRow({
                 />
               )}
             </Link>
-            <span className="text-slate-300">{message}</span>
+            <span className="text-slate-300 truncate">{message}</span>
           </div>
-          <span className="text-slate-400 text-xs whitespace-nowrap ml-2">
+          <span className="text-slate-400 text-xs whitespace-nowrap ml-2 flex-shrink-0">
             {formatTimeAgo(new Date(entry.timestamp).getTime() / 1000)}
           </span>
         </div>
