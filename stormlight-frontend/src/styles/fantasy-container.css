@@ -365,6 +365,8 @@
   margin: 4% 4% 0 4%;
   margin-bottom: 0; /* No gap below profile section */
   z-index: 5;
+  /* Prevent clipping of nav ribbon bottom V-shape */
+  overflow: visible !important;
 }
 
 /* Profile Header Panel - uses OUTER unified-container styling */
