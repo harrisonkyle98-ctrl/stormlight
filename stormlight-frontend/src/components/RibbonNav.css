@@ -1,26 +1,27 @@
 /* ========================================
-   HANGING RIBBON NAVIGATION
-   Matches header ribbon styling with cloth texture, lighting, and effects
+   HANGING TAB NAVIGATION
+   Simple hanging tabs that extend downward from the yellow ribbon
+   No folded top - just clean rectangular tabs with V-cut notch
    ======================================== */
 
-/* Container for the ribbon navigation - positioned to hang OVER the gold ribbon */
+/* Container for the ribbon navigation - positioned to hang from the gold ribbon */
 .ribbon-nav-container {
   position: absolute;
-  top: -0.35rem; /* Lowered additional 1px so fold touches gold ribbon */
+  top: 0; /* Flush with bottom edge of yellow ribbon */
   left: 0;
   right: 0;
   width: 100%;
   z-index: 20;
-  pointer-events: none;
+  pointer-events: none; /* Allow clicks to pass through to gold ribbon */
 }
 
 /* Flex container for left-aligned ribbons */
 .ribbon-nav-bar {
   display: flex;
   justify-content: flex-start;
-  gap: 0.5rem; /* Reduced spacing between ribbons */
+  gap: 0.35rem; /* Tighter spacing between ribbons */
   pointer-events: none; /* Allow clicks to pass through to gold ribbon */
-  padding-left: 44px; /* Shifted left by ~7px for better alignment */
+  padding-left: 38px; /* Shifted left for better alignment */
 }
 
 /* Link/button wrapper - reset styles */
@@ -31,104 +32,68 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  pointer-events: none; /* Allow clicks to pass through decorative wrapper */
+  pointer-events: auto; /* Only the link itself is clickable */
 }
 
-/* Individual hanging ribbon - wrapper container */
+/* Individual hanging ribbon wrapper */
 .nav-ribbon {
-  --f: 0.35em; /* control the folded part */
-  --r: 0.6em; /* control the cutout */
-  
-  /* Color palette - matches blue header ribbon */
+  /* Color palette - default blue */
   --nav-ribbon-color-top: #3b66d1;
   --nav-ribbon-color-middle: #3156b5;
   --nav-ribbon-color-bottom: #29479c;
   
   position: relative;
   display: inline-block;
-  pointer-events: none; /* Allow clicks to pass through decorative ribbon */
 }
 
-/* Static fold layer - does NOT animate, reproduces original fold geometry */
-.nav-ribbon-fold {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: calc(2 * var(--f));
-  height: var(--f);
+/* The actual hanging tab - simple rectangular shape with V-cut notch at bottom */
+.nav-ribbon-tab {
+  --notch-size: 0.5em; /* Size of the V-cut notch at bottom */
   
-  /* Match the original top rounding */
-  border-radius: var(--f) var(--f) 0 0;
-  
-  /* Original fold-specific gradient from the old .nav-ribbon */
-  background:
-    radial-gradient(
-      50% 100% at bottom,
-      rgba(0, 0, 0, 0.3) 98%,
-      transparent 101%
-    )
-      0 0 / calc(2 * var(--f)) var(--f) no-repeat border-box,
-    linear-gradient(
-      to bottom,
-      var(--nav-ribbon-color-top),
-      var(--nav-ribbon-color-middle)
-    );
-  
-  pointer-events: none;
-  z-index: 3;
-}
-
-/* Stretchable cloth body - starts below the fold, this is what animates */
-.nav-ribbon-body {
   position: relative;
+  padding: 0.6em 0.9em;
+  padding-bottom: calc(0.6em + var(--notch-size));
   
-  /* Sit just under the fold strip */
-  margin-top: var(--f);
-  
-  padding: 0.6em 0.8em;
-  padding-bottom: calc(0.6em + var(--r));
-  
-  /* Transparent border for the bottom cutout effect */
-  border: solid transparent;
-  border-width: 0 0 var(--r) calc(2 * var(--f));
-  
-  /* Cloth-only background (no fold-specific shadow here) */
+  /* Glossy gradient background matching header ribbons */
   background:
     /* Top highlight - subtle thin top-edge highlight */
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 15%, transparent 30%),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.06) 12%, transparent 25%),
     /* Ambient fantasy glow - subtle magical sheen */
-    radial-gradient(circle at center, rgba(255, 255, 255, 0.10) 0%, transparent 70%),
-    /* Base gradient - fantasy blue */
-    linear-gradient(to bottom, var(--nav-ribbon-color-top), var(--nav-ribbon-color-middle) 40%, var(--nav-ribbon-color-bottom));
+    radial-gradient(ellipse at center 30%, rgba(255, 255, 255, 0.12) 0%, transparent 60%),
+    /* Base gradient - fantasy color */
+    linear-gradient(to bottom, var(--nav-ribbon-color-top), var(--nav-ribbon-color-middle) 45%, var(--nav-ribbon-color-bottom));
   
   background-color: var(--nav-ribbon-color-middle);
   
-  /* No top rounding - fold handles that */
+  /* Straight top edge, smooth sides */
   border-radius: 0;
   
-  /* Clip path for cloth only (no fold cut-out at the top) */
+  /* V-cut notch at bottom using clip-path */
   clip-path: polygon(
-    0 0,
-    100% 0,
-    100% 100%,
-    calc(50% + var(--f)) calc(100% - var(--r)),
-    calc(2 * var(--f)) 100%,
-    0 100%
+    0 0,                                    /* Top-left */
+    100% 0,                                 /* Top-right */
+    100% calc(100% - var(--notch-size)),    /* Right side before notch */
+    50% 100%,                               /* Bottom center point (V notch) */
+    0 calc(100% - var(--notch-size))        /* Left side before notch */
   );
   
   /* Drop shadow + inner glow for depth - matches header ribbon */
   box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.3),
-    inset 0 0 8px rgba(255, 255, 255, 0.12);
+    0 4px 8px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 0 8px rgba(255, 255, 255, 0.08);
   
-  /* Tug animation - stretch from top of cloth (just under fold) */
+  /* Tug animation - stretch from top (top edge stays stationary) */
   transform-origin: top center;
   transition: transform 180ms ease-out;
-  pointer-events: none; /* Allow clicks to pass through decorative body */
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Cloth fiber grain + ripple effect overlay - matches header ribbon */
-.nav-ribbon-body::before {
+.nav-ribbon-tab::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -139,66 +104,62 @@
     /* Cloth fiber grain - barely visible vertical woven texture */
     repeating-linear-gradient(
       0deg,
-      rgba(255, 255, 255, 0.008) 0px,
-      rgba(255, 255, 255, 0.008) 1px,
+      rgba(255, 255, 255, 0.01) 0px,
+      rgba(255, 255, 255, 0.01) 1px,
       transparent 1px,
       transparent 2px
     ),
     /* Ripple bulge highlight - cloth drape center */
     radial-gradient(
-      ellipse at center,
-      rgba(255, 255, 255, 0.06) 0%,
-      transparent 70%
+      ellipse at center 40%,
+      rgba(255, 255, 255, 0.08) 0%,
+      transparent 60%
     ),
     /* Vertical fade from top - drape shadow */
     linear-gradient(
       to bottom,
-      rgba(255, 255, 255, 0.08) 0%,
-      transparent 40%
+      rgba(255, 255, 255, 0.1) 0%,
+      transparent 35%
     );
-}
-
-/* Inner content wrapper - counter-scales to keep icon stationary during tug */
-.nav-ribbon-inner {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform-origin: top center;
-  transition: transform 180ms ease-out;
-  pointer-events: auto; /* Only the icon area is clickable */
+  
+  /* Match the clip-path of the parent */
+  clip-path: inherit;
 }
 
 /* Icon styling */
 .nav-ribbon-icon {
+  position: relative;
+  z-index: 2;
   width: 1.25rem;
   height: 1.25rem;
-  color: rgba(255, 255, 255, 0.9);
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  color: rgba(255, 255, 255, 0.92);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+  /* Counter-scale to keep icon stationary during tug animation */
+  transform-origin: top center;
+  transition: transform 180ms ease-out;
 }
 
-/* Hover state - tug stretch animation (body stretches, fold stays anchored) */
-.nav-ribbon-link:hover .nav-ribbon-body {
-  transform: scaleY(1.08);
+/* Hover state - tug stretch animation (only bottom stretches down) */
+.nav-ribbon-link:hover .nav-ribbon-tab {
+  transform: scaleY(1.06);
 }
 
-/* Counter-scale inner wrapper so icon doesn't stretch */
-.nav-ribbon-link:hover .nav-ribbon-inner {
-  transform: scaleY(0.93); /* Inverse of 1.08 to keep icon visually static */
+/* Counter-scale icon so it doesn't stretch with the tab */
+.nav-ribbon-link:hover .nav-ribbon-icon {
+  transform: scaleY(0.943); /* Inverse of 1.06 to keep icon visually static */
 }
 
 /* Exit animation - slightly slower ease-in */
-.nav-ribbon-link:not(:hover) .nav-ribbon-body {
+.nav-ribbon-link:not(:hover) .nav-ribbon-tab {
   transition: transform 200ms ease-in;
 }
 
-.nav-ribbon-link:not(:hover) .nav-ribbon-inner {
+.nav-ribbon-link:not(:hover) .nav-ribbon-icon {
   transition: transform 200ms ease-in;
 }
 
 /* Active state - slightly brighter */
-.nav-ribbon--active {
+.nav-ribbon--active .nav-ribbon-tab {
   --nav-ribbon-color-top: #4a7ae8;
   --nav-ribbon-color-middle: #3d6ad4;
   --nav-ribbon-color-bottom: #3156b5;
@@ -209,7 +170,7 @@
 }
 
 /* Focus state for accessibility */
-.nav-ribbon-link:focus-visible .nav-ribbon {
+.nav-ribbon-link:focus-visible .nav-ribbon-tab {
   outline: 2px solid rgba(255, 255, 255, 0.5);
   outline-offset: 2px;
 }
@@ -221,11 +182,23 @@
   --nav-ribbon-color-bottom: #29479c;
 }
 
-/* Magenta-red variant (Members) - more red-pink */
+.nav-ribbon--blue.nav-ribbon--active {
+  --nav-ribbon-color-top: #4a7ae8;
+  --nav-ribbon-color-middle: #3d6ad4;
+  --nav-ribbon-color-bottom: #3156b5;
+}
+
+/* Red-Pink variant (Members) - more red than magenta */
 .nav-ribbon--magenta {
-  --nav-ribbon-color-top: #d4457a;
-  --nav-ribbon-color-middle: #b13062;
-  --nav-ribbon-color-bottom: #851e46;
+  --nav-ribbon-color-top: #d94a6e;
+  --nav-ribbon-color-middle: #c43558;
+  --nav-ribbon-color-bottom: #9e2444;
+}
+
+.nav-ribbon--magenta.nav-ribbon--active {
+  --nav-ribbon-color-top: #e85a7e;
+  --nav-ribbon-color-middle: #d44568;
+  --nav-ribbon-color-bottom: #b43454;
 }
 
 /* Green variant (Competitions) */
@@ -235,9 +208,8 @@
   --nav-ribbon-color-bottom: #22663d;
 }
 
-/* Gold variant (optional - for special ribbons) */
-.nav-ribbon--gold {
-  --nav-ribbon-color-top: #D4AF37;
-  --nav-ribbon-color-middle: #C9A227;
-  --nav-ribbon-color-bottom: #A88728;
+.nav-ribbon--green.nav-ribbon--active {
+  --nav-ribbon-color-top: #4fcc7c;
+  --nav-ribbon-color-middle: #3f9b62;
+  --nav-ribbon-color-bottom: #32764d;
 }
