@@ -34,6 +34,7 @@ const RibbonNav = () => {
                 to={item.path}
                 className="nav-ribbon-link"
                 aria-label={item.label}
+                onClick={(e) => e.stopPropagation()}
               >
                 <div 
                   className={`nav-ribbon nav-ribbon--${item.variant} ${isCurrentActive ? 'nav-ribbon--active' : ''}`}
