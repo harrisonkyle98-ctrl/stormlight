@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
-import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Hiscores from './pages/Hiscores'
 import Members from './pages/Members'
@@ -34,10 +33,9 @@ function AppContent() {
     return <LinkAccount />
   }
 
-  return (
-    <div>
-      <Navbar />
-      <main className="w-full px-6 py-4">
+    return (
+      <div>
+        <main className="w-full px-6 py-4">
         <div className="max-w-7xl mx-auto">
           <Routes>
             <Route path="/" element={<Home />} />

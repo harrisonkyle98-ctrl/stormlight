@@ -1,0 +1,169 @@
+/* ========================================
+   HANGING RIBBON NAVIGATION
+   Matches header ribbon styling with cloth texture, lighting, and effects
+   ======================================== */
+
+/* Container for the ribbon navigation - positioned above gold ribbon */
+.ribbon-nav-container {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  pointer-events: none;
+}
+
+/* Flex container for evenly spaced ribbons */
+.ribbon-nav-bar {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  pointer-events: auto;
+}
+
+/* Link/button wrapper - reset styles */
+.nav-ribbon-link {
+  display: block;
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* Individual hanging ribbon - uses same styling as header ribbons */
+.nav-ribbon {
+  --f: 0.35em; /* control the folded part */
+  --r: 0.6em; /* control the cutout */
+  
+  /* Color palette - matches blue header ribbon */
+  --nav-ribbon-color-top: #3b66d1;
+  --nav-ribbon-color-middle: #3156b5;
+  --nav-ribbon-color-bottom: #29479c;
+  
+  position: relative;
+  padding: 0.6em 0.8em;
+  padding-bottom: calc(0.6em + var(--r));
+  
+  /* Transparent border for the folded effect */
+  border: solid transparent;
+  border-width: 0 0 var(--r) calc(2 * var(--f));
+  
+  /* Layered background matching header ribbon styling */
+  background:
+    /* Fold shadow at top-left corner */
+    radial-gradient(50% 100% at bottom, rgba(0, 0, 0, 0.3) 98%, transparent 101%) 
+      0 0 / calc(2 * var(--f)) var(--f) no-repeat border-box,
+    /* Top highlight - subtle thin top-edge highlight */
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 15%, transparent 30%),
+    /* Ambient fantasy glow - subtle magical sheen */
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.10) 0%, transparent 70%),
+    /* Base gradient - fantasy blue */
+    linear-gradient(to bottom, var(--nav-ribbon-color-top), var(--nav-ribbon-color-middle) 40%, var(--nav-ribbon-color-bottom));
+  
+  background-color: var(--nav-ribbon-color-middle);
+  
+  /* Rounded top corners */
+  border-radius: var(--f) var(--f) 0 0;
+  
+  /* Clip path for hanging ribbon shape with bottom cutout */
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% 100%,
+    calc(50% + var(--f)) calc(100% - var(--r)),
+    calc(2 * var(--f)) 100%,
+    calc(2 * var(--f)) var(--f),
+    0 var(--f)
+  );
+  
+  /* Drop shadow + inner glow for depth - matches header ribbon */
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    inset 0 0 8px rgba(255, 255, 255, 0.12);
+  
+  /* Smooth tug animation on hover */
+  transition: transform 180ms ease-out;
+}
+
+/* Cloth fiber grain + ripple effect overlay - matches header ribbon */
+.nav-ribbon::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  
+  background:
+    /* Cloth fiber grain - barely visible vertical woven texture */
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.008) 0px,
+      rgba(255, 255, 255, 0.008) 1px,
+      transparent 1px,
+      transparent 2px
+    ),
+    /* Ripple bulge highlight - cloth drape center */
+    radial-gradient(
+      ellipse at center,
+      rgba(255, 255, 255, 0.06) 0%,
+      transparent 70%
+    ),
+    /* Vertical fade from top - drape shadow */
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.08) 0%,
+      transparent 40%
+    );
+}
+
+/* Inner content wrapper */
+.nav-ribbon-inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Icon styling */
+.nav-ribbon-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: rgba(255, 255, 255, 0.9);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+/* Hover state - tug downward animation */
+.nav-ribbon-link:hover .nav-ribbon {
+  transform: translateY(4px);
+}
+
+/* Exit animation - slightly slower ease-in */
+.nav-ribbon-link:not(:hover) .nav-ribbon {
+  transition: transform 200ms ease-in;
+}
+
+/* Active state - slightly brighter */
+.nav-ribbon--active {
+  --nav-ribbon-color-top: #4a7ae8;
+  --nav-ribbon-color-middle: #3d6ad4;
+  --nav-ribbon-color-bottom: #3156b5;
+}
+
+.nav-ribbon--active .nav-ribbon-icon {
+  color: #ffffff;
+}
+
+/* Focus state for accessibility */
+.nav-ribbon-link:focus-visible .nav-ribbon {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* Gold variant (optional - for special ribbons) */
+.nav-ribbon--gold {
+  --nav-ribbon-color-top: #D4AF37;
+  --nav-ribbon-color-middle: #C9A227;
+  --nav-ribbon-color-bottom: #A88728;
+}

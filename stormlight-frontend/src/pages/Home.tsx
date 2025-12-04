@@ -14,6 +14,7 @@ import { themes } from '../config/themes'
 import { ClanLogRow } from '../components/clanLogs/ClanLogRow'
 import { ActivityLogRow } from '../components/activityLogs/ActivityLogRow'
 import { Username } from '../components/ui/username'
+import RibbonNav from '../components/RibbonNav'
 
 const getRankIcon = (rank: string): string => {
   const rankImageMap: { [key: string]: string } = {
@@ -810,6 +811,9 @@ const Home = () => {
         </section>
       ) : playerData && (
         <section className="profile-header-section">
+          {/* Hanging Ribbon Navigation */}
+          <RibbonNav />
+          
           {/* Gold Ribbon with username - clickable to toggle collapse */}
           <div 
             className="gold-banner-wrapper cursor-pointer"
