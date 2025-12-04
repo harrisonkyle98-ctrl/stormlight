@@ -31,12 +31,15 @@
 
 .nav-ribbon {
   /* Ribbon geometry variable */
-  --r: 0.8em; /* cutout depth */
+  --r: 0.8em; /* depth of center notch */
   
-  /* Default color - blue */
-  --nav-color: #3156b5;
+  /* Color stops - default blue (overridden by variants) */
+  --nav-color-top: #3b66d1;
+  --nav-color-mid: #3156b5;
+  --nav-color-bot: #29479c;
   
   /* Layout */
+  position: relative;
   font-size: 24px;
   color: #fff;
   display: flex;
@@ -49,7 +52,7 @@
   border-inline: 0.5em solid transparent;
   padding: 0.5em 0.2em calc(var(--r) + 0.2em);
   
-  /* EXACT ribbon shape with pointed bottom, no spikes */
+  /* EXACT SHAPE — DO NOT MODIFY */
   clip-path: polygon(
     0 0,
     100% 0,
@@ -60,9 +63,33 @@
     0 100%
   );
   
-  /* Flat solid color - NO shadows, NO gradients */
-  background-color: var(--nav-color);
-  background-image: none;
+  /* Material styling - matches header ribbon (minus fold shading) */
+  background:
+    /* Top highlight - subtle thin top-edge highlight */
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.10) 0%,
+      rgba(255, 255, 255, 0.04) 3%,
+      rgba(255, 255, 255, 0.00) 8%
+    ),
+    /* Ambient fantasy glow - subtle magical sheen */
+    radial-gradient(
+      circle at center,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.00) 70%
+    ),
+    /* Base gradient - fantasy color variant */
+    linear-gradient(
+      to bottom,
+      var(--nav-color-top),
+      var(--nav-color-mid) 35%,
+      var(--nav-color-bot)
+    );
+  
+  /* Same style of depth as banner */
+  box-shadow:
+    0 6px 10px rgba(0, 0, 0, 0.25),
+    inset 0 0 12px rgba(255, 255, 255, 0.15);
   
   /* Tug animation - stretch from top so only bottom extends downward */
   transform-origin: top center;
@@ -70,6 +97,37 @@
   
   /* Enable clicks on the ribbon */
   pointer-events: auto;
+}
+
+/* Cloth fiber grain + ripple effect overlay - matches header ribbon */
+.nav-ribbon::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  
+  background:
+    /* Cloth fiber grain - barely visible vertical woven texture */
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.006) 0px,
+      rgba(255, 255, 255, 0.006) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    /* Ripple bulge highlight - cloth drape center */
+    radial-gradient(
+      ellipse at center,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.00) 70%
+    ),
+    /* Vertical fade from top - drape shadow */
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.10) 0%,
+      rgba(255, 255, 255, 0.00) 30%
+    );
 }
 
 /* Icon styling */
@@ -106,7 +164,9 @@
 
 /* Active state - slightly brighter */
 .nav-ribbon--active {
-  --nav-color: #3d6ad4;
+  --nav-color-top: #4a7ae8;
+  --nav-color-mid: #3d6ad4;
+  --nav-color-bot: #3156b5;
 }
 
 .nav-ribbon--active .nav-ribbon-icon {
@@ -125,20 +185,28 @@
 
 /* Blue variant (Home) - Sapphire blue */
 .nav-ribbon--blue {
-  --nav-color: #3156b5;
+  --nav-color-top: #3b66d1;
+  --nav-color-mid: #3156b5;
+  --nav-color-bot: #29479c;
 }
 
 /* Magenta-red variant (Members) - Red-pink */
 .nav-ribbon--magenta {
-  --nav-color: #b13062;
+  --nav-color-top: #d4457a;
+  --nav-color-mid: #b13062;
+  --nav-color-bot: #851e46;
 }
 
 /* Green variant (Competitions) */
 .nav-ribbon--green {
-  --nav-color: #2f8b52;
+  --nav-color-top: #3fb96c;
+  --nav-color-mid: #2f8b52;
+  --nav-color-bot: #22663d;
 }
 
 /* Gold variant (optional - for special ribbons) */
 .nav-ribbon--gold {
-  --nav-color: #C9A227;
+  --nav-color-top: #D4AF37;
+  --nav-color-mid: #C9A227;
+  --nav-color-bot: #A88728;
 }
