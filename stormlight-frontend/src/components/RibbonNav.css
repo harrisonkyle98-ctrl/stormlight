@@ -6,7 +6,7 @@
 /* Container for the ribbon navigation - positioned to hang OVER the gold ribbon */
 .ribbon-nav-container {
   position: absolute;
-  top: -0.4rem; /* Lowered by 1-2px so fold touches gold ribbon */
+  top: -0.35rem; /* Lowered additional 1px so fold touches gold ribbon */
   left: 0;
   right: 0;
   width: 100%;
@@ -19,8 +19,8 @@
   display: flex;
   justify-content: flex-start;
   gap: 0.5rem; /* Reduced spacing between ribbons */
-  pointer-events: auto;
-  padding-left: 51px; /* Match gold ribbon overhang */
+  pointer-events: none; /* Allow clicks to pass through to gold ribbon */
+  padding-left: 44px; /* Shifted left by ~7px for better alignment */
 }
 
 /* Link/button wrapper - reset styles */
@@ -31,6 +31,7 @@
   border: none;
   padding: 0;
   cursor: pointer;
+  pointer-events: none; /* Allow clicks to pass through decorative wrapper */
 }
 
 /* Individual hanging ribbon - uses same styling as header ribbons */
@@ -83,6 +84,11 @@
   box-shadow:
     0 4px 8px rgba(0, 0, 0, 0.3),
     inset 0 0 8px rgba(255, 255, 255, 0.12);
+  
+  /* Tug animation - stretch from bottom so fold stays anchored */
+  transform-origin: bottom center;
+  transition: transform 180ms ease-out;
+  pointer-events: none; /* Allow clicks to pass through decorative ribbon */
 }
 
 /* Cloth fiber grain + ripple effect overlay - matches header ribbon */
@@ -116,15 +122,16 @@
     );
 }
 
-/* Inner content wrapper - handles tug stretch animation */
+/* Inner content wrapper - counter-scales to keep icon stationary during tug */
 .nav-ribbon-inner {
   position: relative;
   z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  transform-origin: top center;
+  transform-origin: bottom center;
   transition: transform 180ms ease-out;
+  pointer-events: auto; /* Only the icon area is clickable */
 }
 
 /* Icon styling */
@@ -135,12 +142,21 @@
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
-/* Hover state - tug stretch animation (body stretches, fold stays anchored) */
-.nav-ribbon-link:hover .nav-ribbon-inner {
+/* Hover state - tug stretch animation (ribbon body stretches, fold stays anchored) */
+.nav-ribbon-link:hover .nav-ribbon {
   transform: scaleY(1.08);
 }
 
+/* Counter-scale inner wrapper so icon doesn't stretch */
+.nav-ribbon-link:hover .nav-ribbon-inner {
+  transform: scaleY(0.93); /* Inverse of 1.08 to keep icon visually static */
+}
+
 /* Exit animation - slightly slower ease-in */
+.nav-ribbon-link:not(:hover) .nav-ribbon {
+  transition: transform 200ms ease-in;
+}
+
 .nav-ribbon-link:not(:hover) .nav-ribbon-inner {
   transition: transform 200ms ease-in;
 }
