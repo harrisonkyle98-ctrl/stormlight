@@ -41,7 +41,6 @@ const RibbonNav = () => {
                   role="menuitem"
                   aria-current={isCurrentActive ? 'page' : undefined}
                 >
-                  <div className="nav-ribbon-fold" aria-hidden="true" />
                   <div className="nav-ribbon-body">
                     <div className="nav-ribbon-inner">
                       <Icon className="nav-ribbon-icon" />
