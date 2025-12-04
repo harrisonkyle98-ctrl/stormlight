@@ -39,7 +39,7 @@ export function ActivityLogRow({
       {/* Left colored icon column */}
       <div
         className="flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: color, width: '52px' }}
+        style={{ backgroundColor: hexToRgba(color, 0.8), width: '52px' }}
       >
         <Icon className="w-5 h-5 text-white" aria-hidden="true" />
       </div>
