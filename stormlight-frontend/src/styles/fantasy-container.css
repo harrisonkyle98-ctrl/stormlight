@@ -210,24 +210,33 @@
   background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.2), transparent);
 }
 
-/* Section ambient lighting */
+/* Section ambient lighting with radial spotlight */
 .fantasy-section::after {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 60px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+  height: 120px;
   pointer-events: none;
   z-index: 0;
-  transition: opacity 280ms ease-in-out, height 280ms ease-in-out;
+  /* Layer 1: Radial spotlight from top-center (cone effect)
+     Layer 2: Linear ambient wash for base lighting */
+  background:
+    radial-gradient(
+      ellipse at top center,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.03) 40%,
+      rgba(255, 255, 255, 0) 70%
+    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+  opacity: 0.5;
+  transition: opacity 350ms ease-in-out;
 }
 
-/* Section hover spotlight - intensify top lighting */
+/* Section hover spotlight - fade in the radial spotlight */
 .fantasy-section:hover::after {
-  height: 80px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 40%, transparent 100%);
+  opacity: 1;
 }
 
 /* Stats row styling */
@@ -250,7 +259,7 @@
   background: rgba(30, 41, 59, 0.7);
 }
 
-/* Stat item top highlight */
+/* Stat item top highlight - static, no hover spotlight */
 .fantasy-stat-item::before {
   content: '';
   position: absolute;
@@ -259,13 +268,6 @@
   right: 0;
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.15), transparent);
-  transition: height 280ms ease-in-out, background 280ms ease-in-out;
-}
-
-/* Stat item hover spotlight - intensify top lighting */
-.fantasy-stat-item:hover::before {
-  height: 40px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 30%, transparent 100%);
 }
 
 /* Section title styling */
