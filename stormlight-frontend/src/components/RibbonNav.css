@@ -37,8 +37,7 @@
   border-radius: 0;
   margin: 0;
   
-  /* Original ribbon geometry variables */
-  --f: 0.4em; /* Controls the horizontal "hip" width of the wings */
+  /* Ribbon geometry variable */
   --r: 0.8em; /* Controls the V-notch cutout depth */
   
   /* Color palette - default blue */
@@ -69,19 +68,18 @@
   
   background-color: var(--nav-ribbon-color-middle);
   
-  /* Original clip-path geometry - V-notch with angled wings
-     Creates:
-     - Flat top edge from (0,0) to (100%,0)
-     - Right edge down to bottom-right corner
-     - Right wing: slanted line from bottom-right to V-notch point
-     - Left wing: slanted line from V-notch to left bottom point
-     - Left edge back to top */
+  /* Perfectly symmetrical V-notch clip-path
+     - Flat top edge
+     - Right edge down to 75% bottom
+     - V-notch centered at 50%
+     - Left edge from 25% bottom back to top */
   clip-path: polygon(
     0 0,
     100% 0,
     100% 100%,
-    calc(50% + var(--f)) calc(100% - var(--r)),
-    calc(2 * var(--f)) 100%,
+    75% 100%,
+    50% calc(100% - var(--r)),
+    25% 100%,
     0 100%
   );
   
