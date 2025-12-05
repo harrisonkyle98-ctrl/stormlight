@@ -283,7 +283,7 @@
   color: #fff;
 }
 
-/* Navigation ribbon tooltips - higher z-index to appear above all ribbons */
+/* Navigation ribbon tooltips - portaled to document.body with very high z-index */
 .tooltip-advanced.nav-tooltip {
-  z-index: 200;
+  z-index: 9999;
 }

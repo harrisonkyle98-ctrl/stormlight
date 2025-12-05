@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import {
   useFloating,
   offset,
@@ -166,6 +167,94 @@ export const AdvancedTooltip: React.FC<AdvancedTooltipProps> = ({
     })
   }
 
+  // Check if this is a nav tooltip that needs to be portaled
+  const isNavTooltip = className?.includes('nav-tooltip')
+
+  const tooltipContent = (
+    <div
+      ref={refs.setFloating}
+      style={floatingStyles}
+      className={`tooltip-advanced ${className}`}
+      role="tooltip"
+      aria-hidden={!open}
+    >
+      {/* Inner wrapper to clip progress bar inside rounded corners */}
+      <div className="tooltip-inner">
+        {/* Progress Bar */}
+        <div
+          className={`tooltip-progress-bar ${progressActive ? 'active' : ''}`}
+          style={{
+            animationDuration: progressActive ? `${persistMs}ms` : '0ms'
+          }}
+        />
+
+        {/* Close Button - Only show on persistent tooltips */}
+        {persisted && (
+          <button
+            onClick={() => setOpen(false)}
+            className="tooltip-close-button"
+            aria-label="Close tooltip"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        )}
+
+        {/* Content Container */}
+        <div className="tooltip-content">
+          {/* Header with Image and Title */}
+          <div className="tooltip-header">
+            {imageSrc && (
+              <div className="tooltip-image">
+                <img src={imageSrc} alt="" />
+              </div>
+            )}
+            <div className="tooltip-header-text">
+              <h3 className="tooltip-title">{title}</h3>
+              {headerTag && headerTag}
+              {description && (
+                <div className="tooltip-description">{description}</div>
+              )}
+            </div>
+          </div>
+
+          {/* Rows */}
+          {rows.length > 0 && (
+            <div className="tooltip-rows">
+              {rows.map((row, index) => (
+                <div key={index} className="tooltip-row">
+                  {row.iconSrc && (
+                    <div className="tooltip-row-icon">
+                      <img src={row.iconSrc} alt="" />
+                    </div>
+                  )}
+                  <div className="tooltip-row-content">
+                    <span className="tooltip-row-label">{row.label}</span>
+                    <span className="tooltip-row-value">{row.value}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Footer */}
+          {footerText && (
+            <div className="tooltip-footer">
+              {footerText}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Arrow - Keep outside inner wrapper so it's not clipped */}
+      <FloatingArrow
+        ref={arrowRef}
+        context={context}
+        className="tooltip-arrow"
+        fill="var(--tooltip-bg)"
+      />
+    </div>
+  )
+
   return (
     <>
       <div
@@ -179,88 +268,9 @@ export const AdvancedTooltip: React.FC<AdvancedTooltipProps> = ({
       </div>
 
       {open && (
-        <div
-          ref={refs.setFloating}
-          style={floatingStyles}
-          className={`tooltip-advanced ${className}`}
-          role="tooltip"
-          aria-hidden={!open}
-        >
-          {/* Inner wrapper to clip progress bar inside rounded corners */}
-          <div className="tooltip-inner">
-            {/* Progress Bar */}
-            <div
-              className={`tooltip-progress-bar ${progressActive ? 'active' : ''}`}
-              style={{
-                animationDuration: progressActive ? `${persistMs}ms` : '0ms'
-              }}
-            />
-
-            {/* Close Button - Only show on persistent tooltips */}
-            {persisted && (
-              <button
-                onClick={() => setOpen(false)}
-                className="tooltip-close-button"
-                aria-label="Close tooltip"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            )}
-
-            {/* Content Container */}
-            <div className="tooltip-content">
-              {/* Header with Image and Title */}
-              <div className="tooltip-header">
-                {imageSrc && (
-                  <div className="tooltip-image">
-                    <img src={imageSrc} alt="" />
-                  </div>
-                )}
-                <div className="tooltip-header-text">
-                  <h3 className="tooltip-title">{title}</h3>
-                  {headerTag && headerTag}
-                  {description && (
-                    <div className="tooltip-description">{description}</div>
-                  )}
-                </div>
-              </div>
-
-              {/* Rows */}
-              {rows.length > 0 && (
-                <div className="tooltip-rows">
-                  {rows.map((row, index) => (
-                    <div key={index} className="tooltip-row">
-                      {row.iconSrc && (
-                        <div className="tooltip-row-icon">
-                          <img src={row.iconSrc} alt="" />
-                        </div>
-                      )}
-                      <div className="tooltip-row-content">
-                        <span className="tooltip-row-label">{row.label}</span>
-                        <span className="tooltip-row-value">{row.value}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Footer */}
-              {footerText && (
-                <div className="tooltip-footer">
-                  {footerText}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Arrow - Keep outside inner wrapper so it's not clipped */}
-          <FloatingArrow
-            ref={arrowRef}
-            context={context}
-            className="tooltip-arrow"
-            fill="var(--tooltip-bg)"
-          />
-        </div>
+        isNavTooltip
+          ? createPortal(tooltipContent, document.body)
+          : tooltipContent
       )}
     </>
   )
