@@ -1327,7 +1327,7 @@ const Home = () => {
 
       {/* User Settings Modal */}
       <Dialog open={settingsSection !== null} onOpenChange={(open) => !open && setSettingsSection(null)}>
-        <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-2xl">
+        <DialogContent className="text-white max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-white text-xl">
               {settingsSection === 'account' && 'Link Account'}

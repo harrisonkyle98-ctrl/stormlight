@@ -57,7 +57,7 @@ export const DropSearchModal = ({ isOpen, onClose, onSelect, position }: DropSea
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-slate-800 border-slate-700 max-w-2xl max-h-[80vh]">
+      <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="text-white">
             Select Drop for Position {position + 1}

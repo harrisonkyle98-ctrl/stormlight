@@ -65,7 +65,7 @@ export const BadgeAssignmentModal: React.FC<BadgeAssignmentModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-slate-800 border-slate-700">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="text-white">
             Assign Custom Badges - {memberUsername}

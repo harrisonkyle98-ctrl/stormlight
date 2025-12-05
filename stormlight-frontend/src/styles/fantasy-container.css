@@ -498,3 +498,24 @@
 .profile-header-panel .profile-avatar-section a {
   color: #ffffff !important;
 }
+
+/* ========================================
+   MODAL UNIFIED CONTAINER STYLING
+   Applies homepage unified container styling to pop-up modals
+   ======================================== */
+
+/* Modal outer container - reuses fantasy-container but removes page-level margin */
+.modal-unified-outer {
+  margin: 0 !important;
+  border-radius: 0 !important;
+  max-width: 100%;
+  overflow: visible;
+}
+
+/* Modal inner panel - reuses fantasy-section but removes margin-bottom */
+.modal-unified-inner {
+  margin-bottom: 0 !important;
+  border-radius: 0 !important;
+  display: grid;
+  gap: 1rem;
+}
