@@ -160,11 +160,11 @@
   --nav-color-bot: #3365d0;
 }
 
-/* Magenta-red variant (Members) - Red-pink */
+/* Magenta-red variant (Members) - Darker, redder magenta */
 .nav-ribbon--magenta {
-  --nav-color-top: #e04882;
-  --nav-color-mid: #d12d6b;
-  --nav-color-bot: #a32352;
+  --nav-color-top: #c73868;
+  --nav-color-mid: #b22255;
+  --nav-color-bot: #8a1a42;
 }
 
 /* Green variant (Competitions) */
