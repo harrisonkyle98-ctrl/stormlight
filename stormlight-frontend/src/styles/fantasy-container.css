@@ -539,3 +539,33 @@
   border: 1px solid rgba(100, 116, 139, 0.2) !important;
   padding: 1.5rem !important;
 }
+
+/* ========================================
+   MEMBERS PAGE - Remove rounded corners from Cards
+   Scoped to fantasy-container to avoid affecting nav ribbons
+   ======================================== */
+
+/* Remove rounded corners from all Cards inside fantasy-container */
+.fantasy-container .rounded-xl {
+  border-radius: 0 !important;
+}
+
+/* Also target Cards with rounded-lg class */
+.fantasy-container .rounded-lg {
+  border-radius: 0 !important;
+}
+
+/* Remove rounded corners from Card children (CardHeader, CardContent, etc.) */
+.fantasy-container [class*="rounded-"] {
+  border-radius: 0 !important;
+}
+
+/* Ensure fantasy-section itself has no rounded corners */
+.fantasy-section {
+  border-radius: 0 !important;
+}
+
+/* Ensure fantasy-container itself has no rounded corners */
+.fantasy-container {
+  border-radius: 0 !important;
+}
