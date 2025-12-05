@@ -60,15 +60,13 @@
   /* Rounded top corners only */
   border-radius: 6px 6px 0 0;
   
-  /* SHAPE — DO NOT ALTER */
+  /* SHAPE — single centered V-cut at bottom */
   clip-path: polygon(
     0 0,
     100% 0,
-    100% 100%,
-    calc(100% - 0.5em) calc(100% - var(--r)),
+    100% calc(100% - var(--r)),
     50% 100%,
-    0.5em calc(100% - var(--r)),
-    0 100%
+    0 calc(100% - var(--r))
   );
   
   /* Material styling - matches header ribbon (minus fold shading) */
