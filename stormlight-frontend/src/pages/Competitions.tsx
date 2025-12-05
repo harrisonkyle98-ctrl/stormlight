@@ -651,8 +651,8 @@ const Competitions = () => {
                   const { status, color } = getCompetitionStatus(competition.startDate, competition.endDate)
                   
                   return (
-                    <div key={competition.id} className="fantasy-section">
-                      {/* Fantasy Header Plate - Blue for skilling, Green for PvM */}
+                    <div key={competition.id} className="competition-entry">
+                      {/* Fantasy Header Ribbon - Blue for skilling, Green for PvM - sits ABOVE the panel */}
                       <div className={`competition-header-plate ${competition.type === 'BOSS_KILLS' ? 'competition-header-plate--pvm' : ''}`}>
                         <div className="competition-header-plate-content">
                           <div className="competition-header-plate-title">
@@ -675,12 +675,14 @@ const Competitions = () => {
                         </div>
                       </div>
                       
-                      {/* Description - below header plate */}
-                      {competition.description && (
-                        <p className="text-slate-400 mb-4 text-sm">
-                          {competition.description}
-                        </p>
-                      )}
+                      {/* Inner panel - content below the ribbon header */}
+                      <div className="fantasy-section">
+                        {/* Description */}
+                        {competition.description && (
+                          <p className="text-slate-400 mb-4 text-sm">
+                            {competition.description}
+                          </p>
+                        )}
                       
                       {/* Content section */}
                       <div className="space-y-4">
@@ -795,6 +797,7 @@ const Competitions = () => {
                             </Button>
                           </div>
                         )}
+                      </div>
                       </div>
                     </div>
                   )
