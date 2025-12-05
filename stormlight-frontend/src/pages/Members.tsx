@@ -216,9 +216,9 @@ const Members = () => {
         <div className="fantasy-content">
           {/* Search and Sort Section */}
           <div className="fantasy-section space-y-6">
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white">Search Members</CardTitle>
+                        <Card className="members-card bg-slate-800/50 border-slate-700">
+                          <CardHeader>
+                            <CardTitle className="text-white">Search Members</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-col md:flex-row gap-4">
@@ -258,81 +258,81 @@ const Members = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardContent className="p-4">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                  <div className="flex items-center space-x-4">
-                    <span className="text-white text-sm">Results per page:</span>
-                    <Select value={pageSize.toString()} onValueChange={(value) => {
-                      setPageSize(parseInt(value))
-                      setCurrentPage(1)
-                    }}>
-                      <SelectTrigger className="w-20 bg-slate-700 border-slate-600 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-700 border-slate-600">
-                        <SelectItem value="15" className="text-white hover:bg-slate-600">15</SelectItem>
-                        <SelectItem value="30" className="text-white hover:bg-slate-600">30</SelectItem>
-                        <SelectItem value="50" className="text-white hover:bg-slate-600">50</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                        <Card className="members-card bg-slate-800/50 border-slate-700">
+                          <CardContent className="p-4">
+                            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                              <div className="flex items-center space-x-4">
+                                <span className="text-white text-sm">Results per page:</span>
+                                <Select value={pageSize.toString()} onValueChange={(value) => {
+                                  setPageSize(parseInt(value))
+                                  setCurrentPage(1)
+                                }}>
+                                  <SelectTrigger className="w-20 bg-slate-700 border-slate-600 text-white">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-slate-700 border-slate-600">
+                                    <SelectItem value="15" className="text-white hover:bg-slate-600">15</SelectItem>
+                                    <SelectItem value="30" className="text-white hover:bg-slate-600">30</SelectItem>
+                                    <SelectItem value="50" className="text-white hover:bg-slate-600">50</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(1)}
-                      disabled={currentPage === 1}
-                      className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                    >
-                      First
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                      disabled={currentPage === 1}
-                      className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                    >
-                      Previous
-                    </Button>
-                    <span className="text-white text-sm px-3">
-                      Page {currentPage}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(currentPage + 1)}
-                      disabled={!membersData?.pagination?.has_next}
-                      className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                    >
-                      Next
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        if (membersData?.pagination?.total_members) {
-                          const totalPages = Math.ceil(membersData.pagination.total_members / pageSize)
-                          setCurrentPage(totalPages)
-                        }
-                      }}
-                      disabled={!membersData?.pagination?.has_next}
-                      className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                    >
-                      Last
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                              <div className="flex items-center space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setCurrentPage(1)}
+                                  disabled={currentPage === 1}
+                                  className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                                >
+                                  First
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                  disabled={currentPage === 1}
+                                  className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                                >
+                                  Previous
+                                </Button>
+                                <span className="text-white text-sm px-3">
+                                  Page {currentPage}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setCurrentPage(currentPage + 1)}
+                                  disabled={!membersData?.pagination?.has_next}
+                                  className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                                >
+                                  Next
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (membersData?.pagination?.total_members) {
+                                      const totalPages = Math.ceil(membersData.pagination.total_members / pageSize)
+                                      setCurrentPage(totalPages)
+                                    }
+                                  }}
+                                  disabled={!membersData?.pagination?.has_next}
+                                  className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                                >
+                                  Last
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
 
-            <div className="grid gap-4">
+                        <div className="grid gap-4">
               {displayData.map((member, index) => {
                 const memberRank = (currentPage - 1) * pageSize + index + 1
                 return (
-                  <Card key={member.username} className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
+                  <Card key={member.username} className="members-card bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
@@ -422,85 +422,85 @@ const Members = () => {
                   </Card>
                 )
               })}
-            </div>
+                      </div>
 
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardContent className="p-4">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                  <div className="flex items-center space-x-4">
-                    <span className="text-white text-sm">Results per page:</span>
-                    <Select value={pageSize.toString()} onValueChange={(value) => {
-                      setPageSize(parseInt(value))
-                      setCurrentPage(1)
-                    }}>
-                      <SelectTrigger className="w-20 bg-slate-700 border-slate-600 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-700 border-slate-600">
-                        <SelectItem value="15" className="text-white hover:bg-slate-600">15</SelectItem>
-                        <SelectItem value="30" className="text-white hover:bg-slate-600">30</SelectItem>
-                        <SelectItem value="50" className="text-white hover:bg-slate-600">50</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      <Card className="members-card bg-slate-800/50 border-slate-700">
+                        <CardContent className="p-4">
+                          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div className="flex items-center space-x-4">
+                              <span className="text-white text-sm">Results per page:</span>
+                              <Select value={pageSize.toString()} onValueChange={(value) => {
+                                setPageSize(parseInt(value))
+                                setCurrentPage(1)
+                              }}>
+                                <SelectTrigger className="w-20 bg-slate-700 border-slate-600 text-white">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-slate-700 border-slate-600">
+                                  <SelectItem value="15" className="text-white hover:bg-slate-600">15</SelectItem>
+                                  <SelectItem value="30" className="text-white hover:bg-slate-600">30</SelectItem>
+                                  <SelectItem value="50" className="text-white hover:bg-slate-600">50</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(1)}
-                      disabled={currentPage === 1}
-                      className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                    >
-                      First
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                      disabled={currentPage === 1}
-                      className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                    >
-                      Previous
-                    </Button>
-                    <span className="text-white text-sm px-3">
-                      Page {currentPage}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(currentPage + 1)}
-                      disabled={!membersData?.pagination?.has_next}
-                      className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                    >
-                      Next
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        if (membersData?.pagination?.total_members) {
-                          const totalPages = Math.ceil(membersData.pagination.total_members / pageSize)
-                          setCurrentPage(totalPages)
-                        }
-                      }}
-                      disabled={!membersData?.pagination?.has_next}
-                      className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                    >
-                      Last
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(1)}
+                                disabled={currentPage === 1}
+                                className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                              >
+                                First
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                disabled={currentPage === 1}
+                                className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                              >
+                                Previous
+                              </Button>
+                              <span className="text-white text-sm px-3">
+                                Page {currentPage}
+                              </span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(currentPage + 1)}
+                                disabled={!membersData?.pagination?.has_next}
+                                className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                              >
+                                Next
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  if (membersData?.pagination?.total_members) {
+                                    const totalPages = Math.ceil(membersData.pagination.total_members / pageSize)
+                                    setCurrentPage(totalPages)
+                                  }
+                                }}
+                                disabled={!membersData?.pagination?.has_next}
+                                className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                              >
+                                Last
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
 
-            {displayData.length === 0 && !loading && (
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardContent className="p-8 text-center">
-                <p className="text-slate-400">No members found. Try searching for a specific member name.</p>
-              </CardContent>
-            </Card>
-          )}
+                      {displayData.length === 0 && !loading && (
+                      <Card className="members-card bg-slate-800/50 border-slate-700">
+                        <CardContent className="p-8 text-center">
+                          <p className="text-slate-400">No members found. Try searching for a specific member name.</p>
+                        </CardContent>
+                      </Card>
+                    )}
           </div>{/* End fantasy-section */}
         </div>{/* End fantasy-content */}
       </div>{/* End fantasy-container */}
