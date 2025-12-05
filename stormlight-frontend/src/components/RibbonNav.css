@@ -53,20 +53,19 @@
   text-decoration: none;
   cursor: pointer;
   
-  /* Sizing with transparent side borders for clip-path geometry */
-  border-inline: 0.5em solid transparent;
-  padding: 0.5em 0.2em calc(var(--r) + 0.2em);
+  /* Sizing - center panel only */
+  padding: 0.5em 0.5em calc(var(--r) + 0.2em);
   
   /* Rounded top corners only */
   border-radius: 6px 6px 0 0;
   
-  /* SHAPE — single centered V-cut at bottom with inset shoulders */
+  /* SHAPE — simple rectangle with centered V-cut at bottom */
   clip-path: polygon(
     0 0,
     100% 0,
-    calc(100% - 0.5em) calc(100% - var(--r)),
+    100% calc(100% - var(--r)),
     50% 100%,
-    0.5em calc(100% - var(--r))
+    0 calc(100% - var(--r))
   );
   
   /* Material styling - single continuous gradient (no seams) */
