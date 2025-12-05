@@ -5,12 +5,16 @@ import { Input } from '../components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
-import { Search, Users, User } from 'lucide-react'
+import { Search, Users, User, ChevronDown, ChevronUp } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { Spinner } from '../components/ui/spinner'
 import { MilestoneBadge, checkPlayerMilestones } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
 import { Username } from '../components/ui/username'
+import { useAuth } from '../contexts/AuthContext'
+import AnimatedHeader from '../components/AnimatedHeader'
+import RibbonNav from '../components/RibbonNav'
+import '../styles/fantasy-container.css'
 
 interface ClanMember {
   username: string
@@ -38,6 +42,7 @@ interface MembersData {
 }
 
 const Members = () => {
+  const { user } = useAuth()
   const [membersData, setMembersData] = useState<MembersData | null>(null)
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -46,6 +51,14 @@ const Members = () => {
   const [pageSize, setPageSize] = useState(15)
   const [sortBy, setSortBy] = useState('rank')
   const [membersWithBadges, setMembersWithBadges] = useState<MemberWithBadges[]>([])
+  const [profileExpanded, setProfileExpanded] = useState(false)
+  const [profileAnimReady, setProfileAnimReady] = useState(false)
+
+  // Enable animation after initial render to prevent flicker
+  useEffect(() => {
+    const timer = setTimeout(() => setProfileAnimReady(true), 50)
+    return () => clearTimeout(timer)
+  }, [])
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -105,311 +118,393 @@ const Members = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-96 gap-4">
-        <Spinner size="lg" />
-        <div className="text-white text-xl">Loading clan members...</div>
-      </div>
+      <>
+        <AnimatedHeader />
+        <div className="flex flex-col items-center justify-center min-h-96 gap-4">
+          <Spinner size="lg" />
+          <div className="text-white text-xl">Loading clan members...</div>
+        </div>
+      </>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold text-white mb-2">
-          <Users className="inline-block w-8 h-8 mr-2 text-theme-accent-light" />
-          Stormlight Clan Members
-        </h1>
-        <p className="text-slate-300">
-          Meet the members of our RuneScape clan
-        </p>
-      </div>
+    <>
+      {/* Static Header - STORMLIGHT banner with theme-adaptive text glow */}
+      <AnimatedHeader />
 
-      <Card className="bg-slate-800/50 border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-white">Search Members</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                <Input
-                  placeholder="Search members..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      setSearchQuery(searchTerm)
-                      setCurrentPage(1)
-                    }
-                  }}
-                  className="pl-10 bg-slate-700 border-slate-600 text-white"
-                />
+      {/* Profile Header Section - Gold Ribbon (for logged-in users) */}
+      {user?.username && user?.isLinked && (
+        <section className="profile-header-section">
+          {/* Hanging Ribbon Navigation */}
+          <RibbonNav />
+          
+          {/* Gold Ribbon with username - clickable to toggle collapse */}
+          <div 
+            className="gold-banner-wrapper cursor-pointer"
+            onClick={() => setProfileExpanded(prev => !prev)}
+            role="button"
+            aria-expanded={profileExpanded}
+          >
+            <div className="fantasy-banner fantasy-banner--gold">
+              <div className="fantasy-banner-inner relative flex items-center justify-center pr-14">
+                <h1 className="fantasy-banner-title">{user.username}</h1>
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center justify-center z-10">
+                  {profileExpanded ? (
+                    <ChevronUp className="w-5 h-5 text-white/80" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-white/80" />
+                  )}
+                </div>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-white text-sm">Sort by:</span>
-              <Select value={sortBy} onValueChange={(value) => {
-                setSortBy(value)
-                setCurrentPage(1)
-              }}>
-                <SelectTrigger className="w-32 bg-slate-700 border-slate-600 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-700 border-slate-600">
-                  <SelectItem value="rank" className="text-white hover:bg-slate-600">Rank</SelectItem>
-                  <SelectItem value="xp" className="text-white hover:bg-slate-600">Clan XP</SelectItem>
-                </SelectContent>
-              </Select>
+          </div>
+
+          {/* Profile Panel - collapsible with smooth animation */}
+          <div 
+            className={`profile-header-panel ${
+              profileAnimReady ? 'profile-header-panel-anim ' : ''
+            }${
+              profileExpanded 
+                ? 'profile-header-panel-anim--expanded' 
+                : 'profile-header-panel-anim--collapsed'
+            }`}
+            aria-hidden={!profileExpanded}
+          >
+            <div className="profile-header-panel-content">
+              <div className="flex flex-col lg:flex-row gap-4 items-center justify-center">
+                <div className="flex items-center gap-4">
+                  <Avatar className="w-16 h-16">
+                    <AvatarImage
+                      src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(user.username.replace(/\u00A0/g, ' '))}/chat.png`}
+                      alt={user.username}
+                    />
+                    <AvatarFallback className="bg-theme-button text-white">
+                      <User className="w-8 h-8" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <Link
+                      to={`/clan-member/${usernameToUrl(user.username)}`}
+                      className="text-xl font-bold text-white hover:text-theme-accent-light transition-colors"
+                    >
+                      View Your Profile
+                    </Link>
+                    <p className="text-sm text-slate-400">Click to see your full stats</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </section>
+      )}
 
-      <Card className="bg-slate-800/50 border-slate-700">
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center space-x-4">
-              <span className="text-white text-sm">Results per page:</span>
-              <Select value={pageSize.toString()} onValueChange={(value) => {
-                setPageSize(parseInt(value))
-                setCurrentPage(1)
-              }}>
-                <SelectTrigger className="w-20 bg-slate-700 border-slate-600 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-700 border-slate-600">
-                  <SelectItem value="15" className="text-white hover:bg-slate-600">15</SelectItem>
-                  <SelectItem value="30" className="text-white hover:bg-slate-600">30</SelectItem>
-                  <SelectItem value="50" className="text-white hover:bg-slate-600">50</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-                className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-              >
-                First
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-              >
-                Previous
-              </Button>
-              <span className="text-white text-sm px-3">
-                Page {currentPage}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={!membersData?.pagination?.has_next}
-                className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-              >
-                Next
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (membersData?.pagination?.total_members) {
-                    const totalPages = Math.ceil(membersData.pagination.total_members / pageSize)
-                    setCurrentPage(totalPages)
-                  }
-                }}
-                disabled={!membersData?.pagination?.has_next}
-                className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-              >
-                Last
-              </Button>
+      {/* Main Content Container */}
+      <div className="fantasy-container">
+        {/* Members Banner Header - magenta/red-pink theme */}
+        <div className="fantasy-banner-wrapper">
+          <div className="fantasy-banner-ribbon-left"></div>
+          <div className="fantasy-banner-ribbon-right"></div>
+          <div className="fantasy-banner fantasy-banner--members">
+            <div className="fantasy-banner-inner">
+              <h1 className="fantasy-banner-title">Members</h1>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      <div className="grid gap-4">
-        {displayData.map((member, index) => {
-          const memberRank = (currentPage - 1) * pageSize + index + 1
-          return (
-            <Card key={member.username} className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="flex items-center">
-                      <div className="w-14 mr-3 flex-shrink-0">
-                        <Badge variant="outline" className="text-yellow-400 border-yellow-400 w-full justify-center tabular-nums">
-                          #{memberRank}
-                        </Badge>
-                      </div>
-                      <Avatar className="w-10 h-10 mr-3 flex-shrink-0">
-                        <AvatarImage
-                          src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(member.username.replace(/\u00A0/g, ' '))}/chat.png`}
-                          alt={member.username}
-                        />
-                        <AvatarFallback className="bg-theme-button text-white">
-                          <User className="w-5 h-5" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <Link
-                          to={`/clan-member/${usernameToUrl(member.username)}`}
-                          className="text-lg font-semibold hover:text-theme-accent-light transition-colors block truncate"
-                          style={{
-                            textAlign: 'left',
-                            margin: 0,
-                            padding: 0,
-                            textIndent: 0,
-                            paddingLeft: '1px'
-                          }}
-                        >
-                          <Username
-                            username={member.username}
-                            clanRank={member.clan_rank}
-                          />
-                        </Link>
-                        <div className="flex items-center mt-1">
-                          {member.badgesLoading ? (
-                            <div className="w-24 h-6 bg-slate-600 rounded animate-pulse"></div>
-                          ) : member.badges.length > 0 ? (
-                            (() => {
-                              const rankBadge = member.badges[0]
-                              return (
-                                <div
-                                  className="px-2 py-1 text-xs font-semibold flex items-center gap-1 rounded-md text-white"
-                                  style={{
-                                    background: rankBadge.gradientBackground || rankBadge.backgroundColor
-                                  }}
-                                  title={rankBadge.name}
-                                >
-                                  <img
-                                    src={rankBadge.icon}
-                                    alt={rankBadge.name}
-                                    className="w-3 h-3"
-                                  />
-                                  <span>{rankBadge.name}</span>
-                                </div>
-                              )
-                            })()
-                          ) : (
-                            <div className="px-2 py-1 text-xs font-semibold flex items-center gap-1 rounded-md text-white bg-slate-600">
-                              <span>{member.clan_rank || 'Member'}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+        {/* Main Content Area */}
+        <div className="fantasy-content">
+          {/* Search and Sort Section */}
+          <div className="fantasy-section space-y-6">
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white">Search Members</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                      <Input
+                        placeholder="Search members..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            setSearchQuery(searchTerm)
+                            setCurrentPage(1)
+                          }
+                        }}
+                        className="pl-10 bg-slate-700 border-slate-600 text-white"
+                      />
                     </div>
                   </div>
-
-                  <div className="text-right">
-                    <div className="flex items-center space-x-4">
-                      <div>
-                        <p className="text-sm text-slate-400">Clan XP</p>
-                        <p className="text-xl font-bold text-green-400">
-                          {member.total_xp.toLocaleString()}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-slate-400">Kills</p>
-                        <p className="text-lg font-semibold text-red-400">
-                          {member.kills.toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-white text-sm">Sort by:</span>
+                    <Select value={sortBy} onValueChange={(value) => {
+                      setSortBy(value)
+                      setCurrentPage(1)
+                    }}>
+                      <SelectTrigger className="w-32 bg-slate-700 border-slate-600 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-700 border-slate-600">
+                        <SelectItem value="rank" className="text-white hover:bg-slate-600">Rank</SelectItem>
+                        <SelectItem value="xp" className="text-white hover:bg-slate-600">Clan XP</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          )
-        })}
-      </div>
 
-      <Card className="bg-slate-800/50 border-slate-700">
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center space-x-4">
-              <span className="text-white text-sm">Results per page:</span>
-              <Select value={pageSize.toString()} onValueChange={(value) => {
-                setPageSize(parseInt(value))
-                setCurrentPage(1)
-              }}>
-                <SelectTrigger className="w-20 bg-slate-700 border-slate-600 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-700 border-slate-600">
-                  <SelectItem value="15" className="text-white hover:bg-slate-600">15</SelectItem>
-                  <SelectItem value="30" className="text-white hover:bg-slate-600">30</SelectItem>
-                  <SelectItem value="50" className="text-white hover:bg-slate-600">50</SelectItem>
-                </SelectContent>
-              </Select>
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardContent className="p-4">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                  <div className="flex items-center space-x-4">
+                    <span className="text-white text-sm">Results per page:</span>
+                    <Select value={pageSize.toString()} onValueChange={(value) => {
+                      setPageSize(parseInt(value))
+                      setCurrentPage(1)
+                    }}>
+                      <SelectTrigger className="w-20 bg-slate-700 border-slate-600 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-700 border-slate-600">
+                        <SelectItem value="15" className="text-white hover:bg-slate-600">15</SelectItem>
+                        <SelectItem value="30" className="text-white hover:bg-slate-600">30</SelectItem>
+                        <SelectItem value="50" className="text-white hover:bg-slate-600">50</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                    >
+                      First
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                      className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-white text-sm px-3">
+                      Page {currentPage}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={!membersData?.pagination?.has_next}
+                      className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                    >
+                      Next
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (membersData?.pagination?.total_members) {
+                          const totalPages = Math.ceil(membersData.pagination.total_members / pageSize)
+                          setCurrentPage(totalPages)
+                        }
+                      }}
+                      disabled={!membersData?.pagination?.has_next}
+                      className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                    >
+                      Last
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-4">
+              {displayData.map((member, index) => {
+                const memberRank = (currentPage - 1) * pageSize + index + 1
+                return (
+                  <Card key={member.username} className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="flex items-center">
+                            <div className="w-14 mr-3 flex-shrink-0">
+                              <Badge variant="outline" className="text-yellow-400 border-yellow-400 w-full justify-center tabular-nums">
+                                #{memberRank}
+                              </Badge>
+                            </div>
+                            <Avatar className="w-10 h-10 mr-3 flex-shrink-0">
+                              <AvatarImage
+                                src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(member.username.replace(/\u00A0/g, ' '))}/chat.png`}
+                                alt={member.username}
+                              />
+                              <AvatarFallback className="bg-theme-button text-white">
+                                <User className="w-5 h-5" />
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <Link
+                                to={`/clan-member/${usernameToUrl(member.username)}`}
+                                className="text-lg font-semibold hover:text-theme-accent-light transition-colors block truncate"
+                                style={{
+                                  textAlign: 'left',
+                                  margin: 0,
+                                  padding: 0,
+                                  textIndent: 0,
+                                  paddingLeft: '1px'
+                                }}
+                              >
+                                <Username
+                                  username={member.username}
+                                  clanRank={member.clan_rank}
+                                />
+                              </Link>
+                              <div className="flex items-center mt-1">
+                                {member.badgesLoading ? (
+                                  <div className="w-24 h-6 bg-slate-600 rounded animate-pulse"></div>
+                                ) : member.badges.length > 0 ? (
+                                  (() => {
+                                    const rankBadge = member.badges[0]
+                                    return (
+                                      <div
+                                        className="px-2 py-1 text-xs font-semibold flex items-center gap-1 rounded-md text-white"
+                                        style={{
+                                          background: rankBadge.gradientBackground || rankBadge.backgroundColor
+                                        }}
+                                        title={rankBadge.name}
+                                      >
+                                        <img
+                                          src={rankBadge.icon}
+                                          alt={rankBadge.name}
+                                          className="w-3 h-3"
+                                        />
+                                        <span>{rankBadge.name}</span>
+                                      </div>
+                                    )
+                                  })()
+                                ) : (
+                                  <div className="px-2 py-1 text-xs font-semibold flex items-center gap-1 rounded-md text-white bg-slate-600">
+                                    <span>{member.clan_rank || 'Member'}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <div className="flex items-center space-x-4">
+                            <div>
+                              <p className="text-sm text-slate-400">Clan XP</p>
+                              <p className="text-xl font-bold text-green-400">
+                                {member.total_xp.toLocaleString()}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-slate-400">Kills</p>
+                              <p className="text-lg font-semibold text-red-400">
+                                {member.kills.toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-                className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-              >
-                First
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-              >
-                Previous
-              </Button>
-              <span className="text-white text-sm px-3">
-                Page {currentPage}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={!membersData?.pagination?.has_next}
-                className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-              >
-                Next
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (membersData?.pagination?.total_members) {
-                    const totalPages = Math.ceil(membersData.pagination.total_members / pageSize)
-                    setCurrentPage(totalPages)
-                  }
-                }}
-                disabled={!membersData?.pagination?.has_next}
-                className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-              >
-                Last
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardContent className="p-4">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                  <div className="flex items-center space-x-4">
+                    <span className="text-white text-sm">Results per page:</span>
+                    <Select value={pageSize.toString()} onValueChange={(value) => {
+                      setPageSize(parseInt(value))
+                      setCurrentPage(1)
+                    }}>
+                      <SelectTrigger className="w-20 bg-slate-700 border-slate-600 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-700 border-slate-600">
+                        <SelectItem value="15" className="text-white hover:bg-slate-600">15</SelectItem>
+                        <SelectItem value="30" className="text-white hover:bg-slate-600">30</SelectItem>
+                        <SelectItem value="50" className="text-white hover:bg-slate-600">50</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-      {displayData.length === 0 && !loading && (
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardContent className="p-8 text-center">
-            <p className="text-slate-400">No members found. Try searching for a specific member name.</p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                    >
+                      First
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                      className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-white text-sm px-3">
+                      Page {currentPage}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={!membersData?.pagination?.has_next}
+                      className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                    >
+                      Next
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (membersData?.pagination?.total_members) {
+                          const totalPages = Math.ceil(membersData.pagination.total_members / pageSize)
+                          setCurrentPage(totalPages)
+                        }
+                      }}
+                      disabled={!membersData?.pagination?.has_next}
+                      className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                    >
+                      Last
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {displayData.length === 0 && !loading && (
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardContent className="p-8 text-center">
+                <p className="text-slate-400">No members found. Try searching for a specific member name.</p>
+              </CardContent>
+            </Card>
+          )}
+          </div>{/* End fantasy-section */}
+        </div>{/* End fantasy-content */}
+      </div>{/* End fantasy-container */}
+    </>
   )
 }
 

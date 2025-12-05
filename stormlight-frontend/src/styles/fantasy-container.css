@@ -341,6 +341,13 @@
   --banner-color-bottom: #A88728; /* shadow gold */
 }
 
+/* Members Banner Modifier - magenta/red-pink colors matching Members nav ribbon */
+.fantasy-banner--members {
+  --banner-color-top: #e04882;    /* magenta pink */
+  --banner-color-middle: #d12d6b; /* mid magenta */
+  --banner-color-bottom: #a32352; /* deep magenta */
+}
+
 /* Gold ribbon inside profile header should match panel width (no overhang) */
 .profile-header-section .fantasy-banner.fantasy-banner--gold {
   --overhang: 51px;
