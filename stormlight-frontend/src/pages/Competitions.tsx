@@ -346,15 +346,20 @@ const Competitions = () => {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-US', {
+    const date = new Date(dateString)
+    const datePart = date.toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
+      timeZone: 'UTC'
+    })
+    const timePart = date.toLocaleString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       timeZone: 'UTC',
       timeZoneName: 'short'
     })
+    return { datePart, timePart }
   }
 
   const competitions = competitionsData?.competitions || []
@@ -610,13 +615,6 @@ const Competitions = () => {
 
         {/* Main Content Area */}
         <div className="fantasy-content">
-          {/* Title and Description - NOT in fantasy-section */}
-          <div className="text-center mb-6">
-            <p className="text-slate-300">
-              Compete with your clan mates in XP and Drop challenges
-            </p>
-          </div>
-
           {/* Tab Buttons - NOT in fantasy-section */}
           <div className="flex items-center space-x-4 p-4 bg-slate-700/30 rounded-lg justify-center mb-6">
             <Button
@@ -654,35 +652,35 @@ const Competitions = () => {
                   
                   return (
                     <div key={competition.id} className="fantasy-section">
-                      {/* Header section */}
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                          {competition.type === 'XP_GAIN' ? (
-                            getSkillIcon(competition.skill || 'overall') ? (
-                              <img 
-                                src={getSkillIcon(competition.skill || 'overall')!} 
-                                alt={competition.skill}
-                                className="w-6 h-6"
-                              />
+                      {/* Fantasy Header Plate - Blue for skilling, Green for PvM */}
+                      <div className={`competition-header-plate ${competition.type === 'BOSS_KILLS' ? 'competition-header-plate--pvm' : ''}`}>
+                        <div className="competition-header-plate-content">
+                          <div className="competition-header-plate-title">
+                            <span>{competition.name}</span>
+                            {competition.type === 'XP_GAIN' ? (
+                              getSkillIcon(competition.skill || 'overall') ? (
+                                <img 
+                                  src={getSkillIcon(competition.skill || 'overall')!} 
+                                  alt={competition.skill}
+                                  className="competition-header-plate-icon"
+                                />
+                              ) : null
                             ) : (
-                              <div className="text-2xl">📊</div>
-                            )
-                          ) : (
-                            <div className="text-2xl">💀</div>
-                          )}
-                          <div className="text-left">
-                            <h3 className="text-white text-xl font-semibold text-left">
-                              {competition.name}
-                            </h3>
-                            <p className="text-slate-400 mt-1 text-left text-sm">
-                              {competition.description}
-                            </p>
+                              <span className="competition-header-plate-icon text-2xl">💀</span>
+                            )}
                           </div>
+                          <Badge className={`${color} text-white capitalize pointer-events-none`}>
+                            {status}
+                          </Badge>
                         </div>
-                        <Badge className={`${color} text-white capitalize pointer-events-none`}>
-                          {status}
-                        </Badge>
                       </div>
+                      
+                      {/* Description - below header plate */}
+                      {competition.description && (
+                        <p className="text-slate-400 mb-4 text-sm">
+                          {competition.description}
+                        </p>
+                      )}
                       
                       {/* Content section */}
                       <div className="space-y-4">
@@ -692,7 +690,10 @@ const Competitions = () => {
                             <div>
                               <p className="text-sm text-slate-400">Start Date</p>
                               <p className="text-white font-medium">
-                                {formatDate(competition.startDate)}
+                                {formatDate(competition.startDate).datePart}
+                              </p>
+                              <p className="text-white font-medium text-sm">
+                                {formatDate(competition.startDate).timePart}
                               </p>
                             </div>
                           </div>
@@ -701,7 +702,10 @@ const Competitions = () => {
                             <div>
                               <p className="text-sm text-slate-400">End Date</p>
                               <p className="text-white font-medium">
-                                {formatDate(competition.endDate)}
+                                {formatDate(competition.endDate).datePart}
+                              </p>
+                              <p className="text-white font-medium text-sm">
+                                {formatDate(competition.endDate).timePart}
                               </p>
                             </div>
                           </div>

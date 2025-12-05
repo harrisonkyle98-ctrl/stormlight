@@ -556,3 +556,104 @@
 .members-card {
   border-radius: 0 !important;
 }
+
+/* ========================================
+   COMPETITION ENTRY HEADER PLATE
+   Ornate fantasy header bar for competition entries
+   Uses same lighting/texture system as header ribbons
+   ======================================== */
+
+.competition-header-plate {
+  position: relative;
+  padding: 0.75rem 1.25rem;
+  margin: -1.5rem -1.5rem 1rem -1.5rem; /* Extend to edges of fantasy-section */
+  
+  /* Base gradient - default blue (skilling) */
+  --plate-color-top: #3b66d1;    /* twilight blue */
+  --plate-color-middle: #3156b5; /* royal storm blue */
+  --plate-color-bottom: #29479c; /* deep fantasy blue */
+  
+  background:
+    /* Top highlight - subtle thin top-edge highlight */
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.04) 3%, rgba(255, 255, 255, 0) 8%),
+    /* Ambient fantasy glow - subtle magical sheen */
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 70%),
+    /* Edge darkening - left */
+    linear-gradient(to right, rgba(0, 0, 0, 0.15) 0%, transparent 15%),
+    /* Edge darkening - right */
+    linear-gradient(to left, rgba(0, 0, 0, 0.15) 0%, transparent 15%),
+    /* Base gradient */
+    linear-gradient(to bottom, var(--plate-color-top), var(--plate-color-middle) 35%, var(--plate-color-bottom));
+  
+  /* Drop shadow + inner glow for depth */
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.25),
+    inset 0 0 10px rgba(255, 255, 255, 0.12);
+}
+
+/* Cloth fiber grain + ripple/drape effect overlay */
+.competition-header-plate::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  
+  background:
+    /* Cloth fiber grain - barely visible vertical woven texture */
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.006) 0px,
+      rgba(255, 255, 255, 0.006) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    /* Ripple bulge highlight - cloth drape center */
+    radial-gradient(
+      ellipse at center,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0) 70%
+    ),
+    /* Vertical fade from top - drape shadow */
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.10) 0%,
+      rgba(255, 255, 255, 0) 30%
+    );
+}
+
+/* Header plate content - above pseudo-elements */
+.competition-header-plate-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Title styling */
+.competition-header-plate-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Icon styling - placed after title */
+.competition-header-plate-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  filter: brightness(1.1) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
+}
+
+/* Green variant for PvM competitions */
+.competition-header-plate--pvm {
+  --plate-color-top: #28a34d;    /* darker green */
+  --plate-color-middle: #228542; /* mid dark green */
+  --plate-color-bottom: #1a6332; /* deep dark green */
+}
