@@ -154,7 +154,9 @@ const Competitions = () => {
   const fetchPlayerStats = async () => {
     if (!user?.username) return
     try {
-      const response = await fetch(`${API_URL}/api/player/${encodeURIComponent(user.username)}`)
+      setProfileError(null)
+      const encodedUsername = encodeURIComponent(user.username)
+      const response = await fetch(`${API_URL}/api/player/${encodedUsername}/stats`)
       if (response.ok) {
         const data = await response.json()
         setPlayerData(data)
