@@ -192,18 +192,18 @@
   --nav-color-bot: #3365d0;
 }
 
-/* Magenta-red variant (Competitions) - Darker, redder magenta */
+/* Magenta-red variant (Competitions) - Balanced magenta */
 .nav-ribbon--magenta {
-  --nav-color-top: #c73868;
-  --nav-color-mid: #b22255;
-  --nav-color-bot: #8a1a42;
+  --nav-color-top: #d44575;
+  --nav-color-mid: #c03060;
+  --nav-color-bot: #9a2250;
 }
 
-/* Green variant (Members) - Darker, richer green */
+/* Green variant (Members) - Balanced green */
 .nav-ribbon--green {
-  --nav-color-top: #28a34d;
-  --nav-color-mid: #228542;
-  --nav-color-bot: #1a6332;
+  --nav-color-top: #30b858;
+  --nav-color-mid: #2c9a4c;
+  --nav-color-bot: #217a3b;
 }
 
 /* Gold variant (optional - for special ribbons) */
