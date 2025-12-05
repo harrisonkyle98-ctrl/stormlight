@@ -199,11 +199,11 @@
   --nav-color-bot: #8a1a42;
 }
 
-/* Green variant (Members) */
+/* Green variant (Members) - Darker, richer green */
 .nav-ribbon--green {
-  --nav-color-top: #3ecf67;
-  --nav-color-mid: #34a853;
-  --nav-color-bot: #287f3f;
+  --nav-color-top: #28a34d;
+  --nav-color-mid: #228542;
+  --nav-color-bot: #1a6332;
 }
 
 /* Gold variant (optional - for special ribbons) */
