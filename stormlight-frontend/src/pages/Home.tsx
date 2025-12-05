@@ -15,8 +15,9 @@ import { ClanLogRow } from '../components/clanLogs/ClanLogRow'
 import { ActivityLogRow } from '../components/activityLogs/ActivityLogRow'
 import { Username } from '../components/ui/username'
 import RibbonNav from '../components/RibbonNav'
+import AnimatedHeader from '../components/AnimatedHeader'
 
-const getRankIcon = (rank: string): string => {
+const getRankIcon= (rank: string): string => {
   const rankImageMap: { [key: string]: string } = {
     'Owner': 'owner.png',
     'Deputy Owner': 'depowner.png',
@@ -748,6 +749,9 @@ const Home = () => {
 
   return (
     <>
+      {/* Static Header - STORMLIGHT banner with theme-adaptive text glow */}
+      <AnimatedHeader />
+
       {/* Profile Header Section - Gold Ribbon + Profile Panel */}
       {user?.username && user?.isLinked && (profileError ? (
         <section className="profile-header-section">

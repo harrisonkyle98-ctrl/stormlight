@@ -1,0 +1,52 @@
+/* Main header container - static background, no animations */
+.animated-header {
+  position: relative;
+  height: 160px;
+  width: calc(100% - 8%);
+  margin: 0 4%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  background: transparent;
+}
+
+/* Title styling */
+.animated-header-title {
+  font-family: 'Cinzel', serif;
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #fffbf0;
+  text-shadow: 
+    var(--header-text-glow),
+    0 2px 4px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.25em;
+  position: relative;
+  z-index: 10;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .animated-header {
+    height: 120px;
+  }
+  
+  .animated-header-title {
+    font-size: 2.5rem;
+    letter-spacing: 0.15em;
+  }
+}
+
+@media (max-width: 480px) {
+  .animated-header {
+    height: 100px;
+  }
+  
+  .animated-header-title {
+    font-size: 1.8rem;
+    letter-spacing: 0.1em;
+  }
+}
