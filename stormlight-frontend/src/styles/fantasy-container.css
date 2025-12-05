@@ -348,6 +348,13 @@
   --banner-color-bottom: #1a6332; /* deep dark green */
 }
 
+/* Competitions Banner Modifier - magenta matching Competitions nav ribbon */
+.fantasy-banner--competitions {
+  --banner-color-top: #d44575;    /* bright magenta */
+  --banner-color-middle: #c03060; /* mid magenta */
+  --banner-color-bottom: #9a2250; /* deep magenta */
+}
+
 /* Gold ribbon inside profile header should match panel width (no overhang) */
 .profile-header-section .fantasy-banner.fantasy-banner--gold {
   --overhang: 51px;
