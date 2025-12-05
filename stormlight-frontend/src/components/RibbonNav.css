@@ -35,8 +35,10 @@
    ======================================== */
 
 .nav-ribbon {
-  /* Ribbon geometry variable */
+  /* Ribbon geometry variables */
   --r: 0.8em; /* depth of center notch */
+  --s: 1.2em; /* ribbon side width for fold shading */
+  --d: 0.6em; /* depth / drop for fold shading */
   
   /* Color stops - default blue (overridden by variants) */
   --nav-color-top: #4a8aff;
@@ -68,13 +70,36 @@
     0 calc(100% - var(--r))
   );
   
-  /* Material styling - single continuous gradient (no seams) */
-  background: linear-gradient(
-    to bottom,
-    var(--nav-color-top),
-    var(--nav-color-mid) 35%,
-    var(--nav-color-bot)
-  );
+  /* Material styling - matches header ribbon lighting system */
+  background:
+    /* Top highlight - subtle thin top-edge highlight */
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.10) 0%,
+      rgba(255, 255, 255, 0.04) 3%,
+      rgba(255, 255, 255, 0) 8%
+    ),
+    /* Ambient fantasy glow - subtle magical sheen */
+    radial-gradient(
+      circle at center,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0) 70%
+    ),
+    /* Ribbon fold shading - left side */
+    conic-gradient(at left var(--s) bottom var(--d),
+      #0000 25%, #0008 0 37.5%, #0004 0
+    ) 0 / 50% 100% no-repeat,
+    /* Ribbon fold shading - right side */
+    conic-gradient(at right var(--s) bottom var(--d),
+      #0004 62.5%, #0008 0 75%, #0000 0
+    ) 100% / 50% 100% no-repeat,
+    /* Base gradient - nav colors */
+    linear-gradient(
+      to bottom,
+      var(--nav-color-top),
+      var(--nav-color-mid) 35%,
+      var(--nav-color-bot)
+    );
   
   /* Same style of depth as banner */
   box-shadow:
@@ -88,7 +113,7 @@
   pointer-events: auto;
 }
 
-/* Lighting overlay - top highlight, glow, and subtle texture */
+/* Cloth fiber grain + ripple/drape effect overlay - matches header ribbon */
 .nav-ribbon::before {
   content: "";
   position: absolute;
@@ -97,18 +122,25 @@
   z-index: 1;
   
   background:
-    /* Top highlight - subtle thin top-edge highlight */
+    /* Cloth fiber grain - barely visible vertical woven texture */
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.006) 0px,
+      rgba(255, 255, 255, 0.006) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    /* Ripple bulge highlight - cloth drape center */
+    radial-gradient(
+      ellipse at center,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0) 70%
+    ),
+    /* Vertical fade from top - drape shadow */
     linear-gradient(
       to bottom,
       rgba(255, 255, 255, 0.10) 0%,
-      rgba(255, 255, 255, 0.04) 3%,
-      rgba(255, 255, 255, 0.00) 8%
-    ),
-    /* Ambient fantasy glow - subtle magical sheen */
-    radial-gradient(
-      circle at center,
-      rgba(255, 255, 255, 0.12) 0%,
-      rgba(255, 255, 255, 0.00) 70%
+      rgba(255, 255, 255, 0) 30%
     );
 }
 
@@ -160,14 +192,14 @@
   --nav-color-bot: #3365d0;
 }
 
-/* Magenta-red variant (Members) - Darker, redder magenta */
+/* Magenta-red variant (Competitions) - Darker, redder magenta */
 .nav-ribbon--magenta {
   --nav-color-top: #c73868;
   --nav-color-mid: #b22255;
   --nav-color-bot: #8a1a42;
 }
 
-/* Green variant (Competitions) */
+/* Green variant (Members) */
 .nav-ribbon--green {
   --nav-color-top: #3ecf67;
   --nav-color-mid: #34a853;

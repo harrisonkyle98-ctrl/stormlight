@@ -341,11 +341,11 @@
   --banner-color-bottom: #A88728; /* shadow gold */
 }
 
-/* Members Banner Modifier - darker, redder magenta matching Members nav ribbon */
+/* Members Banner Modifier - green matching Members nav ribbon */
 .fantasy-banner--members {
-  --banner-color-top: #c73868;    /* darker magenta */
-  --banner-color-middle: #b22255; /* mid dark magenta */
-  --banner-color-bottom: #8a1a42; /* deep dark magenta */
+  --banner-color-top: #3ecf67;    /* bright green */
+  --banner-color-middle: #34a853; /* mid green */
+  --banner-color-bottom: #287f3f; /* deep green */
 }
 
 /* Gold ribbon inside profile header should match panel width (no overhang) */
