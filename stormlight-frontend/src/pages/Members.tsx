@@ -182,13 +182,17 @@ const Members = () => {
   const fetchAccountLinkRequests = async () => {
     const token = localStorage.getItem('access_token')
     if (!token) return
+    
     try {
       const response = await fetch(`${API_URL}/api/account-link-requests/my-requests`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       })
+      
       if (response.ok) {
         const data = await response.json()
-        setAccountLinkRequests(data)
+        setAccountLinkRequests(data.requests || [])
       }
     } catch (error) {
       console.error('Error fetching account link requests:', error)
@@ -196,8 +200,11 @@ const Members = () => {
   }
 
   const fetchLinkedAccounts = async () => {
+    if (!user?.username || !user?.discordId) return
+    
     const token = localStorage.getItem('access_token')
     if (!token) return
+    
     try {
       const [membersResponse, requestsResponse] = await Promise.all([
         fetch(`${API_URL}/api/clan/members`),
@@ -205,20 +212,25 @@ const Members = () => {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ])
-      if (membersResponse.ok && requestsResponse.ok) {
+      
+      if (membersResponse.ok) {
         const membersData = await membersResponse.json()
-        const requestsData = await requestsResponse.json()
-        const approvedRequests = requestsData.filter((req: any) => req.status === 'APPROVED')
-        const linkedUsernames = new Set([
-          user?.username,
-          ...approvedRequests.map((req: any) => req.alternateUsername)
-        ])
-        const allLinkedAccounts = membersData.members
-          .filter((m: any) => linkedUsernames.has(m.username))
-          .map((m: any) => ({
-            username: m.username,
-            discord_id: m.discord_id
-          }))
+        const requestsData = requestsResponse.ok ? await requestsResponse.json() : { requests: [] }
+        const requests = requestsData.requests || []
+        
+        const linkedUsernames = new Set<string>()
+        linkedUsernames.add(user.username)
+        
+        requests.forEach((req: any) => {
+          if (req.status === 'APPROVED') {
+            linkedUsernames.add(req.alternateUsername)
+            linkedUsernames.add(req.primaryUsername)
+          }
+        })
+        
+        const allLinkedAccounts = membersData.members.filter((member: any) => 
+          linkedUsernames.has(member.username)
+        )
         setLinkedAccounts(allLinkedAccounts)
       }
     } catch (error) {
@@ -228,23 +240,29 @@ const Members = () => {
 
   const handleSubmitLinkRequest = async () => {
     const token = localStorage.getItem('access_token')
-    if (!token || !newUsername.trim()) return
+    if (!newUsername.trim() || !token) return
+    
     setLinkRequestLoading(true)
     try {
       const response = await fetch(`${API_URL}/api/account-link-requests`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ alternateUsername: newUsername.trim() })
+        body: JSON.stringify({
+          alternateUsername: newUsername.trim()
+        })
       })
+      
       if (response.ok) {
         setNewUsername('')
-        fetchAccountLinkRequests()
+        await fetchAccountLinkRequests()
+        await fetchLinkedAccounts()
+        alert('Link request submitted successfully! An admin will review it.')
       } else {
-        const errorData = await response.json()
-        alert(errorData.detail || 'Failed to submit link request')
+        const error = await response.json()
+        alert(error.detail || 'Failed to submit link request')
       }
     } catch (error) {
       console.error('Error submitting link request:', error)
@@ -257,41 +275,44 @@ const Members = () => {
   const handleDeleteRejectedRequest = async (requestId: string) => {
     const token = localStorage.getItem('access_token')
     if (!token) return
+    
     try {
       const response = await fetch(`${API_URL}/api/account-link-requests/${requestId}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       })
+      
       if (response.ok) {
-        fetchAccountLinkRequests()
+        await fetchAccountLinkRequests()
+      } else {
+        const error = await response.json()
+        alert(error.detail || 'Failed to delete request')
       }
     } catch (error) {
       console.error('Error deleting request:', error)
+      alert('Failed to delete request')
     }
   }
 
-  const handleSwitchAccount = async (username: string) => {
+  const handleSwitchAccount = async (targetUsername: string) => {
     const token = localStorage.getItem('access_token')
     if (!token) return
+    
     try {
-      const response = await fetch(`${API_URL}/api/auth/switch-account`, {
+      const response = await fetch(`${API_URL}/api/account-link-requests/switch/${encodeURIComponent(targetUsername)}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username })
-      })
-      if (response.ok) {
-        const userResponse = await fetch(`${API_URL}/api/auth/me`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-        if (userResponse.ok) {
-          window.location.reload()
+          'Authorization': `Bearer ${token}`
         }
+      })
+      
+      if (response.ok) {
+        window.location.reload()
       } else {
-        const errorData = await response.json()
-        alert(errorData.detail || 'Failed to switch account')
+        const error = await response.json()
+        alert(error.detail || 'Failed to switch account')
       }
     } catch (error) {
       console.error('Error switching account:', error)
