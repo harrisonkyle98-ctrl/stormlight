@@ -1147,75 +1147,65 @@ const PlayerProfile = () => {
             <div className="space-y-6">
               
               <div className="fantasy-section p-6">
-              {/* Profile Header with Triangular Divider */}
-              <div className="profile-header-wrapper">
-                <div className="profile-header-background">
-                  <div className="profile-header-content">
-                    {/* Discord Verification Indicator - Top Right */}
-                    <Tooltip content={
-                      <>
-                        {playerData.is_verified ? "Verified" : "Unverified"}
-                        <br />
-                        Last updated: {new Date(playerData.last_updated).toLocaleDateString()}
-                      </>
-                    }>
-                      <div className="absolute top-4 right-4">
-                        <CircleCheck 
-                          className={`w-5 h-5 ${playerData.is_verified ? 'text-green-500' : 'text-gray-500'}`}
-                        />
-                      </div>
-                    </Tooltip>
+              <div className="bg-slate-700/30 rounded-lg p-6 mb-4 relative">
+                {/* Discord Verification Indicator - Top Right */}
+                <Tooltip content={
+                  <>
+                    {playerData.is_verified ? "Verified" : "Unverified"}
+                    <br />
+                    Last updated: {new Date(playerData.last_updated).toLocaleDateString()}
+                  </>
+                }>
+                  <div className="absolute top-4 right-4">
+                    <CircleCheck 
+                      className={`w-5 h-5 ${playerData.is_verified ? 'text-green-500' : 'text-gray-500'}`}
+                    />
+                  </div>
+                </Tooltip>
+                
+                <div className="flex flex-col items-center space-y-4">
+                  <Avatar className="w-20 h-20">
+                    <AvatarImage
+                      src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(urlToUsername(username || ''))}/chat.png`}
+                      alt={urlToUsername(username || '')}
+                    />
+                    <AvatarFallback className="bg-theme-button text-white">
+                      <User className="w-10 h-10" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="text-center">
+                    <h1 className="text-2xl font-bold text-center">
+                      <Username
+                        username={urlToUsername(username || '')}
+                        clanRank={playerData.clan_rank}
+                      />
+                    </h1>
                     
-                    <div className="flex flex-col items-center space-y-4">
-                      <Avatar className="w-20 h-20">
-                        <AvatarImage
-                          src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(urlToUsername(username || ''))}/chat.png`}
-                          alt={urlToUsername(username || '')}
-                        />
-                        <AvatarFallback className="bg-theme-button text-white">
-                          <User className="w-10 h-10" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="text-center">
-                        <h1 className="text-2xl font-bold text-center">
-                          <Username
-                            username={urlToUsername(username || '')}
-                            clanRank={playerData.clan_rank}
-                          />
-                        </h1>
-                        
-                        {/* Rank Badge */}
-                        {playerData.stats && (() => {
-                          const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''), playerData.league_points)
-                          const rankBadge = allBadges.find(badge => badge.id.startsWith('rank-'))
-                          return rankBadge ? (
-                            <div className="mt-3">
-                              <div
-                                className="inline-flex items-center space-x-2 px-3 py-1 text-sm font-semibold rounded-md text-white"
-                                style={{
-                                  background: rankBadge.gradientBackground || rankBadge.backgroundColor
-                                }}
-                              >
-                                <img
-                                  src={rankBadge.icon}
-                                  alt={rankBadge.name}
-                                  className="w-4 h-4"
-                                />
-                                <span>{rankBadge.name}</span>
-                              </div>
-                            </div>
-                          ) : null
-                        })()}
-                      </div>
-                    </div>
+                    {/* Rank Badge */}
+                    {playerData.stats && (() => {
+                      const allBadges = checkPlayerMilestones(playerData.stats, questData, playerData.clan_rank, urlToUsername(username || ''), playerData.league_points)
+                      const rankBadge = allBadges.find(badge => badge.id.startsWith('rank-'))
+                      return rankBadge ? (
+                        <div className="mt-3">
+                          <div
+                            className="inline-flex items-center space-x-2 px-3 py-1 text-sm font-semibold rounded-md text-white"
+                            style={{
+                              background: rankBadge.gradientBackground || rankBadge.backgroundColor
+                            }}
+                          >
+                            <img
+                              src={rankBadge.icon}
+                              alt={rankBadge.name}
+                              className="w-4 h-4"
+                            />
+                            <span>{rankBadge.name}</span>
+                          </div>
+                        </div>
+                      ) : null
+                    })()}
                   </div>
                 </div>
-                {/* Triangular Divider */}
-                <div className="profile-header-divider"></div>
               </div>
-
-              {/* Lower Content - No faint background */}
-              <div className="profile-lower-content">
 
               {/* Badges Section - Directly Above Combat Level */}
               {playerData.stats && playerData.custom_badges !== undefined && (() => {
@@ -1568,7 +1558,6 @@ const PlayerProfile = () => {
                   </div>
                 ) : null
               })()}
-              </div>
             </div>
 
             {/* Right Column - Tabs */}
