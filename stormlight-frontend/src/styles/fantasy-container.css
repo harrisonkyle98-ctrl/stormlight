@@ -567,13 +567,17 @@
 .competition-entry {
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .competition-header-plate {
   position: relative;
   padding: 0.5rem 1.25rem;
-  padding-inline: calc(0.8em + 0.3em); /* Account for ribbon shape */
-  width: fit-content;
+  padding-inline: calc(0.8em + 0.5em); /* Account for ribbon shape + extra padding for overhang */
+  
+  /* Full width + overhang past panel edges */
+  width: calc(100% + 20px); /* Extend 10px past each side */
+  left: -10px; /* Center the overhang */
   
   /* Ribbon clip-path shape - pointed ends on left and right */
   --r: 0.8em; /* control the ribbon shape */
