@@ -1,23 +1,45 @@
 /* Tooltip Advanced Styles */
 /* All tooltips are portaled to document.body, so they need high z-index */
 /* z-index 1000 is high enough to appear above all page content but below modals (which use 9999+) */
+
+/* OUTER CONTAINER - matches fantasy-container styling */
 .tooltip-advanced {
   position: absolute;
   z-index: 1000;
   max-width: 320px;
-  background-color: var(--tooltip-bg);
-  border: 1px solid var(--tooltip-border);
-  border-radius: 12px;
-  box-shadow: var(--tooltip-shadow);
+  /* Outer container: dark slate gradient background */
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.99) 100%);
+  /* Double border effect */
+  border: 2px solid rgba(100, 116, 139, 0.4);
+  box-shadow:
+    inset 0 0 0 1px rgba(148, 163, 184, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 10px 25px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgb(var(--color-accent-rgb, 59 130 246) / 0.15);
   overflow: visible;
   animation: tooltip-fade-in 0.2s ease-out;
 }
 
-/* Inner wrapper to clip content inside rounded corners while allowing carat to render outside */
+/* INNER CONTAINER - matches fantasy-section styling */
 .tooltip-inner {
   position: relative;
   overflow: hidden;
-  border-radius: inherit;
+  /* Inner panel: lighter background with single border */
+  background: rgba(30, 41, 59, 0.3);
+  border: 1px solid rgba(100, 116, 139, 0.2);
+  margin: 6px;
+}
+
+/* Inner panel top highlight - matches fantasy-section::before */
+.tooltip-inner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.2), transparent);
+  z-index: 1;
 }
 
 @keyframes tooltip-fade-in {
@@ -197,14 +219,14 @@
   cursor: default;
 }
 
-/* Arrow */
+/* Arrow - matches outer container background */
 .tooltip-arrow {
-  fill: var(--tooltip-border) !important;
+  fill: rgba(30, 41, 59, 0.98) !important;
   width: 12px;
   height: 12px;
 }
 
-/* Unified Tooltip Styles - Neutral Grey Background + Theme-Reactive Accents */
+/* Unified Tooltip Styles - Panel System + Theme-Reactive Accents */
 :root,
 [data-theme="blue"],
 [data-theme="crimson"],
@@ -212,8 +234,7 @@
 [data-theme="obsidian"],
 [data-theme="amethyst"],
 [data-theme="sunset"] {
-  /* Theme-independent neutral grey background */
-  --tooltip-bg: rgba(30, 41, 59, 0.95);
+  /* Text colors */
   --tooltip-title: #f1f5f9;
   --tooltip-text: #cbd5e1;
   --tooltip-text-muted: #94a3b8;
@@ -221,8 +242,6 @@
   --tooltip-row-icon-bg: rgba(51, 65, 85, 0.5);
   
   /* Theme-reactive accent colors */
-  --tooltip-border: rgb(var(--color-accent-rgb, 59 130 246) / 0.30);
-  --tooltip-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgb(var(--color-accent-rgb, 59 130 246) / 0.10);
   --tooltip-progress: var(--color-accent);
   --tooltip-footer-bg: rgb(var(--color-accent-rgb, 59 130 246) / 0.15);
   --tooltip-footer-text: var(--color-accent);
