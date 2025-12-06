@@ -1079,7 +1079,7 @@ const PlayerProfile = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[30%_70%] gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_2.3fr] gap-6">
             {/* Account Stats Card - Horizontal Layout */}
             {accountStats && (
               <div className="lg:col-span-2">
