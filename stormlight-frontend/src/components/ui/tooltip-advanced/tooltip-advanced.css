@@ -1,7 +1,9 @@
 /* Tooltip Advanced Styles */
+/* All tooltips are portaled to document.body, so they need high z-index */
+/* z-index 1000 is high enough to appear above all page content but below modals (which use 9999+) */
 .tooltip-advanced {
-  position: relative;
-  z-index: 50;
+  position: absolute;
+  z-index: 1000;
   max-width: 320px;
   background-color: var(--tooltip-bg);
   border: 1px solid var(--tooltip-border);
@@ -283,7 +285,7 @@
   color: #fff;
 }
 
-/* Navigation ribbon tooltips - portaled to document.body with very high z-index */
+/* Navigation ribbon tooltips - keep higher z-index to ensure they appear above ribbons */
 .tooltip-advanced.nav-tooltip {
-  z-index: 9999;
+  z-index: 1001;
 }

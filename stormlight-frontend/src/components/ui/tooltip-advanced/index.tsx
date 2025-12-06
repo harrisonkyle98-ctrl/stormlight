@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react'
+import React, { useEffect, useRef, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   useFloating,
@@ -53,6 +53,8 @@ export const AdvancedTooltip: React.FC<AdvancedTooltipProps> = ({
   const triggerRef = useRef<HTMLDivElement>(null)
   const cursorRef = useRef<{x: number; y: number} | null>(null)
   const rafRef = useRef<number | null>(null)
+  // Track whether position has been calculated to prevent flashing at (0,0)
+  const [hasPosition, setHasPosition] = useState(false)
 
   const {
     open,
@@ -104,8 +106,16 @@ export const AdvancedTooltip: React.FC<AdvancedTooltipProps> = ({
     if (open && cursorRef.current) {
       refs.setReference(virtualRef as any)
       update()
-    } else if (triggerRef.current) {
+      // Use requestAnimationFrame to ensure position is calculated before showing
+      requestAnimationFrame(() => setHasPosition(true))
+    } else if (open && triggerRef.current) {
       refs.setReference(triggerRef.current)
+      // Use requestAnimationFrame to ensure position is calculated before showing
+      requestAnimationFrame(() => setHasPosition(true))
+    }
+    // Reset hasPosition when tooltip closes
+    if (!open) {
+      setHasPosition(false)
     }
   }, [open, refs, update, virtualRef])
 
@@ -167,9 +177,8 @@ export const AdvancedTooltip: React.FC<AdvancedTooltipProps> = ({
     })
   }
 
-  // Check if this is a nav tooltip that needs to be portaled
-  const isNavTooltip = className?.includes('nav-tooltip')
-
+  // All tooltips are now portaled to document.body to avoid clipping issues
+  // from parent containers with overflow: hidden (e.g., fantasy-container, profile panels)
   const tooltipContent = (
     <div
       ref={refs.setFloating}
@@ -267,11 +276,7 @@ export const AdvancedTooltip: React.FC<AdvancedTooltipProps> = ({
         {children}
       </div>
 
-      {open && (
-        isNavTooltip
-          ? createPortal(tooltipContent, document.body)
-          : tooltipContent
-      )}
+      {open && hasPosition && createPortal(tooltipContent, document.body)}
     </>
   )
 }
