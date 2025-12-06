@@ -1136,16 +1136,15 @@ const PlayerProfile = () => {
             </div>
           </div>
 
+          {/* Account Stats Card - Horizontal Layout (above grid) */}
+          {accountStats && (
+            <div className="mb-6">
+              <AccountStatsCard {...accountStats} />
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_2.3fr] gap-6">
-            {/* Account Stats Card - Horizontal Layout */}
-            {accountStats && (
-              <div className="lg:col-span-2">
-                <AccountStatsCard {...accountStats} />
-              </div>
-            )}
-            
             <div className="space-y-6">
-              
               <div className="fantasy-section p-6">
               <div className="bg-slate-700/30 rounded-lg p-6 mb-4 relative">
                 {/* Discord Verification Indicator - Top Right */}
