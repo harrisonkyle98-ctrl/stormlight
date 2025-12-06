@@ -1147,7 +1147,7 @@ const PlayerProfile = () => {
             <div className="space-y-6">
               
               <div className="fantasy-section p-6">
-              <div className="bg-slate-700/30 rounded-lg p-6 mb-4 relative">
+              <div className="relative pb-2">
                 {/* Discord Verification Indicator - Top Right */}
                 <Tooltip content={
                   <>
@@ -1156,7 +1156,7 @@ const PlayerProfile = () => {
                     Last updated: {new Date(playerData.last_updated).toLocaleDateString()}
                   </>
                 }>
-                  <div className="absolute top-4 right-4">
+                  <div className="absolute top-0 right-0">
                     <CircleCheck 
                       className={`w-5 h-5 ${playerData.is_verified ? 'text-green-500' : 'text-gray-500'}`}
                     />
@@ -1205,6 +1205,12 @@ const PlayerProfile = () => {
                     })()}
                   </div>
                 </div>
+              </div>
+
+              {/* Section Divider - Fantasy-themed break between header and stats */}
+              <div className="profile-section-divider">
+                <div className="profile-section-divider-top"></div>
+                <div className="profile-section-divider-bottom"></div>
               </div>
 
               {/* Badges Section - Directly Above Combat Level */}
