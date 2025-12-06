@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
-import { ArrowLeft, Trophy, Calendar, Users, TrendingUp, BarChart3, Radio, ChevronDown, ChevronUp, Link2, Palette, Award, LogOut, Key, User } from 'lucide-react'
+import { ArrowLeft, Trophy, Calendar, Users, BarChart3, Radio, ChevronDown, ChevronUp, Link2, Palette, Award, LogOut, Key, User } from 'lucide-react'
 import { Spinner } from '../components/ui/spinner'
 import { getSkillIcon } from '../utils/skillIcons'
 import { fetchClanMembers, checkPlayerMilestones } from '../utils/gradientUtils'
@@ -975,18 +975,14 @@ const CompetitionDetail = () => {
 
         {competition.type === 'XP_GAIN' && top10Data.length > 0 && (
           <div className="fantasy-section mb-6">
-            <h3 className="text-white flex items-center justify-between text-xl font-bold mb-4">
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="w-5 h-5 text-green-400" />
-                <span>Top 10 Progress</span>
-              </div>
-              {isLive && lastUpdated && (
+            {isLive && lastUpdated && (
+              <div className="flex justify-end mb-4">
                 <Badge className="bg-green-500/20 text-green-400 border-green-500/30 flex items-center space-x-1">
                   <Radio className="w-3 h-3 animate-pulse" />
                   <span>Live - {getTimeSinceUpdate()}</span>
                 </Badge>
-              )}
-            </h3>
+              </div>
+            )}
             <ResponsiveContainer width="100%" height={450}>
               <BarChart data={top10Data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -1055,18 +1051,20 @@ const CompetitionDetail = () => {
         )}
 
         <div className="fantasy-section">
-          <h3 className="text-white flex items-center justify-between text-xl font-bold mb-4">
-            <div className="flex items-center space-x-2">
-              <Trophy className="w-5 h-5 text-yellow-400" />
-              <span>Leaderboard</span>
-            </div>
+          <div className="mb-4">
+            <h3 className="text-white text-xl font-bold text-center" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.1em' }}>
+              Leaderboard
+            </h3>
+            <div className="fantasy-divider" style={{ margin: '1rem 0' }}></div>
             {isLive && lastUpdated && competition.type === 'XP_GAIN' && (
-              <Badge className="bg-green-500/20 text-green-400 border-green-500/30 flex items-center space-x-1">
-                <Radio className="w-3 h-3 animate-pulse" />
-                <span>Live - {getTimeSinceUpdate()}</span>
-              </Badge>
+              <div className="flex justify-center">
+                <Badge className="bg-green-500/20 text-green-400 border-green-500/30 flex items-center space-x-1">
+                  <Radio className="w-3 h-3 animate-pulse" />
+                  <span>Live - {getTimeSinceUpdate()}</span>
+                </Badge>
+              </div>
             )}
-          </h3>
+          </div>
           {competition.type === 'XP_GAIN' ? (
             <Table className="text-slate-300">
               <TableHeader>
