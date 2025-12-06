@@ -576,8 +576,8 @@
   padding-inline: calc(0.8em + 0.5em); /* Account for ribbon shape + extra padding for overhang */
   
   /* Full width + overhang past panel edges */
-  width: calc(100% + 20px); /* Extend 10px past each side */
-  left: -10px; /* Center the overhang */
+  width: calc(100% + 30px); /* Extend 15px past each side */
+  left: -15px; /* Center the overhang */
   
   /* Ribbon clip-path shape - pointed ends on left and right */
   --r: 0.8em; /* control the ribbon shape */
