@@ -648,30 +648,29 @@ const Competitions = () => {
             <div className="space-y-4">
               <div className="grid gap-6">
                 {competitions.map((competition) => {
-                  const { status, color } = getCompetitionStatus(competition.startDate, competition.endDate)
+                  const { status } = getCompetitionStatus(competition.startDate, competition.endDate)
                   
                   return (
                     <div key={competition.id} className="competition-entry">
-                      {/* Fantasy Header Ribbon - Blue for skilling, Green for PvM - sits ABOVE the panel */}
-                      <div className={`competition-header-plate ${competition.type === 'BOSS_KILLS' ? 'competition-header-plate--pvm' : ''}`}>
+                      {/* Fantasy Header Ribbon - Color based on status: Active=green, Upcoming=blue, Ended=grey */}
+                      <div className={`competition-header-plate ${status === 'active' ? 'competition-header-plate--active' : status === 'ended' ? 'competition-header-plate--ended' : ''}`}>
                         <div className="competition-header-plate-content">
+                          {/* Centered title */}
                           <div className="competition-header-plate-title">
-                            <span>{competition.name}</span>
-                            {competition.type === 'XP_GAIN' ? (
-                              getSkillIcon(competition.skill || 'overall') ? (
-                                <img 
-                                  src={getSkillIcon(competition.skill || 'overall')!} 
-                                  alt={competition.skill}
-                                  className="competition-header-plate-icon"
-                                />
-                              ) : null
-                            ) : (
-                              <span className="competition-header-plate-icon text-2xl">💀</span>
-                            )}
+                            {competition.name}
                           </div>
-                          <Badge className={`${color} text-white capitalize pointer-events-none`}>
-                            {status}
-                          </Badge>
+                          {/* Icon positioned on the right */}
+                          {competition.type === 'XP_GAIN' ? (
+                            getSkillIcon(competition.skill || 'overall') ? (
+                              <img 
+                                src={getSkillIcon(competition.skill || 'overall')!} 
+                                alt={competition.skill}
+                                className="competition-header-plate-icon"
+                              />
+                            ) : null
+                          ) : (
+                            <span className="competition-header-plate-icon text-2xl">💀</span>
+                          )}
                         </div>
                       </div>
                       

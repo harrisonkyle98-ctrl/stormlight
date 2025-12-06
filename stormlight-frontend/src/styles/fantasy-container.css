@@ -655,10 +655,11 @@
   z-index: 2;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center; /* Center the title */
+  width: 100%;
 }
 
-/* Title styling */
+/* Title styling - centered text */
 .competition-header-plate-title {
   font-family: 'Cinzel', serif;
   font-size: 1.25rem;
@@ -666,21 +667,33 @@
   color: #ffffff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   letter-spacing: 0.05em;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  text-align: center;
 }
 
-/* Icon styling - placed after title */
+/* Icon styling - positioned on the right side */
 .competition-header-plate-icon {
+  position: absolute;
+  right: 1.25rem; /* Match padding */
   width: 1.5rem;
   height: 1.5rem;
   filter: brightness(1.1) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
 }
 
-/* Green variant for PvM competitions */
-.competition-header-plate--pvm {
+/* Status-based color variants for competition ribbons */
+
+/* Active status - Members page green */
+.competition-header-plate--active {
   --plate-color-top: #28a34d;    /* darker green */
   --plate-color-middle: #228542; /* mid dark green */
   --plate-color-bottom: #1a6332; /* deep dark green */
+}
+
+/* Upcoming status - Homepage blue (default, no override needed) */
+/* Uses the default blue: #3b66d1, #3156b5, #29479c */
+
+/* Ended/Completed status - Neutral grey */
+.competition-header-plate--ended {
+  --plate-color-top: #7a7a7a;    /* light grey */
+  --plate-color-middle: #666666; /* mid grey */
+  --plate-color-bottom: #525252; /* dark grey */
 }
