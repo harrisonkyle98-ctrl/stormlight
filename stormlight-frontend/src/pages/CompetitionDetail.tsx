@@ -844,7 +844,7 @@ const CompetitionDetail = () => {
           </div>
 
           {/* Competition Summary - matches competition entry styling from list page */}
-          <div className="competition-entry mb-6">
+          <div className="competition-entry">
             {/* Status-colored ribbon header - Green=Active, Blue=Upcoming, Grey=Ended */}
             <div className={`competition-header-plate ${status === 'active' ? 'competition-header-plate--active' : status === 'ended' ? 'competition-header-plate--ended' : ''}`}>
               <div className="competition-header-plate-content">
