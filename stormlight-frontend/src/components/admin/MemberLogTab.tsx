@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
@@ -7,6 +6,7 @@ import { Users, Search, Filter } from 'lucide-react'
 import { Spinner } from '../ui/spinner'
 import { ClanLogRow } from '../clanLogs/ClanLogRow'
 import { usernameToUrl } from '../../utils/urlUtils'
+import '../../styles/fantasy-container.css'
 
 interface ClanLogEntry {
   id: number
@@ -104,105 +104,99 @@ export const MemberLogTab = () => {
         </div>
       </div>
 
-      <Card className="bg-slate-700/30 border-slate-600">
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-              <Input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search members..."
-                className="pl-10 bg-slate-600 border-slate-500 text-white"
-              />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Filter className="w-4 h-4 text-slate-400" />
-              <select
-                value={eventFilter}
-                onChange={(e) => setEventFilter(e.target.value as 'all' | 'Join' | 'Leave')}
-                className="bg-slate-600 border-slate-500 text-white rounded px-3 py-2"
-              >
-                <option value="all">All Events</option>
-                <option value="Join">Joins Only</option>
-                <option value="Leave">Leaves Only</option>
-              </select>
-            </div>
+      <div className="fantasy-section">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+            <Input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search members..."
+              className="pl-10 bg-slate-600 border-slate-500 text-white"
+            />
           </div>
-        </CardContent>
-      </Card>
 
-      <Card className="bg-slate-700/30 border-slate-600">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center space-x-2">
-            <Users className="w-5 h-5 text-theme-accent-light" />
-            <span>Join & Leave Activity</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {filteredEntries.length === 0 ? (
-            <p className="text-slate-400 text-center py-8">No member activity found</p>
-          ) : (
-            <>
-              <div className="space-y-3">
-                {filteredEntries.map((entry) => (
-                  <ClanLogRow
-                    key={entry.id}
-                    entry={entry}
-                    formatTimeAgo={formatTimeAgo}
-                    usernameToUrl={usernameToUrl}
-                  />
-                ))}
+          <div className="flex items-center space-x-2">
+            <Filter className="w-4 h-4 text-slate-400" />
+            <select
+              value={eventFilter}
+              onChange={(e) => setEventFilter(e.target.value as 'all' | 'Join' | 'Leave')}
+              className="bg-slate-600 border-slate-500 text-white rounded px-3 py-2"
+            >
+              <option value="all">All Events</option>
+              <option value="Join">Joins Only</option>
+              <option value="Leave">Leaves Only</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="fantasy-section">
+        <div className="flex items-center space-x-2 mb-4">
+          <Users className="w-4 h-4 text-slate-400" />
+          <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>Join & Leave Activity</h3>
+        </div>
+        {filteredEntries.length === 0 ? (
+          <p className="text-slate-400 text-center py-8">No member activity found</p>
+        ) : (
+          <>
+            <div className="space-y-3">
+              {filteredEntries.map((entry) => (
+                <ClanLogRow
+                  key={entry.id}
+                  entry={entry}
+                  formatTimeAgo={formatTimeAgo}
+                  usernameToUrl={usernameToUrl}
+                />
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center space-x-2 mt-6">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                >
+                  First
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                >
+                  Previous
+                </Button>
+                <span className="text-white text-sm px-3">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                >
+                  Next
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                >
+                  Last
+                </Button>
               </div>
-
-              {totalPages > 1 && (
-                <div className="flex justify-center items-center space-x-2 mt-6">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(1)}
-                    disabled={currentPage === 1}
-                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                  >
-                    First
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                  >
-                    Previous
-                  </Button>
-                  <span className="text-white text-sm px-3">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
-                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                  >
-                    Next
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(totalPages)}
-                    disabled={currentPage === totalPages}
-                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                  >
-                    Last
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </>
+        )}
+      </div>
     </div>
   )
 }

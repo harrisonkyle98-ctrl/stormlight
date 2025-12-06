@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Award, Plus, Edit, Trash2, Lock } from 'lucide-react'
 import { Spinner } from '../ui/spinner'
+import '../../styles/fantasy-container.css'
 
 interface CustomBadge {
   id: string
@@ -187,14 +187,11 @@ export const BadgeManagementTab = () => {
 
       {/* Create/Edit Form */}
       {showCreateForm && (
-        <Card className="bg-slate-700/30 border-slate-600">
-          <CardHeader>
-            <CardTitle className="text-white">
-              {editingBadge ? 'Edit Badge' : 'Create New Badge'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="fantasy-section">
+          <h3 className="text-white font-semibold mb-4" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>
+            {editingBadge ? 'Edit Badge' : 'Create New Badge'}
+          </h3>
+          <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
                   Badge Name
@@ -347,75 +344,70 @@ export const BadgeManagementTab = () => {
                 </Button>
               </div>
             </form>
-          </CardContent>
-        </Card>
+        </div>
       )}
 
       {/* Badges List */}
-      <Card className="bg-slate-700/30 border-slate-600">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center space-x-2">
-            <Award className="w-5 h-5 text-yellow-400" />
-            <span>Custom Badges</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {customBadges.length === 0 ? (
-            <p className="text-slate-400 text-center py-8">No custom badges created yet</p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {customBadges.map((badge) => {
-                const backgroundColor = badge.gradientColors 
-                  ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
-                  : badge.backgroundColor || '#6b7280'
-                
-                return (
-                  <div key={badge.id} className="flex items-center justify-between">
-                    <div
-                      className="flex-1 px-3 py-1 text-sm font-semibold flex items-center space-x-2 rounded-md text-white"
-                      style={{
-                        background: backgroundColor
-                      }}
-                    >
-                      <img
-                        src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
-                        alt={badge.name} 
-                        className="w-4 h-4"
-                      />
-                      <span>{badge.name}</span>
-                      {badge.competitions && badge.competitions.length > 0 && (
-                        <span title={`Linked to ${badge.competitions.length} competition(s)`}>
-                          <Lock className="w-3 h-3 ml-1 text-yellow-400" />
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex space-x-1 ml-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => startEdit(badge)}
-                        className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-white"
-                        title="Edit badge"
-                      >
-                        <Edit className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDelete(badge.id)}
-                        className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-red-400 hover:text-red-300"
-                        title="Delete badge"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
+      <div className="fantasy-section">
+        <div className="flex items-center space-x-2 mb-4">
+          <Award className="w-4 h-4 text-slate-400" />
+          <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>Custom Badges</h3>
+        </div>
+        {customBadges.length === 0 ? (
+          <p className="text-slate-400 text-center py-8">No custom badges created yet</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {customBadges.map((badge) => {
+              const backgroundColor = badge.gradientColors 
+                ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
+                : badge.backgroundColor || '#6b7280'
+              
+              return (
+                <div key={badge.id} className="flex items-center justify-between">
+                  <div
+                    className="flex-1 px-3 py-1 text-sm font-semibold flex items-center space-x-2 rounded-md text-white"
+                    style={{
+                      background: backgroundColor
+                    }}
+                  >
+                    <img
+                      src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
+                      alt={badge.name} 
+                      className="w-4 h-4"
+                    />
+                    <span>{badge.name}</span>
+                    {badge.competitions && badge.competitions.length > 0 && (
+                      <span title={`Linked to ${badge.competitions.length} competition(s)`}>
+                        <Lock className="w-3 h-3 ml-1 text-yellow-400" />
+                      </span>
+                    )}
                   </div>
-                )
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  <div className="flex space-x-1 ml-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => startEdit(badge)}
+                      className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-white"
+                      title="Edit badge"
+                    >
+                      <Edit className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDelete(badge.id)}
+                      className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-red-400 hover:text-red-300"
+                      title="Delete badge"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

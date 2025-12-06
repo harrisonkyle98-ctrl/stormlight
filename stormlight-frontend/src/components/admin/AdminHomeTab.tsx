@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { Activity, AlertCircle, CheckCircle, Clock, UserPlus } from 'lucide-react'
 import { Spinner } from '../ui/spinner'
+import '../../styles/fantasy-container.css'
 
 interface AdminLog {
   id: number
@@ -225,56 +225,49 @@ export const AdminHomeTab = () => {
   return (
     <div className="space-y-6">
       {/* Site Health */}
-      <Card className="bg-slate-700/30 border-slate-600">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center space-x-2">
-            <Activity className="w-5 h-5 text-green-400" />
-            <span>Site Health</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="flex items-center justify-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-400" />
-                <span className="text-sm text-slate-400">Snapshots</span>
-              </div>
-              <p className="text-white font-medium">{siteHealth?.snapshot_status || 'Unknown'}</p>
+      <div className="fantasy-section">
+        <div className="flex items-center space-x-2 mb-4">
+          <Activity className="w-4 h-4 text-slate-400" />
+          <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>Site Health</h3>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="text-center">
+            <div className="flex items-center justify-center space-x-2">
+              <CheckCircle className="w-4 h-4 text-slate-400" />
+              <span className="text-sm text-slate-400">Snapshots</span>
             </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center space-x-2">
-                <Clock className="w-4 h-4 text-theme-accent-light" />
-                <span className="text-sm text-slate-400">Scheduler</span>
-              </div>
-              <p className="text-white font-medium">{siteHealth?.scheduler_status || 'Unknown'}</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center space-x-2">
-                <AlertCircle className="w-4 h-4 text-yellow-400" />
-                <span className="text-sm text-slate-400">Failed</span>
-              </div>
-              <p className="text-white font-medium">{siteHealth?.failed_members?.length || 0}</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center space-x-2">
-                <Activity className="w-4 h-4 text-green-400" />
-                <span className="text-sm text-slate-400">Total Members</span>
-              </div>
-              <p className="text-white font-medium">{siteHealth?.total_members || 0}</p>
-            </div>
+            <p className="text-white font-medium">{siteHealth?.snapshot_status || 'Unknown'}</p>
           </div>
-        </CardContent>
-      </Card>
+          <div className="text-center">
+            <div className="flex items-center justify-center space-x-2">
+              <Clock className="w-4 h-4 text-slate-400" />
+              <span className="text-sm text-slate-400">Scheduler</span>
+            </div>
+            <p className="text-white font-medium">{siteHealth?.scheduler_status || 'Unknown'}</p>
+          </div>
+          <div className="text-center">
+            <div className="flex items-center justify-center space-x-2">
+              <AlertCircle className="w-4 h-4 text-slate-400" />
+              <span className="text-sm text-slate-400">Failed</span>
+            </div>
+            <p className="text-white font-medium">{siteHealth?.failed_members?.length || 0}</p>
+          </div>
+          <div className="text-center">
+            <div className="flex items-center justify-center space-x-2">
+              <Activity className="w-4 h-4 text-slate-400" />
+              <span className="text-sm text-slate-400">Total Members</span>
+            </div>
+            <p className="text-white font-medium">{siteHealth?.total_members || 0}</p>
+          </div>
+        </div>
+      </div>
 
       {/* Account Link Requests */}
-      <Card className="bg-slate-700/30 border-slate-600">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center space-x-2">
-            <UserPlus className="w-5 h-5 text-theme-accent-light" />
-            <span>Account Link Requests</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="fantasy-section">
+        <div className="flex items-center space-x-2 mb-4">
+          <UserPlus className="w-4 h-4 text-slate-400" />
+          <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>Account Link Requests</h3>
+        </div>
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {accountLinkRequests.length === 0 ? (
               <p className="text-slate-400 text-center py-4">No account link requests</p>
@@ -344,41 +337,36 @@ export const AdminHomeTab = () => {
               ))
             )}
           </div>
-        </CardContent>
-      </Card>
+      </div>
 
       {/* Admin Logs */}
-      <Card className="bg-slate-700/30 border-slate-600">
-        <CardHeader>
-          <CardTitle className="text-white">Recent Admin Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {adminLogs.length === 0 ? (
-              <p className="text-slate-400 text-center py-4">No admin actions recorded</p>
-            ) : (
-              adminLogs.map((log) => (
-                <div key={log.id} className="flex items-center justify-between p-3 bg-slate-600/30 rounded-lg">
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-white font-medium">{log.username}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {log.action}
-                      </Badge>
-                    </div>
-                    {log.details && (
-                      <p className="text-sm text-slate-400 mt-1">{log.details}</p>
-                    )}
+      <div className="fantasy-section">
+        <h3 className="text-white font-semibold mb-4" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>Recent Admin Actions</h3>
+        <div className="space-y-3 max-h-96 overflow-y-auto">
+          {adminLogs.length === 0 ? (
+            <p className="text-slate-400 text-center py-4">No admin actions recorded</p>
+          ) : (
+            adminLogs.map((log) => (
+              <div key={log.id} className="flex items-center justify-between p-3 bg-slate-600/30 rounded-lg">
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-white font-medium">{log.username}</span>
+                    <Badge variant="outline" className="text-xs">
+                      {log.action}
+                    </Badge>
                   </div>
-                  <span className="text-xs text-slate-500">
-                    {new Date(log.timestamp).toLocaleString()}
-                  </span>
+                  {log.details && (
+                    <p className="text-sm text-slate-400 mt-1">{log.details}</p>
+                  )}
                 </div>
-              ))
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                <span className="text-xs text-slate-500">
+                  {new Date(log.timestamp).toLocaleString()}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   )
 }

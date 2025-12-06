@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
@@ -9,6 +8,7 @@ import { Spinner } from '../ui/spinner'
 import { toast } from 'sonner'
 import { DropSearchModal } from './DropSearchModal'
 import { getSkillIcon } from '../../utils/skillIcons'
+import '../../styles/fantasy-container.css'
 
 interface Competition {
   id: string
@@ -344,13 +344,13 @@ export const CompetitionManagementTab = () => {
 
       {/* Create/Edit Form */}
       {showCreateForm && (
-        <Card className="bg-slate-700/30 border-slate-600">
-          <CardHeader>
-            <CardTitle className="text-white">
+        <div className="fantasy-section">
+          <div className="flex items-center space-x-2 mb-4">
+            <Trophy className="w-4 h-4 text-slate-400" />
+            <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>
               {editingCompetition ? 'Edit Competition' : 'Create New Competition'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
+          </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -431,11 +431,10 @@ export const CompetitionManagementTab = () => {
                   </Button>
 
                   {showGridBuilder && (
-                    <Card className="bg-slate-700/30 border-slate-600">
-                      <CardHeader>
-                        <CardTitle className="text-white">Bingo Grid Builder</CardTitle>
-                      </CardHeader>
-                      <CardContent>
+                    <div className="fantasy-section">
+                      <div className="flex items-center space-x-2 mb-4">
+                        <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>Bingo Grid Builder</h3>
+                      </div>
                         <div className="space-y-4">
                           <div>
                             <label className="block text-sm font-medium text-slate-300 mb-2">
@@ -518,8 +517,7 @@ export const CompetitionManagementTab = () => {
                             </Button>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
+                    </div>
                   )}
                 </div>
               )}
@@ -691,145 +689,136 @@ export const CompetitionManagementTab = () => {
                 </Button>
               </div>
             </form>
-          </CardContent>
-        </Card>
+        </div>
       )}
 
       {/* Competitions List */}
-      <Card className="bg-slate-700/30 border-slate-600">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center space-x-2">
-            <Trophy className="w-5 h-5 text-theme-accent-light" />
-            <span>Active Competitions</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {competitions.length === 0 ? (
-            <p className="text-slate-400 text-center py-8">No competitions created yet</p>
-          ) : (
-            <div className="space-y-4">
-              {competitions.map((competition) => {
-                const { status, color } = getCompetitionStatus(competition.startDate, competition.endDate)
+      <div className="fantasy-section">
+        <div className="flex items-center space-x-2 mb-4">
+          <Trophy className="w-4 h-4 text-slate-400" />
+          <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>Active Competitions</h3>
+        </div>
+        {competitions.length === 0 ? (
+          <p className="text-slate-400 text-center py-8">No competitions created yet</p>
+        ) : (
+          <div className="space-y-4">
+            {competitions.map((competition) => {
+              const { status, color } = getCompetitionStatus(competition.startDate, competition.endDate)
 
-                return (
-                  <Card key={competition.id} className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center space-x-3">
-                          {competition.type === 'XP' || competition.type === 'XP_GAIN' ? (
-                            getSkillIcon(competition.skill || 'overall') ? (
-                              <img 
-                                src={getSkillIcon(competition.skill || 'overall')!} 
-                                alt={competition.skill}
-                                className="w-6 h-6"
-                              />
-                            ) : (
-                              <div className="text-2xl">📊</div>
-                            )
-                          ) : (
-                            <div className="text-2xl">💀</div>
-                          )}
-                          <div className="text-left">
-                            <CardTitle className="text-white text-xl text-left">
-                              {competition.name}
-                            </CardTitle>
-                            <CardDescription className="text-slate-400 mt-1 text-left">
-                              {competition.description}
-                            </CardDescription>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge className={`${color} text-white capitalize pointer-events-none`}>
-                            {status}
-                          </Badge>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => startEdit(competition)}
-                            className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-white"
-                          >
-                            <Edit className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDelete(competition.id)}
-                            className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-red-400 hover:text-red-300"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
+              return (
+                <div key={competition.id} className="bg-slate-800/50 border border-slate-700 hover:bg-slate-800/70 transition-colors p-4">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      {competition.type === 'XP' || competition.type === 'XP_GAIN' ? (
+                        getSkillIcon(competition.skill || 'overall') ? (
+                          <img 
+                            src={getSkillIcon(competition.skill || 'overall')!} 
+                            alt={competition.skill}
+                            className="w-6 h-6"
+                          />
+                        ) : (
+                          <div className="text-2xl">📊</div>
+                        )
+                      ) : (
+                        <div className="text-2xl">💀</div>
+                      )}
+                      <div className="text-left">
+                        <h4 className="text-white text-xl text-left font-semibold">
+                          {competition.name}
+                        </h4>
+                        <p className="text-slate-400 mt-1 text-left text-sm">
+                          {competition.description}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge className={`${color} text-white capitalize pointer-events-none`}>
+                        {status}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => startEdit(competition)}
+                        className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-white"
+                      >
+                        <Edit className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDelete(competition.id)}
+                        className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-red-400 hover:text-red-300"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="w-4 h-4 text-slate-400" />
+                      <div>
+                        <p className="text-sm text-slate-400">Start Date</p>
+                        <p className="text-white font-medium">
+                          {formatDate(competition.startDate)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="w-4 h-4 text-slate-400" />
+                      <div>
+                        <p className="text-sm text-slate-400">End Date</p>
+                        <p className="text-white font-medium">
+                          {formatDate(competition.endDate)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Users className="w-4 h-4 text-slate-400" />
+                      <div>
+                        <p className="text-sm text-slate-400">Type</p>
+                        <p className="text-white font-medium">
+                          {getCompetitionTypeLabel(competition.type)}
+                        </p>
+                      </div>
+                    </div>
+                    {(competition.type === 'XP' || competition.type === 'XP_GAIN') && competition.skill && (
+                      <div className="flex items-center space-x-2">
+                        <BarChart3 className="w-4 h-4 text-slate-400" />
+                        <div>
+                          <p className="text-sm text-slate-400">Skill</p>
+                          <p className="text-white font-medium capitalize">
+                            {competition.skill}
+                          </p>
                         </div>
                       </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="w-4 h-4 text-slate-400" />
-                          <div>
-                            <p className="text-sm text-slate-400">Start Date</p>
-                            <p className="text-white font-medium">
-                              {formatDate(competition.startDate)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="w-4 h-4 text-slate-400" />
-                          <div>
-                            <p className="text-sm text-slate-400">End Date</p>
-                            <p className="text-white font-medium">
-                              {formatDate(competition.endDate)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Users className="w-4 h-4 text-slate-400" />
-                          <div>
-                            <p className="text-sm text-slate-400">Type</p>
-                            <p className="text-white font-medium">
-                              {getCompetitionTypeLabel(competition.type)}
-                            </p>
-                          </div>
-                        </div>
-                        {(competition.type === 'XP' || competition.type === 'XP_GAIN') && competition.skill && (
-                          <div className="flex items-center space-x-2">
-                            <BarChart3 className="w-4 h-4 text-slate-400" />
-                            <div>
-                              <p className="text-sm text-slate-400">Skill</p>
-                              <p className="text-white font-medium capitalize">
-                                {competition.skill}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                        {(competition.type === 'DROPS' || competition.type === 'BOSS_KILLS') && competition.boardSize && (
-                          <div className="flex items-center space-x-2">
-                            <Trophy className="w-4 h-4 text-slate-400" />
-                            <div>
-                              <p className="text-sm text-slate-400">Grid Size</p>
-                              <p className="text-white font-medium">
-                                {competition.boardSize}×{competition.boardSize}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                        <div className="flex items-center space-x-2">
-                          <Users className="w-4 h-4 text-slate-400" />
-                          <div>
-                            <p className="text-sm text-slate-400">Participants</p>
-                            <p className="text-white font-medium">
-                              Auto-Enrolled
-                            </p>
-                          </div>
+                    )}
+                    {(competition.type === 'DROPS' || competition.type === 'BOSS_KILLS') && competition.boardSize && (
+                      <div className="flex items-center space-x-2">
+                        <Trophy className="w-4 h-4 text-slate-400" />
+                        <div>
+                          <p className="text-sm text-slate-400">Grid Size</p>
+                          <p className="text-white font-medium">
+                            {competition.boardSize}×{competition.boardSize}
+                          </p>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    )}
+                    <div className="flex items-center space-x-2">
+                      <Users className="w-4 h-4 text-slate-400" />
+                      <div>
+                        <p className="text-sm text-slate-400">Participants</p>
+                        <p className="text-white font-medium">
+                          Auto-Enrolled
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       <DropSearchModal
         isOpen={showDropModal}

@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
@@ -7,6 +6,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '.
 import { Users, Search, Calendar, TrendingUp, Crown, AlertCircle } from 'lucide-react'
 import { Spinner } from '../ui/spinner'
 import { checkPlayerMilestones, MilestoneBadge } from '../../utils/gradientUtils'
+import '../../styles/fantasy-container.css'
 
 interface ClanMember {
   id: string
@@ -197,46 +197,39 @@ export const RankTrackingTab = () => {
 
       {/* Promotion Notification Card */}
       {dueForPromotionCount > 0 && (
-        <Card className="promotion-notification">
-          <CardContent className="p-3">
-            <div className="promotion-notification__content flex items-center justify-center text-sm">
-              <AlertCircle className="promotion-notification__icon w-4 h-4 mr-2 shrink-0" />
-              <span>
-                {dueForPromotionCount} {dueForPromotionCount === 1 ? 'member is' : 'members are'} due for a promotion. Please resolve in-game.
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="fantasy-section promotion-notification">
+          <div className="promotion-notification__content flex items-center justify-center text-sm p-3">
+            <AlertCircle className="promotion-notification__icon w-4 h-4 mr-2 shrink-0" />
+            <span>
+              {dueForPromotionCount} {dueForPromotionCount === 1 ? 'member is' : 'members are'} due for a promotion. Please resolve in-game.
+            </span>
+          </div>
+        </div>
       )}
 
       {/* Search */}
-      <Card className="bg-slate-700/30 border-slate-600">
-        <CardContent className="p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-            <Input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search members..."
-              className="pl-10 bg-slate-600 border-slate-500 text-white"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="fantasy-section">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+          <Input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search members..."
+            className="pl-10 bg-slate-600 border-slate-500 text-white"
+          />
+        </div>
+      </div>
 
       {/* Section 1: Members Due for Promotion */}
       {dueForPromotionMembers.length > 0 && (
-        <Card className="bg-slate-700/30 border-slate-600">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center space-x-2">
-              <TrendingUp className="w-5 h-5 text-[#ffb74d]" />
-              <span>Members Due for Promotion</span>
-              <Badge className="bg-[#ffb74d] text-white ml-2">
-                {dueForPromotionMembers.length}
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="fantasy-section">
+          <div className="flex items-center space-x-2 mb-4">
+            <TrendingUp className="w-4 h-4 text-slate-400" />
+            <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>Members Due for Promotion</h3>
+            <Badge className="bg-[#ffb74d] text-white ml-2">
+              {dueForPromotionMembers.length}
+            </Badge>
+          </div>
             <Table className="text-slate-300">
               <TableHeader>
                 <TableRow className="border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50">
@@ -320,23 +313,19 @@ export const RankTrackingTab = () => {
                 ))}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
+        </div>
       )}
 
       {/* Section 2: All Active Members */}
       {activeMembers.length > 0 && (
-        <Card className="bg-slate-700/30 border-slate-600">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center space-x-2">
-              <Users className="w-5 h-5 text-theme-accent-light" />
-              <span>All Active Members</span>
-              <Badge className="bg-slate-600 text-white ml-2">
-                {activeMembers.length}
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="fantasy-section">
+          <div className="flex items-center space-x-2 mb-4">
+            <Users className="w-4 h-4 text-slate-400" />
+            <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>All Active Members</h3>
+            <Badge className="bg-slate-600 text-white ml-2">
+              {activeMembers.length}
+            </Badge>
+          </div>
             <Table className="text-slate-300">
               <TableHeader>
                 <TableRow className="border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50">
@@ -449,23 +438,19 @@ export const RankTrackingTab = () => {
                 </Button>
               </div>
             )}
-          </CardContent>
-        </Card>
+        </div>
       )}
 
       {/* Section 3: Leadership Ranks */}
       {leadershipMembers.length > 0 && (
-        <Card className="bg-slate-700/30 border-slate-600">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center space-x-2">
-              <Crown className="w-5 h-5 text-[#ffb74d]" />
-              <span>Leadership Ranks</span>
-              <Badge className="bg-[#ffb74d] text-white ml-2">
-                {leadershipMembers.length}
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="fantasy-section">
+          <div className="flex items-center space-x-2 mb-4">
+            <Crown className="w-4 h-4 text-slate-400" />
+            <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>Leadership Ranks</h3>
+            <Badge className="bg-[#ffb74d] text-white ml-2">
+              {leadershipMembers.length}
+            </Badge>
+          </div>
             <Table className="text-slate-300">
               <TableHeader>
                 <TableRow className="border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50">
@@ -546,56 +531,53 @@ export const RankTrackingTab = () => {
                 ))}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
+        </div>
       )}
 
       {/* Longevity Rules */}
-      <Card className="bg-slate-700/30 border-slate-600">
-        <CardHeader>
-          <CardTitle className="text-white">Longevity Rules</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-slate-400">2+ years:</span>
-              <span className="text-white">Coordinator</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">1.5+ years:</span>
-              <span className="text-white">Organiser</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">1+ year:</span>
-              <span className="text-white">Admin</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">9+ months:</span>
-              <span className="text-white">General</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">6+ months:</span>
-              <span className="text-white">Captain</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">3+ months:</span>
-              <span className="text-white">Lieutenant</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">2+ months:</span>
-              <span className="text-white">Sergeant</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">1+ month:</span>
-              <span className="text-white">Corporal</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Entry:</span>
-              <span className="text-white">Recruit</span>
-            </div>
+      <div className="fantasy-section">
+        <div className="flex items-center space-x-2 mb-4">
+          <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>Longevity Rules</h3>
+        </div>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-slate-400">2+ years:</span>
+            <span className="text-white">Coordinator</span>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex justify-between">
+            <span className="text-slate-400">1.5+ years:</span>
+            <span className="text-white">Organiser</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-400">1+ year:</span>
+            <span className="text-white">Admin</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-400">9+ months:</span>
+            <span className="text-white">General</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-400">6+ months:</span>
+            <span className="text-white">Captain</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-400">3+ months:</span>
+            <span className="text-white">Lieutenant</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-400">2+ months:</span>
+            <span className="text-white">Sergeant</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-400">1+ month:</span>
+            <span className="text-white">Corporal</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-400">Entry:</span>
+            <span className="text-white">Recruit</span>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
