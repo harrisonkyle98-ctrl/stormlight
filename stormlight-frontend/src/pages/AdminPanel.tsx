@@ -427,11 +427,16 @@ const AdminPanel = () => {
             </div>
           </div>
 
-          {/* Profile Panel - collapsible */}
+          {/* Profile Panel - collapsible with smooth animation */}
           <div 
             className={`profile-header-panel ${
-              profileAnimReady ? 'profile-header-panel--animated' : ''
-            } ${profileExpanded ? 'profile-header-panel--expanded' : ''}`}
+              profileAnimReady ? 'profile-header-panel-anim ' : ''
+            }${
+              profileExpanded 
+                ? 'profile-header-panel-anim--expanded' 
+                : 'profile-header-panel-anim--collapsed'
+            }`}
+            aria-hidden={!profileExpanded}
           >
             <div className="profile-header-panel-content">
               <div className="flex flex-col lg:flex-row gap-4">
@@ -679,24 +684,24 @@ const AdminPanel = () => {
         <div className="fantasy-content">
           {/* Admin Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-5 bg-slate-700/50 border border-slate-600 mb-4">
-                <TabsTrigger value="home" className="flex items-center space-x-2 data-[state=active]:bg-slate-600">
+              <TabsList className="grid w-full grid-cols-5 bg-slate-700/50 border border-slate-600 mb-4 rounded-none">
+                <TabsTrigger value="home" className="flex items-center space-x-2 rounded-none data-[state=active]:bg-slate-600 data-[state=active]:rounded-none">
                   <Home className="w-4 h-4" />
                   <span className="hidden sm:inline">Home</span>
                 </TabsTrigger>
-                <TabsTrigger value="badges" className="flex items-center space-x-2 data-[state=active]:bg-slate-600">
+                <TabsTrigger value="badges" className="flex items-center space-x-2 rounded-none data-[state=active]:bg-slate-600 data-[state=active]:rounded-none">
                   <Award className="w-4 h-4" />
                   <span className="hidden sm:inline">Badges</span>
                 </TabsTrigger>
-                <TabsTrigger value="competitions" className="flex items-center space-x-2 data-[state=active]:bg-slate-600">
+                <TabsTrigger value="competitions" className="flex items-center space-x-2 rounded-none data-[state=active]:bg-slate-600 data-[state=active]:rounded-none">
                   <Trophy className="w-4 h-4" />
                   <span className="hidden sm:inline">Competitions</span>
                 </TabsTrigger>
-                <TabsTrigger value="ranks" className="flex items-center space-x-2 data-[state=active]:bg-slate-600">
+                <TabsTrigger value="ranks" className="flex items-center space-x-2 rounded-none data-[state=active]:bg-slate-600 data-[state=active]:rounded-none">
                   <ArrowBigUp className="w-4 h-4" />
                   <span className="hidden sm:inline">Ranks</span>
                 </TabsTrigger>
-                <TabsTrigger value="memberlog" className="flex items-center space-x-2 data-[state=active]:bg-slate-600">
+                <TabsTrigger value="memberlog" className="flex items-center space-x-2 rounded-none data-[state=active]:bg-slate-600 data-[state=active]:rounded-none">
                   <UsersRound className="w-4 h-4" />
                   <span className="hidden sm:inline">Log</span>
                 </TabsTrigger>

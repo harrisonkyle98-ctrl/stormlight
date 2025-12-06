@@ -197,7 +197,7 @@ export const RankTrackingTab = () => {
 
       {/* Promotion Notification Card */}
       {dueForPromotionCount > 0 && (
-        <div className="promotion-notification bg-slate-700/30 border border-slate-600 rounded-lg">
+        <div className="promotion-notification bg-slate-700/30 border border-slate-600 rounded-none">
           <div className="promotion-notification__content flex items-center justify-center text-sm p-3">
             <AlertCircle className="promotion-notification__icon w-4 h-4 mr-2 shrink-0" />
             <span>
