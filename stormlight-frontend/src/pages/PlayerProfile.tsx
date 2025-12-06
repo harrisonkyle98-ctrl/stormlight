@@ -1267,13 +1267,14 @@ const PlayerProfile = () => {
               </div>
               </div>
 
-              {/* Clue Scrolls Section */}
+              {/* Clue Scrolls Section - Inner Panel */}
               {playerData.clue_scrolls && Object.values(playerData.clue_scrolls).some(count => count !== null && count !== undefined) && (
-                <div className="mt-6 pt-6 border-t border-slate-600/50">
-                  <h3 className="text-white flex items-center space-x-2 mb-4 font-['Cinzel',serif]">
+                <div className="fantasy-section p-6">
+                  <h3 className="text-white flex items-center space-x-2 mb-2 font-['Cinzel',serif]">
                     <Scroll className="w-5 h-5 text-purple-400" />
                     <span>Clue Scrolls</span>
                   </h3>
+                  <div className="h-px bg-slate-700/60 mb-4" />
                   <div className="space-y-3">
                   {[
                     { name: 'Easy', key: 'easy', color: 'text-green-400' },
@@ -1300,7 +1301,7 @@ const PlayerProfile = () => {
                 </div>
               )}
 
-              {/* Skills at 99 Section */}
+              {/* Skills at 99 Section - Inner Panel */}
               {playerData.stats && (() => {
                 const skillsAt99 = skillOrder
                   .filter(skill => {
@@ -1317,11 +1318,12 @@ const PlayerProfile = () => {
                   .sort((a, b) => (a.xp || 0) - (b.xp || 0))
 
                 return skillsAt99.length > 0 ? (
-                  <div className="mt-6 pt-6 border-t border-slate-600/50">
-                    <h3 className="text-white flex items-center space-x-2 mb-4 font-['Cinzel',serif]">
+                  <div className="fantasy-section p-6">
+                    <h3 className="text-white flex items-center space-x-2 mb-2 font-['Cinzel',serif]">
                       <BarChart2 className="w-5 h-5 text-[#22c55e]" />
                       <span>Skills at 99 [{skillsAt99.length}]</span>
                     </h3>
+                    <div className="h-px bg-slate-700/60 mb-4" />
                   <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                     {skillsAt99.map((skill) => {
                       const categoryInfo = getSkillCategory(skill.name);
@@ -1366,7 +1368,7 @@ const PlayerProfile = () => {
                 ) : null
               })()}
 
-              {/* Skills at 120+ Section */}
+              {/* Skills at 120+ Section - Inner Panel */}
               {playerData.stats && (() => {
                 const skillsAt120Plus = skillOrder
                   .filter(skill => {
@@ -1383,11 +1385,12 @@ const PlayerProfile = () => {
                   .sort((a, b) => (a.xp || 0) - (b.xp || 0))
 
                 return skillsAt120Plus.length > 0 ? (
-                  <div className="mt-6 pt-6 border-t border-slate-600/50">
-                    <h3 className="text-white flex items-center space-x-2 mb-4 font-['Cinzel',serif]">
+                  <div className="fantasy-section p-6">
+                    <h3 className="text-white flex items-center space-x-2 mb-2 font-['Cinzel',serif]">
                       <BarChart2 className="w-5 h-5 text-[#be9a55]" />
                       <span>Skills at 120 [{skillsAt120Plus.length}]</span>
                     </h3>
+                    <div className="h-px bg-slate-700/60 mb-4" />
                   <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                     {skillsAt120Plus.map((skill) => {
                       const categoryInfo = getSkillCategory(skill.name);
@@ -1432,7 +1435,7 @@ const PlayerProfile = () => {
                 ) : null
               })()}
 
-              {/* Skills at 200m Section */}
+              {/* Skills at 200m Section - Inner Panel */}
               {playerData.stats && (() => {
                 const skillsAt200m = skillOrder
                   .filter(skill => {
@@ -1449,11 +1452,12 @@ const PlayerProfile = () => {
                   .sort((a, b) => (a.rank || 0) - (b.rank || 0))
 
                 return skillsAt200m.length > 0 ? (
-                  <div className="mt-6 pt-6 border-t border-slate-600/50">
-                    <h3 className="text-white flex items-center space-x-2 mb-4 font-['Cinzel',serif]">
+                  <div className="fantasy-section p-6">
+                    <h3 className="text-white flex items-center space-x-2 mb-2 font-['Cinzel',serif]">
                       <BarChart2 className="w-5 h-5 text-[#a855f7]" />
                       <span>Skills at 200m [{skillsAt200m.length}]</span>
                     </h3>
+                    <div className="h-px bg-slate-700/60 mb-4" />
                   <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                     {skillsAt200m.map((skill) => {
                       const categoryInfo = getSkillCategory(skill.name);
