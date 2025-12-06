@@ -620,7 +620,7 @@ const CompetitionDetail = () => {
     )
   }
 
-  const { status, color } = getCompetitionStatus(competition.startDate, competition.endDate)
+  const { status } = getCompetitionStatus(competition.startDate, competition.endDate)
 
   return (
     <>
@@ -843,96 +843,102 @@ const CompetitionDetail = () => {
             </Button>
           </div>
 
-          <div className="fantasy-section mb-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center space-x-4">
-              {competition.type === 'XP_GAIN' ? (
-                getSkillIcon(competition.skill || 'overall') ? (
-                  <img 
-                    src={getSkillIcon(competition.skill || 'overall')!} 
-                    alt={competition.skill}
-                    className="w-10 h-10"
-                  />
-                ) : (
-                  <div className="text-4xl">📊</div>
-                )
-              ) : (
-                <div className="text-4xl">💀</div>
-              )}
-              <div className="text-left">
-                <h2 className="text-2xl text-white mb-2 text-left font-bold">
+          {/* Competition Summary - matches competition entry styling from list page */}
+          <div className="competition-entry mb-6">
+            {/* Status-colored ribbon header - Green=Active, Blue=Upcoming, Grey=Ended */}
+            <div className={`competition-header-plate ${status === 'active' ? 'competition-header-plate--active' : status === 'ended' ? 'competition-header-plate--ended' : ''}`}>
+              <div className="competition-header-plate-content">
+                {/* Centered title */}
+                <div className="competition-header-plate-title">
                   {competition.name}
-                </h2>
-                <p className="text-slate-400 text-left">
-                  {competition.description || `Compete for the ${competition.type === 'XP_GAIN' ? 'highest XP gains' : 'most boss drops'}!`}
-                </p>
+                </div>
+                {/* Icon positioned on the right */}
+                {competition.type === 'XP_GAIN' ? (
+                  getSkillIcon(competition.skill || 'overall') ? (
+                    <img 
+                      src={getSkillIcon(competition.skill || 'overall')!} 
+                      alt={competition.skill}
+                      className="competition-header-plate-icon"
+                    />
+                  ) : null
+                ) : (
+                  <span className="competition-header-plate-icon text-2xl">💀</span>
+                )}
               </div>
             </div>
-            <Badge className={`${color} text-white capitalize`}>
-              {status}
-            </Badge>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-            <div className="flex items-center space-x-3">
-              <Calendar className="w-5 h-5 text-theme-accent-light" />
-              <div>
-                <p className="text-sm text-slate-400">Start Date</p>
-                <p className="text-white font-medium">
-                  {formatDate(competition.startDate)}
+            
+            {/* Inner panel - content below the ribbon header */}
+            <div className="fantasy-section">
+              {/* Description */}
+              {competition.description && (
+                <p className="text-slate-400 mb-4 text-sm">
+                  {competition.description}
                 </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Calendar className="w-5 h-5 text-red-400" />
-              <div>
-                <p className="text-sm text-slate-400">End Date</p>
-                <p className="text-white font-medium">
-                  {formatDate(competition.endDate)}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <TrendingUp className="w-5 h-5 text-purple-400" />
-              <div>
-                <p className="text-sm text-slate-400">Type</p>
-                <p className="text-white font-medium">
-                  {competition.type === 'XP_GAIN' ? 'Skilling' : 'PvM'}
-                </p>
-              </div>
-            </div>
-            {competition.type === 'XP_GAIN' && competition.skill && (
-              <div className="flex items-center space-x-3">
-                <BarChart3 className="w-5 h-5 text-slate-400" />
-                <div>
-                  <p className="text-sm text-slate-400">Skill</p>
-                  <p className="text-white font-medium capitalize">
-                    {competition.skill}
-                  </p>
+              )}
+            
+              {/* Content section - matches list page layout exactly */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="flex items-center space-x-2">
+                  <Calendar className="w-4 h-4 text-slate-400" />
+                  <div>
+                    <p className="text-sm text-slate-400">Start Date</p>
+                    <p className="text-white font-medium">
+                      {formatDate(competition.startDate)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Calendar className="w-4 h-4 text-slate-400" />
+                  <div>
+                    <p className="text-sm text-slate-400">End Date</p>
+                    <p className="text-white font-medium">
+                      {formatDate(competition.endDate)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Users className="w-4 h-4 text-slate-400" />
+                  <div>
+                    <p className="text-sm text-slate-400">Type</p>
+                    <p className="text-white font-medium">
+                      {competition.type === 'XP_GAIN' ? 'Skilling' : 'PvM'}
+                    </p>
+                  </div>
+                </div>
+                {competition.type === 'XP_GAIN' && competition.skill && (
+                  <div className="flex items-center space-x-2">
+                    <BarChart3 className="w-4 h-4 text-slate-400" />
+                    <div>
+                      <p className="text-sm text-slate-400">Skill</p>
+                      <p className="text-white font-medium capitalize">
+                        {competition.skill}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {competition.type === 'BOSS_KILLS' && competition.boardSize && (
+                  <div className="flex items-center space-x-2">
+                    <Trophy className="w-4 h-4 text-slate-400" />
+                    <div>
+                      <p className="text-sm text-slate-400">Grid Size</p>
+                      <p className="text-white font-medium">
+                        {competition.boardSize}x{competition.boardSize}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-center space-x-2">
+                  <Users className="w-4 h-4 text-slate-400" />
+                  <div>
+                    <p className="text-sm text-slate-400">Participants</p>
+                    <p className="text-white font-medium">
+                      {totalParticipants}
+                    </p>
+                  </div>
                 </div>
               </div>
-            )}
-            {competition.type === 'BOSS_KILLS' && competition.boardSize && (
-              <div className="flex items-center space-x-3">
-                <Trophy className="w-5 h-5 text-slate-400" />
-                <div>
-                  <p className="text-sm text-slate-400">Grid Size</p>
-                  <p className="text-white font-medium">
-                    {competition.boardSize}x{competition.boardSize}
-                  </p>
-                </div>
-              </div>
-            )}
-            <div className="flex items-center space-x-3">
-              <Users className="w-5 h-5 text-green-400" />
-              <div>
-                <p className="text-sm text-slate-400">Participants</p>
-                <p className="text-white font-medium">
-                  {totalParticipants}
-                </p>
-              </div>
             </div>
           </div>
-        </div>
 
         {(competition.rewardFirstGp || competition.rewardSecondGp || competition.rewardThirdGp) && (
           <div className="fantasy-section mb-6">
