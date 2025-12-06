@@ -1,5 +1,5 @@
-import { Card, CardContent } from '../ui/card'
 import { Tooltip } from '../ui/tooltip'
+import '../../styles/fantasy-container.css'
 
 interface AccountStatsCardProps {
   combatLevel: number
@@ -23,8 +23,7 @@ export const AccountStatsCard = ({
   leagueIcon
 }: AccountStatsCardProps) => {
   return (
-    <Card className="w-full bg-slate-800/50 border-slate-700">
-      <CardContent className="p-3 sm:p-4">
+    <div className="fantasy-section w-full p-3 sm:p-4">
         <div className="flex flex-nowrap items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 overflow-x-auto">
           {/* Combat Level */}
           <Tooltip content="Combat Level">
@@ -160,7 +159,6 @@ export const AccountStatsCard = ({
             </Tooltip>
           )}
         </div>
-      </CardContent>
-    </Card>
+    </div>
   )
 }

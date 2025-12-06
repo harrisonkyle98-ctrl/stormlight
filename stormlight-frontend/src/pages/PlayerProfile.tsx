@@ -1,18 +1,18 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { ArrowLeft, User, Scroll, Trophy, Package, Activity, BarChart3, Compass, BarChart2, FileText, RefreshCw, Plus, CircleCheck } from 'lucide-react'
+import { ArrowLeft, User, Scroll, Trophy, Package, Activity, BarChart3, Compass, BarChart2, FileText, RefreshCw, Plus, CircleCheck, ChevronDown, ChevronUp, Link2, Palette, Award, LogOut, Key } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { Spinner } from '../components/ui/spinner'
 import { getSkillIcon } from '../utils/skillIcons'
 import { checkPlayerMilestones } from '../utils/gradientUtils'
-import { urlToUsername } from '../utils/urlUtils'
+import { urlToUsername, usernameToUrl } from '../utils/urlUtils'
 import { Username } from '../components/ui/username'
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
 import { useProfileGains } from '../contexts/ProfileGainsContext'
 import { Tooltip } from '../components/ui/tooltip'
 import { getSkillCategory } from '../utils/skillCategory'
@@ -26,6 +26,12 @@ import { LogTab } from '../components/tabs/LogTab'
 import { AccountStatsCard } from '../components/profile/AccountStatsCard'
 import { CircularClanXPGraph } from '../components/ui/CircularClanXPGraph'
 import { getBadgeTooltipConfig } from '../utils/badgeTooltipConfig'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog'
+import { Input } from '../components/ui/input'
+import { themes } from '../config/themes'
+import AnimatedHeader from '../components/AnimatedHeader'
+import RibbonNav from '../components/RibbonNav'
+import '../styles/fantasy-container.css'
 
 interface CustomBadge {
   id: string
@@ -86,7 +92,9 @@ interface PlayerStats {
 
 const PlayerProfile = () => {
   const { username } = useParams<{ username: string }>()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
+  const { theme: selectedTheme, setTheme: handleThemeChange } = useTheme()
+  const navigate = useNavigate()
   const { publish } = useProfileGains()
   const [playerData, setPlayerData] = useState<PlayerStats | null>(null)
   const [questData, setQuestData] = useState<any>(null)
@@ -102,8 +110,220 @@ const PlayerProfile = () => {
   const [badgeModalError, setBadgeModalError] = useState<string | null>(null)
   const [modalCustomBadges, setModalCustomBadges] = useState<CustomBadge[]>([])
   const [citadelCaps, setCitadelCaps] = useState<number | null>(null)
+  
+  // Profile ribbon state (for logged-in user - separate from viewed profile)
+  const [profileExpanded, setProfileExpanded] = useState(false)
+  const [profileAnimReady, setProfileAnimReady] = useState(false)
+  const [selfPlayerData, setSelfPlayerData] = useState<PlayerStats | null>(null)
+  const [selfQuestData, setSelfQuestData] = useState<any>(null)
+  const [selfProfileLoading, setSelfProfileLoading] = useState(false)
+  const [selfProfileError, setSelfProfileError] = useState<string | null>(null)
+  const [settingsSection, setSettingsSection] = useState<'account' | 'badges' | 'appearance' | null>(null)
+  const [eligibleBadges, setEligibleBadges] = useState<CustomBadge[]>([])
+  const [selectedBadgeId, setSelectedBadgeId] = useState<string | null>(null)
+  const [accountLinkRequests, setAccountLinkRequests] = useState<any[]>([])
+  const [linkedAccounts, setLinkedAccounts] = useState<any[]>([])
+  const [newUsername, setNewUsername] = useState('')
+  const [linkRequestLoading, setLinkRequestLoading] = useState(false)
+  const [themeTooltip, setThemeTooltip] = useState<string | null>(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+  
+  // Enable animation after initial render to prevent flicker
+  useEffect(() => {
+    const timer = setTimeout(() => setProfileAnimReady(true), 50)
+    return () => clearTimeout(timer)
+  }, [])
+  
+  // Profile ribbon data fetching (for logged-in user)
+  useEffect(() => {
+    const loadSelfProfileData = async () => {
+      if (user?.username && user?.isLinked) {
+        setSelfProfileLoading(true)
+        try {
+          await Promise.all([
+            fetchSelfPlayerStats(),
+            fetchSelfQuestData()
+          ])
+        } finally {
+          setSelfProfileLoading(false)
+        }
+      } else if (user) {
+        setSelfProfileError(user.requiresLinking ? 'Please link your RuneScape account' : 'Account not linked to clan member')
+      }
+    }
+    loadSelfProfileData()
+  }, [user?.username, user?.isLinked])
+  
+  // Fetch settings data when dialog opens
+  useEffect(() => {
+    if (settingsSection !== null) {
+      fetchAccountLinkRequests()
+      fetchLinkedAccounts()
+      fetchEligibleBadges()
+    }
+  }, [settingsSection])
+  
+  const fetchSelfPlayerStats = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/player/${encodeURIComponent(user?.username || '')}/stats`)
+      if (response.ok) {
+        const data = await response.json()
+        setSelfPlayerData(data)
+      }
+    } catch (error) {
+      console.error('Error fetching self player stats:', error)
+    }
+  }
+  
+  const fetchSelfQuestData = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/player/${encodeURIComponent(user?.username || '')}/quests`)
+      if (response.ok) {
+        const data = await response.json()
+        setSelfQuestData(data)
+      }
+    } catch (error) {
+      console.error('Error fetching self quest data:', error)
+    }
+  }
+  
+  const fetchAccountLinkRequests = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_URL}/api/auth/link-requests`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setAccountLinkRequests(Array.isArray(data) ? data : (data.requests || []))
+      }
+    } catch (error) {
+      console.error('Error fetching link requests:', error)
+    }
+  }
+  
+  const fetchLinkedAccounts = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const [membersResponse, requestsResponse] = await Promise.all([
+        fetch(`${API_URL}/api/clan/members?limit=500`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_URL}/api/auth/link-requests`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ])
+      
+      if (membersResponse.ok && requestsResponse.ok) {
+        const membersData = await membersResponse.json()
+        const requestsData = await requestsResponse.json()
+        const requests = Array.isArray(requestsData) ? requestsData : (requestsData.requests || [])
+        const approvedUsernames = requests
+          .filter((r: any) => r.status === 'approved' && r.discord_id === user?.discordId)
+          .map((r: any) => r.requested_username)
+        const allLinkedAccounts = membersData.members
+          .filter((m: any) => approvedUsernames.includes(m.username))
+          .map((m: any) => ({ username: m.username, clan_rank: m.clan_rank }))
+        setLinkedAccounts(allLinkedAccounts)
+      }
+    } catch (error) {
+      console.error('Error fetching linked accounts:', error)
+    }
+  }
+  
+  const handleSubmitLinkRequest = async () => {
+    if (!newUsername.trim()) return
+    setLinkRequestLoading(true)
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_URL}/api/auth/link-request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ requested_username: newUsername.trim() })
+      })
+      if (response.ok) {
+        setNewUsername('')
+        fetchAccountLinkRequests()
+      }
+    } catch (error) {
+      console.error('Error submitting link request:', error)
+    } finally {
+      setLinkRequestLoading(false)
+    }
+  }
+  
+  const handleDeleteRejectedRequest = async (requestId: string) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_URL}/api/auth/link-request/${requestId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        fetchAccountLinkRequests()
+      }
+    } catch (error) {
+      console.error('Error deleting request:', error)
+    }
+  }
+  
+  const handleSwitchAccount = async (targetUsername: string) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_URL}/api/auth/switch-account`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ target_username: targetUsername })
+      })
+      if (response.ok) {
+        window.location.reload()
+      }
+    } catch (error) {
+      console.error('Error switching account:', error)
+    }
+  }
+  
+  const fetchEligibleBadges = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_URL}/api/badges/eligible`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setEligibleBadges(data)
+      }
+    } catch (error) {
+      console.error('Error fetching eligible badges:', error)
+    }
+  }
+  
+  const handleBadgeSelection = async (badgeId: string | null) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_URL}/api/badges/select`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ badge_id: badgeId })
+      })
+      if (response.ok) {
+        setSelectedBadgeId(badgeId)
+        fetchSelfPlayerStats()
+      }
+    } catch (error) {
+      console.error('Error selecting badge:', error)
+    }
+  }
 
   useEffect(() => {
     if (username) {
@@ -397,31 +617,48 @@ const PlayerProfile = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-96 gap-4">
-        <Spinner size="lg" />
-        <div className="text-white text-xl">Loading clan member profile...</div>
-      </div>
+      <>
+        <AnimatedHeader />
+        <div className="flex flex-col items-center justify-center min-h-96 gap-4">
+          <Spinner size="lg" />
+          <div className="text-white text-xl">Loading clan member profile...</div>
+        </div>
+      </>
     )
   }
 
   if (error || !playerData) {
     return (
-      <div className="space-y-6">
-        <Button asChild className="bg-theme-button hover:bg-theme-button-hover text-white">
-          <Link to="/members">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Members
-          </Link>
-        </Button>
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardContent className="p-8 text-center">
-            <p className="text-red-400 text-lg">{error}</p>
-            <p className="text-slate-400 mt-2">
-              The clan member "{username}" could not be found or their stats are unavailable.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <AnimatedHeader />
+        <div className="fantasy-container">
+          <div className="fantasy-banner-wrapper">
+            <div className="fantasy-banner-ribbon-left"></div>
+            <div className="fantasy-banner-ribbon-right"></div>
+            <div className="fantasy-banner fantasy-banner--members">
+              <div className="fantasy-banner-inner">
+                <h1 className="fantasy-banner-title">Members</h1>
+              </div>
+            </div>
+          </div>
+          <div className="fantasy-content">
+            <div className="fantasy-section space-y-6">
+              <Button asChild className="bg-theme-button hover:bg-theme-button-hover text-white">
+                <Link to="/members">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Members
+                </Link>
+              </Button>
+              <div className="p-8 text-center">
+                <p className="text-red-400 text-lg">{error}</p>
+                <p className="text-slate-400 mt-2">
+                  The clan member "{username}" could not be found or their stats are unavailable.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
     )
   }
 
@@ -649,47 +886,210 @@ const PlayerProfile = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <Button asChild className="bg-theme-button hover:bg-theme-button-hover text-white">
-          <Link to="/members">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Members
-          </Link>
-        </Button>
-        <div className="flex items-center gap-2">
-          {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
-            <Button
-              onClick={handleOpenBadgeModal}
-              size="sm"
-              className="bg-theme-button hover:bg-theme-button-hover text-white"
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
-          )}
-          <Button
-            onClick={handleRefresh}
-            disabled={refreshing || (lastRefresh ? Date.now() - lastRefresh < 300000 : false)}
-            size="sm"
-            className="bg-theme-button hover:bg-theme-button-hover text-white disabled:opacity-50 disabled:bg-theme-slate-700"
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-          </Button>
-        </div>
-      </div>
+    <>
+      {/* Static Header - STORMLIGHT banner */}
+      <AnimatedHeader />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[30%_70%] gap-6">
-        {/* Account Stats Card - Horizontal Layout */}
-        {accountStats && (
-          <div className="lg:col-span-2">
-            <AccountStatsCard {...accountStats} />
+      {/* Profile Header Section - Gold Ribbon + Profile Panel (for logged-in user) */}
+      {user?.username && user?.isLinked && (selfProfileError ? (
+        <section className="profile-header-section">
+          <RibbonNav />
+          <div className="gold-banner-wrapper">
+            <div className="fantasy-banner fantasy-banner--gold">
+              <div className="fantasy-banner-inner">
+                <h1 className="fantasy-banner-title">Profile Error</h1>
+              </div>
+            </div>
           </div>
-        )}
-        
-        <div className="space-y-6">
-          
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardContent className="p-6">
+          <div className="profile-header-panel">
+            <div className="profile-header-panel-content">
+              <div className="text-center py-4">
+                <p className="text-red-400 mb-4">{selfProfileError}</p>
+                {!user?.requiresLinking && (
+                  <Button onClick={fetchSelfPlayerStats} className="profile-button">Retry</Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : selfProfileLoading || !selfPlayerData ? (
+        <section className="profile-header-section">
+          <RibbonNav />
+          <div className="gold-banner-wrapper">
+            <div className="fantasy-banner fantasy-banner--gold">
+              <div className="fantasy-banner-inner">
+                <div className="w-32 h-6 bg-white/20 rounded animate-pulse mx-auto"></div>
+              </div>
+            </div>
+          </div>
+          <div className="profile-header-panel">
+            <div className="profile-header-panel-content">
+              <div className="flex flex-col lg:flex-row gap-4 animate-pulse">
+                <div className="lg:w-[30%] flex-shrink-0">
+                  <div className="rounded-lg p-6 bg-slate-700/30">
+                    <div className="w-20 h-20 bg-slate-600/50 rounded-full mx-auto mb-4"></div>
+                    <div className="w-24 h-5 bg-slate-600/50 rounded mx-auto"></div>
+                  </div>
+                </div>
+                <div className="flex-1 lg:max-w-[40%] space-y-2">
+                  <div className="h-10 bg-slate-700/30 rounded"></div>
+                  <div className="h-10 bg-slate-700/30 rounded"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : selfPlayerData && (
+        <section className="profile-header-section">
+          <RibbonNav />
+          <div 
+            className="gold-banner-wrapper cursor-pointer"
+            onClick={() => setProfileExpanded(prev => !prev)}
+            role="button"
+            aria-expanded={profileExpanded}
+          >
+            <div className="fantasy-banner fantasy-banner--gold">
+              <div className="fantasy-banner-inner relative flex items-center justify-center pr-14">
+                <h1 className="fantasy-banner-title">{user.username}</h1>
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center justify-center z-10">
+                  {profileExpanded ? (
+                    <ChevronUp className="w-5 h-5 text-white/80" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-white/80" />
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div 
+            className={`profile-header-panel ${
+              profileAnimReady ? 'profile-header-panel-anim ' : ''
+            }${
+              profileExpanded 
+                ? 'profile-header-panel-anim--expanded' 
+                : 'profile-header-panel-anim--collapsed'
+            }`}
+            aria-hidden={!profileExpanded}
+          >
+            <div className="profile-header-panel-content">
+              <div className="flex flex-col lg:flex-row gap-4">
+                <div className="lg:flex-1 flex flex-col">
+                  <div className="profile-avatar-section rounded-lg p-4">
+                    <div className="flex flex-col items-center space-y-2">
+                      <Avatar className="w-20 h-20">
+                        <AvatarImage
+                          src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(user.username)}/chat.png`}
+                          alt={user.username}
+                        />
+                        <AvatarFallback className="bg-theme-button text-white">
+                          <User className="w-10 h-10" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="text-center">
+                        <h1 className="text-2xl font-bold text-center">
+                          <Link to={`/clan-member/${usernameToUrl(user.username)}`} className="hover:opacity-80 transition-opacity">
+                            <Username username={user.username} clanRank={selfPlayerData.clan_rank} />
+                          </Link>
+                        </h1>
+                        {selfPlayerData.stats && (() => {
+                          const allBadges = checkPlayerMilestones(selfPlayerData.stats, selfQuestData, selfPlayerData.clan_rank, user.username)
+                          const rankBadge = allBadges.find(badge => badge.id.startsWith('rank-'))
+                          return rankBadge ? (
+                            <div className="mt-1">
+                              <div className="inline-flex items-center space-x-2 px-3 py-1 text-sm font-semibold rounded-md text-white" style={{ background: rankBadge.gradientBackground || rankBadge.backgroundColor }}>
+                                <img src={rankBadge.icon} alt={rankBadge.name} className="w-4 h-4" />
+                                <span>{rankBadge.name}</span>
+                              </div>
+                            </div>
+                          ) : null
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="lg:flex-1 flex flex-col gap-2">
+                  <Button onClick={() => setSettingsSection('account')} className="profile-button w-full justify-start gap-3">
+                    <Link2 className="w-5 h-5" /><span>Link Account</span>
+                  </Button>
+                  <Button onClick={() => setSettingsSection('badges')} className="profile-button w-full justify-start gap-3">
+                    <Award className="w-5 h-5" /><span>Badges</span>
+                  </Button>
+                  <Button onClick={() => navigate(`/clan-member/${usernameToUrl(user.username)}`)} className="profile-button w-full justify-start gap-3">
+                    <User className="w-5 h-5" /><span>View My Profile</span>
+                  </Button>
+                  <Button onClick={() => setSettingsSection('appearance')} className="profile-button w-full justify-start gap-3">
+                    <Palette className="w-5 h-5" /><span>Change Theme</span>
+                  </Button>
+                  {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
+                    <Button onClick={() => navigate('/admin')} className="profile-button w-full justify-start gap-3">
+                      <Key className="w-5 h-5" /><span>Admin Panel</span>
+                    </Button>
+                  )}
+                  <Button onClick={logout} className="profile-button w-full justify-start gap-3">
+                    <LogOut className="w-5 h-5" /><span>Log Out</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      ))}
+
+      {/* Main Content Container */}
+      <div className="fantasy-container">
+        {/* Members Banner Header - green theme */}
+        <div className="fantasy-banner-wrapper">
+          <div className="fantasy-banner-ribbon-left"></div>
+          <div className="fantasy-banner-ribbon-right"></div>
+          <div className="fantasy-banner fantasy-banner--members">
+            <div className="fantasy-banner-inner">
+              <h1 className="fantasy-banner-title">Members</h1>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="fantasy-content">
+          {/* Top toolbar */}
+          <div className="flex items-center justify-between mb-6">
+            <Button asChild className="bg-theme-button hover:bg-theme-button-hover text-white">
+              <Link to="/members">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Members
+              </Link>
+            </Button>
+            <div className="flex items-center gap-2">
+              {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
+                <Button
+                  onClick={handleOpenBadgeModal}
+                  size="sm"
+                  className="bg-theme-button hover:bg-theme-button-hover text-white"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              )}
+              <Button
+                onClick={handleRefresh}
+                disabled={refreshing || (lastRefresh ? Date.now() - lastRefresh < 300000 : false)}
+                size="sm"
+                className="bg-theme-button hover:bg-theme-button-hover text-white disabled:opacity-50 disabled:bg-theme-slate-700"
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[30%_70%] gap-6">
+            {/* Account Stats Card - Horizontal Layout */}
+            {accountStats && (
+              <div className="lg:col-span-2">
+                <AccountStatsCard {...accountStats} />
+              </div>
+            )}
+            
+            <div className="space-y-6">
+              
+              <div className="fantasy-section p-6">
               <div className="bg-slate-700/30 rounded-lg p-6 mb-4 relative">
                 {/* Discord Verification Indicator - Top Right */}
                 <Tooltip content={
@@ -865,20 +1265,16 @@ const PlayerProfile = () => {
                   </Tooltip>
                 ) : null}
               </div>
-            </CardContent>
-          </Card>
+              </div>
 
-          {/* Clue Scrolls Card */}
-          {playerData.clue_scrolls && Object.values(playerData.clue_scrolls).some(count => count !== null && count !== undefined) && (
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center space-x-2">
-                  <Scroll className="w-5 h-5 text-purple-400" />
-                  <span>Clue Scrolls</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+              {/* Clue Scrolls Section */}
+              {playerData.clue_scrolls && Object.values(playerData.clue_scrolls).some(count => count !== null && count !== undefined) && (
+                <div className="mt-6 pt-6 border-t border-slate-600/50">
+                  <h3 className="text-white flex items-center space-x-2 mb-4 font-['Cinzel',serif]">
+                    <Scroll className="w-5 h-5 text-purple-400" />
+                    <span>Clue Scrolls</span>
+                  </h3>
+                  <div className="space-y-3">
                   {[
                     { name: 'Easy', key: 'easy', color: 'text-green-400' },
                     { name: 'Medium', key: 'medium', color: 'text-yellow-400' },
@@ -900,36 +1296,32 @@ const PlayerProfile = () => {
                       </div>
                     )
                   })}
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
 
-          {/* Skills at 99 [X] Card */}
-          {playerData.stats && (() => {
-            const skillsAt99 = skillOrder
-              .filter(skill => {
-                if (skill === 'overall') return false
-                return playerData.stats[skill] && playerData.stats[skill].level >= 99 && playerData.stats[skill].level < 120
-              })
-              .map(skill => ({
-                name: skill,
-                icon: getSkillIcon(skill),
-                xp: playerData.stats[skill].xp,
-                rank: playerData.stats[skill].rank
-              }))
-              .filter(skill => skill.icon)
-              .sort((a, b) => (a.xp || 0) - (b.xp || 0))
+              {/* Skills at 99 Section */}
+              {playerData.stats && (() => {
+                const skillsAt99 = skillOrder
+                  .filter(skill => {
+                    if (skill === 'overall') return false
+                    return playerData.stats[skill] && playerData.stats[skill].level >= 99 && playerData.stats[skill].level < 120
+                  })
+                  .map(skill => ({
+                    name: skill,
+                    icon: getSkillIcon(skill),
+                    xp: playerData.stats[skill].xp,
+                    rank: playerData.stats[skill].rank
+                  }))
+                  .filter(skill => skill.icon)
+                  .sort((a, b) => (a.xp || 0) - (b.xp || 0))
 
-            return skillsAt99.length > 0 ? (
-              <Card className="bg-slate-800/50 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center space-x-2">
-                    <BarChart2 className="w-5 h-5 text-[#22c55e]" />
-                    <span>Skills at 99 [{skillsAt99.length}]</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+                return skillsAt99.length > 0 ? (
+                  <div className="mt-6 pt-6 border-t border-slate-600/50">
+                    <h3 className="text-white flex items-center space-x-2 mb-4 font-['Cinzel',serif]">
+                      <BarChart2 className="w-5 h-5 text-[#22c55e]" />
+                      <span>Skills at 99 [{skillsAt99.length}]</span>
+                    </h3>
                   <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                     {skillsAt99.map((skill) => {
                       const categoryInfo = getSkillCategory(skill.name);
@@ -970,36 +1362,32 @@ const PlayerProfile = () => {
                       );
                     })}
                   </div>
-                </CardContent>
-              </Card>
-            ) : null
-          })()}
+                  </div>
+                ) : null
+              })()}
 
-          {/* Skills at 120+ Card */}
-          {playerData.stats && (() => {
-            const skillsAt120Plus = skillOrder
-              .filter(skill => {
-                if (skill === 'overall') return false
-                return playerData.stats[skill] && playerData.stats[skill].level >= 120 && playerData.stats[skill].xp < 200000000
-              })
-              .map(skill => ({
-                name: skill,
-                icon: getSkillIcon(skill),
-                xp: playerData.stats[skill].xp,
-                rank: playerData.stats[skill].rank
-              }))
-              .filter(skill => skill.icon)
-              .sort((a, b) => (a.xp || 0) - (b.xp || 0))
+              {/* Skills at 120+ Section */}
+              {playerData.stats && (() => {
+                const skillsAt120Plus = skillOrder
+                  .filter(skill => {
+                    if (skill === 'overall') return false
+                    return playerData.stats[skill] && playerData.stats[skill].level >= 120 && playerData.stats[skill].xp < 200000000
+                  })
+                  .map(skill => ({
+                    name: skill,
+                    icon: getSkillIcon(skill),
+                    xp: playerData.stats[skill].xp,
+                    rank: playerData.stats[skill].rank
+                  }))
+                  .filter(skill => skill.icon)
+                  .sort((a, b) => (a.xp || 0) - (b.xp || 0))
 
-            return skillsAt120Plus.length > 0 ? (
-              <Card className="bg-slate-800/50 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center space-x-2">
-                    <BarChart2 className="w-5 h-5 text-[#be9a55]" />
-                    <span>Skills at 120 [{skillsAt120Plus.length}]</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+                return skillsAt120Plus.length > 0 ? (
+                  <div className="mt-6 pt-6 border-t border-slate-600/50">
+                    <h3 className="text-white flex items-center space-x-2 mb-4 font-['Cinzel',serif]">
+                      <BarChart2 className="w-5 h-5 text-[#be9a55]" />
+                      <span>Skills at 120 [{skillsAt120Plus.length}]</span>
+                    </h3>
                   <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                     {skillsAt120Plus.map((skill) => {
                       const categoryInfo = getSkillCategory(skill.name);
@@ -1040,36 +1428,32 @@ const PlayerProfile = () => {
                       );
                     })}
                   </div>
-                </CardContent>
-              </Card>
-            ) : null
-          })()}
+                  </div>
+                ) : null
+              })()}
 
-          {/* Skills at 200m [X] Card */}
-          {playerData.stats && (() => {
-            const skillsAt200m = skillOrder
-              .filter(skill => {
-                if (skill === 'overall') return false
-                return playerData.stats[skill] && playerData.stats[skill].xp >= 200000000
-              })
-              .map(skill => ({
-                name: skill,
-                icon: getSkillIcon(skill),
-                xp: playerData.stats[skill].xp,
-                rank: playerData.stats[skill].rank
-              }))
-              .filter(skill => skill.icon)
-              .sort((a, b) => (a.rank || 0) - (b.rank || 0))
+              {/* Skills at 200m Section */}
+              {playerData.stats && (() => {
+                const skillsAt200m = skillOrder
+                  .filter(skill => {
+                    if (skill === 'overall') return false
+                    return playerData.stats[skill] && playerData.stats[skill].xp >= 200000000
+                  })
+                  .map(skill => ({
+                    name: skill,
+                    icon: getSkillIcon(skill),
+                    xp: playerData.stats[skill].xp,
+                    rank: playerData.stats[skill].rank
+                  }))
+                  .filter(skill => skill.icon)
+                  .sort((a, b) => (a.rank || 0) - (b.rank || 0))
 
-            return skillsAt200m.length > 0 ? (
-              <Card className="bg-slate-800/50 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center space-x-2">
-                    <BarChart2 className="w-5 h-5 text-[#a855f7]" />
-                    <span>Skills at 200m [{skillsAt200m.length}]</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+                return skillsAt200m.length > 0 ? (
+                  <div className="mt-6 pt-6 border-t border-slate-600/50">
+                    <h3 className="text-white flex items-center space-x-2 mb-4 font-['Cinzel',serif]">
+                      <BarChart2 className="w-5 h-5 text-[#a855f7]" />
+                      <span>Skills at 200m [{skillsAt200m.length}]</span>
+                    </h3>
                   <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                     {skillsAt200m.map((skill) => {
                       const categoryInfo = getSkillCategory(skill.name);
@@ -1110,23 +1494,21 @@ const PlayerProfile = () => {
                       );
                     })}
                   </div>
-                </CardContent>
-              </Card>
-            ) : null
-          })()}
-        </div>
+                  </div>
+                ) : null
+              })()}
+            </div>
 
-        <div>
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader className="pb-4">
-              <div className="flex flex-wrap gap-2 border-b border-slate-600 pb-4">
+            {/* Right Column - Tabs */}
+            <div className="fantasy-section p-6">
+              <div className="flex flex-wrap gap-2 border-b border-slate-600 pb-4 mb-4">
                 {tabs.map((tab) => {
                   const IconComponent = tab.icon
                   return (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
+                      className={`flex items-center space-x-2 px-3 py-2 transition-colors ${
                         activeTab === tab.id
                           ? 'bg-theme-button text-white'
                           : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700 hover:text-white'
@@ -1138,11 +1520,9 @@ const PlayerProfile = () => {
                   )
                 })}
               </div>
-            </CardHeader>
-            <CardContent>
               {renderTabContent()}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -1171,7 +1551,237 @@ const PlayerProfile = () => {
         console.log('🔐 DEBUG: modalCustomBadges actual data:', JSON.stringify(modalCustomBadges, null, 2))
         return null
       })()}
-    </div>
+
+      {/* User Settings Modal (matching homepage) */}
+      <Dialog open={settingsSection !== null} onOpenChange={(open) => !open && setSettingsSection(null)}>
+        <DialogContent className="text-white max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl">
+              {settingsSection === 'account' && 'Link Account'}
+              {settingsSection === 'badges' && 'Username Color Badge'}
+              {settingsSection === 'appearance' && 'Change Theme'}
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              {settingsSection === 'account' && 'Manage your linked RuneScape accounts'}
+              {settingsSection === 'badges' && 'Select a badge to apply its color to your username'}
+              {settingsSection === 'appearance' && 'Customize the appearance of the site'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {/* Account Section */}
+            {settingsSection === 'account' && (
+            <div className="space-y-3">
+              <div className="space-y-2">
+                {linkedAccounts.map((account, index) => {
+                  const isActive = account.discord_id === user?.discordId
+                  const isPrimary = index === 0
+                  const approvedUsernames = new Set(
+                    accountLinkRequests
+                      .filter((req: any) => req.status === 'APPROVED')
+                      .flatMap((req: any) => [req.primaryUsername, req.alternateUsername])
+                  )
+                  const canSwitch = !isActive && approvedUsernames.has(account.username) && !account.discord_id
+                  
+                  return (
+                    <div 
+                      key={account.username}
+                      className="bg-slate-700/30 rounded-lg p-3 flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-white font-medium">{account.username}</span>
+                        {isActive ? (
+                          <span className="text-xs px-2 py-1 rounded bg-blue-500/20 text-theme-accent-light border border-theme-accent/30">
+                            Active
+                          </span>
+                        ) : isPrimary ? (
+                          <span className="text-xs px-2 py-1 rounded bg-green-500/20 text-green-400 border border-green-500/30">
+                            Linked (Primary)
+                          </span>
+                        ) : (
+                          <span className="text-xs px-2 py-1 rounded bg-green-500/20 text-green-400 border border-green-500/30">
+                            Linked (Alternate)
+                          </span>
+                        )}
+                      </div>
+                      
+                      {canSwitch && (
+                        <Button
+                          size="sm"
+                          className="bg-theme-button hover:bg-theme-button-hover text-white"
+                          onClick={() => handleSwitchAccount(account.username)}
+                        >
+                          Switch
+                        </Button>
+                      )}
+                    </div>
+                  )
+                })}
+                
+                {accountLinkRequests.filter((req: any) => 
+                  req.status === 'APPROVED' && !linkedAccounts.some((acc) => acc.username === req.alternateUsername)
+                ).map((request: any) => (
+                  <div 
+                    key={request.id}
+                    className="bg-slate-700/30 rounded-lg p-3 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-white font-medium">{request.alternateUsername}</span>
+                      <span className="text-xs px-2 py-1 rounded bg-green-500/20 text-green-400 border border-green-500/30">
+                        Linked (Alternate)
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="bg-theme-button hover:bg-theme-button-hover text-white"
+                      onClick={() => handleSwitchAccount(request.alternateUsername)}
+                    >
+                      Switch
+                    </Button>
+                  </div>
+                ))}
+                
+                {accountLinkRequests.filter((req: any) => 
+                  req.status !== 'APPROVED' && !linkedAccounts.some((acc) => acc.username === req.alternateUsername)
+                ).map((request: any) => (
+                  <div 
+                    key={request.id}
+                    className="bg-slate-700/30 rounded-lg p-3 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-white font-medium">{request.alternateUsername}</span>
+                      {request.status === 'PENDING' && (
+                        <span className="text-xs px-2 py-1 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                          Pending
+                        </span>
+                      )}
+                      {request.status === 'REJECTED' && (
+                        <span className="text-xs px-2 py-1 rounded bg-red-500/20 text-red-400 border border-red-500/30">
+                          Rejected
+                        </span>
+                      )}
+                    </div>
+                    {request.status === 'REJECTED' && (
+                      <button
+                        onClick={() => handleDeleteRejectedRequest(request.id)}
+                        className="text-slate-400 hover:text-red-400 transition-colors"
+                        title="Remove rejected request"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+                
+                <div className="bg-slate-700/30 rounded-lg p-3">
+                  <div className="flex gap-2">
+                    <Input
+                      type="text"
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                      placeholder="Enter RuneScape username"
+                      className="flex-1 bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={linkRequestLoading}
+                    />
+                    <Button
+                      onClick={handleSubmitLinkRequest}
+                      disabled={!newUsername.trim() || linkRequestLoading}
+                      className="bg-theme-button hover:bg-theme-button-hover text-white"
+                    >
+                      {linkRequestLoading ? 'Submitting...' : '+ Add Another Account'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            )}
+
+            {/* Badge Username Color Section */}
+            {settingsSection === 'badges' && eligibleBadges.length > 0 && (
+              <div className="space-y-3">
+                <div className="bg-slate-700/30 rounded-lg p-4">
+                  <div className="space-y-4">
+                    <p className="text-sm text-slate-300 mb-3">
+                      Select a badge to apply its color to your username across the site. Click again to deselect.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      {eligibleBadges.map((badge) => {
+                        const isSelected = selectedBadgeId === badge.id
+                        const backgroundColor = badge.gradientColors 
+                          ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
+                          : badge.backgroundColor || '#6b7280'
+                        
+                        return (
+                          <button
+                            key={badge.id}
+                            onClick={() => handleBadgeSelection(badge.id)}
+                            className={`px-3 py-1.5 text-sm font-semibold flex items-center space-x-2 rounded-md text-white transition-all ${
+                              isSelected 
+                                ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-800 scale-105' 
+                                : 'hover:scale-105 opacity-80 hover:opacity-100'
+                            }`}
+                            style={{
+                              background: backgroundColor
+                            }}
+                            title={badge.name}
+                          >
+                            <img 
+                              src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
+                              alt={badge.name} 
+                              className="w-4 h-4"
+                            />
+                            <span>{badge.name}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Appearance Section */}
+            {settingsSection === 'appearance' && (
+            <div className="space-y-3">
+              <div className="bg-slate-700/30 rounded-lg p-4">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-medium text-slate-300 mb-3">Color Theme</h4>
+                    <div className="flex flex-wrap gap-3">
+                      {Object.values(themes).map((theme) => (
+                        <div key={theme.id} className="relative">
+                          <button
+                            onClick={() => handleThemeChange(theme.id)}
+                            onMouseEnter={() => setThemeTooltip(theme.name)}
+                            onMouseLeave={() => setThemeTooltip(null)}
+                            className={`w-12 h-12 rounded-full transition-all ${
+                              selectedTheme === theme.id 
+                                ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-800 scale-110' 
+                                : 'hover:scale-105'
+                            }`}
+                            style={{ background: theme.gradient }}
+                            title={theme.name}
+                          />
+                          {themeTooltip === theme.name && (
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded whitespace-nowrap z-50">
+                              {theme.name}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-2">
+                    Select a color theme to customize the appearance of the site. Your preference will be saved and applied across all pages.
+                  </p>
+                </div>
+              </div>
+            </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
