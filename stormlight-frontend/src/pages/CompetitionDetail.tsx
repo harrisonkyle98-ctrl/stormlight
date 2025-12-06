@@ -591,21 +591,29 @@ const CompetitionDetail = () => {
           </section>
         )}
         
-        <div className="fantasy-banner fantasy-banner--competitions">
-          <div className="fantasy-banner-inner">
-            <h1 className="fantasy-banner-title">Competitions</h1>
-          </div>
-        </div>
-
         <div className="fantasy-container">
-          <div className="fantasy-section">
-            <Button asChild className="bg-theme-button hover:bg-theme-button-hover text-white mb-4">
-              <Link to="/competitions">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Competitions
-              </Link>
-            </Button>
-            <p className="text-red-400 text-lg text-center py-8">{error}</p>
+          <div className="fantasy-banner-wrapper">
+            <div className="fantasy-banner-ribbon-left"></div>
+            <div className="fantasy-banner-ribbon-right"></div>
+            <div className="fantasy-banner fantasy-banner--competitions">
+              <div className="fantasy-banner-inner">
+                <h1 className="fantasy-banner-title">Competitions</h1>
+              </div>
+            </div>
+          </div>
+
+          <div className="fantasy-content">
+            <div className="mb-4 flex justify-start">
+              <Button asChild className="bg-theme-button hover:bg-theme-button-hover text-white">
+                <Link to="/competitions">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Competitions
+                </Link>
+              </Button>
+            </div>
+            <div className="fantasy-section">
+              <p className="text-red-400 text-lg text-center py-8">{error}</p>
+            </div>
           </div>
         </div>
       </>
@@ -814,23 +822,28 @@ const CompetitionDetail = () => {
         </section>
       ))}
 
-      <div className="fantasy-banner fantasy-banner--competitions">
-        <div className="fantasy-banner-inner">
-          <h1 className="fantasy-banner-title">Competitions</h1>
-        </div>
-      </div>
-
       <div className="fantasy-container">
-        <div className="mb-4">
-          <Button asChild className="bg-theme-button hover:bg-theme-button-hover text-white">
-            <Link to="/competitions">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Competitions
-            </Link>
-          </Button>
+        <div className="fantasy-banner-wrapper">
+          <div className="fantasy-banner-ribbon-left"></div>
+          <div className="fantasy-banner-ribbon-right"></div>
+          <div className="fantasy-banner fantasy-banner--competitions">
+            <div className="fantasy-banner-inner">
+              <h1 className="fantasy-banner-title">Competitions</h1>
+            </div>
+          </div>
         </div>
 
-        <div className="fantasy-section mb-6">
+        <div className="fantasy-content">
+          <div className="mb-4 flex justify-start">
+            <Button asChild className="bg-theme-button hover:bg-theme-button-hover text-white">
+              <Link to="/competitions">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Competitions
+              </Link>
+            </Button>
+          </div>
+
+          <div className="fantasy-section mb-6">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center space-x-4">
               {competition.type === 'XP_GAIN' ? (
@@ -1222,6 +1235,7 @@ const CompetitionDetail = () => {
               </div>
             </div>
           )}
+        </div>
         </div>
       </div>
 
