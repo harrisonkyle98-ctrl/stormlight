@@ -341,7 +341,7 @@ export const AdminHomeTab = () => {
 
       {/* Admin Logs */}
       <div className="fantasy-section">
-        <h3 className="text-white font-semibold mb-4" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>Recent Admin Actions</h3>
+        <h3 className="text-white font-semibold mb-4 text-left" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>Recent Admin Actions</h3>
         <div className="space-y-3 max-h-96 overflow-y-auto">
           {adminLogs.length === 0 ? (
             <p className="text-slate-400 text-center py-4">No admin actions recorded</p>
