@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
+import { CometLoader } from './components/ui/comet-loader'
 import Home from './pages/Home'
 import Hiscores from './pages/Hiscores'
 import Members from './pages/Members'
@@ -20,7 +21,7 @@ function AppContent() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
+        <CometLoader size={48} />
       </div>
     )
   }
