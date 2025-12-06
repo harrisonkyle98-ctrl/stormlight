@@ -678,8 +678,7 @@ const AdminPanel = () => {
         {/* Content Area */}
         <div className="fantasy-content">
           {/* Admin Tabs */}
-          <div className="fantasy-section">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-5 bg-slate-700/50 border border-slate-600 mb-4">
                 <TabsTrigger value="home" className="flex items-center space-x-2 data-[state=active]:bg-slate-600">
                   <Home className="w-4 h-4" />
@@ -719,7 +718,6 @@ const AdminPanel = () => {
                 <MemberLogTab />
               </TabsContent>
             </Tabs>
-          </div>
         </div>
       </div>
     </>

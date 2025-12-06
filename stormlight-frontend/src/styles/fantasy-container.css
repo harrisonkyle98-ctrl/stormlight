@@ -357,9 +357,9 @@
 
 /* Admin Panel Banner Modifier - purple for admin identification */
 .fantasy-banner--admin {
-  --banner-color-top: #8b5cf6;    /* bright purple */
-  --banner-color-middle: #7c3aed; /* mid purple */
-  --banner-color-bottom: #6d28d9; /* deep purple */
+  --banner-color-top: #6d28d9;    /* deep purple */
+  --banner-color-middle: #5b21b6; /* darker purple */
+  --banner-color-bottom: #4c1d95; /* darkest purple */
 }
 
 /* Gold ribbon inside profile header should match panel width (no overhang) */
