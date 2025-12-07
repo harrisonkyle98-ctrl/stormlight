@@ -49,9 +49,9 @@
   animation: clouds-loop-1 30s infinite linear;
 }
 
-/* Cloud layer 2 - slowed down */
+/* Cloud layer 2 - slowed down, using custom Stormlight clouds */
 .clouds-2 {
-  background-image: url('https://s.cdpn.io/15514/clouds_1.png');
+  background-image: url('/assets/clouds_1.png');
   animation: clouds-loop-2 22s infinite linear;
 }
 

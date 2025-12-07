@@ -80,9 +80,9 @@ html[data-theme='sunset'] {
   --theme-gradient-end: #1f0f06;
 }
 
-/* Page background gradient from CodePen - SINGLE SOURCE OF TRUTH */
+/* Page background gradient - Stormlight grey palette */
 html {
-  background: linear-gradient(#333, #000);
+  background: linear-gradient(#252d41, #21283a);
   background-attachment: fixed;
   min-height: 100vh;
   width: 100%;
