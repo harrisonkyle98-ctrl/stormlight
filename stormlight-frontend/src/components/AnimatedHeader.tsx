@@ -9,11 +9,11 @@ const AnimatedHeader = () => {
   return (
     <div className="hero-header">
       {/* Starfall animation layer - sits behind clouds */}
-      <div className="starfall">
+      <div id="starfall-layer" className="starfall">
         {fallingStars}
       </div>
       {/* Cloud animation layer - sits above starfall */}
-      <div className="clouds">
+      <div id="cloud-layer" className="clouds">
         <div className="clouds-1"></div>
         <div className="clouds-2"></div>
         <div className="clouds-3"></div>

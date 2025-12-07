@@ -8,7 +8,8 @@
 }
 
 /* Starfall animation layer - sits behind clouds */
-.starfall {
+.starfall,
+#starfall-layer {
   position: absolute;
   top: 0;
   left: 0;
@@ -17,15 +18,13 @@
   overflow: hidden;
   z-index: 0;
   pointer-events: none;
-  transform-style: preserve-3d;
-  perspective: 1000px;
 }
 
-/* Individual falling star */
+/* Individual falling star - blue color to match Stormlight palette */
 .starfall .falling-star {
   width: 6px;
   height: 6px;
-  background: #00d1b2;
+  background: rgba(100, 140, 255, 0.9);
   position: absolute;
   border-radius: 50%;
   opacity: 0.5;
@@ -133,150 +132,151 @@
   animation-delay: 6.0s;
 }
 
-/* Starfall keyframe animations */
+/* Starfall keyframe animations - left-slanted fall direction, blue glow */
 @keyframes anim1 {
   10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
   15% { opacity: 0.5; }
   50% { opacity: 0; }
-  100% { transform: translateX(25vw) translateY(100vh); opacity: 0; }
+  100% { transform: translateX(-15vw) translateY(100vh); opacity: 0; }
 }
 @keyframes anim2 {
   10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
   15% { opacity: 0.5; }
   50% { opacity: 0; }
-  100% { transform: translateX(35vw) translateY(100vh); opacity: 0; }
+  100% { transform: translateX(-5vw) translateY(100vh); opacity: 0; }
 }
 @keyframes anim3 {
   10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
-  15% { opacity: 0.5; }
-  50% { opacity: 0; }
-  100% { transform: translateX(45vw) translateY(100vh); opacity: 0; }
-}
-@keyframes anim4 {
-  10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
-  15% { opacity: 0.5; }
-  50% { opacity: 0; }
-  100% { transform: translateX(55vw) translateY(100vh); opacity: 0; }
-}
-@keyframes anim5 {
-  10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
-  15% { opacity: 0.5; }
-  50% { opacity: 0; }
-  100% { transform: translateX(65vw) translateY(100vh); opacity: 0; }
-}
-@keyframes anim6 {
-  10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
-  15% { opacity: 0.5; }
-  50% { opacity: 0; }
-  100% { transform: translateX(75vw) translateY(100vh); opacity: 0; }
-}
-@keyframes anim7 {
-  10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
-  15% { opacity: 0.5; }
-  50% { opacity: 0; }
-  100% { transform: translateX(85vw) translateY(100vh); opacity: 0; }
-}
-@keyframes anim8 {
-  10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
-  15% { opacity: 0.5; }
-  50% { opacity: 0; }
-  100% { transform: translateX(95vw) translateY(100vh); opacity: 0; }
-}
-@keyframes anim9 {
-  10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
   15% { opacity: 0.5; }
   50% { opacity: 0; }
   100% { transform: translateX(5vw) translateY(100vh); opacity: 0; }
 }
-@keyframes anim10 {
+@keyframes anim4 {
   10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
   15% { opacity: 0.5; }
   50% { opacity: 0; }
   100% { transform: translateX(15vw) translateY(100vh); opacity: 0; }
 }
-@keyframes anim11 {
+@keyframes anim5 {
   10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
   15% { opacity: 0.5; }
   50% { opacity: 0; }
-  100% { transform: translateX(30vw) translateY(100vh); opacity: 0; }
+  100% { transform: translateX(25vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim6 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(35vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim7 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(45vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim8 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(55vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim9 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(65vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim10 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(75vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim11 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(-10vw) translateY(100vh); opacity: 0; }
 }
 @keyframes anim12 {
   10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
   15% { opacity: 0.5; }
   50% { opacity: 0; }
-  100% { transform: translateX(40vw) translateY(100vh); opacity: 0; }
+  100% { transform: translateX(0vw) translateY(100vh); opacity: 0; }
 }
 @keyframes anim13 {
   10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
-  15% { opacity: 0.5; }
-  50% { opacity: 0; }
-  100% { transform: translateX(50vw) translateY(100vh); opacity: 0; }
-}
-@keyframes anim14 {
-  10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
-  15% { opacity: 0.5; }
-  50% { opacity: 0; }
-  100% { transform: translateX(60vw) translateY(100vh); opacity: 0; }
-}
-@keyframes anim15 {
-  10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
-  15% { opacity: 0.5; }
-  50% { opacity: 0; }
-  100% { transform: translateX(70vw) translateY(100vh); opacity: 0; }
-}
-@keyframes anim16 {
-  10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
-  15% { opacity: 0.5; }
-  50% { opacity: 0; }
-  100% { transform: translateX(80vw) translateY(100vh); opacity: 0; }
-}
-@keyframes anim17 {
-  10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
-  15% { opacity: 0.5; }
-  50% { opacity: 0; }
-  100% { transform: translateX(90vw) translateY(100vh); opacity: 0; }
-}
-@keyframes anim18 {
-  10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
   15% { opacity: 0.5; }
   50% { opacity: 0; }
   100% { transform: translateX(10vw) translateY(100vh); opacity: 0; }
 }
-@keyframes anim19 {
+@keyframes anim14 {
   10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
   15% { opacity: 0.5; }
   50% { opacity: 0; }
   100% { transform: translateX(20vw) translateY(100vh); opacity: 0; }
 }
-@keyframes anim20 {
+@keyframes anim15 {
   10% { opacity: 0.5; }
-  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
   15% { opacity: 0.5; }
   50% { opacity: 0; }
-  100% { transform: translateX(23vw) translateY(100vh); opacity: 0; }
+  100% { transform: translateX(30vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim16 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(40vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim17 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(50vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim18 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(60vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim19 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(70vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim20 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 rgba(100, 140, 255, 0.9); }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(-17vw) translateY(100vh); opacity: 0; }
 }
 
 /* Cloud animation container - sits above starfall */
-.clouds {
+.clouds,
+#cloud-layer {
   position: absolute;
   top: 0;
   left: 0;
