@@ -6,11 +6,9 @@
 }
 
 /* Ensure main content appears above the animated header background */
-/* Add top padding to prevent content from being hidden behind the fixed header */
 main {
   position: relative;
   z-index: 2;
-  padding-top: 160px;
 }
 
 .logo {
