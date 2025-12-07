@@ -52,7 +52,7 @@
 /* Cloud layer 2 - slowed down, using custom Stormlight clouds */
 .clouds-2 {
   background-image: url('/assets/clouds_1.png');
-  animation: clouds-loop-2 22s infinite linear;
+  animation: clouds-loop-2 30s infinite linear;
 }
 
 /* Cloud layer 3 - slowed down */
