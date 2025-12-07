@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { Spinner } from './components/ui/spinner'
+import AnimatedHeader from './components/AnimatedHeader'
 import Home from './pages/Home'
 import Hiscores from './pages/Hiscores'
 import Members from './pages/Members'
@@ -36,6 +37,8 @@ function AppContent() {
 
     return (
       <div>
+        {/* AnimatedHeader rendered at app level, outside main, for proper fixed positioning */}
+        <AnimatedHeader />
         <main className="w-full px-6 py-4">
         <div className="max-w-7xl mx-auto">
           <Routes>

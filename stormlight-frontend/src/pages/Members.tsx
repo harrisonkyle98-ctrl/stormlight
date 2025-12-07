@@ -15,7 +15,6 @@ import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog'
 import { themes } from '../config/themes'
-import AnimatedHeader from '../components/AnimatedHeader'
 import RibbonNav from '../components/RibbonNav'
 import '../styles/fantasy-container.css'
 
@@ -419,7 +418,6 @@ const Members = () => {
   if (loading) {
     return (
       <>
-        <AnimatedHeader />
         <div className="flex flex-col items-center justify-center min-h-96 gap-4">
           <Spinner size="lg" />
           <div className="text-white text-xl">Loading clan members...</div>
@@ -430,9 +428,6 @@ const Members = () => {
 
   return (
     <>
-      {/* Static Header - STORMLIGHT banner with theme-adaptive text glow */}
-      <AnimatedHeader />
-
       {/* Profile Header Section - Gold Ribbon + Profile Panel (matching homepage) */}
       {user?.username && user?.isLinked && (profileError ? (
         <section className="profile-header-section">

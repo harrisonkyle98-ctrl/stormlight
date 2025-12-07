@@ -17,7 +17,6 @@ import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog'
 import { Input } from '../components/ui/input'
 import { themes } from '../config/themes'
-import AnimatedHeader from '../components/AnimatedHeader'
 import RibbonNav from '../components/RibbonNav'
 import '../styles/fantasy-container.css'
 
@@ -553,7 +552,6 @@ const CompetitionDetail = () => {
   if (loading) {
     return (
       <>
-        <AnimatedHeader />
         <div className="flex flex-col items-center justify-center min-h-96 gap-4">
           <Spinner size="lg" />
           <div className="text-white text-xl">Loading competition...</div>
@@ -565,7 +563,6 @@ const CompetitionDetail = () => {
   if (error || !competition) {
     return (
       <>
-        <AnimatedHeader />
         {user?.username && user?.isLinked && playerData && (
           <section className="profile-header-section">
             <RibbonNav />
@@ -624,8 +621,6 @@ const CompetitionDetail = () => {
 
   return (
     <>
-      <AnimatedHeader />
-
       {user?.username && user?.isLinked && (profileError ? (
         <section className="profile-header-section">
           <RibbonNav />

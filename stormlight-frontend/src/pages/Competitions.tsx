@@ -14,7 +14,6 @@ import { checkPlayerMilestones } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
 import { Username } from '../components/ui/username'
 import { themes } from '../config/themes'
-import AnimatedHeader from '../components/AnimatedHeader'
 import RibbonNav from '../components/RibbonNav'
 import '../styles/fantasy-container.css'
 
@@ -367,7 +366,6 @@ const Competitions = () => {
   if (loading) {
     return (
       <>
-        <AnimatedHeader />
         <div className="flex flex-col items-center justify-center min-h-96 gap-4">
           <Spinner size="lg" />
           <div className="text-white text-xl">Loading competitions...</div>
@@ -378,9 +376,6 @@ const Competitions = () => {
 
   return (
     <>
-      {/* Static Header - STORMLIGHT banner with theme-adaptive text glow */}
-      <AnimatedHeader />
-
       {/* Profile Header Section - Gold Ribbon + Profile Panel (matching homepage/Members) */}
       {user?.username && user?.isLinked && (profileError ? (
         <section className="profile-header-section">

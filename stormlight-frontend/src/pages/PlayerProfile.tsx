@@ -29,7 +29,6 @@ import { getBadgeTooltipConfig } from '../utils/badgeTooltipConfig'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog'
 import { Input } from '../components/ui/input'
 import { themes } from '../config/themes'
-import AnimatedHeader from '../components/AnimatedHeader'
 import RibbonNav from '../components/RibbonNav'
 import '../styles/fantasy-container.css'
 
@@ -617,7 +616,6 @@ const PlayerProfile = () => {
   if (loading) {
     return (
       <>
-        <AnimatedHeader />
         <div className="flex flex-col items-center justify-center min-h-96 gap-4">
           <Spinner size="lg" />
           <div className="text-white text-xl">Loading clan member profile...</div>
@@ -629,7 +627,6 @@ const PlayerProfile = () => {
   if (error || !playerData) {
     return (
       <>
-        <AnimatedHeader />
         <div className="fantasy-container">
           <div className="fantasy-banner-wrapper">
             <div className="fantasy-banner-ribbon-left"></div>
@@ -886,9 +883,6 @@ const PlayerProfile = () => {
 
   return (
     <>
-      {/* Static Header - STORMLIGHT banner */}
-      <AnimatedHeader />
-
       {/* Profile Header Section - Gold Ribbon + Profile Panel (for logged-in user) */}
       {user?.username && user?.isLinked && (selfProfileError ? (
         <section className="profile-header-section">

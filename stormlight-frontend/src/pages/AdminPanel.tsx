@@ -19,7 +19,6 @@ import { RankTrackingTab } from '../components/admin/RankTrackingTab'
 import { MemberLogTab } from '../components/admin/MemberLogTab'
 import { checkPlayerMilestones } from '../utils/gradientUtils'
 import { themes } from '../config/themes'
-import AnimatedHeader from '../components/AnimatedHeader'
 import RibbonNav from '../components/RibbonNav'
 import '../styles/fantasy-container.css'
 
@@ -329,7 +328,6 @@ const AdminPanel = () => {
   if (!user) {
     return (
       <>
-        <AnimatedHeader />
         <div className="flex flex-col items-center justify-center min-h-96 gap-4">
           <Spinner size="lg" />
           <div className="text-white text-xl">Loading...</div>
@@ -345,9 +343,6 @@ const AdminPanel = () => {
 
   return (
     <>
-      {/* Static Header - STORMLIGHT banner */}
-      <AnimatedHeader />
-
       {/* Profile Header Section - Gold Ribbon + Profile Panel */}
       {user?.username && user?.isLinked && (profileError ? (
         <section className="profile-header-section">
