@@ -37,70 +37,60 @@ body {
   min-height: 100%;
 }
 
-/* Sapphire (blue) theme as default fallback - shows when no theme is set or when Sapphire is active */
-/* Simple 3-stop gradient: blue at top (0-15%), dark grey takes up most of the page */
+/* ===========================================
+   GLOBAL PAGE BACKGROUND GRADIENT
+   Applied directly to html element per theme
+   Uses CSS variables for theme-specific colors
+   =========================================== */
+
+/* Default theme gradient variables (Sapphire/blue) */
 html:not([data-theme]),
 html[data-theme='blue'] {
-  background: linear-gradient(to bottom, #081d47 0%, #0b2c78 15%, #0f172a 100%) fixed !important;
-  background-attachment: fixed !important;
-  background-size: cover !important;
-  background-repeat: no-repeat !important;
-  background-position: top center !important;
-  min-height: 100vh;
-  width: 100%;
+  --theme-gradient-start: #081d47;
+  --theme-gradient-end: #0b2c78;
 }
 
-/* Crimson theme gradient - 3-stop: theme colors at top (0-15%), dark grey takes up most of the page */
+/* Crimson theme gradient variables */
 html[data-theme='crimson'] {
-  background: linear-gradient(to bottom, #2d1212 0%, #1c0a0a 15%, #0f172a 100%) fixed !important;
-  background-attachment: fixed !important;
-  background-size: cover !important;
-  background-repeat: no-repeat !important;
-  background-position: top center !important;
-  min-height: 100vh;
-  width: 100%;
+  --theme-gradient-start: #2d1212;
+  --theme-gradient-end: #1c0a0a;
 }
 
-/* Emerald theme gradient - 3-stop: theme colors at top (0-15%), dark grey takes up most of the page */
+/* Emerald theme gradient variables */
 html[data-theme='emerald'] {
-  background: linear-gradient(to bottom, #0f2e26 0%, #0a1f1a 15%, #0f172a 100%) fixed !important;
-  background-attachment: fixed !important;
-  background-size: cover !important;
-  background-repeat: no-repeat !important;
-  background-position: top center !important;
-  min-height: 100vh;
-  width: 100%;
+  --theme-gradient-start: #0f2e26;
+  --theme-gradient-end: #0a1f1a;
 }
 
-/* Obsidian theme gradient - 3-stop: theme colors at top (0-15%), dark grey takes up most of the page */
+/* Obsidian theme gradient variables */
 html[data-theme='obsidian'] {
-  background: linear-gradient(to bottom, #0f172a 0%, #020617 15%, #0f172a 100%) fixed !important;
-  background-attachment: fixed !important;
-  background-size: cover !important;
-  background-repeat: no-repeat !important;
-  background-position: top center !important;
-  min-height: 100vh;
-  width: 100%;
+  --theme-gradient-start: #0f172a;
+  --theme-gradient-end: #020617;
 }
 
-/* Amethyst theme gradient - 3-stop: theme colors at top (0-15%), dark grey takes up most of the page */
+/* Amethyst theme gradient variables */
 html[data-theme='amethyst'] {
-  background: linear-gradient(to bottom, #2e1e47 0%, #1e0a33 15%, #0f172a 100%) fixed !important;
-  background-attachment: fixed !important;
-  background-size: cover !important;
-  background-repeat: no-repeat !important;
-  background-position: top center !important;
-  min-height: 100vh;
-  width: 100%;
+  --theme-gradient-start: #2e1e47;
+  --theme-gradient-end: #1e0a33;
 }
 
-/* Sunset theme gradient - 3-stop: theme colors at top (0-15%), dark grey takes up most of the page */
+/* Sunset theme gradient variables */
 html[data-theme='sunset'] {
-  background: linear-gradient(to bottom, #3a1c0d 0%, #1f0f06 15%, #0f172a 100%) fixed !important;
+  --theme-gradient-start: #3a1c0d;
+  --theme-gradient-end: #1f0f06;
+}
+
+/* Apply the gradient to html element - SINGLE SOURCE OF TRUTH */
+html {
+  background: linear-gradient(
+    to bottom,
+    var(--theme-gradient-start, #0a2a5e) 0%,
+    var(--theme-gradient-end, #0d3d80) 15%,
+    #0f172a 100%
+  ) !important;
   background-attachment: fixed !important;
-  background-size: cover !important;
   background-repeat: no-repeat !important;
-  background-position: top center !important;
+  background-size: cover !important;
   min-height: 100vh;
   width: 100%;
 }
