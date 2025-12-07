@@ -80,9 +80,10 @@ html[data-theme='sunset'] {
   --theme-gradient-end: #1f0f06;
 }
 
-/* Solid dark grey background - SINGLE SOURCE OF TRUTH */
+/* Page background gradient from CodePen - SINGLE SOURCE OF TRUTH */
 html {
-  background: #0e1623;
+  background: linear-gradient(#333, #000);
+  background-attachment: fixed;
   min-height: 100vh;
   width: 100%;
 }

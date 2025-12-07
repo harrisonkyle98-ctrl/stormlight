@@ -1,13 +1,13 @@
-/* Main header container with cloud animation */
+/* Main header container - positioned at very top of page */
 .animated-header {
-  position: relative;
-  height: 200px;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  height: 260px;
   overflow: hidden;
-  background: transparent;
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* Cloud animation container */
@@ -35,22 +35,22 @@
   height: 500px;
 }
 
-/* Cloud layer 1 */
+/* Cloud layer 1 - slowed down */
 .clouds-1 {
   background-image: url('https://s.cdpn.io/15514/clouds_2.png');
-  animation: clouds-loop-1 20s infinite linear;
+  animation: clouds-loop-1 30s infinite linear;
 }
 
-/* Cloud layer 2 */
+/* Cloud layer 2 - slowed down */
 .clouds-2 {
   background-image: url('https://s.cdpn.io/15514/clouds_1.png');
-  animation: clouds-loop-2 15s infinite linear;
+  animation: clouds-loop-2 22s infinite linear;
 }
 
-/* Cloud layer 3 */
+/* Cloud layer 3 - slowed down */
 .clouds-3 {
   background-image: url('https://s.cdpn.io/15514/clouds_3.png');
-  animation: clouds-loop-3 17s infinite linear;
+  animation: clouds-loop-3 25s infinite linear;
 }
 
 /* Keyframe animations for each cloud layer */
@@ -69,42 +69,15 @@
   to { background-position: -1579px 0; }
 }
 
-/* Title styling */
-.animated-header-title {
-  font-family: 'Cinzel', serif;
-  font-size: 3.5rem;
-  font-weight: 700;
-  color: #fffbf0;
-  text-shadow: 
-    var(--header-text-glow),
-    0 2px 4px rgba(0, 0, 0, 0.5);
-  letter-spacing: 0.25em;
-  position: relative;
-  z-index: 10;
-  margin: 0;
-  padding: 0;
-  user-select: none;
-}
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .animated-header {
-    height: 160px;
-  }
-  
-  .animated-header-title {
-    font-size: 2.5rem;
-    letter-spacing: 0.15em;
+    height: 200px;
   }
 }
 
 @media (max-width: 480px) {
   .animated-header {
-    height: 120px;
-  }
-  
-  .animated-header-title {
-    font-size: 1.8rem;
-    letter-spacing: 0.1em;
+    height: 160px;
   }
 }
