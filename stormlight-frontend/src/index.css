@@ -333,16 +333,6 @@ html[data-theme='sunset'] {
   }
 }
 @layer base {
-  /* Apply gradient background to html and body for seamless coverage on all page sizes */
-  html, body {
-    min-height: 100vh;
-    background: var(--background-gradient) fixed center top / cover no-repeat !important;
-    background-repeat: no-repeat !important;
-    background-size: cover !important;
-    background-attachment: fixed !important;
-    background-position: center top !important;
-  }
-  
   /* Keep #root transparent so the html/body background shows through */
   #root {
     min-height: 100vh;
@@ -357,7 +347,7 @@ html[data-theme='sunset'] {
   :root {
     --radius: 0.5rem;
     
-    --background-gradient: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    --background-gradient: transparent;
     
     --color-primary: #1e3a8a;
     --color-secondary: #3b82f6;
