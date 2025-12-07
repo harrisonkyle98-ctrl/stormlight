@@ -87,17 +87,17 @@ html {
     var(--theme-gradient-start, #0a2a5e) 0%,
     var(--theme-gradient-end, #0d3d80) 15%,
     #0f172a 100%
-  ) !important;
-  background-attachment: fixed !important;
-  background-repeat: no-repeat !important;
-  background-size: cover !important;
+  );
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
   min-height: 100vh;
   width: 100%;
 }
 
 /* Ensure nested containers don't have their own backgrounds */
 :where(main, .app, .layout, .page, .app-container) {
-  background: transparent !important;
+  background: transparent;
 }
 
 /* Keep CSS variables for other component styling */
