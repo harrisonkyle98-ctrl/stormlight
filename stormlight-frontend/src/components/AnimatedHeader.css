@@ -1,14 +1,12 @@
-/* Main header container - positioned at very top of page */
+/* Main header container - fixed at very top of viewport */
 .animated-header {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 300px;
   z-index: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  pointer-events: none;
 }
 
 /* Cloud animation container */
@@ -79,13 +77,13 @@
   to { background-position: -1579px 0; }
 }
 
-/* Logo wrapper - floats on top of animation with its own stacking context */
+/* Logo wrapper - fixed at top of viewport, floats on top of animation */
 .stormlight-logo-wrapper {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  height: 300px;
+  height: 160px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -110,9 +108,12 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .animated-header,
-  .stormlight-logo-wrapper {
+  .animated-header {
     height: 200px;
+  }
+  
+  .stormlight-logo-wrapper {
+    height: 140px;
   }
   
   .animated-header-title {
@@ -122,9 +123,12 @@
 }
 
 @media (max-width: 480px) {
-  .animated-header,
-  .stormlight-logo-wrapper {
+  .animated-header {
     height: 160px;
+  }
+  
+  .stormlight-logo-wrapper {
+    height: 120px;
   }
   
   .animated-header-title {
