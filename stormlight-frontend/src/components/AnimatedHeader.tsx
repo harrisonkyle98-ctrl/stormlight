@@ -53,6 +53,12 @@ const AnimatedHeader = () => {
         '--header-mist-soft': themeConfig.mistSoft,
       } as React.CSSProperties}
     >
+      {/* Cloud animation layers from CodePen */}
+      <div className="clouds">
+        <div className="clouds-1"></div>
+        <div className="clouds-2"></div>
+        <div className="clouds-3"></div>
+      </div>
       <h1 className="animated-header-title">STORMLIGHT</h1>
     </div>
   )

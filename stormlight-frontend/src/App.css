@@ -5,6 +5,12 @@
   text-align: center;
 }
 
+/* Ensure main content appears above the animated header background */
+main {
+  position: relative;
+  z-index: 2;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;

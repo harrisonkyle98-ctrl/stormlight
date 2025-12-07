@@ -80,20 +80,9 @@ html[data-theme='sunset'] {
   --theme-gradient-end: #1f0f06;
 }
 
-/* Apply the gradient to html element - SINGLE SOURCE OF TRUTH */
-/* Blue extends past gold ribbon (26%), short fade (26-34%), grey rest */
+/* Solid dark grey background - SINGLE SOURCE OF TRUTH */
 html {
-  background: linear-gradient(
-    to bottom,
-    #002a7e 0%,
-    #0046c4 12%,
-    #0046c4 26%,
-    #19212c 34%,
-    #0e1623 100%
-  );
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-  background-size: cover;
+  background: #0e1623;
   min-height: 100vh;
   width: 100%;
 }
