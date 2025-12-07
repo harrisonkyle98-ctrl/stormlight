@@ -3579,8 +3579,9 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         
         leaderboard.sort(key=lambda x: x['xp_gain'], reverse=True)
         
-        for idx, entry in enumerate(leaderboard, 1):
-            entry['rank'] = idx
+        # Assign global ranks based on page offset (start_idx is 0-indexed, ranks are 1-indexed)
+        for idx, entry in enumerate(leaderboard, start=1):
+            entry['rank'] = start_idx + idx
         
         all_entries_for_top10 = entries[:50]  # Limit to first 50 for performance
         top_10_leaderboard = []
