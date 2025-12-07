@@ -3370,7 +3370,11 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         skill = competition.skill or 'overall'
         skill_normalized = skill.lower()
         
-        is_active = now < competition.endDate
+        # Ensure competition.endDate is timezone-aware for comparison
+        comp_end = competition.endDate
+        if comp_end and comp_end.tzinfo is None:
+            comp_end = comp_end.replace(tzinfo=timezone.utc)
+        is_active = now < comp_end if comp_end else False
         
         # Paginate entries before processing
         start_idx = (page - 1) * per_page
@@ -3408,6 +3412,9 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
                         xp_gain = row[1]
                         last_updated = row[2]
                         
+                        # Ensure last_updated is timezone-aware for comparison
+                        if last_updated and last_updated.tzinfo is None:
+                            last_updated = last_updated.replace(tzinfo=timezone.utc)
                         is_stale = (now - last_updated) > staleness_threshold if last_updated else True
                         
                         skill_gains_map[username] = {
