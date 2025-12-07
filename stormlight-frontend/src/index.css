@@ -38,10 +38,10 @@ body {
 }
 
 /* Sapphire (blue) theme as default fallback - shows when no theme is set or when Sapphire is active */
-/* Gradient keeps original theme colors at top, fades into dark grey panel palette at bottom */
+/* Simple 3-stop gradient: blue at top (0-30%), fading to dark grey (#0f172a) at bottom */
 html:not([data-theme]),
 html[data-theme='blue'] {
-  background: linear-gradient(180deg, #081d47 0%, #0b2c78 40%, #1e293b 75%, #0f172a 100%) fixed !important;
+  background: linear-gradient(to bottom, #081d47 0%, #0b2c78 30%, #0f172a 100%) fixed !important;
   background-attachment: fixed !important;
   background-size: cover !important;
   background-repeat: no-repeat !important;
@@ -50,9 +50,9 @@ html[data-theme='blue'] {
   width: 100%;
 }
 
-/* Crimson theme gradient - keeps theme color at top, fades into dark grey at bottom */
+/* Crimson theme gradient - 3-stop: theme colors at top, dark grey at bottom */
 html[data-theme='crimson'] {
-  background: linear-gradient(180deg, #2d1212 0%, #1c0a0a 40%, #1e293b 75%, #0f172a 100%) fixed !important;
+  background: linear-gradient(to bottom, #2d1212 0%, #1c0a0a 30%, #0f172a 100%) fixed !important;
   background-attachment: fixed !important;
   background-size: cover !important;
   background-repeat: no-repeat !important;
@@ -61,9 +61,9 @@ html[data-theme='crimson'] {
   width: 100%;
 }
 
-/* Emerald theme gradient - keeps theme color at top, fades into dark grey at bottom */
+/* Emerald theme gradient - 3-stop: theme colors at top, dark grey at bottom */
 html[data-theme='emerald'] {
-  background: linear-gradient(180deg, #0f2e26 0%, #0a1f1a 40%, #1e293b 75%, #0f172a 100%) fixed !important;
+  background: linear-gradient(to bottom, #0f2e26 0%, #0a1f1a 30%, #0f172a 100%) fixed !important;
   background-attachment: fixed !important;
   background-size: cover !important;
   background-repeat: no-repeat !important;
@@ -72,9 +72,9 @@ html[data-theme='emerald'] {
   width: 100%;
 }
 
-/* Obsidian theme gradient - keeps theme color at top, fades into dark grey at bottom */
+/* Obsidian theme gradient - 3-stop: theme colors at top, dark grey at bottom */
 html[data-theme='obsidian'] {
-  background: linear-gradient(180deg, #0f172a 0%, #0f172a 40%, #1e293b 75%, #0f172a 100%) fixed !important;
+  background: linear-gradient(to bottom, #0f172a 0%, #020617 30%, #0f172a 100%) fixed !important;
   background-attachment: fixed !important;
   background-size: cover !important;
   background-repeat: no-repeat !important;
@@ -83,9 +83,9 @@ html[data-theme='obsidian'] {
   width: 100%;
 }
 
-/* Amethyst theme gradient - keeps theme color at top, fades into dark grey at bottom */
+/* Amethyst theme gradient - 3-stop: theme colors at top, dark grey at bottom */
 html[data-theme='amethyst'] {
-  background: linear-gradient(180deg, #2e1e47 0%, #1e0a33 40%, #1e293b 75%, #0f172a 100%) fixed !important;
+  background: linear-gradient(to bottom, #2e1e47 0%, #1e0a33 30%, #0f172a 100%) fixed !important;
   background-attachment: fixed !important;
   background-size: cover !important;
   background-repeat: no-repeat !important;
@@ -94,9 +94,9 @@ html[data-theme='amethyst'] {
   width: 100%;
 }
 
-/* Sunset theme gradient - keeps theme color at top, fades into dark grey at bottom */
+/* Sunset theme gradient - 3-stop: theme colors at top, dark grey at bottom */
 html[data-theme='sunset'] {
-  background: linear-gradient(180deg, #3a1c0d 0%, #1f0f06 40%, #1e293b 75%, #0f172a 100%) fixed !important;
+  background: linear-gradient(to bottom, #3a1c0d 0%, #1f0f06 30%, #0f172a 100%) fixed !important;
   background-attachment: fixed !important;
   background-size: cover !important;
   background-repeat: no-repeat !important;
