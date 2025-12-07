@@ -81,13 +81,13 @@ html[data-theme='sunset'] {
 }
 
 /* Apply the gradient to html element - SINGLE SOURCE OF TRUTH */
-/* Hard cutoff: blue at top 0-5%, then immediately grey for rest of page */
+/* Smooth gradient: blue at top 25%, fading to dark grey for remaining 75% */
 html {
   background: linear-gradient(
     to bottom,
-    var(--theme-gradient-start, #0a2a5e) 0%,
-    var(--theme-gradient-end, #0d3d80) 5%,
-    #0f172a 5%,
+    #00173a 0%,
+    #00397a 10%,
+    #004aaf 25%,
     #0f172a 100%
   );
   background-attachment: fixed;
