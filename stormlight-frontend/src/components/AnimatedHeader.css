@@ -7,7 +7,275 @@
   z-index: 1;
 }
 
-/* Cloud animation container - fills the hero section */
+/* Starfall animation layer - sits behind clouds */
+.starfall {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+/* Individual falling star */
+.starfall .falling-star {
+  width: 6px;
+  height: 6px;
+  background: #00d1b2;
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.5;
+}
+
+/* Falling star positions and animations - nth-child rules */
+.falling-star:nth-child(1) {
+  transform: translateX(5vw) translateY(-8px);
+  animation: anim1 4s infinite;
+  animation-delay: 0.3s;
+}
+.falling-star:nth-child(2) {
+  transform: translateX(15vw) translateY(-8px);
+  animation: anim2 4s infinite;
+  animation-delay: 0.6s;
+}
+.falling-star:nth-child(3) {
+  transform: translateX(25vw) translateY(-8px);
+  animation: anim3 4s infinite;
+  animation-delay: 0.9s;
+}
+.falling-star:nth-child(4) {
+  transform: translateX(35vw) translateY(-8px);
+  animation: anim4 4s infinite;
+  animation-delay: 1.2s;
+}
+.falling-star:nth-child(5) {
+  transform: translateX(45vw) translateY(-8px);
+  animation: anim5 4s infinite;
+  animation-delay: 1.5s;
+}
+.falling-star:nth-child(6) {
+  transform: translateX(55vw) translateY(-8px);
+  animation: anim6 4s infinite;
+  animation-delay: 1.8s;
+}
+.falling-star:nth-child(7) {
+  transform: translateX(65vw) translateY(-8px);
+  animation: anim7 4s infinite;
+  animation-delay: 2.1s;
+}
+.falling-star:nth-child(8) {
+  transform: translateX(75vw) translateY(-8px);
+  animation: anim8 4s infinite;
+  animation-delay: 2.4s;
+}
+.falling-star:nth-child(9) {
+  transform: translateX(85vw) translateY(-8px);
+  animation: anim9 4s infinite;
+  animation-delay: 2.7s;
+}
+.falling-star:nth-child(10) {
+  transform: translateX(95vw) translateY(-8px);
+  animation: anim10 4s infinite;
+  animation-delay: 3.0s;
+}
+.falling-star:nth-child(11) {
+  transform: translateX(10vw) translateY(-8px);
+  animation: anim11 4s infinite;
+  animation-delay: 3.3s;
+}
+.falling-star:nth-child(12) {
+  transform: translateX(20vw) translateY(-8px);
+  animation: anim12 4s infinite;
+  animation-delay: 3.6s;
+}
+.falling-star:nth-child(13) {
+  transform: translateX(30vw) translateY(-8px);
+  animation: anim13 4s infinite;
+  animation-delay: 3.9s;
+}
+.falling-star:nth-child(14) {
+  transform: translateX(40vw) translateY(-8px);
+  animation: anim14 4s infinite;
+  animation-delay: 4.2s;
+}
+.falling-star:nth-child(15) {
+  transform: translateX(50vw) translateY(-8px);
+  animation: anim15 4s infinite;
+  animation-delay: 4.5s;
+}
+.falling-star:nth-child(16) {
+  transform: translateX(60vw) translateY(-8px);
+  animation: anim16 4s infinite;
+  animation-delay: 4.8s;
+}
+.falling-star:nth-child(17) {
+  transform: translateX(70vw) translateY(-8px);
+  animation: anim17 4s infinite;
+  animation-delay: 5.1s;
+}
+.falling-star:nth-child(18) {
+  transform: translateX(80vw) translateY(-8px);
+  animation: anim18 4s infinite;
+  animation-delay: 5.4s;
+}
+.falling-star:nth-child(19) {
+  transform: translateX(90vw) translateY(-8px);
+  animation: anim19 4s infinite;
+  animation-delay: 5.7s;
+}
+.falling-star:nth-child(20) {
+  transform: translateX(3vw) translateY(-8px);
+  animation: anim20 4s infinite;
+  animation-delay: 6.0s;
+}
+
+/* Starfall keyframe animations */
+@keyframes anim1 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(25vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim2 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(35vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim3 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(45vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim4 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(55vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim5 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(65vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim6 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(75vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim7 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(85vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim8 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(95vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim9 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(5vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim10 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(15vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim11 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(30vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim12 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(40vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim13 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(50vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim14 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(60vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim15 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(70vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim16 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(80vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim17 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(90vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim18 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(10vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim19 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(20vw) translateY(100vh); opacity: 0; }
+}
+@keyframes anim20 {
+  10% { opacity: 0.5; }
+  12% { opacity: 1; box-shadow: 0 0 3px 0 #fff; }
+  15% { opacity: 0.5; }
+  50% { opacity: 0; }
+  100% { transform: translateX(23vw) translateY(100vh); opacity: 0; }
+}
+
+/* Cloud animation container - sits above starfall */
 .clouds {
   position: absolute;
   top: 0;
@@ -16,6 +284,7 @@
   height: 100%;
   opacity: 0.4;
   pointer-events: none;
+  z-index: 1;
 }
 
 /* Individual cloud layers */
@@ -43,19 +312,19 @@
 /* Cloud layer 1 */
 .clouds-1 {
   background-image: url('https://s.cdpn.io/15514/clouds_2.png');
-  animation: clouds-loop-1 75s infinite linear;
+  animation: clouds-loop-1 180s infinite linear;
 }
 
 /* Cloud layer 2 - using custom Stormlight clouds */
 .clouds-2 {
   background-image: url('/assets/clouds_1.png');
-  animation: clouds-loop-2 75s infinite linear;
+  animation: clouds-loop-2 180s infinite linear;
 }
 
 /* Cloud layer 3 */
 .clouds-3 {
   background-image: url('https://s.cdpn.io/15514/clouds_3.png');
-  animation: clouds-loop-3 65s infinite linear;
+  animation: clouds-loop-3 160s infinite linear;
 }
 
 /* Keyframe animations for each cloud layer */
