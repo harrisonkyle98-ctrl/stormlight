@@ -3603,7 +3603,9 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
             else:
                 skill_gain_data = skill_gains_map.get(entry.username)
                 if skill_gain_data:
-                    current_xp = skill_gain_data['current_xp']
+                    baseline_xp = skill_gain_data.get('baseline_xp', 0)
+                    xp_gain_today = skill_gain_data.get('xp_gain', 0)
+                    current_xp = baseline_xp + xp_gain_today
                     xp_gain = max(0, current_xp - xp_start)
                 else:
                     current_xp = xp_start
