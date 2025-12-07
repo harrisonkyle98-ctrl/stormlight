@@ -7,8 +7,70 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden;
+  overflow: visible;
   background: transparent;
+}
+
+/* Animated accent glow - originates from bottom (yellow ribbon) and radiates upward */
+.animated-header::before {
+  content: '';
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  height: 200px;
+  background: radial-gradient(
+    ellipse at center bottom,
+    var(--header-glow-color, rgba(212, 175, 55, 0.25)) 0%,
+    var(--header-glow-color-mid, rgba(212, 175, 55, 0.12)) 30%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 1;
+  animation: glow-pulse 5s ease-in-out infinite;
+}
+
+/* Subtle secondary glow layer for depth */
+.animated-header::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 160px;
+  background: radial-gradient(
+    ellipse at center bottom,
+    var(--header-glow-color, rgba(212, 175, 55, 0.15)) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+  z-index: 1;
+  animation: glow-pulse-secondary 5s ease-in-out infinite;
+  animation-delay: 0.5s;
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.1);
+  }
+}
+
+@keyframes glow-pulse-secondary {
+  0%, 100% {
+    opacity: 0.4;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateX(-50%) scale(1.05);
+  }
 }
 
 /* Title styling */

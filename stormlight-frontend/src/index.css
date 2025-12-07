@@ -38,9 +38,10 @@ body {
 }
 
 /* Sapphire (blue) theme as default fallback - shows when no theme is set or when Sapphire is active */
+/* Gradient fades from theme color at top into dark grey panel palette */
 html:not([data-theme]),
 html[data-theme='blue'] {
-  background: linear-gradient(180deg, #081d47 0%, #0b2c78 100%) fixed !important;
+  background: linear-gradient(180deg, #081d47 0%, #0b2c78 20%, #1e293b 60%, #0f172a 100%) fixed !important;
   background-attachment: fixed !important;
   background-size: cover !important;
   background-repeat: no-repeat !important;
@@ -49,9 +50,9 @@ html[data-theme='blue'] {
   width: 100%;
 }
 
-/* Crimson theme gradient */
+/* Crimson theme gradient - fades into dark grey */
 html[data-theme='crimson'] {
-  background: linear-gradient(180deg, #2d1212 0%, #1c0a0a 100%) fixed !important;
+  background: linear-gradient(180deg, #2d1212 0%, #1c0a0a 20%, #1e293b 60%, #0f172a 100%) fixed !important;
   background-attachment: fixed !important;
   background-size: cover !important;
   background-repeat: no-repeat !important;
@@ -60,9 +61,9 @@ html[data-theme='crimson'] {
   width: 100%;
 }
 
-/* Emerald theme gradient */
+/* Emerald theme gradient - fades into dark grey */
 html[data-theme='emerald'] {
-  background: linear-gradient(180deg, #0f2e26 0%, #0a1f1a 100%) fixed !important;
+  background: linear-gradient(180deg, #0f2e26 0%, #0a1f1a 20%, #1e293b 60%, #0f172a 100%) fixed !important;
   background-attachment: fixed !important;
   background-size: cover !important;
   background-repeat: no-repeat !important;
@@ -71,9 +72,9 @@ html[data-theme='emerald'] {
   width: 100%;
 }
 
-/* Obsidian theme gradient */
+/* Obsidian theme gradient - fades into dark grey */
 html[data-theme='obsidian'] {
-  background: linear-gradient(180deg, #0f172a 0%, #020617 100%) fixed !important;
+  background: linear-gradient(180deg, #0f172a 0%, #0f172a 20%, #1e293b 60%, #0f172a 100%) fixed !important;
   background-attachment: fixed !important;
   background-size: cover !important;
   background-repeat: no-repeat !important;
@@ -82,9 +83,9 @@ html[data-theme='obsidian'] {
   width: 100%;
 }
 
-/* Amethyst theme gradient */
+/* Amethyst theme gradient - fades into dark grey */
 html[data-theme='amethyst'] {
-  background: linear-gradient(180deg, #2e1e47 0%, #1e0a33 100%) fixed !important;
+  background: linear-gradient(180deg, #2e1e47 0%, #1e0a33 20%, #1e293b 60%, #0f172a 100%) fixed !important;
   background-attachment: fixed !important;
   background-size: cover !important;
   background-repeat: no-repeat !important;
@@ -93,9 +94,9 @@ html[data-theme='amethyst'] {
   width: 100%;
 }
 
-/* Sunset theme gradient */
+/* Sunset theme gradient - fades into dark grey */
 html[data-theme='sunset'] {
-  background: linear-gradient(180deg, #3a1c0d 0%, #1f0f06 100%) fixed !important;
+  background: linear-gradient(180deg, #3a1c0d 0%, #1f0f06 20%, #1e293b 60%, #0f172a 100%) fixed !important;
   background-attachment: fixed !important;
   background-size: cover !important;
   background-repeat: no-repeat !important;
