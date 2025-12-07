@@ -85,7 +85,7 @@ html {
   background: linear-gradient(
     to bottom,
     var(--theme-gradient-start, #0a2a5e) 0%,
-    var(--theme-gradient-end, #0d3d80) 15%,
+    var(--theme-gradient-end, #0d3d80) 5%,
     #0f172a 100%
   );
   background-attachment: fixed;
