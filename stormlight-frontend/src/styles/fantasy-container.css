@@ -704,3 +704,12 @@
   --plate-color-middle: #666666; /* mid grey */
   --plate-color-bottom: #525252; /* dark grey */
 }
+
+/* ========================================
+   LOGIN PAGE CONTAINER OVERRIDE
+   Removes default margin for centered login layout
+   ======================================== */
+
+.fantasy-container.w-full.max-w-md {
+  margin: 0; /* Override default 4% margin for centered login */
+}

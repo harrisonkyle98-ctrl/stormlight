@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Button } from '../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { toast } from 'sonner'
+import '../styles/fantasy-container.css'
 
 const Login = () => {
   const { login, getAuthUrl } = useAuth()
@@ -43,19 +43,28 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-slate-800/50 border-slate-700">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-white mb-2">
-            ⚡ Stormlight
-          </CardTitle>
-          <CardDescription className="text-slate-300">
-            Welcome to the Stormlight clan dashboard.
-          </CardDescription>
-          <CardDescription className="text-slate-300">
-            Sign in with Discord to access clan features.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      {/* Unified outer container with fantasy styling */}
+      <div className="fantasy-container w-full max-w-md">
+        {/* Blue header ribbon with "Welcome" */}
+        <div className="fantasy-banner-wrapper">
+          <div className="fantasy-banner">
+            <div className="fantasy-banner-inner">
+              <h1 className="fantasy-banner-title">Welcome</h1>
+            </div>
+          </div>
+        </div>
+
+        {/* Inner panel content */}
+        <div className="fantasy-section">
+          <div className="text-center mb-6">
+            <p className="text-slate-300 mb-1">
+              Welcome to the Stormlight clan dashboard.
+            </p>
+            <p className="text-slate-300">
+              Sign in with Discord to access clan features.
+            </p>
+          </div>
+
           <Button
             onClick={handleDiscordLogin}
             disabled={loading}
@@ -77,7 +86,7 @@ const Login = () => {
             )}
           </Button>
 
-          <div className="text-center text-sm text-slate-400">
+          <div className="text-center text-sm text-slate-400 mt-4">
             <p>Only Stormlight clan members can access this site.</p>
             <p className="mt-2">
               <a
@@ -90,8 +99,8 @@ const Login = () => {
               </a>
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }
