@@ -43,19 +43,19 @@
 /* Cloud layer 1 */
 .clouds-1 {
   background-image: url('https://s.cdpn.io/15514/clouds_2.png');
-  animation: clouds-loop-1 30s infinite linear;
+  animation: clouds-loop-1 75s infinite linear;
 }
 
 /* Cloud layer 2 - using custom Stormlight clouds */
 .clouds-2 {
   background-image: url('/assets/clouds_1.png');
-  animation: clouds-loop-2 30s infinite linear;
+  animation: clouds-loop-2 75s infinite linear;
 }
 
 /* Cloud layer 3 */
 .clouds-3 {
   background-image: url('https://s.cdpn.io/15514/clouds_3.png');
-  animation: clouds-loop-3 25s infinite linear;
+  animation: clouds-loop-3 65s infinite linear;
 }
 
 /* Keyframe animations for each cloud layer */
@@ -81,18 +81,46 @@
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 10;
-  font-family: 'Cinzel', serif;
+  font-family: 'Cinzel Decorative', serif;
   font-size: 3.5rem;
   font-weight: 700;
-  color: #fffbf0;
-  text-shadow: 
-    var(--header-text-glow),
-    0 2px 4px rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+  text-shadow:
+    0 0 15px rgba(100, 140, 255, 0.7),
+    0 0 30px rgba(110, 150, 255, 0.5),
+    0 0 45px rgba(120, 160, 255, 0.4);
   letter-spacing: 0.25em;
   margin: 0;
   padding: 0;
   user-select: none;
   pointer-events: none;
+  white-space: nowrap;
+  text-transform: none;
+  animation: logoGlow 12s ease-in-out infinite alternate;
+}
+
+/* Animated blue glow keyframes */
+@keyframes logoGlow {
+  0% {
+    text-shadow:
+      0 0 15px rgba(80, 120, 255, 0.8),
+      0 0 35px rgba(90, 140, 255, 0.6),
+      0 0 60px rgba(110, 160, 255, 0.5);
+  }
+
+  50% {
+    text-shadow:
+      0 0 18px rgba(140, 180, 255, 0.9),
+      0 0 45px rgba(150, 190, 255, 0.7),
+      0 0 75px rgba(160, 200, 255, 0.6);
+  }
+
+  100% {
+    text-shadow:
+      0 0 12px rgba(60, 100, 230, 0.7),
+      0 0 30px rgba(70, 110, 240, 0.5),
+      0 0 50px rgba(90, 130, 250, 0.4);
+  }
 }
 
 /* Responsive adjustments */
