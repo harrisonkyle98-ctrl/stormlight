@@ -351,45 +351,19 @@
   transform: translate(-50%, -50%);
   z-index: 10;
   font-family: 'Cinzel Decorative', serif;
-  font-size: 3.5rem;
-  font-weight: 700;
+  font-size: 4rem;
+  font-weight: normal;
   color: #ffffff;
   text-shadow:
-    0 0 18px rgba(255, 255, 255, 0.7),
-    0 0 40px rgba(255, 255, 255, 0.5),
-    0 0 65px rgba(255, 255, 255, 0.4);
-  letter-spacing: 0.25em;
+    0 0 12px rgba(180, 200, 230, 0.45),
+    0 0 25px rgba(180, 200, 230, 0.25);
+  letter-spacing: 0.03em;
   margin: 0;
   padding: 0;
   user-select: none;
   pointer-events: none;
   white-space: nowrap;
   text-transform: none;
-  animation: logoGlowWhite 12s ease-in-out infinite alternate;
-}
-
-/* Animated white glow keyframes */
-@keyframes logoGlowWhite {
-  0% {
-    text-shadow:
-      0 0 14px rgba(255, 255, 255, 0.6),
-      0 0 32px rgba(255, 255, 255, 0.45),
-      0 0 50px rgba(255, 255, 255, 0.35);
-  }
-
-  50% {
-    text-shadow:
-      0 0 22px rgba(255, 255, 255, 0.85),
-      0 0 55px rgba(255, 255, 255, 0.65),
-      0 0 85px rgba(255, 255, 255, 0.5);
-  }
-
-  100% {
-    text-shadow:
-      0 0 12px rgba(255, 255, 255, 0.55),
-      0 0 28px rgba(255, 255, 255, 0.4),
-      0 0 45px rgba(255, 255, 255, 0.3);
-  }
 }
 
 /* Responsive adjustments */
@@ -399,8 +373,8 @@
   }
   
   .stormlight-logo {
-    font-size: 2.5rem;
-    letter-spacing: 0.15em;
+    font-size: 2.8rem;
+    letter-spacing: 0.02em;
   }
 }
 
@@ -410,7 +384,7 @@
   }
   
   .stormlight-logo {
-    font-size: 1.8rem;
-    letter-spacing: 0.1em;
+    font-size: 2rem;
+    letter-spacing: 0.01em;
   }
 }
