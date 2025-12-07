@@ -6,9 +6,11 @@
 }
 
 /* Ensure main content appears above the animated header background */
+/* Add top margin to reveal the floating logo above the animation */
 main {
   position: relative;
   z-index: 2;
+  margin-top: 160px;
 }
 
 .logo {
