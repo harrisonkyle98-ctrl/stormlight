@@ -47,7 +47,7 @@ const Login = () => {
       {/* Animated hero banner - same as all other pages */}
       <AnimatedHeader />
       
-      <div className="min-h-[calc(100vh-300px)] flex items-center justify-center p-4">
+      <div className="min-h-[calc(100vh-300px)] flex items-center justify-center p-4 -mt-8">
         {/* Unified outer container with fantasy styling */}
         <div className="fantasy-container w-full max-w-md">
           {/* Blue header ribbon with "Welcome" */}
