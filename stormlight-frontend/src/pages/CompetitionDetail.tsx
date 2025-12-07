@@ -99,11 +99,8 @@ const CompetitionDetail = () => {
   const { theme: selectedTheme, setTheme: handleThemeChange } = useTheme()
   const [competition, setCompetition] = useState<CompetitionDetailData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [paginationLoading, setPaginationLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [clanMembers, setClanMembers] = useState<any[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
   const [totalParticipants, setTotalParticipants] = useState(0)
   const [top10Data, setTop10Data] = useState<CompetitionLeaderboard[]>([])
   const [leaderboardData, setLeaderboardData] = useState<CompetitionLeaderboard[]>([])
@@ -376,7 +373,7 @@ const CompetitionDetail = () => {
         clearInterval(pollIntervalRef.current)
       }
     }
-  }, [competition, currentPage])
+  }, [competition])
 
   const loadClanMembers = async () => {
     const members = await fetchClanMembers()
@@ -386,7 +383,7 @@ const CompetitionDetail = () => {
   const fetchCompetitionInitial = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`${API_URL}/api/competitions/${id}?page=1&per_page=25`)
+      const response = await fetch(`${API_URL}/api/competitions/${id}`)
       if (response.ok) {
         const data = await response.json()
         setCompetition(data)
@@ -404,8 +401,6 @@ const CompetitionDetail = () => {
         }
         
         if (data.pagination) {
-          setCurrentPage(data.pagination.page)
-          setTotalPages(data.pagination.total_pages)
           setTotalParticipants(data.pagination.total)
         }
       } else {
@@ -429,8 +424,8 @@ const CompetitionDetail = () => {
       const isActive = now >= start && now <= end
       
       const endpoint = isActive 
-        ? `${API_URL}/api/competitions/${id}/live?page=${currentPage}&per_page=25`
-        : `${API_URL}/api/competitions/${id}?page=${currentPage}&per_page=25`
+        ? `${API_URL}/api/competitions/${id}/live`
+        : `${API_URL}/api/competitions/${id}`
       
       const response = await fetch(endpoint)
       if (response.ok) {
@@ -454,8 +449,6 @@ const CompetitionDetail = () => {
         }
         
         if (data.pagination) {
-          setCurrentPage(data.pagination.page)
-          setTotalPages(data.pagination.total_pages)
           setTotalParticipants(data.pagination.total)
         }
         
@@ -467,41 +460,6 @@ const CompetitionDetail = () => {
       }
     } catch (error) {
       console.error('Error fetching live competition data:', error)
-    }
-  }
-
-  const fetchLeaderboardPage = async (page: number) => {
-    try {
-      setPaginationLoading(true)
-      
-      const now = new Date()
-      const start = new Date(competition?.startDate || '')
-      const end = new Date(competition?.endDate || '')
-      const isActive = competition?.type === 'XP_GAIN' && now >= start && now <= end
-      
-      const endpoint = isActive
-        ? `${API_URL}/api/competitions/${id}/live?page=${page}&per_page=25`
-        : `${API_URL}/api/competitions/${id}?page=${page}&per_page=25`
-      
-      const response = await fetch(endpoint)
-      if (response.ok) {
-        const data = await response.json()
-        setLeaderboardData(data.leaderboard || [])
-        
-        if (data.pagination) {
-          setCurrentPage(data.pagination.page)
-          setTotalPages(data.pagination.total_pages)
-          setTotalParticipants(data.pagination.total)
-        }
-        
-        if (data.last_updated) {
-          setLastUpdated(data.last_updated)
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching leaderboard page:', error)
-    } finally {
-      setPaginationLoading(false)
     }
   }
 
@@ -1206,31 +1164,10 @@ const CompetitionDetail = () => {
             </div>
           )}
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 mt-4 bg-slate-800/50 border border-slate-700">
+          {totalParticipants > 0 && (
+            <div className="flex items-center justify-center px-4 py-3 mt-4 bg-slate-800/50 border border-slate-700">
               <div className="text-sm text-slate-400">
-                Showing {((currentPage - 1) * 25) + 1} to {Math.min(currentPage * 25, totalParticipants)} of {totalParticipants} participants
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  size="sm"
-                  onClick={() => fetchLeaderboardPage(currentPage - 1)}
-                  disabled={currentPage === 1 || paginationLoading}
-                  className="bg-theme-button hover:bg-theme-button-hover text-white disabled:opacity-50 disabled:bg-theme-button/50"
-                >
-                  {paginationLoading && currentPage > 1 ? 'Loading...' : 'Previous'}
-                </Button>
-                <div className="text-sm text-slate-300">
-                  Page {currentPage} of {totalPages}
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => fetchLeaderboardPage(currentPage + 1)}
-                  disabled={currentPage === totalPages || paginationLoading}
-                  className="bg-theme-button hover:bg-theme-button-hover text-white disabled:opacity-50 disabled:bg-theme-button/50"
-                >
-                  {paginationLoading && currentPage < totalPages ? 'Loading...' : 'Next'}
-                </Button>
+                Showing all {totalParticipants} participants
               </div>
             </div>
           )}

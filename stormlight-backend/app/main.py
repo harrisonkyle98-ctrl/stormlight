@@ -3261,8 +3261,6 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                             
                             invalidate_player_cache(winner_username)
             
-            start_idx = (page - 1) * per_page
-            end_idx = start_idx + per_page
             total_participants = len(leaderboard)
             top_10 = leaderboard[:10] if len(leaderboard) >= 10 else leaderboard
             
@@ -3284,13 +3282,13 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                 "rewardBadgeId": competition.rewardBadgeId,
                 "createdAt": competition.createdAt.isoformat() if competition.createdAt else None,
                 "updatedAt": competition.updatedAt.isoformat() if competition.updatedAt else None,
-                "leaderboard": leaderboard[start_idx:end_idx],
+                "leaderboard": leaderboard,
                 "top_10": top_10,
                 "pagination": {
-                    "page": page,
-                    "per_page": per_page,
+                    "page": 1,
+                    "per_page": total_participants,
                     "total": total_participants,
-                    "total_pages": (total_participants + per_page - 1) // per_page
+                    "total_pages": 1
                 }
             }
         else:
@@ -3308,7 +3306,7 @@ _live_competition_cache_ttl = 60  # seconds
 async def get_competition_live(competition_id: str, page: int = 1, per_page: int = 25):
     """Get competition with live XP tracking and time series for line graph"""
     try:
-        cache_key = f"{competition_id}:{page}"
+        cache_key = f"{competition_id}"
         if cache_key in _live_competition_cache:
             cached_data, cached_time = _live_competition_cache[cache_key]
             from datetime import timezone
@@ -3376,11 +3374,9 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
             comp_end = comp_end.replace(tzinfo=timezone.utc)
         is_active = now < comp_end if comp_end else False
         
-        # Paginate entries before processing
-        start_idx = (page - 1) * per_page
-        end_idx = start_idx + per_page
+        # Process all entries (no pagination)
         total_entries = len(entries)
-        entries_to_process = entries[start_idx:end_idx]
+        entries_to_process = entries
         
         conn = await get_db_connection()
         usernames = [entry.username for entry in entries_to_process]
@@ -3586,41 +3582,12 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         
         leaderboard.sort(key=lambda x: x['xp_gain'], reverse=True)
         
-        # Assign global ranks based on page offset (start_idx is 0-indexed, ranks are 1-indexed)
+        # Assign global ranks (1-indexed)
         for idx, entry in enumerate(leaderboard, start=1):
-            entry['rank'] = start_idx + idx
+            entry['rank'] = idx
         
-        all_entries_for_top10 = entries[:50]  # Limit to first 50 for performance
-        top_10_leaderboard = []
-        
-        for entry in all_entries_for_top10:
-            xp_start = int(entry.xpStart or 0)
-            xp_end = int(entry.xpEnd or 0)
-            
-            if not is_active and xp_end > 0:
-                current_xp = xp_end
-                xp_gain = max(0, xp_end - xp_start)
-            else:
-                skill_gain_data = skill_gains_map.get(entry.username)
-                if skill_gain_data:
-                    baseline_xp = skill_gain_data.get('baseline_xp', 0)
-                    xp_gain_today = skill_gain_data.get('xp_gain', 0)
-                    current_xp = baseline_xp + xp_gain_today
-                    xp_gain = max(0, current_xp - xp_start)
-                else:
-                    current_xp = xp_start
-                    xp_gain = 0
-            
-            top_10_leaderboard.append({
-                'username': entry.username,
-                'xp_gain': xp_gain,
-                'starting_xp': xp_start,
-                'ending_xp': current_xp,
-                'skill': skill
-            })
-        
-        top_10_leaderboard.sort(key=lambda x: x['xp_gain'], reverse=True)
-        top_10 = top_10_leaderboard[:10]
+        # Derive top_10 from the full sorted leaderboard
+        top_10 = leaderboard[:10] if len(leaderboard) >= 10 else leaderboard
         
         top_10_timeline = {username: timeline_data.get(username, []) for username in [p['username'] for p in top_10]}
         
@@ -3636,10 +3603,10 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
             "top_10": top_10,
             "timeline": top_10_timeline,
             "pagination": {
-                "page": page,
-                "per_page": per_page,
+                "page": 1,
+                "per_page": total_entries,
                 "total": total_entries,
-                "total_pages": (total_entries + per_page - 1) // per_page
+                "total_pages": 1
             },
             "last_updated": now.isoformat()
         }
