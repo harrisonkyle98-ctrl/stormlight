@@ -1,11 +1,11 @@
 /* Main header container - fixed at very top of viewport, behind all content */
 .animated-header {
-  position: fixed;
+  position: fixed !important;
   top: 0;
   left: 0;
   width: 100%;
   height: 300px;
-  z-index: -1;
+  z-index: -1 !important;
   pointer-events: none;
 }
 
@@ -79,7 +79,7 @@
 
 /* Logo wrapper - fixed at top of viewport, floats on top of animation */
 .stormlight-logo-wrapper {
-  position: fixed;
+  position: fixed !important;
   top: 0;
   left: 50%;
   transform: translateX(-50%);
@@ -87,7 +87,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 5;
+  z-index: 10 !important;
   pointer-events: none;
 }
 
