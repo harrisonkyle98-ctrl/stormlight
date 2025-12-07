@@ -351,12 +351,13 @@
   transform: translate(-50%, -50%);
   z-index: 10;
   font-family: 'Cinzel Decorative', serif;
-  font-size: 4rem;
+  font-size: 4.7rem;
   font-weight: normal;
   color: #ffffff;
   text-shadow:
-    0 0 12px rgba(180, 200, 230, 0.45),
-    0 0 25px rgba(180, 200, 230, 0.25);
+    0 0 18px rgba(200, 220, 255, 0.70),
+    0 0 40px rgba(200, 220, 255, 0.45),
+    0 0 70px rgba(200, 220, 255, 0.35);
   letter-spacing: 0.03em;
   margin: 0;
   padding: 0;
@@ -373,7 +374,7 @@
   }
   
   .stormlight-logo {
-    font-size: 2.8rem;
+    font-size: 3.3rem;
     letter-spacing: 0.02em;
   }
 }
@@ -384,7 +385,7 @@
   }
   
   .stormlight-logo {
-    font-size: 2rem;
+    font-size: 2.4rem;
     letter-spacing: 0.01em;
   }
 }
