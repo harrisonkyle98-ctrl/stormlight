@@ -31,28 +31,23 @@ const AnimatedHeader = () => {
   const themeConfig = headerThemes[theme] || headerThemes.blue
 
   return (
-    <>
-      {/* Cloud animation background - stays at z-index 0 */}
-      <div 
-        className="animated-header"
-        id="stormlight-top-animation"
-      >
-        <div className="clouds">
-          <div className="clouds-1"></div>
-          <div className="clouds-2"></div>
-          <div className="clouds-3"></div>
-        </div>
+    <div className="hero-header">
+      {/* Cloud animation background */}
+      <div className="clouds">
+        <div className="clouds-1"></div>
+        <div className="clouds-2"></div>
+        <div className="clouds-3"></div>
       </div>
-      {/* Logo floats on top of animation with its own z-index */}
-      <div 
-        className="stormlight-logo-wrapper"
+      {/* Logo floats visually above clouds but inside the hero block */}
+      <h1 
+        className="stormlight-logo"
         style={{
           '--header-text-glow': themeConfig.textGlow
         } as React.CSSProperties}
       >
-        <h1 id="stormlight-logo" className="animated-header-title">STORMLIGHT</h1>
-      </div>
-    </>
+        STORMLIGHT
+      </h1>
+    </div>
   )
 }
 
