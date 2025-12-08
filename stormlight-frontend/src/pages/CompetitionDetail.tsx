@@ -339,18 +339,14 @@ const CompetitionDetail = () => {
   }, [id])
 
 
+  // Trigger live data fetch when isActiveXpGain is set to true
+  // This uses the state we already computed in fetchCompetitionInitial
+  // to avoid any mismatch in active status calculation
   useEffect(() => {
-    if (competition && competition.type === 'XP_GAIN') {
-      const now = new Date()
-      const start = new Date(competition.startDate)
-      const end = new Date(competition.endDate)
-      const isActive = now >= start && now <= end
-      
-      if (isActive) {
-        fetchLiveData()
-      }
+    if (isActiveXpGain && competition) {
+      fetchLiveData()
     }
-  }, [competition])
+  }, [isActiveXpGain, competition])
 
   const loadClanMembers = async () => {
     const members = await fetchClanMembers()
