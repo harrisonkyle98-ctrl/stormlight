@@ -102,6 +102,25 @@ const PlayerProfile = () => {
   const navigate = useNavigate()
   const { publish } = useProfileGains()
   const [playerData, setPlayerData] = useState<PlayerStats | null>(null)
+
+  // Helper function to abbreviate XP values >= 100M for profile card header only
+  const formatXpAbbreviated = (xp: number): string => {
+    const billion = 1_000_000_000
+    const million = 1_000_000
+    if (xp >= billion) {
+      const value = xp / billion
+      // Format with up to 2 decimal places, remove trailing zeros
+      const formatted = value.toFixed(2).replace(/\.?0+$/, '')
+      return `${formatted}B`
+    }
+    if (xp >= 100 * million) {
+      const value = xp / million
+      // Format with up to 2 decimal places, remove trailing zeros
+      const formatted = value.toFixed(2).replace(/\.?0+$/, '')
+      return `${formatted}M`
+    }
+    return xp.toLocaleString()
+  }
   const [questData, setQuestData] = useState<any>(null)
   const [statsLoading, setStatsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -1273,7 +1292,7 @@ const PlayerProfile = () => {
                   <div className={`text-center bg-slate-700/30 px-4 py-3 ${playerData.stats.overall.rank ? 'rounded-b-lg' : 'rounded-lg'}`}>
                     <p className="text-xs text-slate-400 mb-1">Total XP</p>
                     <p className="text-xl font-bold text-green-400">
-                      {playerData.stats.overall.xp.toLocaleString()}
+                      {formatXpAbbreviated(playerData.stats.overall.xp)}
                     </p>
                   </div>
                 </div>
@@ -1316,7 +1335,7 @@ const PlayerProfile = () => {
                         <div className={`text-center bg-slate-700/30 px-4 py-3 ${playerData.clan_rank_number ? 'rounded-b-lg' : 'rounded-lg'}`}>
                           <p className="text-xs text-slate-400 mb-1">Clan XP</p>
                           <p className="text-xl font-bold text-green-400">
-                            {playerData.clan_xp.toLocaleString()}
+                            {formatXpAbbreviated(playerData.clan_xp)}
                           </p>
                         </div>
                       )}
