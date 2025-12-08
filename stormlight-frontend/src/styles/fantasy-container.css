@@ -352,19 +352,19 @@
 }
 
 /* Competitions Banner Modifier - magenta matching Competitions nav ribbon */
-/* Desaturated 17% + darkened 11% for premium muted aesthetic */
+/* Further desaturated for premium muted aesthetic */
 .fantasy-banner--competitions {
-  --banner-color-top: #a33d5f;    /* bright magenta - desaturated + darkened */
-  --banner-color-middle: #83344e; /* mid magenta - desaturated + darkened */
-  --banner-color-bottom: #60233a; /* deep magenta - desaturated + darkened */
+  --banner-color-top: #9b4562;    /* bright magenta - further desaturated */
+  --banner-color-middle: #7d3a50; /* mid magenta - further desaturated */
+  --banner-color-bottom: #5b283b; /* deep magenta - further desaturated */
 }
 
 /* Admin Panel Banner Modifier - purple for admin identification */
-/* Desaturated 17% for premium muted aesthetic */
+/* Further desaturated for premium muted aesthetic */
 .fantasy-banner--admin {
-  --banner-color-top: #713dc3;    /* deep purple - desaturated */
-  --banner-color-middle: #5f33a3; /* darker purple - desaturated */
-  --banner-color-bottom: #4f2c85; /* darkest purple - desaturated */
+  --banner-color-top: #7347b9;    /* deep purple - further desaturated */
+  --banner-color-middle: #613b9b; /* darker purple - further desaturated */
+  --banner-color-bottom: #50337e; /* darkest purple - further desaturated */
 }
 
 /* Gold ribbon inside profile header should match panel width (no overhang) */

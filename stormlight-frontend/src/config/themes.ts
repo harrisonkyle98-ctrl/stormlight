@@ -38,18 +38,18 @@ export const ribbonColors: Record<string, RibbonColor> = {
   purple: {
     id: 'purple',
     name: 'Amethyst Purple',
-    top: '#713dc3',      // desaturated 17%
-    middle: '#5f33a3',   // desaturated 17%
-    bottom: '#4f2c85',   // desaturated 17%
-    gradient: 'linear-gradient(135deg, #713dc3 0%, #4f2c85 100%)'
+    top: '#7347b9',      // further desaturated
+    middle: '#613b9b',   // further desaturated
+    bottom: '#50337e',   // further desaturated
+    gradient: 'linear-gradient(135deg, #7347b9 0%, #50337e 100%)'
   },
   red: {
     id: 'red',
     name: 'Crimson Red',
-    top: '#c63b3b',      // desaturated 17%
-    middle: '#a62e2e',   // desaturated 17%
-    bottom: '#892a2a',   // desaturated 17%
-    gradient: 'linear-gradient(135deg, #c63b3b 0%, #892a2a 100%)'
+    top: '#bc4545',      // further desaturated
+    middle: '#9d3737',   // further desaturated
+    bottom: '#823131',   // further desaturated
+    gradient: 'linear-gradient(135deg, #bc4545 0%, #823131 100%)'
   }
 }
 
@@ -200,32 +200,32 @@ export const themes: Record<string, Theme> = {
     id: 'purple',
     name: 'Amethyst Purple',
     colors: {
-      primary: '#713dc3',      // desaturated 17%
-      secondary: '#5f33a3',    // desaturated 17%
+      primary: '#7347b9',      // further desaturated
+      secondary: '#613b9b',    // further desaturated
       ...standardColors,
-      accent: '#8a5ad4',
-      accentHover: '#713dc3',
-      accentLight: '#a37ae0',
-      accentDark: '#4f2c85',
-      textAccent: '#a37ae0'
+      accent: '#8558c4',
+      accentHover: '#7347b9',
+      accentLight: '#9a70d0',
+      accentDark: '#50337e',
+      textAccent: '#9a70d0'
     },
-    gradient: 'linear-gradient(135deg, #713dc3 0%, #4f2c85 100%)',
+    gradient: 'linear-gradient(135deg, #7347b9 0%, #50337e 100%)',
     pageBg: 'linear-gradient(180deg, #252d41 0%, #21283a 100%)'
   },
   red: {
     id: 'red',
     name: 'Crimson Red',
     colors: {
-      primary: '#c63b3b',      // desaturated 17%
-      secondary: '#a62e2e',    // desaturated 17%
+      primary: '#bc4545',      // further desaturated
+      secondary: '#9d3737',    // further desaturated
       ...standardColors,
-      accent: '#d45555',
-      accentHover: '#c63b3b',
-      accentLight: '#e07070',
-      accentDark: '#892a2a',
-      textAccent: '#e07070'
+      accent: '#c95858',
+      accentHover: '#bc4545',
+      accentLight: '#d66b6b',
+      accentDark: '#823131',
+      textAccent: '#d66b6b'
     },
-    gradient: 'linear-gradient(135deg, #c63b3b 0%, #892a2a 100%)',
+    gradient: 'linear-gradient(135deg, #bc4545 0%, #823131 100%)',
     pageBg: 'linear-gradient(180deg, #252d41 0%, #21283a 100%)'
   }
 }
