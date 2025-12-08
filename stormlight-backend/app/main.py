@@ -909,12 +909,16 @@ async def update_active_competition_xp():
                     print(f"[Scheduler][COMP_XP] Successfully fetched live XP for {len(live_xp_map)} participants")
                 
                 updates_for_comp = 0
+                skipped_no_data = 0
                 
                 for entry in comp.entries:
                     try:
                         starting_xp = int(entry.xpStart or 0)
-                        ending_xp = 0
-                        xp_gained = 0
+                        current_end = int(entry.xpEnd or 0)  # Keep existing value
+                        current_gain = int(entry.xpGained or 0)
+                        
+                        # Track if we successfully computed a new value
+                        new_ending_xp = None
                         
                         skill_gain_data = skill_gains_map.get(entry.username)
                         
@@ -938,29 +942,42 @@ async def update_active_competition_xp():
                                     baseline_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
                                 
                                 xp_gain_today = skill_gain_data.get('xp_gain', 0)
-                                ending_xp = baseline_xp + xp_gain_today
-                                xp_gained = max(0, ending_xp - starting_xp)
+                                new_ending_xp = baseline_xp + xp_gain_today
                         
-                        # If no cached data, use live API data
-                        if ending_xp == 0 and entry.username in live_xp_map:
-                            ending_xp = live_xp_map[entry.username]
-                            xp_gained = max(0, ending_xp - starting_xp)
+                        # If no cached data, try live API data
+                        if new_ending_xp is None and entry.username in live_xp_map:
+                            new_ending_xp = live_xp_map[entry.username]
                         
-                        # Always update the entry (even if ending_xp is 0, to clear stale data)
-                        await prisma.competitionentry.update(
-                            where={'id': entry.id},
-                            data={
-                                'xpEnd': ending_xp,
-                                'xpGained': xp_gained,
-                            },
-                        )
-                        updates_for_comp += 1
+                        # Only update if we got new data
+                        if new_ending_xp is not None:
+                            # Never let XP go backwards vs start or existing value
+                            if new_ending_xp < starting_xp:
+                                new_ending_xp = starting_xp
+                            if new_ending_xp < current_end and current_end > 0:
+                                # Treat this as bad/partial data; keep the existing value
+                                new_ending_xp = current_end
+                            
+                            new_xp_gained = max(0, new_ending_xp - starting_xp)
+                            
+                            # Only hit the DB if something actually changed
+                            if new_ending_xp != current_end or new_xp_gained != current_gain:
+                                await prisma.competitionentry.update(
+                                    where={'id': entry.id},
+                                    data={
+                                        'xpEnd': new_ending_xp,
+                                        'xpGained': new_xp_gained,
+                                    },
+                                )
+                                updates_for_comp += 1
+                        else:
+                            # No data found - skip this entry, don't overwrite with zeros
+                            skipped_no_data += 1
                     
                     except Exception as entry_error:
                         print(f"[Scheduler][COMP_XP] Error updating entry for {entry.username}: {entry_error}")
                         continue
                 
-                print(f"[Scheduler][COMP_XP] Competition {comp.name}: updated {updates_for_comp} entries")
+                print(f"[Scheduler][COMP_XP] Competition {comp.name}: updated {updates_for_comp} entries, skipped {skipped_no_data} with no data")
                 total_updates += updates_for_comp
                 
                 if comp.id in _live_competition_cache:
@@ -3349,36 +3366,43 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                                     ending_xp = 0
                         
                         elif is_active:
-                            skill_gain_data = skill_gains_map.get(entry.username)
-                            
-                            if skill_gain_data and not skill_gain_data['is_stale']:
-                                user_snapshots = snapshots_by_user.get(entry.username, [])
-                                if user_snapshots:
-                                    latest_snapshot = user_snapshots[-1]
-                                    snapshot_stats = latest_snapshot['stats']
-                                    if skill_normalized == 'overall':
-                                        baseline_xp = 0
-                                        if isinstance(snapshot_stats.get('overall'), dict):
-                                            baseline_xp = snapshot_stats['overall'].get('xp', 0) or 0
-                                        if baseline_xp == 0:
-                                            baseline_xp = sum(
-                                                s.get('xp', 0) for k, s in snapshot_stats.items()
-                                                if isinstance(s, dict) and k != 'overall'
-                                            )
+                            # For active competitions, use xpEnd from database (updated by scheduler)
+                            # This ensures we always show the most recent data without recomputing
+                            if entry.xpEnd is not None and entry.xpEnd > 0:
+                                ending_xp = int(entry.xpEnd)
+                                xp_gain = max(0, ending_xp - starting_xp)
+                            else:
+                                # Fallback to cached data if xpEnd not yet populated by scheduler
+                                skill_gain_data = skill_gains_map.get(entry.username)
+                                
+                                if skill_gain_data and not skill_gain_data['is_stale']:
+                                    user_snapshots = snapshots_by_user.get(entry.username, [])
+                                    if user_snapshots:
+                                        latest_snapshot = user_snapshots[-1]
+                                        snapshot_stats = latest_snapshot['stats']
+                                        if skill_normalized == 'overall':
+                                            baseline_xp = 0
+                                            if isinstance(snapshot_stats.get('overall'), dict):
+                                                baseline_xp = snapshot_stats['overall'].get('xp', 0) or 0
+                                            if baseline_xp == 0:
+                                                baseline_xp = sum(
+                                                    s.get('xp', 0) for k, s in snapshot_stats.items()
+                                                    if isinstance(s, dict) and k != 'overall'
+                                                )
+                                        else:
+                                            skill_data = snapshot_stats.get(skill_normalized, {})
+                                            baseline_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
+                                        
+                                        xp_gain_today = skill_gain_data.get('xp_gain', 0)
+                                        current_xp = baseline_xp + xp_gain_today
+                                        ending_xp = current_xp
+                                        xp_gain = max(0, current_xp - starting_xp)
                                     else:
-                                        skill_data = snapshot_stats.get(skill_normalized, {})
-                                        baseline_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
-                                    
-                                    xp_gain_today = skill_gain_data.get('xp_gain', 0)
-                                    current_xp = baseline_xp + xp_gain_today
-                                    ending_xp = current_xp
-                                    xp_gain = max(0, current_xp - starting_xp)
+                                        ending_xp = 0
+                                        xp_gain = 0
                                 else:
                                     ending_xp = 0
                                     xp_gain = 0
-                            else:
-                                ending_xp = 0
-                                xp_gain = 0
                         
                         leaderboard.append({
                             'username': entry.username,
