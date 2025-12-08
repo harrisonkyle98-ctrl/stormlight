@@ -52,9 +52,9 @@
 
 /* Pure CSS Ribbon Banner */
 .fantasy-banner {
-  --banner-color-top: #3b66d1;    /* twilight blue */
-  --banner-color-middle: #3156b5; /* royal storm blue */
-  --banner-color-bottom: #29479c; /* deep fantasy blue */
+  --banner-color-top: #4f6ebc;    /* twilight blue - desaturated */
+  --banner-color-middle: #445ea1; /* royal storm blue - desaturated */
+  --banner-color-bottom: #394f8b; /* deep fantasy blue - desaturated */
   --s: 2.2em; /* ribbon side width */
   --d: 1.0em; /* depth / drop */
   --c: 1em;   /* cutout */
@@ -338,30 +338,33 @@
 /* Colors are set via CSS variables from JavaScript (--profile-ribbon-top/middle/bottom) */
 /* Falls back to gold if variables are not set */
 .fantasy-banner--gold {
-  --banner-color-top: var(--profile-ribbon-top, #D4AF37);    /* customizable - default gold */
-  --banner-color-middle: var(--profile-ribbon-middle, #C9A227); /* customizable - default gold */
-  --banner-color-bottom: var(--profile-ribbon-bottom, #A88728); /* customizable - default gold */
+  --banner-color-top: var(--profile-ribbon-top, #bfa44b);    /* customizable - default gold desaturated */
+  --banner-color-middle: var(--profile-ribbon-middle, #b4973b); /* customizable - default gold desaturated */
+  --banner-color-bottom: var(--profile-ribbon-bottom, #967e39); /* customizable - default gold desaturated */
 }
 
 /* Members Banner Modifier - darker, richer green matching Members nav ribbon */
+/* Desaturated 17% + darkened 11% for premium muted aesthetic */
 .fantasy-banner--members {
-  --banner-color-top: #28a34d;    /* darker green */
-  --banner-color-middle: #228542; /* mid dark green */
-  --banner-color-bottom: #1a6332; /* deep dark green */
+  --banner-color-top: #29693c;    /* darker green - desaturated + darkened */
+  --banner-color-middle: #204e2f; /* mid dark green - desaturated + darkened */
+  --banner-color-bottom: #14301d; /* deep dark green - desaturated + darkened */
 }
 
 /* Competitions Banner Modifier - magenta matching Competitions nav ribbon */
+/* Desaturated 17% + darkened 11% for premium muted aesthetic */
 .fantasy-banner--competitions {
-  --banner-color-top: #d44575;    /* bright magenta */
-  --banner-color-middle: #c03060; /* mid magenta */
-  --banner-color-bottom: #9a2250; /* deep magenta */
+  --banner-color-top: #a33d5f;    /* bright magenta - desaturated + darkened */
+  --banner-color-middle: #83344e; /* mid magenta - desaturated + darkened */
+  --banner-color-bottom: #60233a; /* deep magenta - desaturated + darkened */
 }
 
 /* Admin Panel Banner Modifier - purple for admin identification */
+/* Desaturated 17% for premium muted aesthetic */
 .fantasy-banner--admin {
-  --banner-color-top: #6d28d9;    /* deep purple */
-  --banner-color-middle: #5b21b6; /* darker purple */
-  --banner-color-bottom: #4c1d95; /* darkest purple */
+  --banner-color-top: #713dc3;    /* deep purple - desaturated */
+  --banner-color-middle: #5f33a3; /* darker purple - desaturated */
+  --banner-color-bottom: #4f2c85; /* darkest purple - desaturated */
 }
 
 /* Gold ribbon inside profile header should match panel width (no overhang) */
@@ -599,10 +602,10 @@
     var(--r) 50%
   );
   
-  /* Base gradient - default blue (skilling) */
-  --plate-color-top: #3b66d1;    /* twilight blue */
-  --plate-color-middle: #3156b5; /* royal storm blue */
-  --plate-color-bottom: #29479c; /* deep fantasy blue */
+  /* Base gradient - default blue (skilling) - desaturated */
+  --plate-color-top: #4f6ebc;    /* twilight blue - desaturated */
+  --plate-color-middle: #445ea1; /* royal storm blue - desaturated */
+  --plate-color-bottom: #394f8b; /* deep fantasy blue - desaturated */
   
   background:
     /* Top highlight - subtle thin top-edge highlight */
@@ -690,15 +693,15 @@
 
 /* Status-based color variants for competition ribbons */
 
-/* Active status - Members page green */
+/* Active status - Members page green - desaturated + darkened */
 .competition-header-plate--active {
-  --plate-color-top: #28a34d;    /* darker green */
-  --plate-color-middle: #228542; /* mid dark green */
-  --plate-color-bottom: #1a6332; /* deep dark green */
+  --plate-color-top: #29693c;    /* darker green - desaturated + darkened */
+  --plate-color-middle: #204e2f; /* mid dark green - desaturated + darkened */
+  --plate-color-bottom: #14301d; /* deep dark green - desaturated + darkened */
 }
 
 /* Upcoming status - Homepage blue (default, no override needed) */
-/* Uses the default blue: #3b66d1, #3156b5, #29479c */
+/* Uses the default blue: #4f6ebc, #445ea1, #394f8b (desaturated) */
 
 /* Ended/Completed status - Neutral grey */
 .competition-header-plate--ended {

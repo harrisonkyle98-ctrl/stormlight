@@ -14,42 +14,42 @@ export const ribbonColors: Record<string, RibbonColor> = {
   gold: {
     id: 'gold',
     name: 'Gold',
-    top: '#D4AF37',
-    middle: '#C9A227',
-    bottom: '#A88728',
-    gradient: 'linear-gradient(135deg, #D4AF37 0%, #A88728 100%)'
+    top: '#bfa44b',      // desaturated 17%
+    middle: '#b4973b',   // desaturated 17%
+    bottom: '#967e39',   // desaturated 17%
+    gradient: 'linear-gradient(135deg, #bfa44b 0%, #967e39 100%)'
   },
   blue: {
     id: 'blue',
     name: 'Sapphire Blue',
-    top: '#3b66d1',
-    middle: '#3156b5',
-    bottom: '#29479c',
-    gradient: 'linear-gradient(135deg, #3b66d1 0%, #29479c 100%)'
+    top: '#4f6ebc',      // desaturated 17%
+    middle: '#445ea1',   // desaturated 17%
+    bottom: '#394f8b',   // desaturated 17%
+    gradient: 'linear-gradient(135deg, #4f6ebc 0%, #394f8b 100%)'
   },
   green: {
     id: 'green',
     name: 'Emerald Green',
-    top: '#28a34d',
-    middle: '#228542',
-    bottom: '#1a6332',
-    gradient: 'linear-gradient(135deg, #28a34d 0%, #1a6332 100%)'
+    top: '#29693c',      // desaturated 17% + darkened 11%
+    middle: '#204e2f',   // desaturated 17% + darkened 11%
+    bottom: '#14301d',   // desaturated 17% + darkened 11%
+    gradient: 'linear-gradient(135deg, #29693c 0%, #14301d 100%)'
   },
   purple: {
     id: 'purple',
     name: 'Amethyst Purple',
-    top: '#6d28d9',
-    middle: '#5b21b6',
-    bottom: '#4c1d95',
-    gradient: 'linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%)'
+    top: '#713dc3',      // desaturated 17%
+    middle: '#5f33a3',   // desaturated 17%
+    bottom: '#4f2c85',   // desaturated 17%
+    gradient: 'linear-gradient(135deg, #713dc3 0%, #4f2c85 100%)'
   },
   red: {
     id: 'red',
     name: 'Crimson Red',
-    top: '#dc2626',
-    middle: '#b91c1c',
-    bottom: '#991b1b',
-    gradient: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)'
+    top: '#c63b3b',      // desaturated 17%
+    middle: '#a62e2e',   // desaturated 17%
+    bottom: '#892a2a',   // desaturated 17%
+    gradient: 'linear-gradient(135deg, #c63b3b 0%, #892a2a 100%)'
   }
 }
 
@@ -146,85 +146,86 @@ const standardColors = {
 }
 
 // Legacy themes object - maps to ribbon colors for backward compatibility
+// All colors desaturated 17%, green/magenta also darkened 11%
 export const themes: Record<string, Theme> = {
   gold: {
     id: 'gold',
     name: 'Gold',
     colors: {
-      primary: '#D4AF37',
-      secondary: '#C9A227',
+      primary: '#bfa44b',      // desaturated 17%
+      secondary: '#b4973b',    // desaturated 17%
       ...standardColors,
-      accent: '#D4AF37',
-      accentHover: '#C9A227',
-      accentLight: '#E5C158',
-      accentDark: '#A88728',
-      textAccent: '#D4AF37'
+      accent: '#bfa44b',
+      accentHover: '#b4973b',
+      accentLight: '#d4bc6a',
+      accentDark: '#967e39',
+      textAccent: '#bfa44b'
     },
-    gradient: 'linear-gradient(135deg, #D4AF37 0%, #A88728 100%)',
+    gradient: 'linear-gradient(135deg, #bfa44b 0%, #967e39 100%)',
     pageBg: 'linear-gradient(180deg, #252d41 0%, #21283a 100%)'
   },
   blue: {
     id: 'blue',
     name: 'Sapphire Blue',
     colors: {
-      primary: '#3b66d1',
-      secondary: '#3156b5',
+      primary: '#4f6ebc',      // desaturated 17%
+      secondary: '#445ea1',    // desaturated 17%
       ...standardColors,
-      accent: '#3b82f6',
-      accentHover: '#2563eb',
-      accentLight: '#60a5fa',
-      accentDark: '#1e40af',
-      textAccent: '#60a5fa'
+      accent: '#5a7ac7',
+      accentHover: '#4f6ebc',
+      accentLight: '#7a94d4',
+      accentDark: '#394f8b',
+      textAccent: '#7a94d4'
     },
-    gradient: 'linear-gradient(135deg, #3b66d1 0%, #29479c 100%)',
+    gradient: 'linear-gradient(135deg, #4f6ebc 0%, #394f8b 100%)',
     pageBg: 'linear-gradient(180deg, #252d41 0%, #21283a 100%)'
   },
   green: {
     id: 'green',
     name: 'Emerald Green',
     colors: {
-      primary: '#28a34d',
-      secondary: '#228542',
+      primary: '#29693c',      // desaturated 17% + darkened 11%
+      secondary: '#204e2f',    // desaturated 17% + darkened 11%
       ...standardColors,
-      accent: '#10b981',
-      accentHover: '#059669',
-      accentLight: '#34d399',
-      accentDark: '#047857',
-      textAccent: '#34d399'
+      accent: '#2d7a45',
+      accentHover: '#29693c',
+      accentLight: '#3d8a55',
+      accentDark: '#14301d',
+      textAccent: '#3d8a55'
     },
-    gradient: 'linear-gradient(135deg, #28a34d 0%, #1a6332 100%)',
+    gradient: 'linear-gradient(135deg, #29693c 0%, #14301d 100%)',
     pageBg: 'linear-gradient(180deg, #252d41 0%, #21283a 100%)'
   },
   purple: {
     id: 'purple',
     name: 'Amethyst Purple',
     colors: {
-      primary: '#6d28d9',
-      secondary: '#5b21b6',
+      primary: '#713dc3',      // desaturated 17%
+      secondary: '#5f33a3',    // desaturated 17%
       ...standardColors,
-      accent: '#a855f7',
-      accentHover: '#9333ea',
-      accentLight: '#c084fc',
-      accentDark: '#7e22ce',
-      textAccent: '#c084fc'
+      accent: '#8a5ad4',
+      accentHover: '#713dc3',
+      accentLight: '#a37ae0',
+      accentDark: '#4f2c85',
+      textAccent: '#a37ae0'
     },
-    gradient: 'linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%)',
+    gradient: 'linear-gradient(135deg, #713dc3 0%, #4f2c85 100%)',
     pageBg: 'linear-gradient(180deg, #252d41 0%, #21283a 100%)'
   },
   red: {
     id: 'red',
     name: 'Crimson Red',
     colors: {
-      primary: '#dc2626',
-      secondary: '#b91c1c',
+      primary: '#c63b3b',      // desaturated 17%
+      secondary: '#a62e2e',    // desaturated 17%
       ...standardColors,
-      accent: '#ef4444',
-      accentHover: '#dc2626',
-      accentLight: '#f87171',
-      accentDark: '#b91c1c',
-      textAccent: '#f87171'
+      accent: '#d45555',
+      accentHover: '#c63b3b',
+      accentLight: '#e07070',
+      accentDark: '#892a2a',
+      textAccent: '#e07070'
     },
-    gradient: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+    gradient: 'linear-gradient(135deg, #c63b3b 0%, #892a2a 100%)',
     pageBg: 'linear-gradient(180deg, #252d41 0%, #21283a 100%)'
   }
 }
