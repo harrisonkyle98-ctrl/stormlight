@@ -758,7 +758,8 @@ async def update_active_competition_xp():
     Update XP for all active competitions (hourly scheduler job).
     
     For each active XP_GAIN competition:
-    - Fetch current XP for all participants from player_today_gains or live API
+    - Fetch current XP for all participants from player_today_gains
+    - For participants with missing/stale data, fetch from RuneScape API
     - Update CompetitionEntry.xpEnd and xpGained in the database
     - This ensures competition detail pages always show current standings
     """
@@ -767,7 +768,8 @@ async def update_active_competition_xp():
             print("[Scheduler][COMP_XP] Prisma not available, skipping active competition XP update")
             return 0
         
-        from datetime import timezone
+        from datetime import timezone, timedelta
+        import asyncio
         now = datetime.now(timezone.utc)
         
         active_comps = await prisma.competition.find_many(
@@ -821,7 +823,6 @@ async def update_active_competition_xp():
                         """, (usernames,))
                         
                         skill_gains_rows = await cur.fetchall()
-                        from datetime import timedelta
                         staleness_threshold = timedelta(minutes=90)
                         
                         for row in skill_gains_rows:
@@ -839,6 +840,7 @@ async def update_active_competition_xp():
                                 'is_stale': is_stale
                             }
                         
+                        # Get snapshots for baseline XP calculation
                         await cur.execute("""
                             SELECT username, stats
                             FROM player_daily_snapshots
@@ -853,6 +855,59 @@ async def update_active_competition_xp():
                                 snapshots_by_user[username] = []
                             snapshots_by_user[username].append({'stats': stats})
                 
+                # Identify participants with missing or stale data that need live API fetch
+                missing_usernames = []
+                for entry in comp.entries:
+                    skill_gain_data = skill_gains_map.get(entry.username)
+                    if not skill_gain_data or skill_gain_data.get('is_stale', True):
+                        missing_usernames.append(entry.username)
+                
+                # Fetch live XP from RuneScape API for missing/stale participants
+                live_xp_map = {}
+                if missing_usernames:
+                    print(f"[Scheduler][COMP_XP] Fetching live XP for {len(missing_usernames)} participants with missing/stale data")
+                    semaphore = asyncio.Semaphore(8)  # Limit concurrent API calls
+                    
+                    async def fetch_with_timeout(username):
+                        async with semaphore:
+                            try:
+                                stats = await asyncio.wait_for(fetch_player_stats(username), timeout=10.0)
+                                return username, stats
+                            except asyncio.TimeoutError:
+                                print(f"[Scheduler][COMP_XP] Timeout fetching stats for {username}")
+                                return username, None
+                            except Exception as e:
+                                print(f"[Scheduler][COMP_XP] Error fetching stats for {username}: {e}")
+                                return username, None
+                    
+                    # Process in batches to avoid overwhelming the API
+                    batch_size = 50
+                    for i in range(0, len(missing_usernames), batch_size):
+                        batch = missing_usernames[i:i + batch_size]
+                        results = await asyncio.gather(*[fetch_with_timeout(username) for username in batch])
+                        
+                        for username, stats in results:
+                            if stats and 'stats' in stats:
+                                if skill_normalized == 'overall':
+                                    overall_data = stats['stats'].get('overall', {})
+                                    if isinstance(overall_data, dict) and 'xp' in overall_data:
+                                        live_xp = overall_data.get('xp', 0)
+                                    else:
+                                        live_xp = sum(s.get('xp', 0) for s in stats['stats'].values() if isinstance(s, dict))
+                                else:
+                                    skill_data = stats['stats'].get(skill_normalized, {})
+                                    if not skill_data:
+                                        skill_data = stats['stats'].get(skill, {})
+                                    live_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
+                                
+                                live_xp_map[username] = live_xp
+                        
+                        # Small delay between batches to be nice to the API
+                        if i + batch_size < len(missing_usernames):
+                            await asyncio.sleep(1)
+                    
+                    print(f"[Scheduler][COMP_XP] Successfully fetched live XP for {len(live_xp_map)} participants")
+                
                 updates_for_comp = 0
                 
                 for entry in comp.entries:
@@ -863,6 +918,7 @@ async def update_active_competition_xp():
                         
                         skill_gain_data = skill_gains_map.get(entry.username)
                         
+                        # First try to use cached data from player_today_gains
                         if skill_gain_data and not skill_gain_data['is_stale']:
                             user_snapshots = snapshots_by_user.get(entry.username, [])
                             if user_snapshots:
@@ -885,15 +941,20 @@ async def update_active_competition_xp():
                                 ending_xp = baseline_xp + xp_gain_today
                                 xp_gained = max(0, ending_xp - starting_xp)
                         
-                        if ending_xp > 0 or xp_gained > 0:
-                            await prisma.competitionentry.update(
-                                where={'id': entry.id},
-                                data={
-                                    'xpEnd': ending_xp,
-                                    'xpGained': xp_gained,
-                                },
-                            )
-                            updates_for_comp += 1
+                        # If no cached data, use live API data
+                        if ending_xp == 0 and entry.username in live_xp_map:
+                            ending_xp = live_xp_map[entry.username]
+                            xp_gained = max(0, ending_xp - starting_xp)
+                        
+                        # Always update the entry (even if ending_xp is 0, to clear stale data)
+                        await prisma.competitionentry.update(
+                            where={'id': entry.id},
+                            data={
+                                'xpEnd': ending_xp,
+                                'xpGained': xp_gained,
+                            },
+                        )
+                        updates_for_comp += 1
                     
                     except Exception as entry_error:
                         print(f"[Scheduler][COMP_XP] Error updating entry for {entry.username}: {entry_error}")

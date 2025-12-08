@@ -339,95 +339,33 @@ const CompetitionDetail = () => {
     try {
       setLoading(true)
       
-      // First, fetch basic competition info to determine if it's an active XP_GAIN competition
-      const basicResponse = await fetch(`${API_URL}/api/competitions/${id}`)
-      if (!basicResponse.ok) {
+      // Fetch competition data from the main endpoint
+      // The scheduler keeps this data fresh for active competitions
+      const response = await fetch(`${API_URL}/api/competitions/${id}`)
+      if (!response.ok) {
         setError('Competition not found')
         return
       }
       
-      const basicData = await basicResponse.json()
+      const data = await response.json()
       
-      // Check if this is an active XP_GAIN competition
-      const now = new Date()
-      const start = new Date(basicData.startDate)
-      const end = new Date(basicData.endDate)
-      const isActiveXpGain = basicData.type === 'XP_GAIN' && now >= start && now <= end
+      // Set all state from the response - data is always fresh from scheduler updates
+      setCompetition(data)
+      setLeaderboardData(data.leaderboard || [])
       
-      // For active XP_GAIN competitions, show basic data immediately then try live data in background
-      if (isActiveXpGain) {
-        // Use basic data first to show something quickly
-        setCompetition(basicData)
-        setLeaderboardData(basicData.leaderboard || [])
-        if (basicData.top_10) setTop10Data(basicData.top_10)
-        if (basicData.leaderboard && basicData.leaderboard.length > 0) {
-          const firstPlace = basicData.leaderboard.find((p: CompetitionLeaderboard) => p.rank === 1)
-          if (firstPlace) setFirstPlaceData(firstPlace)
+      if (data.top_10) {
+        setTop10Data(data.top_10)
+      }
+      
+      if (data.leaderboard && data.leaderboard.length > 0) {
+        const firstPlace = data.leaderboard.find((p: CompetitionLeaderboard) => p.rank === 1)
+        if (firstPlace) {
+          setFirstPlaceData(firstPlace)
         }
-        if (basicData.pagination) setTotalParticipants(basicData.pagination.total)
-        
-        // Set loading to false immediately so page renders with basic data
-        setLoading(false)
-        
-        // Then try to fetch live data in the background (non-blocking)
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 30000)
-        
-        fetch(`${API_URL}/api/competitions/${id}/live`, {
-          signal: controller.signal
-        })
-          .then(liveResponse => {
-            clearTimeout(timeoutId)
-            if (liveResponse.ok) {
-              return liveResponse.json()
-            }
-            return null
-          })
-          .then(liveData => {
-            if (liveData) {
-              setCompetition(liveData)
-              setLeaderboardData(liveData.leaderboard || [])
-              
-              if (liveData.top_10) {
-                setTop10Data(liveData.top_10)
-              }
-              
-              if (liveData.leaderboard && liveData.leaderboard.length > 0) {
-                const firstPlace = liveData.leaderboard.find((p: CompetitionLeaderboard) => p.rank === 1) || liveData.leaderboard[0]
-                setFirstPlaceData(firstPlace)
-              }
-              
-              if (liveData.pagination) {
-                setTotalParticipants(liveData.pagination.total)
-              }
-            }
-          })
-          .catch(() => {
-            // Live endpoint failed or timed out, keep using basic data
-            console.log('Live endpoint unavailable, using cached data')
-          })
-        
-        // Return early since we already set loading to false
-        return
-      } else {
-        // For non-active or non-XP_GAIN competitions, use basic data
-        setCompetition(basicData)
-        setLeaderboardData(basicData.leaderboard || [])
-        
-        if (basicData.top_10) {
-          setTop10Data(basicData.top_10)
-        }
-        
-        if (basicData.leaderboard && basicData.leaderboard.length > 0) {
-          const firstPlace = basicData.leaderboard.find((p: CompetitionLeaderboard) => p.rank === 1)
-          if (firstPlace) {
-            setFirstPlaceData(firstPlace)
-          }
-        }
-        
-        if (basicData.pagination) {
-          setTotalParticipants(basicData.pagination.total)
-        }
+      }
+      
+      if (data.pagination) {
+        setTotalParticipants(data.pagination.total)
       }
     } catch (error) {
       console.error('Error fetching competition:', error)
