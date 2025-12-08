@@ -40,10 +40,10 @@
   --s: 1.2em; /* ribbon side width for fold shading */
   --d: 0.6em; /* depth / drop for fold shading */
   
-  /* Color stops - default blue (overridden by variants) */
-  --nav-color-top: #4a8aff;
-  --nav-color-mid: #3f80ff;
-  --nav-color-bot: #3365d0;
+  /* Color stops - default blue desaturated (overridden by variants) */
+  --nav-color-top: #4f6ebc;
+  --nav-color-mid: #445ea1;
+  --nav-color-bot: #394f8b;
   
   /* Layout */
   position: relative;
@@ -164,11 +164,11 @@
   transition: transform 200ms ease-in;
 }
 
-/* Active state - slightly brighter */
+/* Active state - slightly brighter (desaturated) */
 .nav-ribbon--active {
-  --nav-color-top: #5a9aff;
-  --nav-color-mid: #4a8aff;
-  --nav-color-bot: #3f80ff;
+  --nav-color-top: #5a7ac7;
+  --nav-color-mid: #4f6ebc;
+  --nav-color-bot: #445ea1;
 }
 
 .nav-ribbon--active .nav-ribbon-icon {
@@ -185,25 +185,25 @@
    COLOR VARIANTS
    ======================================== */
 
-/* Blue variant (Home) */
+/* Blue variant (Home) - matches header ribbon desaturated colors */
 .nav-ribbon--blue {
-  --nav-color-top: #4a8aff;
-  --nav-color-mid: #3f80ff;
-  --nav-color-bot: #3365d0;
+  --nav-color-top: #4f6ebc;
+  --nav-color-mid: #445ea1;
+  --nav-color-bot: #394f8b;
 }
 
-/* Magenta-red variant (Competitions) - Balanced magenta */
+/* Magenta-red variant (Competitions) - matches header ribbon desaturated + darkened colors */
 .nav-ribbon--magenta {
-  --nav-color-top: #d44575;
-  --nav-color-mid: #c03060;
-  --nav-color-bot: #9a2250;
+  --nav-color-top: #a33d5f;
+  --nav-color-mid: #83344e;
+  --nav-color-bot: #60233a;
 }
 
-/* Green variant (Members) - Balanced green */
+/* Green variant (Members) - matches header ribbon desaturated colors */
 .nav-ribbon--green {
-  --nav-color-top: #30b858;
-  --nav-color-mid: #2c9a4c;
-  --nav-color-bot: #217a3b;
+  --nav-color-top: #329951;
+  --nav-color-mid: #2a7d45;
+  --nav-color-bot: #205d34;
 }
 
 /* Gold variant (optional - for special ribbons) */

@@ -30,10 +30,10 @@ export const ribbonColors: Record<string, RibbonColor> = {
   green: {
     id: 'green',
     name: 'Emerald Green',
-    top: '#29693c',      // desaturated 17% + darkened 11%
-    middle: '#204e2f',   // desaturated 17% + darkened 11%
-    bottom: '#14301d',   // desaturated 17% + darkened 11%
-    gradient: 'linear-gradient(135deg, #29693c 0%, #14301d 100%)'
+    top: '#329951',      // desaturated 17%
+    middle: '#2a7d45',   // desaturated 17%
+    bottom: '#205d34',   // desaturated 17%
+    gradient: 'linear-gradient(135deg, #329951 0%, #205d34 100%)'
   },
   purple: {
     id: 'purple',
@@ -146,7 +146,7 @@ const standardColors = {
 }
 
 // Legacy themes object - maps to ribbon colors for backward compatibility
-// All colors desaturated 17%, green/magenta also darkened 11%
+// All colors desaturated 17%, magenta also darkened 11%
 export const themes: Record<string, Theme> = {
   gold: {
     id: 'gold',
@@ -184,16 +184,16 @@ export const themes: Record<string, Theme> = {
     id: 'green',
     name: 'Emerald Green',
     colors: {
-      primary: '#29693c',      // desaturated 17% + darkened 11%
-      secondary: '#204e2f',    // desaturated 17% + darkened 11%
+      primary: '#329951',      // desaturated 17%
+      secondary: '#2a7d45',    // desaturated 17%
       ...standardColors,
-      accent: '#2d7a45',
-      accentHover: '#29693c',
-      accentLight: '#3d8a55',
-      accentDark: '#14301d',
-      textAccent: '#3d8a55'
+      accent: '#3aa85a',
+      accentHover: '#329951',
+      accentLight: '#4db96a',
+      accentDark: '#205d34',
+      textAccent: '#4db96a'
     },
-    gradient: 'linear-gradient(135deg, #29693c 0%, #14301d 100%)',
+    gradient: 'linear-gradient(135deg, #329951 0%, #205d34 100%)',
     pageBg: 'linear-gradient(180deg, #252d41 0%, #21283a 100%)'
   },
   purple: {

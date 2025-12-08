@@ -344,11 +344,11 @@
 }
 
 /* Members Banner Modifier - darker, richer green matching Members nav ribbon */
-/* Desaturated 17% + darkened 11% for premium muted aesthetic */
+/* Desaturated 17% for premium muted aesthetic */
 .fantasy-banner--members {
-  --banner-color-top: #29693c;    /* darker green - desaturated + darkened */
-  --banner-color-middle: #204e2f; /* mid dark green - desaturated + darkened */
-  --banner-color-bottom: #14301d; /* deep dark green - desaturated + darkened */
+  --banner-color-top: #329951;    /* emerald green - desaturated */
+  --banner-color-middle: #2a7d45; /* mid green - desaturated */
+  --banner-color-bottom: #205d34; /* deep green - desaturated */
 }
 
 /* Competitions Banner Modifier - magenta matching Competitions nav ribbon */
@@ -693,11 +693,11 @@
 
 /* Status-based color variants for competition ribbons */
 
-/* Active status - Members page green - desaturated + darkened */
+/* Active status - Members page green - desaturated */
 .competition-header-plate--active {
-  --plate-color-top: #29693c;    /* darker green - desaturated + darkened */
-  --plate-color-middle: #204e2f; /* mid dark green - desaturated + darkened */
-  --plate-color-bottom: #14301d; /* deep dark green - desaturated + darkened */
+  --plate-color-top: #329951;    /* emerald green - desaturated */
+  --plate-color-middle: #2a7d45; /* mid green - desaturated */
+  --plate-color-bottom: #205d34; /* deep green - desaturated */
 }
 
 /* Upcoming status - Homepage blue (default, no override needed) */
