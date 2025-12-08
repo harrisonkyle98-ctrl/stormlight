@@ -1,9 +1,9 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
-import { ArrowLeft, Trophy, Calendar, Users, BarChart3, Radio, ChevronDown, ChevronUp, Link2, Palette, Award, LogOut, Key, User } from 'lucide-react'
+import { ArrowLeft, Trophy, Calendar, Users, BarChart3, ChevronDown, ChevronUp, Link2, Palette, Award, LogOut, Key, User } from 'lucide-react'
 import { Spinner } from '../components/ui/spinner'
 import { getSkillIcon } from '../utils/skillIcons'
 import { fetchClanMembers, checkPlayerMilestones } from '../utils/gradientUtils'
@@ -105,10 +105,7 @@ const CompetitionDetail = () => {
   const [top10Data, setTop10Data] = useState<CompetitionLeaderboard[]>([])
   const [leaderboardData, setLeaderboardData] = useState<CompetitionLeaderboard[]>([])
   const [firstPlaceData, setFirstPlaceData] = useState<CompetitionLeaderboard | null>(null)
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null)
-  const [isLive, setIsLive] = useState(false)
   const [previousRanks, setPreviousRanks] = useState<Map<string, number>>(new Map())
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Profile card state (matching homepage/Members/Competitions)
   const [profileExpanded, setProfileExpanded] = useState(false)
@@ -334,13 +331,6 @@ const CompetitionDetail = () => {
     }
   }, [id])
 
-  useEffect(() => {
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current)
-      }
-    }
-  }, [])
 
   useEffect(() => {
     if (competition && competition.type === 'XP_GAIN') {
@@ -349,28 +339,8 @@ const CompetitionDetail = () => {
       const end = new Date(competition.endDate)
       const isActive = now >= start && now <= end
       
-      setIsLive(isActive)
-      
       if (isActive) {
         fetchLiveData()
-        
-        if (pollIntervalRef.current) {
-          clearInterval(pollIntervalRef.current)
-        }
-        
-        pollIntervalRef.current = setInterval(() => {
-          fetchLiveData()
-        }, 60000)
-      } else {
-        if (pollIntervalRef.current) {
-          clearInterval(pollIntervalRef.current)
-        }
-      }
-    }
-    
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current)
       }
     }
   }, [competition])
@@ -451,12 +421,6 @@ const CompetitionDetail = () => {
         if (data.pagination) {
           setTotalParticipants(data.pagination.total)
         }
-        
-        if (data.last_updated) {
-          setLastUpdated(data.last_updated)
-        } else {
-          setLastUpdated(new Date().toISOString())
-        }
       }
     } catch (error) {
       console.error('Error fetching live competition data:', error)
@@ -493,18 +457,6 @@ const CompetitionDetail = () => {
     return { status: 'active', color: 'bg-green-500' }
   }
 
-  const getTimeSinceUpdate = () => {
-    if (!lastUpdated) return ''
-    const now = new Date()
-    const updated = new Date(lastUpdated)
-    const diffSeconds = Math.floor((now.getTime() - updated.getTime()) / 1000)
-    
-    if (diffSeconds < 60) return `${diffSeconds}s ago`
-    const diffMinutes = Math.floor(diffSeconds / 60)
-    if (diffMinutes < 60) return `${diffMinutes}m ago`
-    const diffHours = Math.floor(diffMinutes / 60)
-    return `${diffHours}h ago`
-  }
 
 
   if (loading) {
@@ -928,14 +880,6 @@ const CompetitionDetail = () => {
 
         {competition.type === 'XP_GAIN' && top10Data.length > 0 && (
           <div className="fantasy-section mb-6">
-            {isLive && lastUpdated && (
-              <div className="flex justify-end mb-4">
-                <Badge className="bg-green-500/20 text-green-400 border-green-500/30 flex items-center space-x-1">
-                  <Radio className="w-3 h-3 animate-pulse" />
-                  <span>Live - {getTimeSinceUpdate()}</span>
-                </Badge>
-              </div>
-            )}
             <ResponsiveContainer width="100%" height={450}>
               <BarChart data={top10Data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -1009,14 +953,6 @@ const CompetitionDetail = () => {
               Leaderboard
             </h3>
             <div className="fantasy-divider" style={{ margin: '1rem 0' }}></div>
-            {isLive && lastUpdated && competition.type === 'XP_GAIN' && (
-              <div className="flex justify-center">
-                <Badge className="bg-green-500/20 text-green-400 border-green-500/30 flex items-center space-x-1">
-                  <Radio className="w-3 h-3 animate-pulse" />
-                  <span>Live - {getTimeSinceUpdate()}</span>
-                </Badge>
-              </div>
-            )}
           </div>
           {competition.type === 'XP_GAIN' ? (
             <Table className="text-slate-300">
