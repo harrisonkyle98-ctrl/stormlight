@@ -722,11 +722,11 @@ const PlayerProfile = () => {
   }
 
   const tabs = [
-    { id: 'skills', label: 'Skill Breakdown', icon: BarChart2 },
+    { id: 'skills', label: 'Skills', icon: BarChart2 },
     { id: 'drops', label: 'Drops', icon: Package },
     { id: 'activity', label: 'Activity', icon: Activity },
     { id: 'quests', label: 'Quests', icon: Compass },
-    { id: 'analytics', label: 'XP Analytics', icon: BarChart3 },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'competitions', label: 'Competitions', icon: Trophy },
     { id: 'log', label: 'Log', icon: FileText }
   ]
@@ -1258,24 +1258,27 @@ const PlayerProfile = () => {
                 ) : null
               })()}
 
-              {/* XP and Rank Stats */}
-              <div className="mt-3 flex flex-col gap-2">
-                <div className="grid grid-cols-2 gap-4 bg-slate-700/30 rounded-lg px-4 py-3">
+              {/* XP and Rank Stats - Vertical Stacked Pairs */}
+              <div className="mt-3 grid grid-cols-2 gap-4">
+                {/* Overall Pair - Stacked */}
+                <div className="flex flex-col">
                   {playerData.stats.overall.rank && (
-                    <div className="text-center">
+                    <div className="text-center bg-slate-700/30 rounded-t-lg px-4 py-3">
                       <p className="text-xs text-slate-400 mb-1">Overall Rank</p>
                       <p className="text-xl font-bold text-theme-accent-light">
                         #{playerData.stats.overall.rank.toLocaleString()}
                       </p>
                     </div>
                   )}
-                  <div className="text-center">
+                  <div className={`text-center bg-slate-700/30 px-4 py-3 ${playerData.stats.overall.rank ? 'rounded-b-lg' : 'rounded-lg'}`}>
                     <p className="text-xs text-slate-400 mb-1">Total XP</p>
                     <p className="text-xl font-bold text-green-400">
                       {playerData.stats.overall.xp.toLocaleString()}
                     </p>
                   </div>
                 </div>
+
+                {/* Clan Pair - Stacked */}
                 {(playerData.clan_xp !== undefined && playerData.clan_xp !== null) || playerData.clan_rank_number ? (
                   <Tooltip
                     title="Clan XP Contribution"
@@ -1286,7 +1289,6 @@ const PlayerProfile = () => {
                             <CircularClanXPGraph
                               percentage={(playerData.clan_xp / playerData.stats.overall.xp) * 100}
                               size={96}
-                              strokeWidth={8}
                               progressColor="#2ecc71"
                               remainingColor="#1b8a4a"
                             />
@@ -1301,9 +1303,9 @@ const PlayerProfile = () => {
                     }
                     placement="top"
                   >
-                    <div className="grid grid-cols-2 gap-4 bg-slate-700/30 rounded-lg px-4 py-3 cursor-help hover:bg-slate-700/50 transition-colors">
+                    <div className="flex flex-col cursor-help hover:opacity-90 transition-opacity">
                       {playerData.clan_rank_number && (
-                        <div className="text-center">
+                        <div className="text-center bg-slate-700/30 rounded-t-lg px-4 py-3">
                           <p className="text-xs text-slate-400 mb-1">Clan Rank</p>
                           <p className="text-xl font-bold text-theme-accent-light">
                             #{playerData.clan_rank_number.toLocaleString()}
@@ -1311,7 +1313,7 @@ const PlayerProfile = () => {
                         </div>
                       )}
                       {playerData.clan_xp !== undefined && playerData.clan_xp !== null && (
-                        <div className="text-center">
+                        <div className={`text-center bg-slate-700/30 px-4 py-3 ${playerData.clan_rank_number ? 'rounded-b-lg' : 'rounded-lg'}`}>
                           <p className="text-xs text-slate-400 mb-1">Clan XP</p>
                           <p className="text-xl font-bold text-green-400">
                             {playerData.clan_xp.toLocaleString()}
