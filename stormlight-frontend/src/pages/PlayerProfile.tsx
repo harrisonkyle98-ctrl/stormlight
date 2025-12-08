@@ -1277,19 +1277,19 @@ const PlayerProfile = () => {
                 ) : null
               })()}
 
-              {/* XP and Rank Stats - Vertical Stacked Pairs */}
-              <div className="mt-3 grid grid-cols-2 gap-4">
-                {/* Overall Pair - Stacked */}
-                <div className="flex flex-col">
+              {/* XP and Rank Stats - Horizontal Rows */}
+              <div className="mt-3 flex flex-col gap-4">
+                {/* Overall Row - Rank left, XP right */}
+                <div className="flex flex-row gap-4">
                   {playerData.stats.overall.rank && (
-                    <div className="text-center bg-slate-700/30 rounded-t-lg px-4 py-3">
+                    <div className="flex-1 text-center bg-slate-700/30 rounded-lg px-4 py-3">
                       <p className="text-xs text-slate-400 mb-1">Overall Rank</p>
                       <p className="text-xl font-bold text-theme-accent-light">
                         #{playerData.stats.overall.rank.toLocaleString()}
                       </p>
                     </div>
                   )}
-                  <div className={`text-center bg-slate-700/30 px-4 py-3 ${playerData.stats.overall.rank ? 'rounded-b-lg' : 'rounded-lg'}`}>
+                  <div className="flex-1 text-center bg-slate-700/30 rounded-lg px-4 py-3">
                     <p className="text-xs text-slate-400 mb-1">Total XP</p>
                     <p className="text-xl font-bold text-green-400">
                       {formatXpAbbreviated(playerData.stats.overall.xp)}
@@ -1297,7 +1297,7 @@ const PlayerProfile = () => {
                   </div>
                 </div>
 
-                {/* Clan Pair - Stacked */}
+                {/* Clan Row - Rank left, XP right */}
                 {(playerData.clan_xp !== undefined && playerData.clan_xp !== null) || playerData.clan_rank_number ? (
                   <Tooltip
                     title="Clan XP Contribution"
@@ -1322,9 +1322,9 @@ const PlayerProfile = () => {
                     }
                     placement="top"
                   >
-                    <div className="flex flex-col cursor-help hover:opacity-90 transition-opacity">
+                    <div className="flex flex-row gap-4 cursor-help hover:opacity-90 transition-opacity">
                       {playerData.clan_rank_number && (
-                        <div className="text-center bg-slate-700/30 rounded-t-lg px-4 py-3">
+                        <div className="flex-1 text-center bg-slate-700/30 rounded-lg px-4 py-3">
                           <p className="text-xs text-slate-400 mb-1">Clan Rank</p>
                           <p className="text-xl font-bold text-theme-accent-light">
                             #{playerData.clan_rank_number.toLocaleString()}
@@ -1332,7 +1332,7 @@ const PlayerProfile = () => {
                         </div>
                       )}
                       {playerData.clan_xp !== undefined && playerData.clan_xp !== null && (
-                        <div className={`text-center bg-slate-700/30 px-4 py-3 ${playerData.clan_rank_number ? 'rounded-b-lg' : 'rounded-lg'}`}>
+                        <div className="flex-1 text-center bg-slate-700/30 rounded-lg px-4 py-3">
                           <p className="text-xs text-slate-400 mb-1">Clan XP</p>
                           <p className="text-xl font-bold text-green-400">
                             {formatXpAbbreviated(playerData.clan_xp)}
