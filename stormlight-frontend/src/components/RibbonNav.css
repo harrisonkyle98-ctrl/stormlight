@@ -40,10 +40,10 @@
   --s: 1.2em; /* ribbon side width for fold shading */
   --d: 0.6em; /* depth / drop for fold shading */
   
-  /* Color stops - default blue desaturated (overridden by variants) */
-  --nav-color-top: #4f6ebc;
-  --nav-color-mid: #445ea1;
-  --nav-color-bot: #394f8b;
+  /* Color stops - default blue brightened (overridden by variants) */
+  --nav-color-top: #738cca;
+  --nav-color-mid: #5d77ba;
+  --nav-color-bot: #4763af;
   
   /* Layout */
   position: relative;
@@ -185,25 +185,25 @@
    COLOR VARIANTS
    ======================================== */
 
-/* Blue variant (Home) - matches header ribbon desaturated colors */
+/* Blue variant (Home) - brightened for nav visibility */
 .nav-ribbon--blue {
-  --nav-color-top: #4f6ebc;
-  --nav-color-mid: #445ea1;
-  --nav-color-bot: #394f8b;
+  --nav-color-top: #738cca;
+  --nav-color-mid: #5d77ba;
+  --nav-color-bot: #4763af;
 }
 
-/* Magenta-red variant (Competitions) - matches header ribbon further desaturated colors */
+/* Magenta-red variant (Competitions) - brightened for nav visibility */
 .nav-ribbon--magenta {
-  --nav-color-top: #9b4562;
-  --nav-color-mid: #7d3a50;
-  --nav-color-bot: #5b283b;
+  --nav-color-top: #b65c7a;
+  --nav-color-mid: #9f4a66;
+  --nav-color-bot: #7e3751;
 }
 
-/* Green variant (Members) - matches header ribbon desaturated colors */
+/* Green variant (Members) - brightened for nav visibility */
 .nav-ribbon--green {
-  --nav-color-top: #329951;
-  --nav-color-mid: #2a7d45;
-  --nav-color-bot: #205d34;
+  --nav-color-top: #3ebf65;
+  --nav-color-mid: #36a35a;
+  --nav-color-bot: #2d8249;
 }
 
 /* Gold variant (optional - for special ribbons) */
