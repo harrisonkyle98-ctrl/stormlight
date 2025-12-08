@@ -6,7 +6,6 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '.
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { ArrowLeft, User, Scroll, Trophy, Package, Activity, BarChart3, Compass, BarChart2, FileText, RefreshCw, Plus, CircleCheck, ChevronDown, ChevronUp, Link2, Palette, Award, LogOut, Key } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { Spinner } from '../components/ui/spinner'
 import { getSkillIcon } from '../utils/skillIcons'
 import { checkPlayerMilestones } from '../utils/gradientUtils'
 import { urlToUsername, usernameToUrl } from '../utils/urlUtils'
@@ -24,6 +23,13 @@ import { AnalyticsTab } from '../components/tabs/AnalyticsTab'
 import { CompetitionsTab } from '../components/tabs/CompetitionsTab'
 import { LogTab } from '../components/tabs/LogTab'
 import { AccountStatsCard } from '../components/profile/AccountStatsCard'
+import { 
+  AccountStatsCardSkeleton, 
+  ProfileOverviewSkeleton, 
+  ClueScrollsSkeleton, 
+  SkillsGridSkeleton,
+  TabsSkeleton
+} from '../components/profile/ProfileSkeletons'
 import { CircularClanXPGraph } from '../components/ui/CircularClanXPGraph'
 import { getBadgeTooltipConfig } from '../utils/badgeTooltipConfig'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog'
@@ -97,7 +103,7 @@ const PlayerProfile = () => {
   const { publish } = useProfileGains()
   const [playerData, setPlayerData] = useState<PlayerStats | null>(null)
   const [questData, setQuestData] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const [statsLoading, setStatsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('skills')
   const [period1, setPeriod1] = useState('today')
@@ -384,7 +390,7 @@ const PlayerProfile = () => {
       console.error('Error fetching player stats:', error)
       setError('Failed to load player stats')
     } finally {
-      setLoading(false)
+      setStatsLoading(false)
     }
   }
 
@@ -613,18 +619,11 @@ const PlayerProfile = () => {
     }
   }, [playerData, questData, citadelCaps, username])
 
-  if (loading) {
-    return (
-      <>
-        <div className="flex flex-col items-center justify-center min-h-96 gap-4">
-          <Spinner size="lg" />
-          <div className="text-white text-xl">Loading clan member profile...</div>
-        </div>
-      </>
-    )
-  }
+  // Helper to check if stats data is ready
+  const isStatsReady = !statsLoading && !!playerData
 
-  if (error || !playerData) {
+  // Only show error after loading completes and there's actually an error
+  if (!statsLoading && (error || !playerData)) {
     return (
       <>
         <div className="fantasy-container">
@@ -667,7 +666,7 @@ const PlayerProfile = () => {
   ]
 
 
-  const skills = skillOrder
+  const skills = playerData?.stats ? skillOrder
     .filter(skill => {
       if (skill === 'overall') {
         return playerData.stats.overall // Check if overall stats exist
@@ -697,7 +696,7 @@ const PlayerProfile = () => {
         xp_gain_period1: (playerData.stats[skill] as any)?.xp_gain_period1 || 0,
         xp_gain_period2: (playerData.stats[skill] as any)?.xp_gain_period2 || 0
       }] as [string, any]
-    })
+    }) : []
 
   const getLevelBadgeStyle = (skill: string, level: number, xp: number) => {
     if (skill === 'overall') {
@@ -1131,7 +1130,11 @@ const PlayerProfile = () => {
           </div>
 
           {/* Account Stats Card - Horizontal Layout (above grid) */}
-          {accountStats && (
+          {!isStatsReady ? (
+            <div className="mb-6">
+              <AccountStatsCardSkeleton />
+            </div>
+          ) : accountStats && (
             <div className="mb-6">
               <AccountStatsCard {...accountStats} />
             </div>
@@ -1139,6 +1142,10 @@ const PlayerProfile = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_2.3fr] gap-6">
             <div className="space-y-6">
+              {/* Profile Overview Panel */}
+              {!isStatsReady ? (
+                <ProfileOverviewSkeleton />
+              ) : (
               <div className="fantasy-section p-6">
               <div className="bg-slate-700/30 rounded-lg p-6 mb-4 relative">
                 {/* Discord Verification Indicator - Top Right */}
@@ -1316,9 +1323,12 @@ const PlayerProfile = () => {
                 ) : null}
               </div>
               </div>
+              )}
 
               {/* Clue Scrolls Section - Inner Panel */}
-              {playerData.clue_scrolls && Object.values(playerData.clue_scrolls).some(count => count !== null && count !== undefined) && (
+              {!isStatsReady ? (
+                <ClueScrollsSkeleton />
+              ) : playerData.clue_scrolls && Object.values(playerData.clue_scrolls).some(count => count !== null && count !== undefined) && (
                 <div className="fantasy-section p-6">
                   <h3 className="text-white flex items-center space-x-2 mb-2 font-['Cinzel',serif]">
                     <Scroll className="w-5 h-5 text-purple-400" />
@@ -1352,7 +1362,9 @@ const PlayerProfile = () => {
               )}
 
               {/* Skills at 99 Section - Inner Panel */}
-              {playerData.stats && (() => {
+              {!isStatsReady ? (
+                <SkillsGridSkeleton title="Skills at 99" iconColor="text-[#22c55e]" />
+              ) : playerData.stats && (() => {
                 const skillsAt99 = skillOrder
                   .filter(skill => {
                     if (skill === 'overall') return false
@@ -1419,7 +1431,9 @@ const PlayerProfile = () => {
               })()}
 
               {/* Skills at 120+ Section - Inner Panel */}
-              {playerData.stats && (() => {
+              {!isStatsReady ? (
+                <SkillsGridSkeleton title="Skills at 120" iconColor="text-[#be9a55]" />
+              ) : playerData.stats && (() => {
                 const skillsAt120Plus = skillOrder
                   .filter(skill => {
                     if (skill === 'overall') return false
@@ -1486,7 +1500,9 @@ const PlayerProfile = () => {
               })()}
 
               {/* Skills at 200m Section - Inner Panel */}
-              {playerData.stats && (() => {
+              {!isStatsReady ? (
+                <SkillsGridSkeleton title="Skills at 200m" iconColor="text-[#a855f7]" />
+              ) : playerData.stats && (() => {
                 const skillsAt200m = skillOrder
                   .filter(skill => {
                     if (skill === 'overall') return false
@@ -1554,6 +1570,9 @@ const PlayerProfile = () => {
             </div>
 
             {/* Right Column - Tabs */}
+            {!isStatsReady ? (
+              <TabsSkeleton />
+            ) : (
             <div className="fantasy-section p-6">
               <div className="flex flex-wrap gap-2 border-b border-slate-600 pb-4 mb-4">
                 {tabs.map((tab) => {
@@ -1576,6 +1595,7 @@ const PlayerProfile = () => {
               </div>
               {renderTabContent()}
             </div>
+            )}
           </div>
         </div>
       </div>
