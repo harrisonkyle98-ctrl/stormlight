@@ -106,6 +106,10 @@ const CompetitionDetail = () => {
   const [leaderboardData, setLeaderboardData] = useState<CompetitionLeaderboard[]>([])
   const [firstPlaceData, setFirstPlaceData] = useState<CompetitionLeaderboard | null>(null)
   const [previousRanks, setPreviousRanks] = useState<Map<string, number>>(new Map())
+  
+  // State to prevent data flicker for active XP_GAIN competitions
+  const [isActiveXpGain, setIsActiveXpGain] = useState(false)
+  const [liveDataReady, setLiveDataReady] = useState(false)
 
   // Profile card state (matching homepage/Members/Competitions)
   const [profileExpanded, setProfileExpanded] = useState(false)
@@ -326,6 +330,9 @@ const CompetitionDetail = () => {
 
   useEffect(() => {
     if (id) {
+      // Reset state when navigating between competitions
+      setIsActiveXpGain(false)
+      setLiveDataReady(false)
       fetchCompetitionInitial()
       loadClanMembers()
     }
@@ -357,16 +364,28 @@ const CompetitionDetail = () => {
       if (response.ok) {
         const data = await response.json()
         setCompetition(data)
-        setLeaderboardData(data.leaderboard || [])
         
-        if (data.top_10) {
-          setTop10Data(data.top_10)
-        }
+        // Check if this is an active XP_GAIN competition
+        const now = new Date()
+        const start = new Date(data.startDate)
+        const end = new Date(data.endDate)
+        const activeXpGain = data.type === 'XP_GAIN' && now >= start && now <= end
+        setIsActiveXpGain(activeXpGain)
         
-        if (data.leaderboard && data.leaderboard.length > 0) {
-          const firstPlace = data.leaderboard.find((p: CompetitionLeaderboard) => p.rank === 1)
-          if (firstPlace) {
-            setFirstPlaceData(firstPlace)
+        // For active XP_GAIN competitions, don't set leaderboard data here
+        // Let fetchLiveData handle it to prevent flicker with stale/zero values
+        if (!activeXpGain) {
+          setLeaderboardData(data.leaderboard || [])
+          
+          if (data.top_10) {
+            setTop10Data(data.top_10)
+          }
+          
+          if (data.leaderboard && data.leaderboard.length > 0) {
+            const firstPlace = data.leaderboard.find((p: CompetitionLeaderboard) => p.rank === 1)
+            if (firstPlace) {
+              setFirstPlaceData(firstPlace)
+            }
           }
         }
         
@@ -421,9 +440,20 @@ const CompetitionDetail = () => {
         if (data.pagination) {
           setTotalParticipants(data.pagination.total)
         }
+        
+        // Derive first place from live data
+        if (updatedLeaderboard.length > 0) {
+          const firstPlace = updatedLeaderboard.find((p: CompetitionLeaderboard) => p.rank === 1) || updatedLeaderboard[0]
+          setFirstPlaceData(firstPlace)
+        }
+        
+        // Mark live data as ready - this allows rendering for active XP_GAIN competitions
+        setLiveDataReady(true)
       }
     } catch (error) {
       console.error('Error fetching live competition data:', error)
+      // Even on error, mark as ready to avoid infinite loading
+      setLiveDataReady(true)
     }
   }
 
@@ -459,7 +489,9 @@ const CompetitionDetail = () => {
 
 
 
-  if (loading) {
+  // Show loading state while initial data loads OR while waiting for live data on active XP_GAIN competitions
+  // This prevents flicker by ensuring only the correct dataset is ever rendered
+  if (loading || (isActiveXpGain && !liveDataReady)) {
     return (
       <>
         <div className="flex flex-col items-center justify-center min-h-96 gap-4">
