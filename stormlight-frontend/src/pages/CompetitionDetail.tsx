@@ -105,11 +105,6 @@ const CompetitionDetail = () => {
   const [top10Data, setTop10Data] = useState<CompetitionLeaderboard[]>([])
   const [leaderboardData, setLeaderboardData] = useState<CompetitionLeaderboard[]>([])
   const [firstPlaceData, setFirstPlaceData] = useState<CompetitionLeaderboard | null>(null)
-  const [previousRanks, setPreviousRanks] = useState<Map<string, number>>(new Map())
-  
-  // State to prevent data flicker for active XP_GAIN competitions
-  const [isActiveXpGain, setIsActiveXpGain] = useState(false)
-  const [liveDataReady, setLiveDataReady] = useState(false)
 
   // Profile card state (matching homepage/Members/Competitions)
   const [profileExpanded, setProfileExpanded] = useState(false)
@@ -330,23 +325,10 @@ const CompetitionDetail = () => {
 
   useEffect(() => {
     if (id) {
-      // Reset state when navigating between competitions
-      setIsActiveXpGain(false)
-      setLiveDataReady(false)
       fetchCompetitionInitial()
       loadClanMembers()
     }
   }, [id])
-
-
-  // Trigger live data fetch when isActiveXpGain is set to true
-  // This uses the state we already computed in fetchCompetitionInitial
-  // to avoid any mismatch in active status calculation
-  useEffect(() => {
-    if (isActiveXpGain && competition) {
-      fetchLiveData()
-    }
-  }, [isActiveXpGain, competition])
 
   const loadClanMembers = async () => {
     const members = await fetchClanMembers()
@@ -356,100 +338,75 @@ const CompetitionDetail = () => {
   const fetchCompetitionInitial = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`${API_URL}/api/competitions/${id}`)
-      if (response.ok) {
-        const data = await response.json()
-        setCompetition(data)
-        
-        // Check if this is an active XP_GAIN competition
-        const now = new Date()
-        const start = new Date(data.startDate)
-        const end = new Date(data.endDate)
-        const activeXpGain = data.type === 'XP_GAIN' && now >= start && now <= end
-        setIsActiveXpGain(activeXpGain)
-        
-        // For active XP_GAIN competitions, don't set leaderboard data here
-        // Let fetchLiveData handle it to prevent flicker with stale/zero values
-        if (!activeXpGain) {
-          setLeaderboardData(data.leaderboard || [])
+      
+      // First, fetch basic competition info to determine if it's an active XP_GAIN competition
+      const basicResponse = await fetch(`${API_URL}/api/competitions/${id}`)
+      if (!basicResponse.ok) {
+        setError('Competition not found')
+        return
+      }
+      
+      const basicData = await basicResponse.json()
+      
+      // Check if this is an active XP_GAIN competition
+      const now = new Date()
+      const start = new Date(basicData.startDate)
+      const end = new Date(basicData.endDate)
+      const isActiveXpGain = basicData.type === 'XP_GAIN' && now >= start && now <= end
+      
+      // For active XP_GAIN competitions, use the live endpoint directly
+      // This prevents flicker by only ever loading one dataset
+      if (isActiveXpGain) {
+        const liveResponse = await fetch(`${API_URL}/api/competitions/${id}/live`)
+        if (liveResponse.ok) {
+          const liveData = await liveResponse.json()
+          setCompetition(liveData)
+          setLeaderboardData(liveData.leaderboard || [])
           
-          if (data.top_10) {
-            setTop10Data(data.top_10)
+          if (liveData.top_10) {
+            setTop10Data(liveData.top_10)
           }
           
-          if (data.leaderboard && data.leaderboard.length > 0) {
-            const firstPlace = data.leaderboard.find((p: CompetitionLeaderboard) => p.rank === 1)
-            if (firstPlace) {
-              setFirstPlaceData(firstPlace)
-            }
+          if (liveData.leaderboard && liveData.leaderboard.length > 0) {
+            const firstPlace = liveData.leaderboard.find((p: CompetitionLeaderboard) => p.rank === 1) || liveData.leaderboard[0]
+            setFirstPlaceData(firstPlace)
           }
-        }
-        
-        if (data.pagination) {
-          setTotalParticipants(data.pagination.total)
+          
+          if (liveData.pagination) {
+            setTotalParticipants(liveData.pagination.total)
+          }
+        } else {
+          // Fallback to basic data if live endpoint fails
+          setCompetition(basicData)
+          setLeaderboardData(basicData.leaderboard || [])
+          if (basicData.top_10) setTop10Data(basicData.top_10)
+          if (basicData.pagination) setTotalParticipants(basicData.pagination.total)
         }
       } else {
-        setError('Competition not found')
+        // For non-active or non-XP_GAIN competitions, use basic data
+        setCompetition(basicData)
+        setLeaderboardData(basicData.leaderboard || [])
+        
+        if (basicData.top_10) {
+          setTop10Data(basicData.top_10)
+        }
+        
+        if (basicData.leaderboard && basicData.leaderboard.length > 0) {
+          const firstPlace = basicData.leaderboard.find((p: CompetitionLeaderboard) => p.rank === 1)
+          if (firstPlace) {
+            setFirstPlaceData(firstPlace)
+          }
+        }
+        
+        if (basicData.pagination) {
+          setTotalParticipants(basicData.pagination.total)
+        }
       }
     } catch (error) {
       console.error('Error fetching competition:', error)
       setError('Failed to load competition')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const fetchLiveData = async () => {
-    if (!id || !competition || competition.type !== 'XP_GAIN') return
-    
-    try {
-      const now = new Date()
-      const start = new Date(competition.startDate)
-      const end = new Date(competition.endDate)
-      const isActive = now >= start && now <= end
-      
-      const endpoint = isActive 
-        ? `${API_URL}/api/competitions/${id}/live`
-        : `${API_URL}/api/competitions/${id}`
-      
-      const response = await fetch(endpoint)
-      if (response.ok) {
-        const data = await response.json()
-        
-        const newRanks = new Map<string, number>()
-        const updatedLeaderboard = data.leaderboard.map((player: CompetitionLeaderboard) => {
-          const prevRank = previousRanks.get(player.username)
-          newRanks.set(player.username, player.rank || 0)
-          return {
-            ...player,
-            previousRank: prevRank
-          }
-        })
-        
-        setLeaderboardData(updatedLeaderboard)
-        setPreviousRanks(newRanks)
-        
-        if (data.top_10) {
-          setTop10Data(data.top_10)
-        }
-        
-        if (data.pagination) {
-          setTotalParticipants(data.pagination.total)
-        }
-        
-        // Derive first place from live data
-        if (updatedLeaderboard.length > 0) {
-          const firstPlace = updatedLeaderboard.find((p: CompetitionLeaderboard) => p.rank === 1) || updatedLeaderboard[0]
-          setFirstPlaceData(firstPlace)
-        }
-        
-        // Mark live data as ready - this allows rendering for active XP_GAIN competitions
-        setLiveDataReady(true)
-      }
-    } catch (error) {
-      console.error('Error fetching live competition data:', error)
-      // Even on error, mark as ready to avoid infinite loading
-      setLiveDataReady(true)
     }
   }
 
@@ -485,9 +442,7 @@ const CompetitionDetail = () => {
 
 
 
-  // Show loading state while initial data loads OR while waiting for live data on active XP_GAIN competitions
-  // This prevents flicker by ensuring only the correct dataset is ever rendered
-  if (loading || (isActiveXpGain && !liveDataReady)) {
+  if (loading) {
     return (
       <>
         <div className="flex flex-col items-center justify-center min-h-96 gap-4">
