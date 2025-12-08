@@ -753,6 +753,174 @@ async def check_and_capture_competition_xp():
         traceback.print_exc()
 
 
+async def update_active_competition_xp():
+    """
+    Update XP for all active competitions (hourly scheduler job).
+    
+    For each active XP_GAIN competition:
+    - Fetch current XP for all participants from player_today_gains or live API
+    - Update CompetitionEntry.xpEnd and xpGained in the database
+    - This ensures competition detail pages always show current standings
+    """
+    try:
+        if not PRISMA_AVAILABLE or not prisma:
+            print("[Scheduler][COMP_XP] Prisma not available, skipping active competition XP update")
+            return 0
+        
+        from datetime import timezone
+        now = datetime.now(timezone.utc)
+        
+        active_comps = await prisma.competition.find_many(
+            where={
+                'type': 'XP_GAIN',
+                'startDate': {'lte': now},
+                'endDate': {'gt': now},
+            },
+            include={'entries': True},
+        )
+        
+        if not active_comps:
+            print("[Scheduler][COMP_XP] No active XP competitions found")
+            return 0
+        
+        print(f"[Scheduler][COMP_XP] Found {len(active_comps)} active XP competitions to update")
+        
+        total_updates = 0
+        
+        for comp in active_comps:
+            try:
+                print(f"[Scheduler][COMP_XP] Processing competition: {comp.name} ({comp.id})")
+                
+                if not comp.entries:
+                    print(f"[Scheduler][COMP_XP] No entries for competition {comp.name}")
+                    continue
+                
+                try:
+                    from .database import get_db_connection
+                    from .skill_mapping import get_column_name
+                except ImportError:
+                    from database import get_db_connection
+                    from skill_mapping import get_column_name
+                
+                skill = comp.skill or 'overall'
+                skill_normalized = skill.lower()
+                skill_column = get_column_name(skill_normalized)
+                
+                usernames = [entry.username for entry in comp.entries]
+                
+                conn = await get_db_connection()
+                skill_gains_map = {}
+                snapshots_by_user = {}
+                
+                async with conn:
+                    async with conn.cursor() as cur:
+                        await cur.execute(f"""
+                            SELECT username, {skill_column}, updated_at
+                            FROM player_today_gains
+                            WHERE username = ANY(%s) AND snapshot_date = CURRENT_DATE
+                        """, (usernames,))
+                        
+                        skill_gains_rows = await cur.fetchall()
+                        from datetime import timedelta
+                        staleness_threshold = timedelta(minutes=90)
+                        
+                        for row in skill_gains_rows:
+                            username = row[0]
+                            xp_gain = row[1]
+                            last_updated = row[2]
+                            
+                            if last_updated and last_updated.tzinfo is None:
+                                last_updated = last_updated.replace(tzinfo=timezone.utc)
+                            
+                            is_stale = (now - last_updated) > staleness_threshold if last_updated else True
+                            
+                            skill_gains_map[username] = {
+                                'xp_gain': xp_gain,
+                                'is_stale': is_stale
+                            }
+                        
+                        await cur.execute("""
+                            SELECT username, stats
+                            FROM player_daily_snapshots
+                            WHERE username = ANY(%s) AND snapshot_date = CURRENT_DATE
+                        """, (usernames,))
+                        
+                        snapshot_rows = await cur.fetchall()
+                        for row in snapshot_rows:
+                            username = row[0]
+                            stats = row[1]
+                            if username not in snapshots_by_user:
+                                snapshots_by_user[username] = []
+                            snapshots_by_user[username].append({'stats': stats})
+                
+                updates_for_comp = 0
+                
+                for entry in comp.entries:
+                    try:
+                        starting_xp = int(entry.xpStart or 0)
+                        ending_xp = 0
+                        xp_gained = 0
+                        
+                        skill_gain_data = skill_gains_map.get(entry.username)
+                        
+                        if skill_gain_data and not skill_gain_data['is_stale']:
+                            user_snapshots = snapshots_by_user.get(entry.username, [])
+                            if user_snapshots:
+                                latest_snapshot = user_snapshots[-1]
+                                snapshot_stats = latest_snapshot['stats']
+                                if skill_normalized == 'overall':
+                                    baseline_xp = 0
+                                    if isinstance(snapshot_stats.get('overall'), dict):
+                                        baseline_xp = snapshot_stats['overall'].get('xp', 0) or 0
+                                    if baseline_xp == 0:
+                                        baseline_xp = sum(
+                                            s.get('xp', 0) for k, s in snapshot_stats.items()
+                                            if isinstance(s, dict) and k != 'overall'
+                                        )
+                                else:
+                                    skill_data = snapshot_stats.get(skill_normalized, {})
+                                    baseline_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
+                                
+                                xp_gain_today = skill_gain_data.get('xp_gain', 0)
+                                ending_xp = baseline_xp + xp_gain_today
+                                xp_gained = max(0, ending_xp - starting_xp)
+                        
+                        if ending_xp > 0 or xp_gained > 0:
+                            await prisma.competitionentry.update(
+                                where={'id': entry.id},
+                                data={
+                                    'xpEnd': ending_xp,
+                                    'xpGained': xp_gained,
+                                },
+                            )
+                            updates_for_comp += 1
+                    
+                    except Exception as entry_error:
+                        print(f"[Scheduler][COMP_XP] Error updating entry for {entry.username}: {entry_error}")
+                        continue
+                
+                print(f"[Scheduler][COMP_XP] Competition {comp.name}: updated {updates_for_comp} entries")
+                total_updates += updates_for_comp
+                
+                if comp.id in _live_competition_cache:
+                    del _live_competition_cache[comp.id]
+            
+            except Exception as comp_error:
+                print(f"[Scheduler][COMP_XP] Error processing competition {comp.id}: {comp_error}")
+                import traceback
+                traceback.print_exc()
+                continue
+        
+        print(f"[Scheduler][COMP_XP] Total updates across all competitions: {total_updates}")
+        return total_updates
+    
+    except Exception as e:
+        print(f"[Scheduler][COMP_XP] Error in update_active_competition_xp: {e}")
+        import traceback
+        traceback.print_exc()
+        return 0
+
+
 def is_rate_limited(client_ip: str, endpoint: str) -> bool:
     """Check if client is rate limited for profile endpoints"""
     if not endpoint.startswith('/api/player/'):
@@ -2925,6 +3093,25 @@ async def get_competitions(status: Optional[str] = None):
         print(f"Error fetching competitions: {e}")
         return {"competitions": []}
 
+def sort_active_competition_leaderboard(leaderboard: list) -> None:
+    """
+    Sort leaderboard for active competitions with special handling for 0 starting XP.
+    
+    Sort order:
+    1. Participants with starting_xp > 0 come first (sorted by xp_gain desc, then ending_xp desc)
+    2. Participants with starting_xp == 0 come last (sorted by xp_gain desc, then ending_xp desc)
+    
+    This ensures players who joined late or have no starting baseline do not appear
+    above legitimate participants.
+    """
+    leaderboard.sort(
+        key=lambda x: (
+            x.get('starting_xp', 0) == 0,  # False (0) comes before True (1), so non-zero first
+            -int(x.get('xp_gain', 0)),      # Higher XP gain first (descending)
+            -int(x.get('ending_xp', 0)),    # Higher ending XP first (descending)
+        )
+    )
+
 async def calculate_drop_leaderboard(competition, members):
     """Calculate leaderboard for drop competitions using activity logs"""
     try:
@@ -3140,7 +3327,12 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                             'skill': competition.skill
                         })
                 
-                leaderboard.sort(key=lambda x: x['xp_gain'], reverse=True)
+                # Use special sorting for active competitions (0 starting XP at bottom)
+                # For completed competitions, use standard XP gain sorting
+                if is_active:
+                    sort_active_competition_leaderboard(leaderboard)
+                else:
+                    leaderboard.sort(key=lambda x: x['xp_gain'], reverse=True)
             
             elif competition.type == 'BOSS_KILLS':
                 if not competition.dropsGrid:
@@ -3580,7 +3772,12 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
                 print(f"Error processing live data for {entry.username}: {e}")
                 continue
         
-        leaderboard.sort(key=lambda x: x['xp_gain'], reverse=True)
+        # Use special sorting for active competitions (0 starting XP at bottom)
+        # For completed competitions, use standard XP gain sorting
+        if is_active:
+            sort_active_competition_leaderboard(leaderboard)
+        else:
+            leaderboard.sort(key=lambda x: x['xp_gain'], reverse=True)
         
         # Assign global ranks (1-indexed)
         for idx, entry in enumerate(leaderboard, start=1):
@@ -8722,6 +8919,16 @@ async def startup_event():
                             print(f"✅ [Scheduler][HOURLY] Per-skill XP gains calculation completed at {skill_completion_time}Z: {skill_updated_count} members with gains (machine: {machine_id})")
                         except Exception as e:
                             print(f"❌ [Scheduler][HOURLY] Error calculating per-skill XP gains: {e} (machine: {machine_id})")
+                            import traceback
+                            traceback.print_exc()
+                        
+                        print(f"📊 [Scheduler][HOURLY] Starting active competition XP update at {now.isoformat()}Z (machine: {machine_id})")
+                        try:
+                            comp_updated_count = await update_active_competition_xp()
+                            comp_completion_time = datetime.now(timezone.utc).isoformat()
+                            print(f"✅ [Scheduler][HOURLY] Active competition XP update completed at {comp_completion_time}Z: {comp_updated_count} entries updated (machine: {machine_id})")
+                        except Exception as e:
+                            print(f"❌ [Scheduler][HOURLY] Error updating active competition XP: {e} (machine: {machine_id})")
                             import traceback
                             traceback.print_exc()
                         
