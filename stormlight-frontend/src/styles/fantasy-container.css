@@ -334,11 +334,13 @@
    GOLD RIBBON BANNER (stacked above blue ribbon)
    ======================================== */
 
-/* Gold Banner Modifier - reuses fantasy-banner structure with gold colors */
+/* Gold Banner Modifier - reuses fantasy-banner structure with customizable colors */
+/* Colors are set via CSS variables from JavaScript (--profile-ribbon-top/middle/bottom) */
+/* Falls back to gold if variables are not set */
 .fantasy-banner--gold {
-  --banner-color-top: #D4AF37;    /* base gold */
-  --banner-color-middle: #C9A227; /* mid gold */
-  --banner-color-bottom: #A88728; /* shadow gold */
+  --banner-color-top: var(--profile-ribbon-top, #D4AF37);    /* customizable - default gold */
+  --banner-color-middle: var(--profile-ribbon-middle, #C9A227); /* customizable - default gold */
+  --banner-color-bottom: var(--profile-ribbon-bottom, #A88728); /* customizable - default gold */
 }
 
 /* Members Banner Modifier - darker, richer green matching Members nav ribbon */

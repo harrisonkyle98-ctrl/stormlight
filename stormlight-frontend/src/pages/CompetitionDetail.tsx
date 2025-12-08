@@ -16,7 +16,7 @@ import { useTheme } from '../contexts/ThemeContext'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog'
 import { Input } from '../components/ui/input'
-import { themes } from '../config/themes'
+import { ribbonColors } from '../config/themes'
 import RibbonNav from '../components/RibbonNav'
 import '../styles/fantasy-container.css'
 
@@ -1162,33 +1162,32 @@ const CompetitionDetail = () => {
       <Dialog open={settingsSection === 'appearance'} onOpenChange={(open) => !open && setSettingsSection(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Change Theme</DialogTitle>
+            <DialogTitle>Profile Ribbon Color</DialogTitle>
             <DialogDescription>
-              Select a color theme for the site.
+              Select a color for your profile ribbon
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-3 gap-3">
-            {Object.entries(themes).map(([key, theme]) => (
-              <Button
-                key={key}
-                onClick={() => handleThemeChange(key)}
-                onMouseEnter={() => setThemeTooltip(theme.name)}
-                onMouseLeave={() => setThemeTooltip(null)}
-                className={`relative h-16 ${
-                  selectedTheme === key 
-                    ? 'ring-2 ring-white' 
-                    : ''
-                }`}
-                style={{
-                  background: `linear-gradient(135deg, ${theme.colors.accent} 0%, ${theme.colors.accentDark} 100%)`
-                }}
-              >
-                {themeTooltip === theme.name && (
-                  <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/80 text-white text-xs rounded whitespace-nowrap">
-                    {theme.name}
-                  </span>
+          <div className="flex flex-wrap gap-3 justify-center">
+            {Object.values(ribbonColors).map((color) => (
+              <div key={color.id} className="relative">
+                <button
+                  onClick={() => handleThemeChange(color.id)}
+                  onMouseEnter={() => setThemeTooltip(color.name)}
+                  onMouseLeave={() => setThemeTooltip(null)}
+                  className={`w-12 h-12 rounded-full transition-all ${
+                    selectedTheme === color.id 
+                      ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-800 scale-110' 
+                      : 'hover:scale-105'
+                  }`}
+                  style={{ background: color.gradient }}
+                  title={color.name}
+                />
+                {themeTooltip === color.name && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded whitespace-nowrap z-50">
+                    {color.name}
+                  </div>
                 )}
-              </Button>
+              </div>
             ))}
           </div>
         </DialogContent>

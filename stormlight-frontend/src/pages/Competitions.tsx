@@ -13,7 +13,7 @@ import { Input } from '../components/ui/input'
 import { checkPlayerMilestones } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
 import { Username } from '../components/ui/username'
-import { themes } from '../config/themes'
+import { ribbonColors } from '../config/themes'
 import RibbonNav from '../components/RibbonNav'
 import '../styles/fantasy-container.css'
 
@@ -957,29 +957,29 @@ const Competitions = () => {
       <Dialog open={settingsSection === 'appearance'} onOpenChange={(open) => !open && setSettingsSection(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Change Theme</DialogTitle>
+            <DialogTitle>Profile Ribbon Color</DialogTitle>
             <DialogDescription>
-              Select a theme for the website
+              Select a color for your profile ribbon
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-wrap gap-3 justify-center">
-            {Object.values(themes).map((theme) => (
-              <div key={theme.id} className="relative">
+            {Object.values(ribbonColors).map((color) => (
+              <div key={color.id} className="relative">
                 <button
-                  onClick={() => handleThemeChange(theme.id)}
-                  onMouseEnter={() => setThemeTooltip(theme.name)}
+                  onClick={() => handleThemeChange(color.id)}
+                  onMouseEnter={() => setThemeTooltip(color.name)}
                   onMouseLeave={() => setThemeTooltip(null)}
                   className={`w-12 h-12 rounded-full transition-all ${
-                    selectedTheme === theme.id 
+                    selectedTheme === color.id 
                       ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-800 scale-110' 
                       : 'hover:scale-105'
                   }`}
-                  style={{ background: theme.gradient }}
-                  title={theme.name}
+                  style={{ background: color.gradient }}
+                  title={color.name}
                 />
-                {themeTooltip === theme.name && (
+                {themeTooltip === color.name && (
                   <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded whitespace-nowrap z-50">
-                    {theme.name}
+                    {color.name}
                   </div>
                 )}
               </div>

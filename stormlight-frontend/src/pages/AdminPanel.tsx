@@ -18,7 +18,7 @@ import { CompetitionManagementTab } from '../components/admin/CompetitionManagem
 import { RankTrackingTab } from '../components/admin/RankTrackingTab'
 import { MemberLogTab } from '../components/admin/MemberLogTab'
 import { checkPlayerMilestones } from '../utils/gradientUtils'
-import { themes } from '../config/themes'
+import { ribbonColors } from '../config/themes'
 import RibbonNav from '../components/RibbonNav'
 import '../styles/fantasy-container.css'
 
@@ -679,23 +679,22 @@ const AdminPanel = () => {
       <Dialog open={settingsSection === 'appearance'} onOpenChange={(open) => !open && setSettingsSection(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Change Theme</DialogTitle>
-            <DialogDescription>Select a color theme for the site</DialogDescription>
+            <DialogTitle>Profile Ribbon Color</DialogTitle>
+            <DialogDescription>Select a color for your profile ribbon</DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-3 gap-3">
-            {Object.entries(themes).map(([key, theme]) => (
+          <div className="flex flex-wrap gap-3 justify-center">
+            {Object.values(ribbonColors).map((color) => (
               <button
-                key={key}
-                onClick={() => handleThemeChange(key)}
-                className={`relative p-4 rounded-lg border-2 transition-all ${
-                  selectedTheme === key
-                    ? 'border-white scale-105'
-                    : 'border-slate-600 hover:border-slate-400'
+                key={color.id}
+                onClick={() => handleThemeChange(color.id)}
+                className={`w-12 h-12 rounded-full transition-all ${
+                  selectedTheme === color.id
+                    ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-800 scale-110'
+                    : 'hover:scale-105'
                 }`}
-                style={{ background: `linear-gradient(135deg, ${theme.colors.accent}, ${theme.colors.accentDark})` }}
-              >
-                <span className="text-white text-xs font-medium">{theme.name}</span>
-              </button>
+                style={{ background: color.gradient }}
+                title={color.name}
+              />
             ))}
           </div>
         </DialogContent>

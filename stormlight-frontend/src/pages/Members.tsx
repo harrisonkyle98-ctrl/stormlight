@@ -14,7 +14,7 @@ import { Username } from '../components/ui/username'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog'
-import { themes } from '../config/themes'
+import { ribbonColors } from '../config/themes'
 import RibbonNav from '../components/RibbonNav'
 import '../styles/fantasy-container.css'
 
@@ -1147,25 +1147,25 @@ const Members = () => {
               <div className="bg-slate-700/30 rounded-lg p-4">
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-sm font-medium text-slate-300 mb-3">Color Theme</h4>
+                    <h4 className="text-sm font-medium text-slate-300 mb-3">Profile Ribbon Color</h4>
                     <div className="flex flex-wrap gap-3">
-                      {Object.values(themes).map((theme) => (
-                        <div key={theme.id} className="relative">
+                      {Object.values(ribbonColors).map((color) => (
+                        <div key={color.id} className="relative">
                           <button
-                            onClick={() => handleThemeChange(theme.id)}
-                            onMouseEnter={() => setThemeTooltip(theme.name)}
+                            onClick={() => handleThemeChange(color.id)}
+                            onMouseEnter={() => setThemeTooltip(color.name)}
                             onMouseLeave={() => setThemeTooltip(null)}
                             className={`w-12 h-12 rounded-full transition-all ${
-                              selectedTheme === theme.id 
+                              selectedTheme === color.id 
                                 ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-800 scale-110' 
                                 : 'hover:scale-105'
                             }`}
-                            style={{ background: theme.gradient }}
-                            title={theme.name}
+                            style={{ background: color.gradient }}
+                            title={color.name}
                           />
-                          {themeTooltip === theme.name && (
+                          {themeTooltip === color.name && (
                             <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded whitespace-nowrap z-50">
-                              {theme.name}
+                              {color.name}
                             </div>
                           )}
                         </div>
@@ -1173,7 +1173,7 @@ const Members = () => {
                     </div>
                   </div>
                   <p className="text-xs text-slate-400 mt-2">
-                    Select a color theme to customize the appearance of the site. Your preference will be saved and applied across all pages.
+                    Select a color for your profile ribbon. Your preference will be saved.
                   </p>
                 </div>
               </div>
