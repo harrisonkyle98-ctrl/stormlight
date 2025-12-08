@@ -354,8 +354,7 @@ const CompetitionDetail = () => {
       const end = new Date(basicData.endDate)
       const isActiveXpGain = basicData.type === 'XP_GAIN' && now >= start && now <= end
       
-      // For active XP_GAIN competitions, try the live endpoint with a timeout
-      // Fall back to basic data if live endpoint takes too long or fails
+      // For active XP_GAIN competitions, show basic data immediately then try live data in background
       if (isActiveXpGain) {
         // Use basic data first to show something quickly
         setCompetition(basicData)
@@ -367,38 +366,49 @@ const CompetitionDetail = () => {
         }
         if (basicData.pagination) setTotalParticipants(basicData.pagination.total)
         
-        // Then try to fetch live data in the background with a 30 second timeout
-        try {
-          const controller = new AbortController()
-          const timeoutId = setTimeout(() => controller.abort(), 30000)
-          
-          const liveResponse = await fetch(`${API_URL}/api/competitions/${id}/live`, {
-            signal: controller.signal
+        // Set loading to false immediately so page renders with basic data
+        setLoading(false)
+        
+        // Then try to fetch live data in the background (non-blocking)
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 30000)
+        
+        fetch(`${API_URL}/api/competitions/${id}/live`, {
+          signal: controller.signal
+        })
+          .then(liveResponse => {
+            clearTimeout(timeoutId)
+            if (liveResponse.ok) {
+              return liveResponse.json()
+            }
+            return null
           })
-          clearTimeout(timeoutId)
-          
-          if (liveResponse.ok) {
-            const liveData = await liveResponse.json()
-            setCompetition(liveData)
-            setLeaderboardData(liveData.leaderboard || [])
-            
-            if (liveData.top_10) {
-              setTop10Data(liveData.top_10)
+          .then(liveData => {
+            if (liveData) {
+              setCompetition(liveData)
+              setLeaderboardData(liveData.leaderboard || [])
+              
+              if (liveData.top_10) {
+                setTop10Data(liveData.top_10)
+              }
+              
+              if (liveData.leaderboard && liveData.leaderboard.length > 0) {
+                const firstPlace = liveData.leaderboard.find((p: CompetitionLeaderboard) => p.rank === 1) || liveData.leaderboard[0]
+                setFirstPlaceData(firstPlace)
+              }
+              
+              if (liveData.pagination) {
+                setTotalParticipants(liveData.pagination.total)
+              }
             }
-            
-            if (liveData.leaderboard && liveData.leaderboard.length > 0) {
-              const firstPlace = liveData.leaderboard.find((p: CompetitionLeaderboard) => p.rank === 1) || liveData.leaderboard[0]
-              setFirstPlaceData(firstPlace)
-            }
-            
-            if (liveData.pagination) {
-              setTotalParticipants(liveData.pagination.total)
-            }
-          }
-        } catch (liveError) {
-          // Live endpoint failed or timed out, keep using basic data
-          console.log('Live endpoint unavailable, using cached data')
-        }
+          })
+          .catch(() => {
+            // Live endpoint failed or timed out, keep using basic data
+            console.log('Live endpoint unavailable, using cached data')
+          })
+        
+        // Return early since we already set loading to false
+        return
       } else {
         // For non-active or non-XP_GAIN competitions, use basic data
         setCompetition(basicData)
