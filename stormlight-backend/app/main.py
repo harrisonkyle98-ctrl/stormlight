@@ -3015,7 +3015,7 @@ async def get_player_citadel_caps(username: str):
                 'username': decoded_username,
                 'text': 'Capped at my Clan Citadel.'
             },
-            order_by={'activity_timestamp': 'desc'}
+            order={'activityTimestamp': 'desc'}
         )
         
         cap_dates = [activity.activity_date for activity in cap_activities if activity.activity_date]
