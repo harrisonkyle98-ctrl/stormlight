@@ -162,6 +162,9 @@ async def init_database():
                     ADD COLUMN IF NOT EXISTS invention_gain BIGINT NOT NULL DEFAULT 0,
                     ADD COLUMN IF NOT EXISTS archaeology_gain BIGINT NOT NULL DEFAULT 0,
                     ADD COLUMN IF NOT EXISTS necromancy_gain BIGINT NOT NULL DEFAULT 0;
+                
+                -- Add total_caps column to clan_members for persistent cap counting
+                ALTER TABLE clan_members ADD COLUMN IF NOT EXISTS total_caps INTEGER DEFAULT 0;
             """)
             print("Database schema initialized successfully")
     except Exception as e:
@@ -891,15 +894,29 @@ async def calculate_daily_changes(conn, username: str, today: date):
             """, (username, skill_name, today, level_change, xp_change, rank_change, today_row[2], yesterday_row[2]))
 
 async def store_clan_activity(conn, username: str, text: str, details: str, activity_date: str, activity_timestamp: int):
-    """Store a clan activity in the database"""
+    """Store a clan activity in the database and increment total_caps if it's a new cap activity"""
     try:
         print(f"  📝 [Store Activity] Storing for {username}: {text[:50]}...")
-        await conn.execute("""
+        
+        cursor = await conn.execute("""
             INSERT INTO clan_activities (username, text, details, activity_date, activity_timestamp)
             VALUES (%s, %s, %s, %s, %s)
             ON CONFLICT (username, text, activity_timestamp) DO NOTHING
+            RETURNING id
         """, (username, text, details, activity_date, activity_timestamp))
-        print(f"  ✅ [Store Activity] Successfully stored activity for {username}")
+        
+        row = await cursor.fetchone()
+        was_inserted = row is not None
+        
+        if was_inserted and text == 'Capped at my Clan Citadel.':
+            await conn.execute("""
+                UPDATE clan_members 
+                SET total_caps = total_caps + 1 
+                WHERE LOWER(username) = LOWER(%s)
+            """, (username,))
+            print(f"  🏰 [Store Activity] Incremented total_caps for {username}")
+        
+        print(f"  ✅ [Store Activity] Successfully stored activity for {username} (new: {was_inserted})")
     except Exception as e:
         print(f"  ❌ [Store Activity] Error storing activity for {username}: {e}")
         import traceback
@@ -941,16 +958,43 @@ async def get_activity_count(conn):
         return 0
 
 async def cleanup_old_activities(conn, days_to_keep: int = 30):
-    """Remove activities older than specified days"""
+    """DISABLED: Activity logs are now kept indefinitely. This function is a no-op."""
+    print("Activity log cleanup is disabled - logs are kept indefinitely")
+
+async def backfill_total_caps_from_activities(conn):
+    """Backfill total_caps in clan_members from historical activity logs.
+    
+    This is idempotent - it uses SET (not +=) so it can be run multiple times safely.
+    """
     try:
-        cutoff_timestamp = datetime.now().timestamp() - (days_to_keep * 24 * 60 * 60)
-        await conn.execute("""
-            DELETE FROM clan_activities 
-            WHERE activity_timestamp < %s
-        """, (cutoff_timestamp,))
-        print(f"Cleaned up activities older than {days_to_keep} days")
+        print("🔄 [Backfill] Starting total_caps backfill from activity logs...")
+        
+        result = await conn.execute("""
+            UPDATE clan_members cm
+            SET total_caps = COALESCE(caps.cnt, 0)
+            FROM (
+                SELECT username, COUNT(*) as cnt
+                FROM clan_activities
+                WHERE text = 'Capped at my Clan Citadel.'
+                GROUP BY username
+            ) caps
+            WHERE LOWER(cm.username) = LOWER(caps.username)
+        """)
+        
+        updated_count = result.split()[-1] if result else "0"
+        print(f"✅ [Backfill] Updated total_caps for {updated_count} clan members")
+        
+        cursor = await conn.execute("""
+            SELECT COUNT(DISTINCT username) FROM clan_activities WHERE text = 'Capped at my Clan Citadel.'
+        """)
+        row = await cursor.fetchone()
+        total_users_with_caps = row[0] if row else 0
+        print(f"📊 [Backfill] Total users with cap activities: {total_users_with_caps}")
+        
     except Exception as e:
-        print(f"Error cleaning up old activities: {e}")
+        print(f"❌ [Backfill] Error backfilling total_caps: {e}")
+        import traceback
+        traceback.print_exc()
 
 def normalize_skill(skill: str | None) -> str:
     if not skill:

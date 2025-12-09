@@ -133,9 +133,10 @@ const PlayerProfile = () => {
   const [badgeModalLoading, setBadgeModalLoading] = useState(false)
   const [badgeModalError, setBadgeModalError] = useState<string | null>(null)
   const [modalCustomBadges, setModalCustomBadges] = useState<CustomBadge[]>([])
-  const [citadelCaps, setCitadelCaps] = useState<number | null>(null)
+    const [citadelCaps, setCitadelCaps] = useState<number | null>(null)
+    const [capDates, setCapDates] = useState<string[]>([])
   
-  // Profile ribbon state (for logged-in user - separate from viewed profile)
+    // Profile ribbon state (for logged-in user - separate from viewed profile)
   const [profileExpanded, setProfileExpanded] = useState(false)
   const [profileAnimReady, setProfileAnimReady] = useState(false)
   const [selfPlayerData, setSelfPlayerData] = useState<PlayerStats | null>(null)
@@ -426,18 +427,19 @@ const PlayerProfile = () => {
     }
   }
 
-  const fetchCitadelCaps = async () => {
-    try {
-      const decodedUsername = urlToUsername(username || '')
-      const response = await fetch(`${API_URL}/api/player/${encodeURIComponent(decodedUsername)}/citadel-caps`)
-      if (response.ok) {
-        const data = await response.json()
-        setCitadelCaps(data.total_caps)
+    const fetchCitadelCaps = async () => {
+      try {
+        const decodedUsername = urlToUsername(username || '')
+        const response = await fetch(`${API_URL}/api/player/${encodeURIComponent(decodedUsername)}/citadel-caps`)
+        if (response.ok) {
+          const data = await response.json()
+          setCitadelCaps(data.total_caps)
+          setCapDates(data.cap_dates || [])
+        }
+      } catch (error) {
+        console.error('Error fetching citadel caps:', error)
       }
-    } catch (error) {
-      console.error('Error fetching citadel caps:', error)
     }
-  }
 
   const handleRefresh = async () => {
     if (refreshing) return
@@ -626,17 +628,18 @@ const PlayerProfile = () => {
     const leagueBadge = allBadges.find(badge => badge.id.startsWith('league-'))
     const leagueIcon = leagueBadge?.icon || '/assets/icons/league_points.png'
     
-    return {
-      combatLevel: playerData.stats.overall.combatlevel,
-      totalLevel: playerData.stats.overall.level,
-      questPoints: playerData.quest_points || 0,
-      runescore: playerData.runescore,
-      citadelCaps: citadelCaps,
-      leaguePoints: playerData.league_points,
-      leagueRank: playerData.league_rank,
-      leagueIcon: leagueIcon
-    }
-  }, [playerData, questData, citadelCaps, username])
+      return {
+        combatLevel: playerData.stats.overall.combatlevel,
+        totalLevel: playerData.stats.overall.level,
+        questPoints: playerData.quest_points || 0,
+        runescore: playerData.runescore,
+        citadelCaps: citadelCaps,
+        capDates: capDates,
+        leaguePoints: playerData.league_points,
+        leagueRank: playerData.league_rank,
+        leagueIcon: leagueIcon
+      }
+    }, [playerData, questData, citadelCaps, capDates, username])
 
   // Helper to check if stats data is ready
   const isStatsReady = !statsLoading && !!playerData

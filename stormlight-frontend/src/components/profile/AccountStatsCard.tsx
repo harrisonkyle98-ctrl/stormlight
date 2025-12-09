@@ -7,6 +7,7 @@ interface AccountStatsCardProps {
   questPoints: number
   runescore?: number
   citadelCaps?: number | null
+  capDates?: string[]
   leaguePoints?: number | null
   leagueRank?: number | null
   leagueIcon?: string
@@ -18,10 +19,19 @@ export const AccountStatsCard = ({
   questPoints,
   runescore,
   citadelCaps,
+  capDates,
   leaguePoints,
   leagueRank,
   leagueIcon
 }: AccountStatsCardProps) => {
+  const formatCapDate = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr)
+      return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+    } catch {
+      return dateStr
+    }
+  }
   return (
     <div className="fantasy-section w-full p-2 sm:p-3">
         <div className="flex flex-nowrap items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 overflow-x-auto">
@@ -101,7 +111,23 @@ export const AccountStatsCard = ({
 
           {/* Total Caps - only show if value exists */}
           {typeof citadelCaps === 'number' && citadelCaps > 0 && (
-            <Tooltip content="Total Caps">
+            <Tooltip 
+              title="Total Caps"
+              description={
+                capDates && capDates.length > 0 ? (
+                  <div className="max-h-48 overflow-y-auto pr-2">
+                    <div className="text-xs text-amber-200/80 mb-2">Capped On:</div>
+                    {capDates.map((date, index) => (
+                      <div key={index} className="text-xs text-slate-300 py-0.5">
+                        {formatCapDate(date)}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-400">No cap dates recorded</div>
+                )
+              }
+            >
               <div className="inline-flex items-stretch overflow-hidden shrink-0 whitespace-nowrap">
                 <div className="bg-slate-700/30 flex items-center justify-center px-2 py-0.5 sm:px-2.5 sm:py-1">
                   <img 

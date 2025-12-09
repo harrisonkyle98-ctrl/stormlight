@@ -37,10 +37,10 @@ except Exception as e:
     PRISMA_AVAILABLE = False
     Prisma = None
 try:
-    from .database import init_database, get_db_connection, collect_daily_player_stats, collect_daily_player_stats_multi_cycle, collect_daily_activities_and_drops
+    from .database import init_database, get_db_connection, collect_daily_player_stats, collect_daily_player_stats_multi_cycle, collect_daily_activities_and_drops, backfill_total_caps_from_activities
     from .admin_utils import log_admin_action, calculate_rank_needed, get_site_health_status, create_competition_snapshot
 except ImportError:
-    from database import init_database, get_db_connection, collect_daily_player_stats, collect_daily_player_stats_multi_cycle, collect_daily_activities_and_drops
+    from database import init_database, get_db_connection, collect_daily_player_stats, collect_daily_player_stats_multi_cycle, collect_daily_activities_and_drops, backfill_total_caps_from_activities
     from admin_utils import log_admin_action, calculate_rank_needed, get_site_health_status, create_competition_snapshot
 
 BOSS_DROPS_DATASET = {}
@@ -2993,7 +2993,7 @@ async def get_player_activities(
 
 @api_router.get("/player/{username}/citadel-caps")
 async def get_player_citadel_caps(username: str):
-    """Get the total count of citadel caps for a specific player"""
+    """Get the total count of citadel caps and cap dates for a specific player"""
     from urllib.parse import unquote
     decoded_username = unquote(username).replace('-', ' ')
     
@@ -3004,18 +3004,28 @@ async def get_player_citadel_caps(username: str):
             print(f"❌ Prisma not available for citadel caps count")
             raise HTTPException(status_code=503, detail="Database connection unavailable")
         
-        caps_count = await prisma.clanactivity.count(
+        member = await prisma.clanmember.find_first(
+            where={'username': {'equals': decoded_username, 'mode': 'insensitive'}}
+        )
+        
+        total_caps = member.totalCaps if member else 0
+        
+        cap_activities = await prisma.clanactivity.find_many(
             where={
                 'username': decoded_username,
                 'text': 'Capped at my Clan Citadel.'
-            }
+            },
+            order_by={'activity_timestamp': 'desc'}
         )
         
-        print(f"Found {caps_count} citadel caps for {decoded_username}")
+        cap_dates = [activity.activity_date for activity in cap_activities if activity.activity_date]
+        
+        print(f"Found {total_caps} total citadel caps for {decoded_username} ({len(cap_dates)} dates)")
         
         return {
             "username": decoded_username,
-            "total_caps": caps_count
+            "total_caps": total_caps,
+            "cap_dates": cap_dates
         }
         
     except Exception as e:
@@ -8868,6 +8878,13 @@ async def startup_event():
         
         await init_database()
         
+        try:
+            conn = await get_db_connection()
+            async with conn:
+                await backfill_total_caps_from_activities(conn)
+        except Exception as e:
+            print(f"❌ Error during total_caps backfill: {e}")
+        
         app.state.snapshot_lock = asyncio.Lock()
         app.state.sync_lock = asyncio.Lock()
         app.state.last_snapshot_date_utc = None
@@ -8957,17 +8974,6 @@ async def startup_event():
                             print(f"❌ [Scheduler][HOURLY] Error in activity/drop collection: {e}")
                             import traceback
                             traceback.print_exc()
-                        
-                        try:
-                            conn = await get_db_connection()
-                            async with conn:
-                                try:
-                                    from .database import cleanup_old_activities
-                                except ImportError:
-                                    from database import cleanup_old_activities
-                                await cleanup_old_activities(conn, days_to_keep=30)
-                        except Exception as e:
-                            print(f"❌ [Scheduler][HOURLY] Error cleaning up activities: {e}")
                         
                         print(f"🏆 [Scheduler][HOURLY] Checking competition events at {now.isoformat()}Z")
                         try:
