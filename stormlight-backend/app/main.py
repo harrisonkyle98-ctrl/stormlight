@@ -3018,7 +3018,7 @@ async def get_player_citadel_caps(username: str):
             order={'activityTimestamp': 'desc'}
         )
         
-        cap_dates = [activity.activity_date for activity in cap_activities if activity.activity_date]
+        cap_dates = [activity.activityDate for activity in cap_activities if activity.activityDate]
         
         print(f"Found {total_caps} total citadel caps for {decoded_username} ({len(cap_dates)} dates)")
         
