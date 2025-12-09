@@ -9334,7 +9334,11 @@ async def debug_scheduler_health():
 
 app.include_router(api_router)
 
-app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
+static_assets_path = Path("static/assets")
+if static_assets_path.exists():
+    app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
+else:
+    print("Warning: static/assets directory not found; skipping /assets mount")
 
 @app.get("/{full_path:path}")
 async def serve_react_app(full_path: str):
