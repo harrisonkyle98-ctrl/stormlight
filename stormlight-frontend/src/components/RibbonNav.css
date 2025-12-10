@@ -70,19 +70,19 @@
     0 calc(100% - var(--r))
   );
   
-  /* Material styling - matches header ribbon lighting system (brightened) */
+  /* Material styling - matches header ribbon lighting system (reduced) */
   background:
-    /* Top highlight - brighter top-edge highlight */
+    /* Top highlight - subtle top-edge highlight */
     linear-gradient(
       to bottom,
-      rgba(255, 255, 255, 0.18) 0%,
-      rgba(255, 255, 255, 0.08) 3%,
+      rgba(255, 255, 255, 0.10) 0%,
+      rgba(255, 255, 255, 0.04) 3%,
       rgba(255, 255, 255, 0) 8%
     ),
-    /* Ambient fantasy glow - brighter magical sheen */
+    /* Ambient fantasy glow - subtle magical sheen */
     radial-gradient(
       circle at center,
-      rgba(255, 255, 255, 0.18) 0%,
+      rgba(255, 255, 255, 0.10) 0%,
       rgba(255, 255, 255, 0) 70%
     ),
     /* Ribbon fold shading - left side */
@@ -101,10 +101,10 @@
       var(--nav-color-bot)
     );
   
-  /* Same style of depth as banner (brightened) */
+  /* Same style of depth as banner (reduced lighting) */
   box-shadow:
     0 6px 10px rgba(0, 0, 0, 0.18),
-    inset 0 0 12px rgba(255, 255, 255, 0.22);
+    inset 0 0 12px rgba(255, 255, 255, 0.12);
   
   /* Hover animation - simple upward movement */
   transition: transform 0.2s ease;
@@ -113,7 +113,7 @@
   pointer-events: auto;
 }
 
-/* Cloth fiber grain + ripple/drape effect overlay - matches header ribbon (brightened) */
+/* Cloth fiber grain + ripple/drape effect overlay - matches header ribbon (reduced lighting) */
 .nav-ribbon::before {
   content: "";
   position: absolute;
@@ -130,16 +130,16 @@
       transparent 1px,
       transparent 3px
     ),
-    /* Ripple bulge highlight - cloth drape center (brightened) */
+    /* Ripple bulge highlight - cloth drape center (reduced) */
     radial-gradient(
       ellipse at center,
-      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.06) 0%,
       rgba(255, 255, 255, 0) 70%
     ),
-    /* Vertical fade from top - drape shadow (brightened) */
+    /* Vertical fade from top - drape shadow (reduced) */
     linear-gradient(
       to bottom,
-      rgba(255, 255, 255, 0.16) 0%,
+      rgba(255, 255, 255, 0.08) 0%,
       rgba(255, 255, 255, 0) 30%
     );
 }
