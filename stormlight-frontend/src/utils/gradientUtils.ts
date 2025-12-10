@@ -154,7 +154,17 @@ export const checkPlayerMilestones = (stats: any, questData?: any, clanRank?: st
   
   const totalXp = skills.reduce((sum, [_, data]: [string, any]) => sum + (data.xp || 0), 0)
   
-  if (totalXp >= 5800000000) {
+  // Maxed -> Master Maxed -> Max XP hierarchy - only show ONE badge (highest tier)
+  const isMaxXp = totalXp >= 5800000000
+  
+  const masterMaxedSkills = skills.filter(([_, data]: [string, any]) => data.level >= 120)
+  const isMasterMaxed = masterMaxedSkills.length === skills.length
+  
+  const maxedSkills = skills.filter(([_, data]: [string, any]) => data.level >= 99)
+  const isMaxed = maxedSkills.length === skills.length
+  
+  // Max XP takes priority over Master Maxed, which takes priority over Maxed
+  if (isMaxXp) {
     const maxXpBadge = {
       id: 'max-xp',
       name: 'Max XP',
@@ -162,16 +172,7 @@ export const checkPlayerMilestones = (stats: any, questData?: any, clanRank?: st
       icon: '/icons/xp.png'
     }
     badges.push(maxXpBadge)
-  }
-  
-  // Maxed / Master Maxed hierarchy - only show one (Master Maxed takes priority)
-  const masterMaxedSkills = skills.filter(([_, data]: [string, any]) => data.level >= 120)
-  const isMasterMaxed = masterMaxedSkills.length === skills.length
-  
-  const maxedSkills = skills.filter(([_, data]: [string, any]) => data.level >= 99)
-  const isMaxed = maxedSkills.length === skills.length
-  
-  if (isMasterMaxed) {
+  } else if (isMasterMaxed) {
     const masterMaxedBadge = {
       id: 'master-maxed',
       name: 'Master Maxed',

@@ -230,10 +230,11 @@ PVM_BADGES = [
 ]
 
 # API Badges - Badges based on game achievements from the RuneScape API
-# Includes: Maxed hierarchy, Max XP, Quest Cape, and Leagues Catalyst tiers
+# Includes: Maxed -> Master Maxed -> Max XP hierarchy, Quest Cape, and Leagues Catalyst tiers
 # Colors match profile badge rendering in gradientUtils.ts exactly
 API_BADGES = [
-    # Maxed -> Master Maxed hierarchy (solid colors matching profile rendering)
+    # Maxed -> Master Maxed -> Max XP hierarchy (solid colors matching profile rendering)
+    # Users only show ONE badge from this hierarchy (highest tier they qualify for)
     {
         'name': 'Maxed',
         'tier': 1,
@@ -250,14 +251,13 @@ API_BADGES = [
         'icon': '/icons/overall.png',
         'description': 'All skills at level 120'
     },
-    # Max XP Badge - standalone achievement (solid color matching profile rendering)
     {
         'name': 'Max XP',
-        'tier': None,
-        'hierarchy_path': None,
+        'tier': 3,
+        'hierarchy_path': 'MAXED',
         'gradient_colors': ['#bf0026', '#bf0026'],
         'icon': '/icons/xp.png',
-        'description': '5.8 billion total XP'
+        'description': '5.8 billion total XP (upgrades from Master Maxed)'
     },
     # Quest Cape Badge - standalone achievement (solid color matching profile rendering)
     {
