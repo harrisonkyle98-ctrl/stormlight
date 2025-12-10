@@ -229,9 +229,10 @@ PVM_BADGES = [
     }
 ]
 
-# API Badges - Hierarchical badges based on game achievements
-# Maxed -> Master Max hierarchy
+# API Badges - Badges based on game achievements from the RuneScape API
+# Includes: Maxed hierarchy, Max XP, Quest Cape, and Leagues Catalyst tiers
 API_BADGES = [
+    # Maxed -> Master Max hierarchy
     {
         'name': 'Maxed',
         'tier': 1,
@@ -247,6 +248,81 @@ API_BADGES = [
         'gradient_colors': ['#99001f', '#ff4d6a'],
         'icon': '/icons/overall.png',
         'description': 'All skills at level 120'
+    },
+    # Max XP Badge - standalone achievement
+    {
+        'name': 'Max XP',
+        'tier': None,
+        'hierarchy_path': None,
+        'gradient_colors': ['#bf0026', '#ff6b6b'],
+        'icon': '/icons/xp.png',
+        'description': '5.8 billion total XP'
+    },
+    # Quest Cape Badge - standalone achievement
+    {
+        'name': 'Quest Cape',
+        'tier': None,
+        'hierarchy_path': None,
+        'gradient_colors': ['#438da9', '#8fd4f0'],
+        'icon': '/assets/ranks/quest.png',
+        'description': 'All quests completed'
+    },
+    # Leagues: Catalyst Badges - 7 tier hierarchy
+    {
+        'name': 'Leagues: Bronze',
+        'tier': 1,
+        'hierarchy_path': 'LEAGUES_CATALYST',
+        'gradient_colors': ['#cd7f32', '#e8c496'],
+        'icon': '/assets/badges/league_bronze.png',
+        'description': 'Leagues Bronze tier'
+    },
+    {
+        'name': 'Leagues: Iron',
+        'tier': 2,
+        'hierarchy_path': 'LEAGUES_CATALYST',
+        'gradient_colors': ['#6b6b6b', '#b8b8b8'],
+        'icon': '/assets/badges/league_iron.png',
+        'description': 'Leagues Iron tier'
+    },
+    {
+        'name': 'Leagues: Steel',
+        'tier': 3,
+        'hierarchy_path': 'LEAGUES_CATALYST',
+        'gradient_colors': ['#71797E', '#c0c0c0'],
+        'icon': '/assets/badges/league_steel.png',
+        'description': 'Leagues Steel tier'
+    },
+    {
+        'name': 'Leagues: Mithril',
+        'tier': 4,
+        'hierarchy_path': 'LEAGUES_CATALYST',
+        'gradient_colors': ['#4a5d8a', '#a8c4e8'],
+        'icon': '/assets/badges/league_mithril.png',
+        'description': 'Leagues Mithril tier'
+    },
+    {
+        'name': 'Leagues: Adamant',
+        'tier': 5,
+        'hierarchy_path': 'LEAGUES_CATALYST',
+        'gradient_colors': ['#2e5d3a', '#7bc98f'],
+        'icon': '/assets/badges/league_adamant.png',
+        'description': 'Leagues Adamant tier'
+    },
+    {
+        'name': 'Leagues: Rune',
+        'tier': 6,
+        'hierarchy_path': 'LEAGUES_CATALYST',
+        'gradient_colors': ['#00b7eb', '#7fdbff'],
+        'icon': '/assets/badges/league_rune.png',
+        'description': 'Leagues Rune tier'
+    },
+    {
+        'name': 'Leagues: Dragon',
+        'tier': 7,
+        'hierarchy_path': 'LEAGUES_CATALYST',
+        'gradient_colors': ['#8b0000', '#ff4500'],
+        'icon': '/assets/badges/league_dragon.png',
+        'description': 'Leagues Dragon tier'
     }
 ]
 
