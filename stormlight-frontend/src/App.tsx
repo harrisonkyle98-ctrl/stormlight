@@ -4,6 +4,7 @@ import { Spinner } from './components/ui/spinner'
 import AnimatedHeader from './components/AnimatedHeader'
 import Home from './pages/Home'
 import Hiscores from './pages/Hiscores'
+import ClanHiscores from './pages/ClanHiscores'
 import Members from './pages/Members'
 import PlayerProfile from './pages/PlayerProfile'
 import Competitions from './pages/Competitions'
@@ -42,9 +43,10 @@ function AppContent() {
         <main className="w-full px-6 py-4">
         <div className="max-w-7xl mx-auto">
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/hiscores" element={<Hiscores />} />
-            <Route path="/members" element={<Members />} />
+                        <Route path="/" element={<Home />} />
+                        <Route path="/hiscores" element={<Hiscores />} />
+                        <Route path="/clan-hiscores" element={<ClanHiscores />} />
+                        <Route path="/members" element={<Members />} />
             <Route path="/clan-member/:username" element={<PlayerProfile />} />
             <Route path="/competitions" element={<Competitions />} />
             <Route path="/competitions/:id" element={<CompetitionDetail />} />

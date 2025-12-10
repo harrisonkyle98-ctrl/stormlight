@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Home, Users, Trophy } from 'lucide-react'
+import { Home, Users, Trophy, BarChart3 } from 'lucide-react'
 import { Tooltip } from './ui/tooltip'
 import './RibbonNav.css'
 
@@ -13,12 +13,13 @@ interface NavItem {
 const RibbonNav = () => {
   const location = useLocation()
 
-  // All navigation ribbons now use blue
-  const navItems: NavItem[] = [
-    { path: '/', label: 'Home', icon: Home, variant: 'blue' },
-    { path: '/members', label: 'Members', icon: Users, variant: 'blue' },
-    { path: '/competitions', label: 'Competitions', icon: Trophy, variant: 'blue' },
-  ]
+    // All navigation ribbons now use blue
+    const navItems: NavItem[] = [
+      { path: '/', label: 'Home', icon: Home, variant: 'blue' },
+      { path: '/members', label: 'Members', icon: Users, variant: 'blue' },
+      { path: '/competitions', label: 'Competitions', icon: Trophy, variant: 'blue' },
+      { path: '/clan-hiscores', label: 'Clan Hiscores', icon: BarChart3, variant: 'blue' },
+    ]
 
   const isActive = (path: string) => location.pathname === path
 
