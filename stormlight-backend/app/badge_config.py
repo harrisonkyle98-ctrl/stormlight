@@ -267,62 +267,62 @@ API_BADGES = [
         'icon': '/assets/ranks/quest.png',
         'description': 'All quests completed'
     },
-    # Leagues: Catalyst Badges - 7 tier hierarchy
+    # Leagues: Catalyst Badges - 7 tier hierarchy (colors match profile badge rendering in gradientUtils.ts)
     {
-        'name': 'Leagues: Bronze',
+        'name': 'Leagues: Catalyst – Bronze',
         'tier': 1,
         'hierarchy_path': 'LEAGUES_CATALYST',
-        'gradient_colors': ['#cd7f32', '#e8c496'],
+        'gradient_colors': ['#9c7445', '#9c7445'],
         'icon': '/assets/badges/league_bronze.png',
-        'description': 'Leagues Bronze tier'
+        'description': 'Leagues: Catalyst Bronze tier (2,000+ points)'
     },
     {
-        'name': 'Leagues: Iron',
+        'name': 'Leagues: Catalyst – Iron',
         'tier': 2,
         'hierarchy_path': 'LEAGUES_CATALYST',
-        'gradient_colors': ['#6b6b6b', '#b8b8b8'],
+        'gradient_colors': ['#969696', '#969696'],
         'icon': '/assets/badges/league_iron.png',
-        'description': 'Leagues Iron tier'
+        'description': 'Leagues: Catalyst Iron tier (4,000+ points)'
     },
     {
-        'name': 'Leagues: Steel',
+        'name': 'Leagues: Catalyst – Steel',
         'tier': 3,
         'hierarchy_path': 'LEAGUES_CATALYST',
-        'gradient_colors': ['#71797E', '#c0c0c0'],
+        'gradient_colors': ['#999999', '#eeeeee'],
         'icon': '/assets/badges/league_steel.png',
-        'description': 'Leagues Steel tier'
+        'description': 'Leagues: Catalyst Steel tier (10,000+ points)'
     },
     {
-        'name': 'Leagues: Mithril',
+        'name': 'Leagues: Catalyst – Mithril',
         'tier': 4,
         'hierarchy_path': 'LEAGUES_CATALYST',
-        'gradient_colors': ['#4a5d8a', '#a8c4e8'],
+        'gradient_colors': ['#565165', '#b0b0e0'],
         'icon': '/assets/badges/league_mithril.png',
-        'description': 'Leagues Mithril tier'
+        'description': 'Leagues: Catalyst Mithril tier (20,000+ points)'
     },
     {
-        'name': 'Leagues: Adamant',
+        'name': 'Leagues: Catalyst – Adamant',
         'tier': 5,
         'hierarchy_path': 'LEAGUES_CATALYST',
-        'gradient_colors': ['#2e5d3a', '#7bc98f'],
+        'gradient_colors': ['#546f66', '#85b1a2'],
         'icon': '/assets/badges/league_adamant.png',
-        'description': 'Leagues Adamant tier'
+        'description': 'Leagues: Catalyst Adamant tier (30,000+ points)'
     },
     {
-        'name': 'Leagues: Rune',
+        'name': 'Leagues: Catalyst – Rune',
         'tier': 6,
         'hierarchy_path': 'LEAGUES_CATALYST',
-        'gradient_colors': ['#00b7eb', '#7fdbff'],
+        'gradient_colors': ['#618a95', '#9ddff2'],
         'icon': '/assets/badges/league_rune.png',
-        'description': 'Leagues Rune tier'
+        'description': 'Leagues: Catalyst Rune tier (45,000+ points)'
     },
     {
-        'name': 'Leagues: Dragon',
+        'name': 'Leagues: Catalyst – Dragon',
         'tier': 7,
         'hierarchy_path': 'LEAGUES_CATALYST',
-        'gradient_colors': ['#8b0000', '#ff4500'],
+        'gradient_colors': ['#b44f5f', '#faa3b0'],
         'icon': '/assets/badges/league_dragon.png',
-        'description': 'Leagues Dragon tier'
+        'description': 'Leagues: Catalyst Dragon tier (60,000+ points)'
     }
 ]
 
