@@ -35,6 +35,15 @@ interface CompetitionLeaderboard {
   previousRank?: number | null
 }
 
+interface RewardBadge {
+  id: string
+  name: string
+  description?: string
+  imageUrl: string
+  backgroundColor?: string
+  gradientColors?: string[]
+}
+
 interface CompetitionDetailData {
   id: string
   name: string
@@ -53,6 +62,7 @@ interface CompetitionDetailData {
   rewardSecondGp?: number
   rewardThirdGp?: number
   rewardBadgeId?: string
+  rewardBadge?: RewardBadge
 }
 
 interface CustomBadge {
@@ -842,22 +852,26 @@ const CompetitionDetail = () => {
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-400">{(competition.rewardFirstGp / 1000000).toFixed(0)}M GP</div>
-                    {competition.rewardBadgeId && (
+                    {competition.rewardBadge && (
                       <div className="mt-3 flex items-center justify-center">
-                        <div 
-                          className="relative"
+                        <div
+                          className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white"
                           style={{
+                            background: competition.rewardBadge.gradientColors 
+                              ? `linear-gradient(135deg, ${competition.rewardBadge.gradientColors[0]}, ${competition.rewardBadge.gradientColors[1]})`
+                              : competition.rewardBadge.backgroundColor || '#6b7280',
                             filter: 'drop-shadow(0 0 8px rgba(255, 215, 0, 0.6)) drop-shadow(0 0 16px rgba(255, 215, 0, 0.4))'
                           }}
                         >
                           <img 
-                            src={`${API_URL}/api/badges/${competition.rewardBadgeId}/image`}
-                            alt="Competition Badge"
-                            className="w-12 h-12"
+                            src={competition.rewardBadge.imageUrl}
+                            alt={competition.rewardBadge.name}
+                            className="w-4 h-4"
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display = 'none'
                             }}
                           />
+                          <span>{competition.rewardBadge.name}</span>
                         </div>
                       </div>
                     )}

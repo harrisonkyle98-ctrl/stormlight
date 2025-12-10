@@ -3262,7 +3262,10 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
             
             competition = await prisma.competition.find_unique(
                 where={'id': competition_id},
-                include={'entries': {'include': {'member': True}}}
+                include={
+                    'entries': {'include': {'member': True}},
+                    'rewardBadge': True
+                }
             )
             
             print(f"[get_competition] Prisma lookup result: {'FOUND' if competition else 'NOT FOUND'}")
@@ -3552,6 +3555,19 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
             total_participants = len(leaderboard)
             top_10 = leaderboard[:10] if len(leaderboard) >= 10 else leaderboard
             
+            # Build reward badge object if it exists
+            reward_badge = None
+            if competition.rewardBadge:
+                b = competition.rewardBadge
+                reward_badge = {
+                    'id': b.id,
+                    'name': b.name,
+                    'description': b.description,
+                    'imageUrl': b.imageUrl,
+                    'backgroundColor': b.backgroundColor,
+                    'gradientColors': b.gradientColors
+                }
+            
             return {
                 "id": competition.id,
                 "name": competition.name,
@@ -3568,6 +3584,7 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
                 "rewardSecondGp": competition.rewardSecondGp,
                 "rewardThirdGp": competition.rewardThirdGp,
                 "rewardBadgeId": competition.rewardBadgeId,
+                "rewardBadge": reward_badge,
                 "createdAt": competition.createdAt.isoformat() if competition.createdAt else None,
                 "updatedAt": competition.updatedAt.isoformat() if competition.updatedAt else None,
                 "leaderboard": leaderboard,
