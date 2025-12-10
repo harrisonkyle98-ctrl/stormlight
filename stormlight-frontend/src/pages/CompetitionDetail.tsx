@@ -793,233 +793,170 @@ const CompetitionDetail = () => {
             </div>
           </div>
 
+        {/* Competition Rewards - 3 profile-card-style columns without wrapper */}
         {(competition.rewardFirstGp || competition.rewardSecondGp || competition.rewardThirdGp) && (
-          <div className="fantasy-section mb-6">
-            <h3 className="text-white flex items-center space-x-2 text-xl font-bold mb-4">
-              <Trophy className="w-5 h-5 text-yellow-400" />
-              <span>Competition Rewards</span>
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* 1st Place - Gold Card */}
-              {competition.rewardFirstGp && (
-                <div 
-                  className="fantasy-section rounded-lg overflow-hidden"
-                  style={{ 
-                    background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
-                    border: '1px solid rgba(255, 215, 0, 0.3)'
-                  }}
-                >
-                  {/* Winner Header Section */}
-                  <div className="p-4 border-b border-slate-700/50">
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="w-12 h-12 flex-shrink-0 ring-2 ring-yellow-500/50">
-                        {leaderboardData.find(p => p.rank === 1) ? (
-                          <AvatarImage
-                            src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(leaderboardData.find(p => p.rank === 1)!.username.replace(/\u00A0/g, ' '))}/chat.png`}
-                            alt={leaderboardData.find(p => p.rank === 1)!.username}
-                          />
-                        ) : null}
-                        <AvatarFallback className="bg-yellow-600/30 text-yellow-400">
-                          <User className="w-6 h-6" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        {leaderboardData.find(p => p.rank === 1) ? (
-                          <>
-                            <Link 
-                              to={`/clan-member/${usernameToUrl(leaderboardData.find(p => p.rank === 1)!.username)}`}
-                              className="text-lg font-semibold hover:text-yellow-400 transition-colors block truncate"
-                            >
-                              <Username
-                                username={leaderboardData.find(p => p.rank === 1)!.username}
-                                clanRank={clanMembers.find(m => m.username === leaderboardData.find(p => p.rank === 1)!.username)?.clan_rank}
-                              />
-                            </Link>
-                            <div className="flex items-center mt-1">
-                              {(() => {
-                                const winner = leaderboardData.find(p => p.rank === 1)
-                                const memberData = clanMembers.find(m => m.username === winner?.username)
-                                if (memberData?.clan_rank) {
-                                  return (
-                                    <div className="px-2 py-0.5 text-xs font-semibold rounded-md text-white bg-slate-600/80">
-                                      {memberData.clan_rank}
-                                    </div>
-                                  )
-                                }
-                                return null
-                              })()}
-                            </div>
-                          </>
-                        ) : (
-                          <div className="text-slate-400 italic">TBD</div>
-                        )}
-                      </div>
-                    </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {/* 1st Place - Gold Card */}
+            {competition.rewardFirstGp && (
+              <div 
+                className="fantasy-section rounded-lg overflow-hidden"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
+                  border: '1px solid rgba(255, 215, 0, 0.3)'
+                }}
+              >
+                {/* Winner Header Section */}
+                <div className="p-4 border-b border-slate-700/50">
+                  <div className="flex items-center justify-center">
+                    <Avatar className="w-16 h-16 flex-shrink-0 ring-2 ring-yellow-500/50">
+                      {leaderboardData.find(p => p.rank === 1) ? (
+                        <AvatarImage
+                          src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(leaderboardData.find(p => p.rank === 1)!.username.replace(/\u00A0/g, ' '))}/chat.png`}
+                          alt={leaderboardData.find(p => p.rank === 1)!.username}
+                        />
+                      ) : null}
+                      <AvatarFallback className="bg-yellow-600/30 text-yellow-400">
+                        <User className="w-8 h-8" />
+                      </AvatarFallback>
+                    </Avatar>
                   </div>
-                  {/* Rewards Section */}
-                  <div className="p-4">
-                    <div className="text-center mb-3">
-                      <div className="text-3xl mb-1">🥇</div>
-                      <div className="text-sm text-yellow-400 font-semibold">1st Place</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-400">{(competition.rewardFirstGp / 1000000).toFixed(0)}M GP</div>
-                      {competition.rewardBadgeId && (
-                        <div className="mt-2 flex items-center justify-center gap-2">
-                          <img 
-                            src={`${API_URL}/api/badges/${competition.rewardBadgeId}/image`}
-                            alt="Competition Badge"
-                            className="w-5 h-5"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none'
-                            }}
-                          />
-                          <span className="text-xs text-green-400">+ Competition Badge</span>
-                        </div>
-                      )}
-                    </div>
+                  <div className="text-center mt-3">
+                    {leaderboardData.find(p => p.rank === 1) ? (
+                      <Link 
+                        to={`/clan-member/${usernameToUrl(leaderboardData.find(p => p.rank === 1)!.username)}`}
+                        className="text-lg font-semibold hover:text-yellow-400 transition-colors"
+                      >
+                        {leaderboardData.find(p => p.rank === 1)!.username}
+                      </Link>
+                    ) : (
+                      <div className="text-slate-400 italic">TBD</div>
+                    )}
                   </div>
                 </div>
-              )}
+                {/* Rewards Section */}
+                <div className="p-4">
+                  <div className="text-center mb-3">
+                    <div className="text-3xl mb-1">🥇</div>
+                    <div className="text-sm text-yellow-400 font-semibold">1st Place</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-400">{(competition.rewardFirstGp / 1000000).toFixed(0)}M GP</div>
+                    {competition.rewardBadgeId && (
+                      <div className="mt-2 flex items-center justify-center">
+                        <img 
+                          src={`${API_URL}/api/badges/${competition.rewardBadgeId}/image`}
+                          alt="Competition Badge"
+                          className="w-8 h-8"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none'
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
-              {/* 2nd Place - Silver Card */}
-              {competition.rewardSecondGp && (
-                <div 
-                  className="fantasy-section rounded-lg overflow-hidden"
-                  style={{ 
-                    background: 'linear-gradient(135deg, rgba(192, 192, 192, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
-                    border: '1px solid rgba(192, 192, 192, 0.3)'
-                  }}
-                >
-                  {/* Winner Header Section */}
-                  <div className="p-4 border-b border-slate-700/50">
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="w-12 h-12 flex-shrink-0 ring-2 ring-gray-400/50">
-                        {leaderboardData.find(p => p.rank === 2) ? (
-                          <AvatarImage
-                            src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(leaderboardData.find(p => p.rank === 2)!.username.replace(/\u00A0/g, ' '))}/chat.png`}
-                            alt={leaderboardData.find(p => p.rank === 2)!.username}
-                          />
-                        ) : null}
-                        <AvatarFallback className="bg-gray-500/30 text-gray-300">
-                          <User className="w-6 h-6" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        {leaderboardData.find(p => p.rank === 2) ? (
-                          <>
-                            <Link 
-                              to={`/clan-member/${usernameToUrl(leaderboardData.find(p => p.rank === 2)!.username)}`}
-                              className="text-lg font-semibold hover:text-gray-300 transition-colors block truncate"
-                            >
-                              <Username
-                                username={leaderboardData.find(p => p.rank === 2)!.username}
-                                clanRank={clanMembers.find(m => m.username === leaderboardData.find(p => p.rank === 2)!.username)?.clan_rank}
-                              />
-                            </Link>
-                            <div className="flex items-center mt-1">
-                              {(() => {
-                                const winner = leaderboardData.find(p => p.rank === 2)
-                                const memberData = clanMembers.find(m => m.username === winner?.username)
-                                if (memberData?.clan_rank) {
-                                  return (
-                                    <div className="px-2 py-0.5 text-xs font-semibold rounded-md text-white bg-slate-600/80">
-                                      {memberData.clan_rank}
-                                    </div>
-                                  )
-                                }
-                                return null
-                              })()}
-                            </div>
-                          </>
-                        ) : (
-                          <div className="text-slate-400 italic">TBD</div>
-                        )}
-                      </div>
-                    </div>
+            {/* 2nd Place - Silver Card */}
+            {competition.rewardSecondGp && (
+              <div 
+                className="fantasy-section rounded-lg overflow-hidden"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(192, 192, 192, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
+                  border: '1px solid rgba(192, 192, 192, 0.3)'
+                }}
+              >
+                {/* Winner Header Section */}
+                <div className="p-4 border-b border-slate-700/50">
+                  <div className="flex items-center justify-center">
+                    <Avatar className="w-16 h-16 flex-shrink-0 ring-2 ring-gray-400/50">
+                      {leaderboardData.find(p => p.rank === 2) ? (
+                        <AvatarImage
+                          src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(leaderboardData.find(p => p.rank === 2)!.username.replace(/\u00A0/g, ' '))}/chat.png`}
+                          alt={leaderboardData.find(p => p.rank === 2)!.username}
+                        />
+                      ) : null}
+                      <AvatarFallback className="bg-gray-500/30 text-gray-300">
+                        <User className="w-8 h-8" />
+                      </AvatarFallback>
+                    </Avatar>
                   </div>
-                  {/* Rewards Section */}
-                  <div className="p-4">
-                    <div className="text-center mb-3">
-                      <div className="text-3xl mb-1">🥈</div>
-                      <div className="text-sm text-gray-300 font-semibold">2nd Place</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-400">{(competition.rewardSecondGp / 1000000).toFixed(0)}M GP</div>
-                    </div>
+                  <div className="text-center mt-3">
+                    {leaderboardData.find(p => p.rank === 2) ? (
+                      <Link 
+                        to={`/clan-member/${usernameToUrl(leaderboardData.find(p => p.rank === 2)!.username)}`}
+                        className="text-lg font-semibold hover:text-gray-300 transition-colors"
+                      >
+                        {leaderboardData.find(p => p.rank === 2)!.username}
+                      </Link>
+                    ) : (
+                      <div className="text-slate-400 italic">TBD</div>
+                    )}
                   </div>
                 </div>
-              )}
+                {/* Rewards Section */}
+                <div className="p-4">
+                  <div className="text-center mb-3">
+                    <div className="text-3xl mb-1">🥈</div>
+                    <div className="text-sm text-gray-300 font-semibold">2nd Place</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-400">{(competition.rewardSecondGp / 1000000).toFixed(0)}M GP</div>
+                  </div>
+                </div>
+              </div>
+            )}
 
-              {/* 3rd Place - Bronze Card */}
-              {competition.rewardThirdGp && (
-                <div 
-                  className="fantasy-section rounded-lg overflow-hidden"
-                  style={{ 
-                    background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
-                    border: '1px solid rgba(205, 127, 50, 0.3)'
-                  }}
-                >
-                  {/* Winner Header Section */}
-                  <div className="p-4 border-b border-slate-700/50">
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="w-12 h-12 flex-shrink-0 ring-2 ring-amber-600/50">
-                        {leaderboardData.find(p => p.rank === 3) ? (
-                          <AvatarImage
-                            src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(leaderboardData.find(p => p.rank === 3)!.username.replace(/\u00A0/g, ' '))}/chat.png`}
-                            alt={leaderboardData.find(p => p.rank === 3)!.username}
-                          />
-                        ) : null}
-                        <AvatarFallback className="bg-amber-600/30 text-amber-400">
-                          <User className="w-6 h-6" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        {leaderboardData.find(p => p.rank === 3) ? (
-                          <>
-                            <Link 
-                              to={`/clan-member/${usernameToUrl(leaderboardData.find(p => p.rank === 3)!.username)}`}
-                              className="text-lg font-semibold hover:text-amber-400 transition-colors block truncate"
-                            >
-                              <Username
-                                username={leaderboardData.find(p => p.rank === 3)!.username}
-                                clanRank={clanMembers.find(m => m.username === leaderboardData.find(p => p.rank === 3)!.username)?.clan_rank}
-                              />
-                            </Link>
-                            <div className="flex items-center mt-1">
-                              {(() => {
-                                const winner = leaderboardData.find(p => p.rank === 3)
-                                const memberData = clanMembers.find(m => m.username === winner?.username)
-                                if (memberData?.clan_rank) {
-                                  return (
-                                    <div className="px-2 py-0.5 text-xs font-semibold rounded-md text-white bg-slate-600/80">
-                                      {memberData.clan_rank}
-                                    </div>
-                                  )
-                                }
-                                return null
-                              })()}
-                            </div>
-                          </>
-                        ) : (
-                          <div className="text-slate-400 italic">TBD</div>
-                        )}
-                      </div>
-                    </div>
+            {/* 3rd Place - Bronze Card */}
+            {competition.rewardThirdGp && (
+              <div 
+                className="fantasy-section rounded-lg overflow-hidden"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
+                  border: '1px solid rgba(205, 127, 50, 0.3)'
+                }}
+              >
+                {/* Winner Header Section */}
+                <div className="p-4 border-b border-slate-700/50">
+                  <div className="flex items-center justify-center">
+                    <Avatar className="w-16 h-16 flex-shrink-0 ring-2 ring-amber-600/50">
+                      {leaderboardData.find(p => p.rank === 3) ? (
+                        <AvatarImage
+                          src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(leaderboardData.find(p => p.rank === 3)!.username.replace(/\u00A0/g, ' '))}/chat.png`}
+                          alt={leaderboardData.find(p => p.rank === 3)!.username}
+                        />
+                      ) : null}
+                      <AvatarFallback className="bg-amber-600/30 text-amber-400">
+                        <User className="w-8 h-8" />
+                      </AvatarFallback>
+                    </Avatar>
                   </div>
-                  {/* Rewards Section */}
-                  <div className="p-4">
-                    <div className="text-center mb-3">
-                      <div className="text-3xl mb-1">🥉</div>
-                      <div className="text-sm text-amber-400 font-semibold">3rd Place</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-400">{(competition.rewardThirdGp / 1000000).toFixed(0)}M GP</div>
-                    </div>
+                  <div className="text-center mt-3">
+                    {leaderboardData.find(p => p.rank === 3) ? (
+                      <Link 
+                        to={`/clan-member/${usernameToUrl(leaderboardData.find(p => p.rank === 3)!.username)}`}
+                        className="text-lg font-semibold hover:text-amber-400 transition-colors"
+                      >
+                        {leaderboardData.find(p => p.rank === 3)!.username}
+                      </Link>
+                    ) : (
+                      <div className="text-slate-400 italic">TBD</div>
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
+                {/* Rewards Section */}
+                <div className="p-4">
+                  <div className="text-center mb-3">
+                    <div className="text-3xl mb-1">🥉</div>
+                    <div className="text-sm text-amber-400 font-semibold">3rd Place</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-400">{(competition.rewardThirdGp / 1000000).toFixed(0)}M GP</div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
