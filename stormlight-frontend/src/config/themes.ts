@@ -53,7 +53,7 @@ export const ribbonColors: Record<string, RibbonColor> = {
   }
 }
 
-export const defaultRibbonColor = 'gold'
+export const defaultRibbonColor = 'purple'
 
 export function applyRibbonColor(color: RibbonColor) {
   const root = document.documentElement
@@ -230,7 +230,7 @@ export const themes: Record<string, Theme> = {
   }
 }
 
-export const defaultTheme = 'gold'
+export const defaultTheme = 'purple'
 
 // Legacy applyTheme function - now only applies ribbon color
 export function applyTheme(theme: Theme) {

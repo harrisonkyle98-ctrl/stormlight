@@ -7,16 +7,17 @@ interface NavItem {
   path: string
   label: string
   icon: React.ComponentType<{ className?: string }>
-  variant: 'blue' | 'magenta' | 'green'
+  variant: 'blue'
 }
 
 const RibbonNav = () => {
   const location = useLocation()
 
+  // All navigation ribbons now use blue
   const navItems: NavItem[] = [
     { path: '/', label: 'Home', icon: Home, variant: 'blue' },
-    { path: '/members', label: 'Members', icon: Users, variant: 'green' },
-    { path: '/competitions', label: 'Competitions', icon: Trophy, variant: 'magenta' },
+    { path: '/members', label: 'Members', icon: Users, variant: 'blue' },
+    { path: '/competitions', label: 'Competitions', icon: Trophy, variant: 'blue' },
   ]
 
   const isActive = (path: string) => location.pathname === path

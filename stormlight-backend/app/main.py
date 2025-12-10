@@ -2381,11 +2381,12 @@ async def update_user_theme(
             raise HTTPException(status_code=503, detail="Database not available")
         
         body = await request.json()
-        theme = body.get('theme', 'blue')
+        theme = body.get('theme', 'purple')
         
-        valid_themes = ['blue', 'crimson', 'emerald', 'obsidian', 'amethyst', 'sunset']
+        # Valid ribbon color IDs - default is now purple
+        valid_themes = ['gold', 'blue', 'green', 'purple', 'red']
         if theme not in valid_themes:
-            theme = 'blue'
+            theme = 'purple'
         
         user = await prisma.user.find_unique(
             where={'discordId': user_id}

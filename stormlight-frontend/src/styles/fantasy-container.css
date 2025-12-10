@@ -343,20 +343,20 @@
   --banner-color-bottom: var(--profile-ribbon-bottom, #967e39); /* customizable - default gold desaturated */
 }
 
-/* Members Banner Modifier - darker, richer green matching Members nav ribbon */
-/* Desaturated 17% for premium muted aesthetic */
+/* Members Banner Modifier - now uses same blue as Home page */
+/* All page headers (except admin) use the same blue */
 .fantasy-banner--members {
-  --banner-color-top: #329951;    /* emerald green - desaturated */
-  --banner-color-middle: #2a7d45; /* mid green - desaturated */
-  --banner-color-bottom: #205d34; /* deep green - desaturated */
+  --banner-color-top: #4f6ebc;    /* twilight blue - desaturated */
+  --banner-color-middle: #445ea1; /* royal storm blue - desaturated */
+  --banner-color-bottom: #394f8b; /* deep fantasy blue - desaturated */
 }
 
-/* Competitions Banner Modifier - magenta matching Competitions nav ribbon */
-/* Further desaturated for premium muted aesthetic */
+/* Competitions Banner Modifier - now uses same blue as Home page */
+/* All page headers (except admin) use the same blue */
 .fantasy-banner--competitions {
-  --banner-color-top: #9b4562;    /* bright magenta - further desaturated */
-  --banner-color-middle: #7d3a50; /* mid magenta - further desaturated */
-  --banner-color-bottom: #5b283b; /* deep magenta - further desaturated */
+  --banner-color-top: #4f6ebc;    /* twilight blue - desaturated */
+  --banner-color-middle: #445ea1; /* royal storm blue - desaturated */
+  --banner-color-bottom: #394f8b; /* deep fantasy blue - desaturated */
 }
 
 /* Admin Panel Banner Modifier - purple for admin identification */

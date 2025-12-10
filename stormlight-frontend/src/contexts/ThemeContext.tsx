@@ -25,30 +25,50 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children, user, loading }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<string>(defaultRibbonColor)
 
-  // Apply ribbon color on initial mount from localStorage
+  // Apply ribbon color based on user preferences from database (primary source)
+  // Falls back to localStorage for anonymous users, then to default (purple)
   useLayoutEffect(() => {
-    const storedColor = localStorage.getItem('ribbonColor') || defaultRibbonColor
-    const ribbonColor = ribbonColors[storedColor]
-    
-    if (ribbonColor) {
-      applyRibbonColor(ribbonColor)
-      setThemeState(storedColor)
-    } else {
-      // Fallback to default if stored color is invalid
+    if (loading) {
+      // While loading, apply default to prevent flash
       applyRibbonColor(ribbonColors[defaultRibbonColor])
       setThemeState(defaultRibbonColor)
+      return
     }
-  }, [])
 
-  // Handle user preference from database (if logged in)
-  useLayoutEffect(() => {
-    if (!loading && user) {
-      // Check if user has a ribbon color preference stored
-      const userRibbonColor = (user as any).theme || (user as any).ribbonColor
+    if (user) {
+      // For logged-in users, read from database preferences (authoritative source)
+      const prefs = (user as any).preferences || {}
+      // Parse preferences if it's a string
+      const parsedPrefs = typeof prefs === 'string' ? JSON.parse(prefs) : prefs
+      
+      // Check multiple possible keys for backward compatibility
+      const userRibbonColor = 
+        parsedPrefs.ribbon_color ||
+        parsedPrefs.ribbonColor ||
+        parsedPrefs.theme ||
+        (user as any).theme ||
+        (user as any).ribbonColor
+      
       if (userRibbonColor && ribbonColors[userRibbonColor]) {
         applyRibbonColor(ribbonColors[userRibbonColor])
         setThemeState(userRibbonColor)
+        // Also update localStorage as a cache
         localStorage.setItem('ribbonColor', userRibbonColor)
+      } else {
+        // User has no valid preference - use default (purple)
+        applyRibbonColor(ribbonColors[defaultRibbonColor])
+        setThemeState(defaultRibbonColor)
+      }
+    } else {
+      // For anonymous users, use localStorage or default
+      const storedColor = localStorage.getItem('ribbonColor')
+      if (storedColor && ribbonColors[storedColor]) {
+        applyRibbonColor(ribbonColors[storedColor])
+        setThemeState(storedColor)
+      } else {
+        // No stored preference - use default (purple)
+        applyRibbonColor(ribbonColors[defaultRibbonColor])
+        setThemeState(defaultRibbonColor)
       }
     }
   }, [user, loading])

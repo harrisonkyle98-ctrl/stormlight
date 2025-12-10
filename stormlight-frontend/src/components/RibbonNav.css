@@ -40,10 +40,10 @@
   --s: 1.2em; /* ribbon side width for fold shading */
   --d: 0.6em; /* depth / drop for fold shading */
   
-  /* Color stops - default blue brightened (overridden by variants) */
-  --nav-color-top: #738cca;
-  --nav-color-mid: #5d77ba;
-  --nav-color-bot: #4763af;
+  /* Color stops - default blue with slightly increased saturation */
+  --nav-color-top: #7a92d4;
+  --nav-color-mid: #6580c8;
+  --nav-color-bot: #506dbc;
   
   /* Layout */
   position: relative;
@@ -185,11 +185,12 @@
    COLOR VARIANTS
    ======================================== */
 
-/* Blue variant (Home) - brightened for nav visibility */
+/* Blue variant - slightly more saturated for nav visibility */
+/* All navigation ribbons now use this blue */
 .nav-ribbon--blue {
-  --nav-color-top: #738cca;
-  --nav-color-mid: #5d77ba;
-  --nav-color-bot: #4763af;
+  --nav-color-top: #7a92d4;
+  --nav-color-mid: #6580c8;
+  --nav-color-bot: #506dbc;
 }
 
 /* Magenta-red variant (Competitions) - brightened for nav visibility */
