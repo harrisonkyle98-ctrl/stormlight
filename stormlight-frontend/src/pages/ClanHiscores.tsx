@@ -306,212 +306,217 @@ const ClanHiscores = () => {
             </Button>
           </div>
 
-          {/* Top 3 Display - Competition Reward Card Style */}
-          {top3.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              {/* 1st Place - Gold Card */}
-              {top3[0] && getScoreForTab(top3[0]) > 0 && (
-                <div 
-                  className="fantasy-section overflow-hidden"
-                  style={{ 
-                    background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
-                    border: '1px solid rgba(255, 215, 0, 0.3)',
-                    borderRadius: 0
-                  }}
-                >
-                  <div className="p-4 border-b border-slate-700/50">
-                    <div className="flex items-center justify-center">
-                      <Avatar className="w-16 h-16 flex-shrink-0 ring-2 ring-yellow-500/50">
-                        <AvatarImage
-                          src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(top3[0].username.replace(/\u00A0/g, ' '))}/chat.png`}
-                          alt={top3[0].username}
-                        />
-                        <AvatarFallback className="bg-yellow-600/30 text-yellow-400">
-                          <User className="w-8 h-8" />
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-                    <div className="text-center mt-3">
-                      <Link 
-                        to={`/clan-member/${usernameToUrl(top3[0].username)}`}
-                        className="text-lg font-semibold hover:text-yellow-400 transition-colors text-white"
-                      >
-                        {top3[0].username}
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <div className="text-center mb-3">
-                      <div className="text-3xl mb-1">🥇</div>
-                      <div className="text-sm text-yellow-400 font-semibold">1st Place</div>
-                    </div>
-                    <div className="text-center mb-3">
-                      <div className="text-2xl font-bold text-green-400">{getScoreForTab(top3[0])} pts</div>
-                      <div className="text-sm text-slate-400">{getBadgeCountForTab(top3[0])} badges</div>
-                    </div>
-                    {/* Badge Display */}
-                    <div className="flex flex-wrap justify-center gap-2 mt-3">
-                      {getBadgesForTab(top3[0]).map((badge) => (
-                        <div
-                          key={badge.id}
-                          className="px-2 py-1 text-xs font-semibold flex items-center space-x-1 rounded-md text-white"
-                          style={{
-                            background: badge.gradientColors 
-                              ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
-                              : badge.backgroundColor || '#6b7280'
-                          }}
-                          title={badge.name}
-                        >
-                          {badge.imageUrl && (
-                            <img 
-                              src={badge.imageUrl}
-                              alt={badge.name}
-                              className="w-3 h-3 object-contain"
-                            />
-                          )}
-                          <span className="truncate max-w-[80px]">{badge.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
+                    {/* Top 3 Display - Competition Reward Card Style */}
+                    {top3.length > 0 && (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        {/* 1st Place - Gold Card */}
+                        {top3[0] && (
+                          <div 
+                            className="fantasy-section overflow-hidden"
+                            style={{ 
+                              background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
+                              border: '1px solid rgba(255, 215, 0, 0.3)',
+                              borderRadius: 0
+                            }}
+                          >
+                            <div className="p-4 border-b border-slate-700/50">
+                              <div className="flex items-center justify-center">
+                                <Avatar className="w-16 h-16 flex-shrink-0 ring-2 ring-yellow-500/50">
+                                  <AvatarImage
+                                    src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(top3[0].username.replace(/\u00A0/g, ' '))}/chat.png`}
+                                    alt={top3[0].username}
+                                  />
+                                  <AvatarFallback className="bg-yellow-600/30 text-yellow-400">
+                                    <User className="w-8 h-8" />
+                                  </AvatarFallback>
+                                </Avatar>
+                              </div>
+                              <div className="text-center mt-3">
+                                <Link 
+                                  to={`/clan-member/${usernameToUrl(top3[0].username)}`}
+                                  className="text-lg font-semibold hover:text-yellow-400 transition-colors text-white"
+                                >
+                                  {top3[0].username}
+                                </Link>
+                              </div>
+                            </div>
+                            <div className="p-4">
+                              <div className="text-center mb-3">
+                                <div className="text-3xl mb-1">🥇</div>
+                                <div className="text-sm text-yellow-400 font-semibold">1st Place</div>
+                              </div>
+                              {/* Badge Display - Profile-style stacked layout */}
+                              {getBadgesForTab(top3[0]).length > 0 ? (
+                                <div className="flex flex-col gap-2 mt-3">
+                                  {getBadgesForTab(top3[0]).map((badge) => (
+                                    <div
+                                      key={badge.id}
+                                      className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white"
+                                      style={{
+                                        background: badge.gradientColors 
+                                          ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
+                                          : badge.backgroundColor || '#6b7280'
+                                      }}
+                                    >
+                                      {badge.imageUrl && (
+                                        <img 
+                                          src={badge.imageUrl}
+                                          alt={badge.name}
+                                          className="w-4 h-4 object-contain"
+                                        />
+                                      )}
+                                      <span>{badge.name}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-center text-slate-400 text-sm mt-3">
+                                  No badges yet
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
 
-              {/* 2nd Place - Silver Card */}
-              {top3[1] && getScoreForTab(top3[1]) > 0 && (
-                <div 
-                  className="fantasy-section overflow-hidden"
-                  style={{ 
-                    background: 'linear-gradient(135deg, rgba(192, 192, 192, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
-                    border: '1px solid rgba(192, 192, 192, 0.3)',
-                    borderRadius: 0
-                  }}
-                >
-                  <div className="p-4 border-b border-slate-700/50">
-                    <div className="flex items-center justify-center">
-                      <Avatar className="w-16 h-16 flex-shrink-0 ring-2 ring-gray-400/50">
-                        <AvatarImage
-                          src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(top3[1].username.replace(/\u00A0/g, ' '))}/chat.png`}
-                          alt={top3[1].username}
-                        />
-                        <AvatarFallback className="bg-gray-500/30 text-gray-300">
-                          <User className="w-8 h-8" />
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-                    <div className="text-center mt-3">
-                      <Link 
-                        to={`/clan-member/${usernameToUrl(top3[1].username)}`}
-                        className="text-lg font-semibold hover:text-gray-300 transition-colors text-white"
-                      >
-                        {top3[1].username}
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <div className="text-center mb-3">
-                      <div className="text-3xl mb-1">🥈</div>
-                      <div className="text-sm text-gray-300 font-semibold">2nd Place</div>
-                    </div>
-                    <div className="text-center mb-3">
-                      <div className="text-2xl font-bold text-green-400">{getScoreForTab(top3[1])} pts</div>
-                      <div className="text-sm text-slate-400">{getBadgeCountForTab(top3[1])} badges</div>
-                    </div>
-                    <div className="flex flex-wrap justify-center gap-2 mt-3">
-                      {getBadgesForTab(top3[1]).map((badge) => (
-                        <div
-                          key={badge.id}
-                          className="px-2 py-1 text-xs font-semibold flex items-center space-x-1 rounded-md text-white"
-                          style={{
-                            background: badge.gradientColors 
-                              ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
-                              : badge.backgroundColor || '#6b7280'
-                          }}
-                          title={badge.name}
-                        >
-                          {badge.imageUrl && (
-                            <img 
-                              src={badge.imageUrl}
-                              alt={badge.name}
-                              className="w-3 h-3 object-contain"
-                            />
-                          )}
-                          <span className="truncate max-w-[80px]">{badge.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
+                        {/* 2nd Place - Silver Card */}
+                        {top3[1] && (
+                          <div 
+                            className="fantasy-section overflow-hidden"
+                            style={{ 
+                              background: 'linear-gradient(135deg, rgba(192, 192, 192, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
+                              border: '1px solid rgba(192, 192, 192, 0.3)',
+                              borderRadius: 0
+                            }}
+                          >
+                            <div className="p-4 border-b border-slate-700/50">
+                              <div className="flex items-center justify-center">
+                                <Avatar className="w-16 h-16 flex-shrink-0 ring-2 ring-gray-400/50">
+                                  <AvatarImage
+                                    src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(top3[1].username.replace(/\u00A0/g, ' '))}/chat.png`}
+                                    alt={top3[1].username}
+                                  />
+                                  <AvatarFallback className="bg-gray-500/30 text-gray-300">
+                                    <User className="w-8 h-8" />
+                                  </AvatarFallback>
+                                </Avatar>
+                              </div>
+                              <div className="text-center mt-3">
+                                <Link 
+                                  to={`/clan-member/${usernameToUrl(top3[1].username)}`}
+                                  className="text-lg font-semibold hover:text-gray-300 transition-colors text-white"
+                                >
+                                  {top3[1].username}
+                                </Link>
+                              </div>
+                            </div>
+                            <div className="p-4">
+                              <div className="text-center mb-3">
+                                <div className="text-3xl mb-1">🥈</div>
+                                <div className="text-sm text-gray-300 font-semibold">2nd Place</div>
+                              </div>
+                              {/* Badge Display - Profile-style stacked layout */}
+                              {getBadgesForTab(top3[1]).length > 0 ? (
+                                <div className="flex flex-col gap-2 mt-3">
+                                  {getBadgesForTab(top3[1]).map((badge) => (
+                                    <div
+                                      key={badge.id}
+                                      className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white"
+                                      style={{
+                                        background: badge.gradientColors 
+                                          ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
+                                          : badge.backgroundColor || '#6b7280'
+                                      }}
+                                    >
+                                      {badge.imageUrl && (
+                                        <img 
+                                          src={badge.imageUrl}
+                                          alt={badge.name}
+                                          className="w-4 h-4 object-contain"
+                                        />
+                                      )}
+                                      <span>{badge.name}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-center text-slate-400 text-sm mt-3">
+                                  No badges yet
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
 
-              {/* 3rd Place - Bronze Card */}
-              {top3[2] && getScoreForTab(top3[2]) > 0 && (
-                <div 
-                  className="fantasy-section overflow-hidden"
-                  style={{ 
-                    background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
-                    border: '1px solid rgba(205, 127, 50, 0.3)',
-                    borderRadius: 0
-                  }}
-                >
-                  <div className="p-4 border-b border-slate-700/50">
-                    <div className="flex items-center justify-center">
-                      <Avatar className="w-16 h-16 flex-shrink-0 ring-2 ring-amber-600/50">
-                        <AvatarImage
-                          src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(top3[2].username.replace(/\u00A0/g, ' '))}/chat.png`}
-                          alt={top3[2].username}
-                        />
-                        <AvatarFallback className="bg-amber-600/30 text-amber-400">
-                          <User className="w-8 h-8" />
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-                    <div className="text-center mt-3">
-                      <Link 
-                        to={`/clan-member/${usernameToUrl(top3[2].username)}`}
-                        className="text-lg font-semibold hover:text-amber-400 transition-colors text-white"
-                      >
-                        {top3[2].username}
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <div className="text-center mb-3">
-                      <div className="text-3xl mb-1">🥉</div>
-                      <div className="text-sm text-amber-400 font-semibold">3rd Place</div>
-                    </div>
-                    <div className="text-center mb-3">
-                      <div className="text-2xl font-bold text-green-400">{getScoreForTab(top3[2])} pts</div>
-                      <div className="text-sm text-slate-400">{getBadgeCountForTab(top3[2])} badges</div>
-                    </div>
-                    <div className="flex flex-wrap justify-center gap-2 mt-3">
-                      {getBadgesForTab(top3[2]).map((badge) => (
-                        <div
-                          key={badge.id}
-                          className="px-2 py-1 text-xs font-semibold flex items-center space-x-1 rounded-md text-white"
-                          style={{
-                            background: badge.gradientColors 
-                              ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
-                              : badge.backgroundColor || '#6b7280'
-                          }}
-                          title={badge.name}
-                        >
-                          {badge.imageUrl && (
-                            <img 
-                              src={badge.imageUrl}
-                              alt={badge.name}
-                              className="w-3 h-3 object-contain"
-                            />
-                          )}
-                          <span className="truncate max-w-[80px]">{badge.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+                        {/* 3rd Place - Bronze Card */}
+                        {top3[2] && (
+                          <div 
+                            className="fantasy-section overflow-hidden"
+                            style={{ 
+                              background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
+                              border: '1px solid rgba(205, 127, 50, 0.3)',
+                              borderRadius: 0
+                            }}
+                          >
+                            <div className="p-4 border-b border-slate-700/50">
+                              <div className="flex items-center justify-center">
+                                <Avatar className="w-16 h-16 flex-shrink-0 ring-2 ring-amber-600/50">
+                                  <AvatarImage
+                                    src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(top3[2].username.replace(/\u00A0/g, ' '))}/chat.png`}
+                                    alt={top3[2].username}
+                                  />
+                                  <AvatarFallback className="bg-amber-600/30 text-amber-400">
+                                    <User className="w-8 h-8" />
+                                  </AvatarFallback>
+                                </Avatar>
+                              </div>
+                              <div className="text-center mt-3">
+                                <Link 
+                                  to={`/clan-member/${usernameToUrl(top3[2].username)}`}
+                                  className="text-lg font-semibold hover:text-amber-400 transition-colors text-white"
+                                >
+                                  {top3[2].username}
+                                </Link>
+                              </div>
+                            </div>
+                            <div className="p-4">
+                              <div className="text-center mb-3">
+                                <div className="text-3xl mb-1">🥉</div>
+                                <div className="text-sm text-amber-400 font-semibold">3rd Place</div>
+                              </div>
+                              {/* Badge Display - Profile-style stacked layout */}
+                              {getBadgesForTab(top3[2]).length > 0 ? (
+                                <div className="flex flex-col gap-2 mt-3">
+                                  {getBadgesForTab(top3[2]).map((badge) => (
+                                    <div
+                                      key={badge.id}
+                                      className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white"
+                                      style={{
+                                        background: badge.gradientColors 
+                                          ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
+                                          : badge.backgroundColor || '#6b7280'
+                                      }}
+                                    >
+                                      {badge.imageUrl && (
+                                        <img 
+                                          src={badge.imageUrl}
+                                          alt={badge.name}
+                                          className="w-4 h-4 object-contain"
+                                        />
+                                      )}
+                                      <span>{badge.name}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-center text-slate-400 text-sm mt-3">
+                                  No badges yet
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
           {/* Full Leaderboard List */}
           <div className="fantasy-section">
