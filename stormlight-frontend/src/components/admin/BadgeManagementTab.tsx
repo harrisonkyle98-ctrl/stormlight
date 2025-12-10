@@ -415,16 +415,16 @@ export const BadgeManagementTab = () => {
         {categorizedBadges.CUSTOM.length === 0 ? (
           <p className="text-slate-400 text-center py-8">No custom badges created yet</p>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap gap-2">
             {categorizedBadges.CUSTOM.map((badge) => {
               const backgroundColor = badge.gradientColors 
                 ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
                 : badge.backgroundColor || '#6b7280'
               
               return (
-                <div key={badge.id} className="flex items-center justify-between">
+                <div key={badge.id} className="relative group inline-flex">
                   <div
-                    className="flex-1 px-3 py-1 text-sm font-semibold flex items-center space-x-2 rounded-md text-white"
+                    className="px-3 py-1 pr-14 text-sm font-semibold flex items-center space-x-2 rounded-md text-white"
                     style={{
                       background: backgroundColor
                     }}
@@ -441,25 +441,21 @@ export const BadgeManagementTab = () => {
                       </span>
                     )}
                   </div>
-                  <div className="flex space-x-1 ml-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
+                  <div className="absolute inset-y-0 right-1 flex items-center space-x-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto">
+                    <button
                       onClick={() => startEdit(badge)}
-                      className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-white"
+                      className="p-1 rounded hover:bg-white/20 text-white/70 hover:text-white transition-colors"
                       title="Edit badge"
                     >
                       <Edit className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
+                    </button>
+                    <button
                       onClick={() => handleDelete(badge.id)}
-                      className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-red-400 hover:text-red-300"
+                      className="p-1 rounded hover:bg-white/20 text-red-300/70 hover:text-red-300 transition-colors"
                       title="Delete badge"
                     >
                       <Trash2 className="w-3 h-3" />
-                    </Button>
+                    </button>
                   </div>
                 </div>
               )
@@ -593,7 +589,7 @@ export const BadgeManagementTab = () => {
         )}
       </div>
 
-      {/* API Badges Section (Read-Only) */}
+      {/* API Badges Section (Read-Only) - excludes Leagues badges */}
       <div className="fantasy-section opacity-90">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
@@ -603,37 +599,85 @@ export const BadgeManagementTab = () => {
           </div>
           <span className="text-xs text-slate-500">Auto-awarded based on game achievements</span>
         </div>
-        {categorizedBadges.API.length === 0 ? (
-          <p className="text-slate-400 text-center py-4 text-sm">No API badges seeded yet. Click "Seed System Badges" above.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {categorizedBadges.API.map((badge) => {
-              const backgroundColor = badge.gradientColors 
-                ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
-                : badge.backgroundColor || '#6b7280'
-              
-              return (
-                <div
-                  key={badge.id}
-                  className="px-3 py-1 text-sm font-semibold flex items-center space-x-2 rounded-md text-white"
-                  style={{ background: backgroundColor }}
-                  title={badge.hierarchyPath ? `Hierarchical: ${badge.hierarchyPath}` : badge.name}
-                >
-                  {badge.imageUrl && (
-                    <img
-                      src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
-                      alt={badge.name} 
-                      className="w-4 h-4"
-                    />
-                  )}
-                  <span>{badge.name}</span>
-                  {badge.hierarchyTier && <span className="text-xs opacity-70">T{badge.hierarchyTier}</span>}
-                </div>
-              )
-            })}
-          </div>
-        )}
+        {(() => {
+          const apiBadges = categorizedBadges.API.filter(badge => badge.hierarchyPath !== 'LEAGUES_CATALYST')
+          return apiBadges.length === 0 ? (
+            <p className="text-slate-400 text-center py-4 text-sm">No API badges seeded yet. Click "Seed System Badges" above.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {apiBadges.map((badge) => {
+                const backgroundColor = badge.gradientColors 
+                  ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
+                  : badge.backgroundColor || '#6b7280'
+                
+                return (
+                  <div
+                    key={badge.id}
+                    className="px-3 py-1 text-sm font-semibold flex items-center space-x-2 rounded-md text-white"
+                    style={{ background: backgroundColor }}
+                    title={badge.hierarchyPath ? `Hierarchical: ${badge.hierarchyPath}` : badge.name}
+                  >
+                    {badge.imageUrl && (
+                      <img
+                        src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
+                        alt={badge.name} 
+                        className="w-4 h-4"
+                      />
+                    )}
+                    <span>{badge.name}</span>
+                    {badge.hierarchyTier && <span className="text-xs opacity-70">T{badge.hierarchyTier}</span>}
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })()}
       </div>
+
+      {/* Leagues: Catalyst Badges Section (Read-Only) */}
+      {(() => {
+        const leagueBadges = categorizedBadges.API.filter(badge => badge.hierarchyPath === 'LEAGUES_CATALYST')
+        return leagueBadges.length > 0 && (
+          <div className="fantasy-section opacity-90">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <Award className="w-4 h-4 text-slate-400" />
+                <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>Leagues: Catalyst Badges</h3>
+                <span title="System badges - read only"><Lock className="w-3 h-3 text-slate-500" /></span>
+              </div>
+              <span className="text-xs text-slate-500">Auto-awarded based on Leagues achievements</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[...leagueBadges]
+                .sort((a, b) => (a.hierarchyTier || 0) - (b.hierarchyTier || 0))
+                .map((badge) => {
+                  const backgroundColor = badge.gradientColors 
+                    ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
+                    : badge.backgroundColor || '#6b7280'
+                  
+                  return (
+                    <div
+                      key={badge.id}
+                      className="px-3 py-1 text-sm font-semibold flex items-center space-x-2 rounded-md text-white"
+                      style={{ background: backgroundColor }}
+                      title={`Leagues: Catalyst Tier ${badge.hierarchyTier || 1}`}
+                    >
+                      {badge.imageUrl && (
+                        <img
+                          src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
+                          alt={badge.name} 
+                          className="w-4 h-4"
+                        />
+                      )}
+                      <span>{badge.name}</span>
+                      <span className="text-xs opacity-70">T{badge.hierarchyTier || 1}</span>
+                    </div>
+                  )
+                })}
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
