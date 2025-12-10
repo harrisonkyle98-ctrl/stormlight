@@ -231,39 +231,40 @@ PVM_BADGES = [
 
 # API Badges - Badges based on game achievements from the RuneScape API
 # Includes: Maxed hierarchy, Max XP, Quest Cape, and Leagues Catalyst tiers
+# Colors match profile badge rendering in gradientUtils.ts exactly
 API_BADGES = [
-    # Maxed -> Master Max hierarchy
+    # Maxed -> Master Maxed hierarchy (solid colors matching profile rendering)
     {
         'name': 'Maxed',
         'tier': 1,
         'hierarchy_path': 'MAXED',
-        'gradient_colors': ['#99003b', '#ff6b8a'],
+        'gradient_colors': ['#99003b', '#99003b'],
         'icon': '/icons/overall.png',
         'description': 'All skills at level 99 or higher'
     },
     {
-        'name': 'Master Max',
+        'name': 'Master Maxed',
         'tier': 2,
         'hierarchy_path': 'MAXED',
-        'gradient_colors': ['#99001f', '#ff4d6a'],
+        'gradient_colors': ['#99001f', '#99001f'],
         'icon': '/icons/overall.png',
         'description': 'All skills at level 120'
     },
-    # Max XP Badge - standalone achievement
+    # Max XP Badge - standalone achievement (solid color matching profile rendering)
     {
         'name': 'Max XP',
         'tier': None,
         'hierarchy_path': None,
-        'gradient_colors': ['#bf0026', '#ff6b6b'],
+        'gradient_colors': ['#bf0026', '#bf0026'],
         'icon': '/icons/xp.png',
         'description': '5.8 billion total XP'
     },
-    # Quest Cape Badge - standalone achievement
+    # Quest Cape Badge - standalone achievement (solid color matching profile rendering)
     {
         'name': 'Quest Cape',
         'tier': None,
         'hierarchy_path': None,
-        'gradient_colors': ['#438da9', '#8fd4f0'],
+        'gradient_colors': ['#438da9', '#438da9'],
         'icon': '/assets/ranks/quest.png',
         'description': 'All quests completed'
     },

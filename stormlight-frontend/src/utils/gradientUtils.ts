@@ -164,8 +164,14 @@ export const checkPlayerMilestones = (stats: any, questData?: any, clanRank?: st
     badges.push(maxXpBadge)
   }
   
+  // Maxed / Master Maxed hierarchy - only show one (Master Maxed takes priority)
   const masterMaxedSkills = skills.filter(([_, data]: [string, any]) => data.level >= 120)
-  if (masterMaxedSkills.length === skills.length) {
+  const isMasterMaxed = masterMaxedSkills.length === skills.length
+  
+  const maxedSkills = skills.filter(([_, data]: [string, any]) => data.level >= 99)
+  const isMaxed = maxedSkills.length === skills.length
+  
+  if (isMasterMaxed) {
     const masterMaxedBadge = {
       id: 'master-maxed',
       name: 'Master Maxed',
@@ -173,10 +179,7 @@ export const checkPlayerMilestones = (stats: any, questData?: any, clanRank?: st
       icon: '/icons/overall.png'
     }
     badges.push(masterMaxedBadge)
-  }
-  
-  const maxedSkills = skills.filter(([_, data]: [string, any]) => data.level >= 99)
-  if (maxedSkills.length === skills.length) {
+  } else if (isMaxed) {
     const maxedBadge = {
       id: 'maxed',
       name: 'Maxed',

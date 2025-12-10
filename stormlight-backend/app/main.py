@@ -5779,19 +5779,23 @@ async def seed_system_badges(admin_info: dict = Depends(verify_admin_access)):
             else:
                 skipped_count += 1
         
-        # Clean up old Leagues badges with incorrect names before seeding new ones
-        old_leagues_names = [
+        # Clean up old badges with incorrect names before seeding new ones
+        old_badge_names = [
+            # Old Leagues badge names
             'Leagues: Bronze', 'Leagues: Iron', 'Leagues: Steel',
-            'Leagues: Mithril', 'Leagues: Adamant', 'Leagues: Rune', 'Leagues: Dragon'
+            'Leagues: Mithril', 'Leagues: Adamant', 'Leagues: Rune', 'Leagues: Dragon',
+            # Old Master Max name (now Master Maxed)
+            'Master Max'
         ]
-        for old_name in old_leagues_names:
+        for old_name in old_badge_names:
             old_badge = await prisma.custombadge.find_first(
                 where={'name': old_name, 'category': 'API'}
             )
             if old_badge:
                 await prisma.custombadge.delete(where={'id': old_badge.id})
         
-        # Seed API Badges (Maxed, Master Max, Leagues: Catalyst)
+        # Seed API Badges (Maxed, Master Maxed, Max XP, Quest Cape, Leagues: Catalyst)
+        # Updates existing badges with new colors if they already exist
         for badge_info in API_BADGES:
             existing = await prisma.custombadge.find_first(
                 where={'name': badge_info['name'], 'category': 'API'}
@@ -5812,6 +5816,18 @@ async def seed_system_badges(admin_info: dict = Depends(verify_admin_access)):
                 })
                 created_count += 1
             else:
+                # Update existing badge with new colors/description
+                await prisma.custombadge.update(
+                    where={'id': existing.id},
+                    data={
+                        'gradientColors': json.dumps(badge_info['gradient_colors']),
+                        'description': badge_info.get('description', ''),
+                        'imagePath': badge_info['icon'],
+                        'imageUrl': badge_info['icon'],
+                        'hierarchyPath': badge_info.get('hierarchy_path'),
+                        'hierarchyTier': badge_info.get('tier')
+                    }
+                )
                 skipped_count += 1
         
         await log_admin_action(
