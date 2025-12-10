@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { Badge } from '../ui/badge'
 import { Trophy, Plus, Edit, Trash2, Users, Calendar, BarChart3 } from 'lucide-react'
 import { Spinner } from '../ui/spinner'
 import { toast } from 'sonner'
@@ -271,15 +270,20 @@ export const CompetitionManagementTab = () => {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-US', {
+    const date = new Date(dateString)
+    const datePart = date.toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
+      timeZone: 'UTC'
+    })
+    const timePart = date.toLocaleString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       timeZone: 'UTC',
       timeZoneName: 'short'
     })
+    return { datePart, timePart }
   }
 
   const getCompetitionTypeLabel = (type: string): string => {
@@ -692,124 +696,149 @@ export const CompetitionManagementTab = () => {
         </div>
       )}
 
-      {/* Competitions List */}
-      <div className="fantasy-section">
-        <div className="flex items-center space-x-2 mb-4">
-          <Trophy className="w-4 h-4 text-slate-400" />
-          <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>Active Competitions</h3>
+      {/* Competitions List - No wrapper, matches public Competitions page styling */}
+      {competitions.length === 0 ? (
+        <div className="fantasy-section">
+          <div className="p-8 text-center">
+            <Trophy className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-white mb-2">
+              No competitions created yet
+            </h3>
+            <p className="text-slate-400">
+              Create a new competition to get started!
+            </p>
+          </div>
         </div>
-        {competitions.length === 0 ? (
-          <p className="text-slate-400 text-center py-8">No competitions created yet</p>
-        ) : (
-          <div className="space-y-4">
+      ) : (
+        <div className="space-y-4">
+          <div className="grid gap-6">
             {competitions.map((competition) => {
-              const { status, color } = getCompetitionStatus(competition.startDate, competition.endDate)
+              const { status } = getCompetitionStatus(competition.startDate, competition.endDate)
 
               return (
-                <div key={competition.id} className="bg-slate-800/50 border border-slate-700 hover:bg-slate-800/70 transition-colors p-4">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-3">
+                <div key={competition.id} className="competition-entry">
+                  {/* Fantasy Header Ribbon - Color based on status: Active=green, Upcoming=blue, Ended=grey */}
+                  <div className={`competition-header-plate ${status === 'active' ? 'competition-header-plate--active' : status === 'ended' ? 'competition-header-plate--ended' : ''}`}>
+                    <div className="competition-header-plate-content">
+                      {/* Centered title */}
+                      <div className="competition-header-plate-title">
+                        {competition.name}
+                      </div>
+                      {/* Icon positioned on the right */}
                       {competition.type === 'XP' || competition.type === 'XP_GAIN' ? (
                         getSkillIcon(competition.skill || 'overall') ? (
                           <img 
                             src={getSkillIcon(competition.skill || 'overall')!} 
                             alt={competition.skill}
-                            className="w-6 h-6"
+                            className="competition-header-plate-icon"
                           />
-                        ) : (
-                          <div className="text-2xl">📊</div>
-                        )
+                        ) : null
                       ) : (
-                        <div className="text-2xl">💀</div>
+                        <span className="competition-header-plate-icon text-2xl">💀</span>
                       )}
-                      <div className="text-left">
-                        <h4 className="text-white text-xl text-left font-semibold">
-                          {competition.name}
-                        </h4>
-                        <p className="text-slate-400 mt-1 text-left text-sm">
-                          {competition.description}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge className={`${color} text-white capitalize pointer-events-none`}>
-                        {status}
-                      </Badge>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => startEdit(competition)}
-                        className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-white"
-                      >
-                        <Edit className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDelete(competition.id)}
-                        className="p-1 h-8 w-8 bg-theme-button hover:bg-theme-button-hover border-theme-accent text-red-400 hover:text-red-300"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-slate-400" />
-                      <div>
-                        <p className="text-sm text-slate-400">Start Date</p>
-                        <p className="text-white font-medium">
-                          {formatDate(competition.startDate)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-slate-400" />
-                      <div>
-                        <p className="text-sm text-slate-400">End Date</p>
-                        <p className="text-white font-medium">
-                          {formatDate(competition.endDate)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Users className="w-4 h-4 text-slate-400" />
-                      <div>
-                        <p className="text-sm text-slate-400">Type</p>
-                        <p className="text-white font-medium">
-                          {getCompetitionTypeLabel(competition.type)}
-                        </p>
-                      </div>
-                    </div>
-                    {(competition.type === 'XP' || competition.type === 'XP_GAIN') && competition.skill && (
-                      <div className="flex items-center space-x-2">
-                        <BarChart3 className="w-4 h-4 text-slate-400" />
-                        <div>
-                          <p className="text-sm text-slate-400">Skill</p>
-                          <p className="text-white font-medium capitalize">
-                            {competition.skill}
-                          </p>
+                  
+                  {/* Inner panel - content below the ribbon header */}
+                  <div className="fantasy-section">
+                    {/* Description */}
+                    {competition.description && (
+                      <p className="text-slate-400 mb-4 text-sm">
+                        {competition.description}
+                      </p>
+                    )}
+                  
+                    {/* Content section */}
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="w-4 h-4 text-slate-400" />
+                          <div>
+                            <p className="text-sm text-slate-400">Start Date</p>
+                            <p className="text-white font-medium">
+                              {formatDate(competition.startDate).datePart}
+                            </p>
+                            <p className="text-white font-medium text-sm">
+                              {formatDate(competition.startDate).timePart}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="w-4 h-4 text-slate-400" />
+                          <div>
+                            <p className="text-sm text-slate-400">End Date</p>
+                            <p className="text-white font-medium">
+                              {formatDate(competition.endDate).datePart}
+                            </p>
+                            <p className="text-white font-medium text-sm">
+                              {formatDate(competition.endDate).timePart}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Users className="w-4 h-4 text-slate-400" />
+                          <div>
+                            <p className="text-sm text-slate-400">Type</p>
+                            <p className="text-white font-medium">
+                              {getCompetitionTypeLabel(competition.type)}
+                            </p>
+                          </div>
+                        </div>
+                        {(competition.type === 'XP' || competition.type === 'XP_GAIN') && competition.skill && (
+                          <div className="flex items-center space-x-2">
+                            <BarChart3 className="w-4 h-4 text-slate-400" />
+                            <div>
+                              <p className="text-sm text-slate-400">Skill</p>
+                              <p className="text-white font-medium capitalize">
+                                {competition.skill}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        {(competition.type === 'DROPS' || competition.type === 'BOSS_KILLS') && competition.boardSize && (
+                          <div className="flex items-center space-x-2">
+                            <Trophy className="w-4 h-4 text-slate-400" />
+                            <div>
+                              <p className="text-sm text-slate-400">Grid Size</p>
+                              <p className="text-white font-medium">
+                                {competition.boardSize}x{competition.boardSize}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex items-center space-x-2">
+                          <Users className="w-4 h-4 text-slate-400" />
+                          <div>
+                            <p className="text-sm text-slate-400">Participants</p>
+                            <p className="text-white font-medium">
+                              Auto-Enrolled
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    )}
-                    {(competition.type === 'DROPS' || competition.type === 'BOSS_KILLS') && competition.boardSize && (
-                      <div className="flex items-center space-x-2">
-                        <Trophy className="w-4 h-4 text-slate-400" />
-                        <div>
-                          <p className="text-sm text-slate-400">Grid Size</p>
-                          <p className="text-white font-medium">
-                            {competition.boardSize}×{competition.boardSize}
-                          </p>
+                      
+                      {/* Admin Controls - Edit and Delete buttons */}
+                      <div className="flex justify-end pt-4 border-t border-slate-700">
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => startEdit(competition)}
+                            className="bg-theme-button hover:bg-theme-button-hover border-theme-accent text-white"
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDelete(competition.id)}
+                            className="bg-red-600 hover:bg-red-700 border-red-600 text-white"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </Button>
                         </div>
-                      </div>
-                    )}
-                    <div className="flex items-center space-x-2">
-                      <Users className="w-4 h-4 text-slate-400" />
-                      <div>
-                        <p className="text-sm text-slate-400">Participants</p>
-                        <p className="text-white font-medium">
-                          Auto-Enrolled
-                        </p>
                       </div>
                     </div>
                   </div>
@@ -817,8 +846,8 @@ export const CompetitionManagementTab = () => {
               )
             })}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <DropSearchModal
         isOpen={showDropModal}
