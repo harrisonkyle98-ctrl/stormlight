@@ -474,7 +474,7 @@ export const BadgeManagementTab = () => {
           <div className="flex items-center space-x-2">
             <Award className="w-4 h-4 text-emerald-400" />
             <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>Skill Competition Badges</h3>
-            <Lock className="w-3 h-3 text-slate-500" title="System badges - read only" />
+            <span title="System badges - read only"><Lock className="w-3 h-3 text-slate-500" /></span>
           </div>
           <span className="text-xs text-slate-500">Auto-awarded for skill competitions</span>
         </div>
@@ -515,7 +515,7 @@ export const BadgeManagementTab = () => {
           <div className="flex items-center space-x-2">
             <Award className="w-4 h-4 text-yellow-400" />
             <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>DXP Badges</h3>
-            <Lock className="w-3 h-3 text-slate-500" title="System badges - read only" />
+            <span title="System badges - read only"><Lock className="w-3 h-3 text-slate-500" /></span>
           </div>
           <span className="text-xs text-slate-500">Hierarchical - upgrades with each DXP win</span>
         </div>
@@ -557,7 +557,7 @@ export const BadgeManagementTab = () => {
           <div className="flex items-center space-x-2">
             <Award className="w-4 h-4 text-red-400" />
             <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>PvM Badges</h3>
-            <Lock className="w-3 h-3 text-slate-500" title="System badges - read only" />
+            <span title="System badges - read only"><Lock className="w-3 h-3 text-slate-500" /></span>
           </div>
           <span className="text-xs text-slate-500">Hierarchical - upgrades with each PvM win</span>
         </div>
@@ -599,7 +599,7 @@ export const BadgeManagementTab = () => {
           <div className="flex items-center space-x-2">
             <Award className="w-4 h-4 text-purple-400" />
             <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>API Badges</h3>
-            <Lock className="w-3 h-3 text-slate-500" title="System badges - read only" />
+            <span title="System badges - read only"><Lock className="w-3 h-3 text-slate-500" /></span>
           </div>
           <span className="text-xs text-slate-500">Auto-awarded based on game achievements</span>
         </div>

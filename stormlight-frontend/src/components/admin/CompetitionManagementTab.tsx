@@ -21,6 +21,8 @@ interface Competition {
   endDate: string
   createdBy: string
   participantCount?: number
+  awardBadge?: boolean
+  isDxpEvent?: boolean
 }
 
 export const CompetitionManagementTab = () => {
@@ -239,6 +241,8 @@ export const CompetitionManagementTab = () => {
       type: normalizedType,
       skill: competition.skill || '',
       boss: competition.boss || '',
+      award_badge: competition.awardBadge || false,
+      is_dxp_event: competition.isDxpEvent || false,
       startDate: competition.startDate.split('T')[0],
       startTime: startDateTime.toISOString().substring(11, 16),
       endDate: competition.endDate.split('T')[0],
