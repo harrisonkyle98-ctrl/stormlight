@@ -5779,7 +5779,19 @@ async def seed_system_badges(admin_info: dict = Depends(verify_admin_access)):
             else:
                 skipped_count += 1
         
-        # Seed API Badges (Maxed, Master Max)
+        # Clean up old Leagues badges with incorrect names before seeding new ones
+        old_leagues_names = [
+            'Leagues: Bronze', 'Leagues: Iron', 'Leagues: Steel',
+            'Leagues: Mithril', 'Leagues: Adamant', 'Leagues: Rune', 'Leagues: Dragon'
+        ]
+        for old_name in old_leagues_names:
+            old_badge = await prisma.custombadge.find_first(
+                where={'name': old_name, 'category': 'API'}
+            )
+            if old_badge:
+                await prisma.custombadge.delete(where={'id': old_badge.id})
+        
+        # Seed API Badges (Maxed, Master Max, Leagues: Catalyst)
         for badge_info in API_BADGES:
             existing = await prisma.custombadge.find_first(
                 where={'name': badge_info['name'], 'category': 'API'}
