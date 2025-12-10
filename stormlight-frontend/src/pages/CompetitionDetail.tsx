@@ -799,10 +799,11 @@ const CompetitionDetail = () => {
             {/* 1st Place - Gold Card */}
             {competition.rewardFirstGp && (
               <div 
-                className="fantasy-section rounded-lg overflow-hidden"
+                className="fantasy-section overflow-hidden"
                 style={{ 
                   background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
-                  border: '1px solid rgba(255, 215, 0, 0.3)'
+                  border: '1px solid rgba(255, 215, 0, 0.3)',
+                  borderRadius: 0
                 }}
               >
                 {/* Winner Header Section */}
@@ -842,15 +843,22 @@ const CompetitionDetail = () => {
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-400">{(competition.rewardFirstGp / 1000000).toFixed(0)}M GP</div>
                     {competition.rewardBadgeId && (
-                      <div className="mt-2 flex items-center justify-center">
-                        <img 
-                          src={`${API_URL}/api/badges/${competition.rewardBadgeId}/image`}
-                          alt="Competition Badge"
-                          className="w-8 h-8"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none'
+                      <div className="mt-3 flex items-center justify-center">
+                        <div 
+                          className="relative"
+                          style={{
+                            filter: 'drop-shadow(0 0 8px rgba(255, 215, 0, 0.6)) drop-shadow(0 0 16px rgba(255, 215, 0, 0.4))'
                           }}
-                        />
+                        >
+                          <img 
+                            src={`${API_URL}/api/badges/${competition.rewardBadgeId}/image`}
+                            alt="Competition Badge"
+                            className="w-12 h-12"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none'
+                            }}
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -861,10 +869,11 @@ const CompetitionDetail = () => {
             {/* 2nd Place - Silver Card */}
             {competition.rewardSecondGp && (
               <div 
-                className="fantasy-section rounded-lg overflow-hidden"
+                className="fantasy-section overflow-hidden"
                 style={{ 
                   background: 'linear-gradient(135deg, rgba(192, 192, 192, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
-                  border: '1px solid rgba(192, 192, 192, 0.3)'
+                  border: '1px solid rgba(192, 192, 192, 0.3)',
+                  borderRadius: 0
                 }}
               >
                 {/* Winner Header Section */}
@@ -911,10 +920,11 @@ const CompetitionDetail = () => {
             {/* 3rd Place - Bronze Card */}
             {competition.rewardThirdGp && (
               <div 
-                className="fantasy-section rounded-lg overflow-hidden"
+                className="fantasy-section overflow-hidden"
                 style={{ 
                   background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
-                  border: '1px solid rgba(205, 127, 50, 0.3)'
+                  border: '1px solid rgba(205, 127, 50, 0.3)',
+                  borderRadius: 0
                 }}
               >
                 {/* Winner Header Section */}
