@@ -67,6 +67,8 @@ model Competition {
   rewardSecondGp   BigInt?            @map("reward_second_gp")
   rewardThirdGp    BigInt?            @map("reward_third_gp")
   rewardBadgeId    String?            @map("reward_badge_id")
+  awardBadge       Boolean            @default(false) @map("award_badge")
+  isDxpEvent       Boolean            @default(false) @map("is_dxp_event")
   createdAt        DateTime           @default(now()) @map("created_at")
   updatedAt        DateTime           @updatedAt @map("updated_at")
   entries          CompetitionEntry[]
@@ -107,6 +109,11 @@ model CustomBadge {
   createdBy               String        @map("created_by")
   createdAt               DateTime      @default(now()) @map("created_at")
   competitions            Competition[]
+  category                BadgeCategory @default(CUSTOM)
+  isSystemBadge           Boolean       @default(false) @map("is_system_badge")
+  skillName               String?       @map("skill_name")
+  hierarchyPath           String?       @map("hierarchy_path")
+  hierarchyTier           Int?          @map("hierarchy_tier")
   
   @@map("custom_badges")
 }
@@ -250,4 +257,12 @@ enum AccountLinkStatus {
   APPROVED
   REJECTED
   UNLINKED
+}
+
+enum BadgeCategory {
+  CUSTOM
+  SKILL
+  DXP
+  PVM
+  API
 }

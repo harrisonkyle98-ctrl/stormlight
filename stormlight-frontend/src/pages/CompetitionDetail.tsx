@@ -58,6 +58,8 @@ interface CompetitionDetailData {
   rewardThirdGp?: number
   rewardBadgeId?: string
   rewardBadge?: RewardBadge
+  awardBadge?: boolean
+  isDxpEvent?: boolean
 }
 
 const CompetitionDetail = () => {

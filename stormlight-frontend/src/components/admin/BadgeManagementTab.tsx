@@ -17,11 +17,31 @@ interface CustomBadge {
   createdBy: string
   createdAt: string
   competitions?: any[]
+  category?: 'CUSTOM' | 'SKILL' | 'DXP' | 'PVM' | 'API'
+  isSystemBadge?: boolean
+  skillName?: string
+  hierarchyPath?: string
+  hierarchyTier?: number
+}
+
+interface CategorizedBadges {
+  CUSTOM: CustomBadge[]
+  SKILL: CustomBadge[]
+  DXP: CustomBadge[]
+  PVM: CustomBadge[]
+  API: CustomBadge[]
 }
 
 export const BadgeManagementTab = () => {
-  const [customBadges, setCustomBadges] = useState<CustomBadge[]>([])
+  const [categorizedBadges, setCategorizedBadges] = useState<CategorizedBadges>({
+    CUSTOM: [],
+    SKILL: [],
+    DXP: [],
+    PVM: [],
+    API: []
+  })
   const [loading, setLoading] = useState(true)
+  const [seeding, setSeeding] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingBadge, setEditingBadge] = useState<CustomBadge | null>(null)
   const [formData, setFormData] = useState({
@@ -38,25 +58,55 @@ export const BadgeManagementTab = () => {
   const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000'
 
   useEffect(() => {
-    fetchCustomBadges()
+    fetchBadgesByCategory()
   }, [])
 
-  const fetchCustomBadges = async () => {
+  const fetchBadgesByCategory = async () => {
     try {
       const token = localStorage.getItem('access_token')
-      const response = await fetch(`${API_URL}/api/admin/badges`, {
+      const response = await fetch(`${API_URL}/api/admin/badges/by-category`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
 
       if (response.ok) {
         const data = await response.json()
-        setCustomBadges(data.badges || [])
+        setCategorizedBadges(data)
       }
     } catch (error) {
-      console.error('Error fetching custom badges:', error)
+      console.error('Error fetching badges by category:', error)
     } finally {
       setLoading(false)
     }
+  }
+
+  const seedSystemBadges = async () => {
+    setSeeding(true)
+    try {
+      const token = localStorage.getItem('access_token')
+      const response = await fetch(`${API_URL}/api/admin/badges/seed-system-badges`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        alert(`System badges seeded: ${data.created_count} created, ${data.skipped_count} already existed`)
+        await fetchBadgesByCategory()
+      } else {
+        const errorData = await response.json()
+        alert(errorData.detail || 'Error seeding system badges')
+      }
+    } catch (error) {
+      console.error('Error seeding system badges:', error)
+      alert('Error seeding system badges')
+    } finally {
+      setSeeding(false)
+    }
+  }
+
+  // Legacy function for backward compatibility
+  const fetchCustomBadges = async () => {
+    await fetchBadgesByCategory()
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -175,14 +225,23 @@ export const BadgeManagementTab = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-white">Custom Badge Management</h2>
-        <Button 
-          onClick={() => setShowCreateForm(true)}
-          className="bg-theme-button hover:bg-theme-button-hover"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Create Badge
-        </Button>
+        <h2 className="text-xl font-semibold text-white">Badge Management</h2>
+        <div className="flex space-x-2">
+          <Button 
+            onClick={seedSystemBadges}
+            disabled={seeding}
+            className="bg-yellow-600 hover:bg-yellow-700"
+          >
+            {seeding ? 'Seeding...' : 'Seed System Badges'}
+          </Button>
+          <Button 
+            onClick={() => setShowCreateForm(true)}
+            className="bg-theme-button hover:bg-theme-button-hover"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Create Custom Badge
+          </Button>
+        </div>
       </div>
 
       {/* Create/Edit Form */}
@@ -347,17 +406,17 @@ export const BadgeManagementTab = () => {
         </div>
       )}
 
-      {/* Badges List */}
+      {/* Custom Badges Section (Editable) */}
       <div className="fantasy-section">
         <div className="flex items-center space-x-2 mb-4">
           <Award className="w-4 h-4 text-slate-400" />
           <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>Custom Badges</h3>
         </div>
-        {customBadges.length === 0 ? (
+        {categorizedBadges.CUSTOM.length === 0 ? (
           <p className="text-slate-400 text-center py-8">No custom badges created yet</p>
         ) : (
           <div className="flex flex-col gap-2">
-            {customBadges.map((badge) => {
+            {categorizedBadges.CUSTOM.map((badge) => {
               const backgroundColor = badge.gradientColors 
                 ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
                 : badge.backgroundColor || '#6b7280'
@@ -402,6 +461,173 @@ export const BadgeManagementTab = () => {
                       <Trash2 className="w-3 h-3" />
                     </Button>
                   </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Skill Competition Badges Section (Read-Only) */}
+      <div className="fantasy-section opacity-90">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <Award className="w-4 h-4 text-emerald-400" />
+            <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>Skill Competition Badges</h3>
+            <Lock className="w-3 h-3 text-slate-500" title="System badges - read only" />
+          </div>
+          <span className="text-xs text-slate-500">Auto-awarded for skill competitions</span>
+        </div>
+        {categorizedBadges.SKILL.length === 0 ? (
+          <p className="text-slate-400 text-center py-4 text-sm">No skill badges seeded yet. Click "Seed System Badges" above.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {categorizedBadges.SKILL.map((badge) => {
+              const backgroundColor = badge.gradientColors 
+                ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
+                : badge.backgroundColor || '#6b7280'
+              
+              return (
+                <div
+                  key={badge.id}
+                  className="px-3 py-1 text-sm font-semibold flex items-center space-x-2 rounded-md text-white"
+                  style={{ background: backgroundColor }}
+                  title={badge.skillName ? `Awarded for winning ${badge.skillName} competitions` : badge.name}
+                >
+                  {badge.imageUrl && (
+                    <img
+                      src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
+                      alt={badge.name} 
+                      className="w-4 h-4"
+                    />
+                  )}
+                  <span>{badge.name}</span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* DXP Badges Section (Read-Only) */}
+      <div className="fantasy-section opacity-90">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <Award className="w-4 h-4 text-yellow-400" />
+            <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>DXP Badges</h3>
+            <Lock className="w-3 h-3 text-slate-500" title="System badges - read only" />
+          </div>
+          <span className="text-xs text-slate-500">Hierarchical - upgrades with each DXP win</span>
+        </div>
+        {categorizedBadges.DXP.length === 0 ? (
+          <p className="text-slate-400 text-center py-4 text-sm">No DXP badges seeded yet. Click "Seed System Badges" above.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {categorizedBadges.DXP.sort((a, b) => (a.hierarchyTier || 0) - (b.hierarchyTier || 0)).map((badge) => {
+              const backgroundColor = badge.gradientColors 
+                ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
+                : badge.backgroundColor || '#6b7280'
+              
+              return (
+                <div
+                  key={badge.id}
+                  className="px-3 py-1 text-sm font-semibold flex items-center space-x-2 rounded-md text-white"
+                  style={{ background: backgroundColor }}
+                  title={`Tier ${badge.hierarchyTier || 1} DXP badge`}
+                >
+                  {badge.imageUrl && (
+                    <img
+                      src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
+                      alt={badge.name} 
+                      className="w-4 h-4"
+                    />
+                  )}
+                  <span>{badge.name}</span>
+                  <span className="text-xs opacity-70">T{badge.hierarchyTier || 1}</span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* PvM Badges Section (Read-Only) */}
+      <div className="fantasy-section opacity-90">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <Award className="w-4 h-4 text-red-400" />
+            <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>PvM Badges</h3>
+            <Lock className="w-3 h-3 text-slate-500" title="System badges - read only" />
+          </div>
+          <span className="text-xs text-slate-500">Hierarchical - upgrades with each PvM win</span>
+        </div>
+        {categorizedBadges.PVM.length === 0 ? (
+          <p className="text-slate-400 text-center py-4 text-sm">No PvM badges seeded yet. Click "Seed System Badges" above.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {categorizedBadges.PVM.sort((a, b) => (a.hierarchyTier || 0) - (b.hierarchyTier || 0)).map((badge) => {
+              const backgroundColor = badge.gradientColors 
+                ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
+                : badge.backgroundColor || '#6b7280'
+              
+              return (
+                <div
+                  key={badge.id}
+                  className="px-3 py-1 text-sm font-semibold flex items-center space-x-2 rounded-md text-white"
+                  style={{ background: backgroundColor }}
+                  title={`Tier ${badge.hierarchyTier || 1} PvM badge`}
+                >
+                  {badge.imageUrl && (
+                    <img
+                      src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
+                      alt={badge.name} 
+                      className="w-4 h-4"
+                    />
+                  )}
+                  <span>{badge.name}</span>
+                  <span className="text-xs opacity-70">T{badge.hierarchyTier || 1}</span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* API Badges Section (Read-Only) */}
+      <div className="fantasy-section opacity-90">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <Award className="w-4 h-4 text-purple-400" />
+            <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>API Badges</h3>
+            <Lock className="w-3 h-3 text-slate-500" title="System badges - read only" />
+          </div>
+          <span className="text-xs text-slate-500">Auto-awarded based on game achievements</span>
+        </div>
+        {categorizedBadges.API.length === 0 ? (
+          <p className="text-slate-400 text-center py-4 text-sm">No API badges seeded yet. Click "Seed System Badges" above.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {categorizedBadges.API.map((badge) => {
+              const backgroundColor = badge.gradientColors 
+                ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
+                : badge.backgroundColor || '#6b7280'
+              
+              return (
+                <div
+                  key={badge.id}
+                  className="px-3 py-1 text-sm font-semibold flex items-center space-x-2 rounded-md text-white"
+                  style={{ background: backgroundColor }}
+                  title={badge.hierarchyPath ? `Hierarchical: ${badge.hierarchyPath}` : badge.name}
+                >
+                  {badge.imageUrl && (
+                    <img
+                      src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
+                      alt={badge.name} 
+                      className="w-4 h-4"
+                    />
+                  )}
+                  <span>{badge.name}</span>
+                  {badge.hierarchyTier && <span className="text-xs opacity-70">T{badge.hierarchyTier}</span>}
                 </div>
               )
             })}

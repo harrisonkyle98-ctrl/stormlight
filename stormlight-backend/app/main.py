@@ -5658,6 +5658,13 @@ async def delete_custom_badge(
             if not badge:
                 raise HTTPException(status_code=404, detail="Badge not found")
             
+            # Prevent deletion of system badges
+            if badge.isSystemBadge:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Cannot delete system badge '{badge.name}' - system badges are read-only"
+                )
+            
             if badge.competitions and len(badge.competitions) > 0:
                 competition_names = [c.name for c in badge.competitions]
                 raise HTTPException(
@@ -5686,6 +5693,316 @@ async def delete_custom_badge(
     except Exception as e:
         print(f"Error deleting badge: {e}")
         raise HTTPException(status_code=500, detail="Error deleting badge")
+
+@api_router.post("/admin/badges/seed-system-badges")
+async def seed_system_badges(admin_info: dict = Depends(verify_admin_access)):
+    """Seed all system badges (skill, DXP, PvM, API badges) - only creates badges that don't exist"""
+    try:
+        from .badge_config import SKILL_BADGES, DXP_BADGES, PVM_BADGES, API_BADGES
+    except ImportError:
+        from badge_config import SKILL_BADGES, DXP_BADGES, PVM_BADGES, API_BADGES
+    
+    admin_id = admin_info['admin_id']
+    admin_username = admin_info['username']
+    created_count = 0
+    skipped_count = 0
+    
+    try:
+        if not PRISMA_AVAILABLE or not prisma:
+            raise HTTPException(status_code=500, detail="Database not available")
+        
+        # Seed Skill Badges
+        for skill_name, badge_info in SKILL_BADGES.items():
+            existing = await prisma.custombadge.find_first(
+                where={'name': badge_info['name'], 'category': 'SKILL'}
+            )
+            if not existing:
+                await prisma.custombadge.create({
+                    'name': badge_info['name'],
+                    'description': f'Awarded for winning a {skill_name.capitalize()} competition',
+                    'imagePath': badge_info['icon'],
+                    'imageUrl': badge_info['icon'],
+                    'gradientColors': json.dumps(badge_info['gradient_colors']),
+                    'allowUsernameColorOverride': True,
+                    'createdBy': 'system',
+                    'category': 'SKILL',
+                    'isSystemBadge': True,
+                    'skillName': skill_name
+                })
+                created_count += 1
+            else:
+                skipped_count += 1
+        
+        # Seed DXP Badges
+        for badge_info in DXP_BADGES:
+            existing = await prisma.custombadge.find_first(
+                where={'name': badge_info['name'], 'category': 'DXP'}
+            )
+            if not existing:
+                await prisma.custombadge.create({
+                    'name': badge_info['name'],
+                    'description': f'DXP Event badge - Tier {badge_info["tier"]}',
+                    'imagePath': badge_info['icon'],
+                    'imageUrl': badge_info['icon'],
+                    'gradientColors': json.dumps(badge_info['gradient_colors']),
+                    'allowUsernameColorOverride': True,
+                    'createdBy': 'system',
+                    'category': 'DXP',
+                    'isSystemBadge': True,
+                    'hierarchyPath': 'DXP',
+                    'hierarchyTier': badge_info['tier']
+                })
+                created_count += 1
+            else:
+                skipped_count += 1
+        
+        # Seed PvM Badges
+        for badge_info in PVM_BADGES:
+            existing = await prisma.custombadge.find_first(
+                where={'name': badge_info['name'], 'category': 'PVM'}
+            )
+            if not existing:
+                await prisma.custombadge.create({
+                    'name': badge_info['name'],
+                    'description': f'PvM Competition badge - Tier {badge_info["tier"]}',
+                    'imagePath': badge_info['icon'],
+                    'imageUrl': badge_info['icon'],
+                    'gradientColors': json.dumps(badge_info['gradient_colors']),
+                    'allowUsernameColorOverride': True,
+                    'createdBy': 'system',
+                    'category': 'PVM',
+                    'isSystemBadge': True,
+                    'hierarchyPath': 'PVM',
+                    'hierarchyTier': badge_info['tier']
+                })
+                created_count += 1
+            else:
+                skipped_count += 1
+        
+        # Seed API Badges (Maxed, Master Max)
+        for badge_info in API_BADGES:
+            existing = await prisma.custombadge.find_first(
+                where={'name': badge_info['name'], 'category': 'API'}
+            )
+            if not existing:
+                await prisma.custombadge.create({
+                    'name': badge_info['name'],
+                    'description': badge_info.get('description', ''),
+                    'imagePath': badge_info['icon'],
+                    'imageUrl': badge_info['icon'],
+                    'gradientColors': json.dumps(badge_info['gradient_colors']),
+                    'allowUsernameColorOverride': True,
+                    'createdBy': 'system',
+                    'category': 'API',
+                    'isSystemBadge': True,
+                    'hierarchyPath': badge_info.get('hierarchy_path'),
+                    'hierarchyTier': badge_info.get('tier')
+                })
+                created_count += 1
+            else:
+                skipped_count += 1
+        
+        await log_admin_action(
+            admin_id,
+            admin_username,
+            "seed_system_badges",
+            f"Seeded system badges: {created_count} created, {skipped_count} skipped",
+            prisma_client=prisma,
+            prisma_available=PRISMA_AVAILABLE
+        )
+        
+        return {
+            "success": True,
+            "created": created_count,
+            "skipped": skipped_count,
+            "message": f"System badges seeded: {created_count} created, {skipped_count} already existed"
+        }
+    except Exception as e:
+        print(f"Error seeding system badges: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error seeding system badges: {str(e)}")
+
+@api_router.get("/admin/badges/by-category")
+async def get_badges_by_category(admin_id: str = Depends(verify_admin_access)):
+    """Get all badges organized by category"""
+    try:
+        if not PRISMA_AVAILABLE or not prisma:
+            raise HTTPException(status_code=500, detail="Database not available")
+        
+        all_badges = await prisma.custombadge.find_many(
+            order={'createdAt': 'desc'},
+            include={'competitions': True}
+        )
+        
+        # Organize badges by category
+        categorized = {
+            'CUSTOM': [],
+            'SKILL': [],
+            'DXP': [],
+            'PVM': [],
+            'API': []
+        }
+        
+        for badge in all_badges:
+            category = badge.category if badge.category else 'CUSTOM'
+            if category in categorized:
+                categorized[category].append(badge)
+            else:
+                categorized['CUSTOM'].append(badge)
+        
+        # Sort hierarchical badges by tier
+        categorized['DXP'].sort(key=lambda b: b.hierarchyTier or 0)
+        categorized['PVM'].sort(key=lambda b: b.hierarchyTier or 0)
+        categorized['API'].sort(key=lambda b: b.hierarchyTier or 0)
+        
+        return {"badges": categorized}
+    except Exception as e:
+        print(f"Error fetching badges by category: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching badges")
+
+def get_badge_for_competition(competition_type: str, skill: str = None, is_dxp_event: bool = False) -> dict | None:
+    """Determine which badge should be awarded for a competition"""
+    try:
+        from .badge_config import SKILL_BADGES, get_skill_badge_for_competition
+    except ImportError:
+        from badge_config import SKILL_BADGES, get_skill_badge_for_competition
+    
+    if competition_type in ['XP_GAIN', 'LEVEL_GAIN']:
+        # Skilling competition
+        if skill and skill.lower() == 'overall' and is_dxp_event:
+            # DXP event - use DXP badge hierarchy
+            return {'category': 'DXP', 'hierarchy_path': 'DXP'}
+        elif skill:
+            # Specific skill competition
+            badge_info = get_skill_badge_for_competition(skill)
+            if badge_info:
+                return {'category': 'SKILL', 'skill_name': skill.lower(), 'badge_info': badge_info}
+    elif competition_type in ['BOSS_KILLS', 'CUSTOM']:
+        # PvM competition
+        return {'category': 'PVM', 'hierarchy_path': 'PVM'}
+    
+    return None
+
+async def award_competition_badge(winner_username: str, competition_type: str, skill: str = None, is_dxp_event: bool = False):
+    """Award the appropriate badge to a competition winner, handling upgrades for hierarchical badges"""
+    if not PRISMA_AVAILABLE or not prisma:
+        print("Database not available for badge award")
+        return None
+    
+    badge_info = get_badge_for_competition(competition_type, skill, is_dxp_event)
+    if not badge_info:
+        print(f"No badge configured for competition type: {competition_type}, skill: {skill}")
+        return None
+    
+    try:
+        # Get the winner's clan member record
+        member = await prisma.clanmember.find_first(
+            where={'username': winner_username}
+        )
+        if not member:
+            print(f"Winner not found in clan: {winner_username}")
+            return None
+        
+        # Parse existing badges
+        existing_badges = []
+        if member.badges:
+            try:
+                existing_badges = json.loads(member.badges) if isinstance(member.badges, str) else member.badges
+            except:
+                existing_badges = []
+        
+        badge_to_award = None
+        
+        if badge_info['category'] == 'SKILL':
+            # Skill badge - just award it (no hierarchy)
+            skill_name = badge_info['skill_name']
+            badge = await prisma.custombadge.find_first(
+                where={'category': 'SKILL', 'skillName': skill_name}
+            )
+            if badge:
+                # Check if user already has this badge
+                has_badge = any(b.get('id') == badge.id for b in existing_badges)
+                if not has_badge:
+                    badge_to_award = badge
+        
+        elif badge_info['category'] in ['DXP', 'PVM']:
+            # Hierarchical badge - check for upgrade
+            hierarchy_path = badge_info['hierarchy_path']
+            category = badge_info['category']
+            
+            # Find user's current badge in this hierarchy
+            current_tier = None
+            for existing_badge in existing_badges:
+                if existing_badge.get('hierarchyPath') == hierarchy_path:
+                    current_tier = existing_badge.get('hierarchyTier', 0)
+                    break
+            
+            # Get the next tier badge
+            if category == 'DXP':
+                try:
+                    from .badge_config import get_next_dxp_tier, get_max_dxp_tier
+                except ImportError:
+                    from badge_config import get_next_dxp_tier, get_max_dxp_tier
+                
+                max_tier = get_max_dxp_tier()
+                if current_tier is None or current_tier < max_tier:
+                    next_tier = get_next_dxp_tier(current_tier)
+                    badge = await prisma.custombadge.find_first(
+                        where={'category': 'DXP', 'hierarchyTier': next_tier}
+                    )
+                    if badge:
+                        badge_to_award = badge
+            
+            elif category == 'PVM':
+                try:
+                    from .badge_config import get_next_pvm_tier, get_max_pvm_tier
+                except ImportError:
+                    from badge_config import get_next_pvm_tier, get_max_pvm_tier
+                
+                max_tier = get_max_pvm_tier()
+                if current_tier is None or current_tier < max_tier:
+                    next_tier = get_next_pvm_tier(current_tier)
+                    badge = await prisma.custombadge.find_first(
+                        where={'category': 'PVM', 'hierarchyTier': next_tier}
+                    )
+                    if badge:
+                        badge_to_award = badge
+        
+        if badge_to_award:
+            # Add the badge to user's badges
+            new_badge_entry = {
+                'id': badge_to_award.id,
+                'name': badge_to_award.name,
+                'imageUrl': badge_to_award.imageUrl,
+                'gradientColors': json.loads(badge_to_award.gradientColors) if badge_to_award.gradientColors else None,
+                'backgroundColor': badge_to_award.backgroundColor,
+                'category': badge_to_award.category,
+                'hierarchyPath': badge_to_award.hierarchyPath,
+                'hierarchyTier': badge_to_award.hierarchyTier
+            }
+            
+            # Remove old badge from same hierarchy if upgrading
+            if badge_to_award.hierarchyPath:
+                existing_badges = [b for b in existing_badges if b.get('hierarchyPath') != badge_to_award.hierarchyPath]
+            
+            existing_badges.append(new_badge_entry)
+            
+            # Update member's badges
+            await prisma.clanmember.update(
+                where={'id': member.id},
+                data={'badges': json.dumps(existing_badges)}
+            )
+            
+            print(f"Awarded badge '{badge_to_award.name}' to {winner_username}")
+            return badge_to_award
+        
+        return None
+    except Exception as e:
+        print(f"Error awarding competition badge: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 async def log_admin_action(admin_id: str, username: str, action: str, details: str, prisma_client=None, prisma_available=False):
     """Log an admin action to the database"""
@@ -6304,12 +6621,46 @@ async def create_admin_competition(
                 'createdBy': admin_id,
                 'rewardFirstGp': competition_data.get('reward_first_gp'),
                 'rewardSecondGp': competition_data.get('reward_second_gp'),
-                'rewardThirdGp': competition_data.get('reward_third_gp')
+                'rewardThirdGp': competition_data.get('reward_third_gp'),
+                'awardBadge': competition_data.get('award_badge', False),
+                'isDxpEvent': competition_data.get('is_dxp_event', False)
             }
             
-            reward_badge_id = competition_data.get('reward_badge_id')
-            if reward_badge_id:
-                create_data['rewardBadge'] = {'connect': {'id': reward_badge_id}}
+            # Handle automatic badge selection based on competition type
+            award_badge = competition_data.get('award_badge', False)
+            is_dxp_event = competition_data.get('is_dxp_event', False)
+            skill = competition_data.get('skill')
+            
+            if award_badge:
+                # Auto-select badge based on competition type
+                badge_selection = get_badge_for_competition(comp_type, skill, is_dxp_event)
+                if badge_selection:
+                    # Find the appropriate badge in the database
+                    if badge_selection['category'] == 'SKILL':
+                        skill_badge = await prisma.custombadge.find_first(
+                            where={'category': 'SKILL', 'skillName': badge_selection['skill_name']}
+                        )
+                        if skill_badge:
+                            create_data['rewardBadge'] = {'connect': {'id': skill_badge.id}}
+                    elif badge_selection['category'] == 'DXP':
+                        # For DXP, use tier 1 badge initially (upgrade happens when awarded)
+                        dxp_badge = await prisma.custombadge.find_first(
+                            where={'category': 'DXP', 'hierarchyTier': 1}
+                        )
+                        if dxp_badge:
+                            create_data['rewardBadge'] = {'connect': {'id': dxp_badge.id}}
+                    elif badge_selection['category'] == 'PVM':
+                        # For PvM, use tier 1 badge initially (upgrade happens when awarded)
+                        pvm_badge = await prisma.custombadge.find_first(
+                            where={'category': 'PVM', 'hierarchyTier': 1}
+                        )
+                        if pvm_badge:
+                            create_data['rewardBadge'] = {'connect': {'id': pvm_badge.id}}
+            else:
+                # Legacy support: manual badge selection
+                reward_badge_id = competition_data.get('reward_badge_id')
+                if reward_badge_id:
+                    create_data['rewardBadge'] = {'connect': {'id': reward_badge_id}}
             
             if competition_data.get('skill'):
                 create_data['skill'] = competition_data['skill']
@@ -6452,7 +6803,37 @@ async def update_admin_competition(
                     update_data['rewardSecondGp'] = competition_data['reward_second_gp']
                 if 'reward_third_gp' in competition_data:
                     update_data['rewardThirdGp'] = competition_data['reward_third_gp']
-                if 'reward_badge_id' in competition_data:
+                if 'award_badge' in competition_data:
+                    update_data['awardBadge'] = competition_data['award_badge']
+                if 'is_dxp_event' in competition_data:
+                    update_data['isDxpEvent'] = competition_data['is_dxp_event']
+                # Handle automatic badge selection if award_badge is enabled
+                if competition_data.get('award_badge'):
+                    skill = competition_data.get('skill') or competition.skill
+                    is_dxp = competition_data.get('is_dxp_event', False)
+                    comp_type = competition.type
+                    badge_selection = get_badge_for_competition(comp_type, skill, is_dxp)
+                    if badge_selection:
+                        if badge_selection['category'] == 'SKILL':
+                            skill_badge = await prisma.custombadge.find_first(
+                                where={'category': 'SKILL', 'skillName': badge_selection['skill_name']}
+                            )
+                            if skill_badge:
+                                update_data['rewardBadgeId'] = skill_badge.id
+                        elif badge_selection['category'] == 'DXP':
+                            dxp_badge = await prisma.custombadge.find_first(
+                                where={'category': 'DXP', 'hierarchyTier': 1}
+                            )
+                            if dxp_badge:
+                                update_data['rewardBadgeId'] = dxp_badge.id
+                        elif badge_selection['category'] == 'PVM':
+                            pvm_badge = await prisma.custombadge.find_first(
+                                where={'category': 'PVM', 'hierarchyTier': 1}
+                            )
+                            if pvm_badge:
+                                update_data['rewardBadgeId'] = pvm_badge.id
+                elif 'reward_badge_id' in competition_data:
+                    # Legacy support: manual badge selection
                     update_data['rewardBadgeId'] = competition_data['reward_badge_id']
             
             if 'name' in competition_data:

@@ -39,7 +39,8 @@ export const CompetitionManagementTab = () => {
     reward_first_gp?: string
     reward_second_gp?: string
     reward_third_gp?: string
-    reward_badge_id?: string
+    award_badge: boolean
+    is_dxp_event: boolean
     startDate: string
     startTime: string
     endDate: string
@@ -50,6 +51,8 @@ export const CompetitionManagementTab = () => {
     type: 'XP',
     skill: '',
     boss: '',
+    award_badge: false,
+    is_dxp_event: false,
     startDate: '',
     startTime: '00:00',
     endDate: '',
@@ -65,7 +68,6 @@ export const CompetitionManagementTab = () => {
   }>>([])
   const [selectedPosition, setSelectedPosition] = useState<number | null>(null)
   const [showDropModal, setShowDropModal] = useState(false)
-  const [customBadges, setCustomBadges] = useState<any[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000'
@@ -80,7 +82,6 @@ export const CompetitionManagementTab = () => {
 
   useEffect(() => {
     fetchCompetitions()
-    fetchCustomBadges()
   }, [])
 
   const fetchCompetitions = async () => {
@@ -101,22 +102,7 @@ export const CompetitionManagementTab = () => {
     }
   }
 
-  const fetchCustomBadges = async () => {
-    try {
-      const token = localStorage.getItem('access_token')
-      const response = await fetch(`${API_URL}/api/admin/badges`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setCustomBadges(data.badges || [])
-      }
-    } catch (error) {
-      console.error('Error fetching badges:', error)
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit= async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (isSubmitting) {
@@ -156,7 +142,8 @@ export const CompetitionManagementTab = () => {
         reward_first_gp: formData.reward_first_gp ? parseInt(formData.reward_first_gp) : null,
         reward_second_gp: formData.reward_second_gp ? parseInt(formData.reward_second_gp) : null,
         reward_third_gp: formData.reward_third_gp ? parseInt(formData.reward_third_gp) : null,
-        reward_badge_id: formData.reward_badge_id || null
+        award_badge: formData.award_badge,
+        is_dxp_event: formData.is_dxp_event
       }
 
       if (formData.type === 'XP') {
@@ -195,14 +182,15 @@ export const CompetitionManagementTab = () => {
           type: 'XP',
           skill: '',
           boss: '',
+          award_badge: false,
+          is_dxp_event: false,
           startDate: '',
           startTime: '00:00',
           endDate: '',
           endTime: '00:00',
           reward_first_gp: '',
           reward_second_gp: '',
-          reward_third_gp: '',
-          reward_badge_id: ''
+          reward_third_gp: ''
         })
       } else {
         const error = await response.json()
@@ -629,29 +617,48 @@ export const CompetitionManagementTab = () => {
                   </div>
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    1st Place Badge Reward (Auto-Awarded)
-                  </label>
-                  <Select
-                    value={formData.reward_badge_id || ''}
-                    onValueChange={(value) => setFormData({ ...formData, reward_badge_id: value })}
-                    disabled={!!(editingCompetition && new Date() >= new Date(editingCompetition.startDate))}
-                  >
-                    <SelectTrigger className="bg-slate-600 border-slate-500 text-white">
-                      <SelectValue placeholder="Select a badge (optional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {customBadges.map((badge) => (
-                        <SelectItem key={badge.id} value={badge.id}>
-                          {badge.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Badge will be automatically awarded to 1st place when competition ends
-                  </p>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      id="award_badge"
+                      checked={formData.award_badge}
+                      onChange={(e) => setFormData({ ...formData, award_badge: e.target.checked })}
+                      disabled={!!(editingCompetition && new Date() >= new Date(editingCompetition.startDate))}
+                      className="w-4 h-4 rounded border-slate-500 bg-slate-600 text-blue-500 focus:ring-blue-500"
+                    />
+                    <label htmlFor="award_badge" className="text-sm font-medium text-slate-300">
+                      Award a badge to the 1st place winner
+                    </label>
+                  </div>
+                  {formData.award_badge && (
+                    <p className="text-xs text-slate-400 ml-7">
+                      {formData.type === 'DROPS' 
+                        ? 'A PvM badge will be automatically awarded (upgrades if winner already has one)'
+                        : formData.skill === 'overall'
+                          ? formData.is_dxp_event
+                            ? 'A DXP badge will be automatically awarded (upgrades if winner already has one)'
+                            : 'Select "DXP Event" below to award a DXP badge, or the Overall Champion badge will be awarded'
+                          : `The ${formData.skill ? formData.skill.charAt(0).toUpperCase() + formData.skill.slice(1) : 'skill'} Champion badge will be automatically awarded`
+                      }
+                    </p>
+                  )}
+                  
+                  {formData.type === 'XP' && formData.skill === 'overall' && formData.award_badge && (
+                    <div className="flex items-center space-x-3 ml-7">
+                      <input
+                        type="checkbox"
+                        id="is_dxp_event"
+                        checked={formData.is_dxp_event}
+                        onChange={(e) => setFormData({ ...formData, is_dxp_event: e.target.checked })}
+                        disabled={!!(editingCompetition && new Date() >= new Date(editingCompetition.startDate))}
+                        className="w-4 h-4 rounded border-slate-500 bg-slate-600 text-yellow-500 focus:ring-yellow-500"
+                      />
+                      <label htmlFor="is_dxp_event" className="text-sm font-medium text-yellow-400">
+                        This is a DXP Event
+                      </label>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -677,14 +684,15 @@ export const CompetitionManagementTab = () => {
                       type: 'XP',
                       skill: '',
                       boss: '',
+                      award_badge: false,
+                      is_dxp_event: false,
                       startDate: '',
                       startTime: '00:00',
                       endDate: '',
                       endTime: '00:00',
                       reward_first_gp: '',
                       reward_second_gp: '',
-                      reward_third_gp: '',
-                      reward_badge_id: ''
+                      reward_third_gp: ''
                     })
                   }}
                   className="bg-red-600 hover:bg-red-700 text-white border-red-600"
