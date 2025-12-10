@@ -859,8 +859,7 @@ const CompetitionDetail = () => {
                           style={{
                             background: competition.rewardBadge.gradientColors 
                               ? `linear-gradient(135deg, ${competition.rewardBadge.gradientColors[0]}, ${competition.rewardBadge.gradientColors[1]})`
-                              : competition.rewardBadge.backgroundColor || '#6b7280',
-                            filter: 'drop-shadow(0 0 8px rgba(255, 215, 0, 0.6)) drop-shadow(0 0 16px rgba(255, 215, 0, 0.4))'
+                              : competition.rewardBadge.backgroundColor || '#6b7280'
                           }}
                         >
                           <img 
