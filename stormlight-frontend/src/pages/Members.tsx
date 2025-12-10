@@ -1,54 +1,20 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Input } from '../components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Badge } from '../components/ui/badge'
-import { Search } from 'lucide-react'
+import { Search, User } from 'lucide-react'
+import { Button } from '../components/ui/button'
+import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { Spinner } from '../components/ui/spinner'
 import { MilestoneBadge, checkPlayerMilestones } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
 import { Username } from '../components/ui/username'
-import { useAuth } from '../contexts/AuthContext'
 import GlobalProfileHeader from '../components/profile/GlobalProfileHeader'
 import '../styles/fantasy-container.css'
 
-interface CustomBadge {
-  id: string
-  name: string
-  description?: string
-  imageUrl: string
-  backgroundColor?: string
-  gradientColors?: string[]
-  allowUsernameColorOverride?: boolean
-}
 
-interface PlayerStats {
-  badges?: Array<{ id: string; name: string; imageUrl: string; type: string }>
-  custom_badges?: CustomBadge[]
-  username: string
-  clan_xp?: number
-  clan_rank_number?: number
-  runescore?: number
-  stats: {
-    overall: {
-      rank: number | null
-      level: number
-      xp: number
-      combatlevel: number
-    }
-    [skill: string]: {
-      rank: number | null
-      level: number
-      xp: number
-    }
-  }
-  quest_points?: number
-  last_updated: string
-  clan_rank?: string
-  is_verified?: boolean
-  join_date?: string
-}
 
 interface ClanMember {
   username: string
@@ -76,7 +42,6 @@ interface MembersData {
 }
 
 const Members = () => {
-  const { user } = useAuth()
   const [membersData, setMembersData] = useState<MembersData | null>(null)
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')

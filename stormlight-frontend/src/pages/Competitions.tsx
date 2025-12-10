@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Badge } from '../components/ui/badge'
 import { Trophy, Calendar, Users, BarChart3 } from 'lucide-react'
+import { Button } from '../components/ui/button'
 import { Spinner } from '../components/ui/spinner'
 import { getSkillIcon } from '../utils/skillIcons'
-import { useAuth } from '../contexts/AuthContext'
 import GlobalProfileHeader from '../components/profile/GlobalProfileHeader'
 import '../styles/fantasy-container.css'
 
@@ -39,7 +38,6 @@ const getCompetitionTypeLabel= (type: string): string => {
 }
 
 const Competitions = () => {
-  const { user } = useAuth()
   const [competitionsData, setCompetitionsData] = useState<CompetitionsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'active' | 'upcoming' | 'ended'>('active')

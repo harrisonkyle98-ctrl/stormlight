@@ -3,7 +3,8 @@ import { useParams, Link } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
-import { ArrowLeft, Trophy, Calendar, Users, BarChart3 } from 'lucide-react'
+import { ArrowLeft, Trophy, Calendar, Users, BarChart3, User } from 'lucide-react'
+import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { Spinner } from '../components/ui/spinner'
 import { getSkillIcon } from '../utils/skillIcons'
 import { fetchClanMembers } from '../utils/gradientUtils'
@@ -11,7 +12,6 @@ import { usernameToUrl } from '../utils/urlUtils'
 import { Username } from '../components/ui/username'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { BingoBoard } from '../components/BingoBoard'
-import { useAuth } from '../contexts/AuthContext'
 import GlobalProfileHeader from '../components/profile/GlobalProfileHeader'
 import '../styles/fantasy-container.css'
 
@@ -62,7 +62,6 @@ interface CompetitionDetailData {
 
 const CompetitionDetail = () => {
   const { id } = useParams<{ id: string }>()
-  const { user } = useAuth()
   const [competition, setCompetition] = useState<CompetitionDetailData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

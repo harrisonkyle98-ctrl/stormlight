@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Users, Trophy, TrendingUp, Calendar, Activity } from 'lucide-react'
 import '../styles/fantasy-container.css'
 import { fetchClanMembers } from '../utils/gradientUtils'
@@ -127,17 +127,9 @@ interface ActivityResponse {
   }
 }
 
-interface PlayerStats {
-  username: string
-  stats: any
-  clan_rank: string
-  join_date?: string
-  league_points?: number
-}
 
 const Home = () => {
   const { user } = useAuth()
-  const navigate = useNavigate()
   const [clanStats, setClanStats] = useState<ClanStats | null>(null)
   const [activities, setActivities] = useState<Activity[]>([])
   const [activityLoading, setActivityLoading] = useState(true)
