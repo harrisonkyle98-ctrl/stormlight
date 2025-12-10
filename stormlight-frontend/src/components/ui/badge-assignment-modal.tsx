@@ -87,7 +87,7 @@ export const BadgeAssignmentModal: React.FC<BadgeAssignmentModalProps> = ({
               No custom badges available
             </p>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto pr-2">
               {customBadges.map((badge) => {
                 const isSelected = selectedBadgeIds.includes(badge.id)
                 const backgroundColor = badge.gradientColors 

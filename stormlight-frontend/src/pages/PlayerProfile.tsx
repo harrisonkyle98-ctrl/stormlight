@@ -283,12 +283,16 @@ const PlayerProfile = () => {
       
       if (response.ok) {
         const data = await response.json()
-        const badges = (data.badges || []).map((badge: any) => ({
-          ...badge,
-          imageUrl: badge.imageUrl.startsWith('http') 
-            ? badge.imageUrl 
-            : `https://stormlight.fly.dev${badge.imageUrl}`
-        }))
+        // Filter out API badges (includes Leagues badges) - only show CUSTOM, SKILL, DXP, PVM
+        const allowedCategories = ['CUSTOM', 'SKILL', 'DXP', 'PVM']
+        const badges = (data.badges || [])
+          .filter((badge: any) => !badge.category || allowedCategories.includes(badge.category))
+          .map((badge: any) => ({
+            ...badge,
+            imageUrl: badge.imageUrl.startsWith('http') 
+              ? badge.imageUrl 
+              : `https://stormlight.fly.dev${badge.imageUrl}`
+          }))
         setModalCustomBadges(badges)
       } else {
         setBadgeModalError(`Failed to load custom badges: ${response.status}`)
