@@ -5856,7 +5856,7 @@ async def get_badges_by_category(admin_id: str = Depends(verify_admin_access)):
         categorized['PVM'].sort(key=lambda b: b.hierarchyTier or 0)
         categorized['API'].sort(key=lambda b: b.hierarchyTier or 0)
         
-        return {"badges": categorized}
+        return categorized
     except Exception as e:
         print(f"Error fetching badges by category: {e}")
         raise HTTPException(status_code=500, detail="Error fetching badges")
