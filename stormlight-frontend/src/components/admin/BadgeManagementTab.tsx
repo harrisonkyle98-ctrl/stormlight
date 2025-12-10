@@ -472,7 +472,7 @@ export const BadgeManagementTab = () => {
       <div className="fantasy-section opacity-90">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
-            <Award className="w-4 h-4 text-emerald-400" />
+            <Award className="w-4 h-4 text-slate-400" />
             <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>Skill Competition Badges</h3>
             <span title="System badges - read only"><Lock className="w-3 h-3 text-slate-500" /></span>
           </div>
@@ -513,7 +513,7 @@ export const BadgeManagementTab = () => {
       <div className="fantasy-section opacity-90">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
-            <Award className="w-4 h-4 text-yellow-400" />
+            <Award className="w-4 h-4 text-slate-400" />
             <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>DXP Badges</h3>
             <span title="System badges - read only"><Lock className="w-3 h-3 text-slate-500" /></span>
           </div>
@@ -539,7 +539,7 @@ export const BadgeManagementTab = () => {
                     <img
                       src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
                       alt={badge.name} 
-                      className="w-4 h-4"
+                      className="w-4 h-4 object-contain"
                     />
                   )}
                   <span>{badge.name}</span>
@@ -555,7 +555,7 @@ export const BadgeManagementTab = () => {
       <div className="fantasy-section opacity-90">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
-            <Award className="w-4 h-4 text-red-400" />
+            <Award className="w-4 h-4 text-slate-400" />
             <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>PvM Badges</h3>
             <span title="System badges - read only"><Lock className="w-3 h-3 text-slate-500" /></span>
           </div>
@@ -597,7 +597,7 @@ export const BadgeManagementTab = () => {
       <div className="fantasy-section opacity-90">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
-            <Award className="w-4 h-4 text-purple-400" />
+            <Award className="w-4 h-4 text-slate-400" />
             <h3 className="text-white font-semibold" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.05em' }}>API Badges</h3>
             <span title="System badges - read only"><Lock className="w-3 h-3 text-slate-500" /></span>
           </div>
