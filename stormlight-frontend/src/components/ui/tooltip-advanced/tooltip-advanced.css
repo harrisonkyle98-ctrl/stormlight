@@ -299,3 +299,25 @@
 .tooltip-advanced.nav-tooltip {
   z-index: 1001;
 }
+
+/* Green Tooltip Variant - for verified users and success indicators */
+.tooltip-advanced.tooltip-green {
+  background: rgba(20, 83, 45, 0.95);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.tooltip-advanced.tooltip-green::before {
+  background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.3), transparent);
+}
+
+.tooltip-advanced.tooltip-green .tooltip-arrow {
+  fill: rgba(20, 83, 45, 0.95) !important;
+}
+
+.tooltip-advanced.tooltip-green .tooltip-title {
+  color: #86efac;
+}
+
+.tooltip-advanced.tooltip-green .tooltip-description {
+  color: #bbf7d0;
+}

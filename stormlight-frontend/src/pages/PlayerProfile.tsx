@@ -825,14 +825,16 @@ const PlayerProfile = () => {
                   <Plus className="w-4 h-4" />
                 </Button>
               )}
-              <Button
-                onClick={handleRefresh}
-                disabled={refreshing || (lastRefresh ? Date.now() - lastRefresh < 300000 : false)}
-                size="sm"
-                className="bg-theme-button hover:bg-theme-button-hover text-white disabled:opacity-50 disabled:bg-theme-slate-700"
-              >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-              </Button>
+              <Tooltip content={`Last updated: ${playerData ? new Date(playerData.last_updated).toLocaleDateString() : 'Unknown'}`}>
+                <Button
+                  onClick={handleRefresh}
+                  disabled={refreshing || (lastRefresh ? Date.now() - lastRefresh < 300000 : false)}
+                  size="sm"
+                  className="bg-theme-button hover:bg-theme-button-hover text-white disabled:opacity-50 disabled:bg-theme-slate-700"
+                >
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                </Button>
+              </Tooltip>
             </div>
           </div>
 
@@ -892,13 +894,10 @@ const PlayerProfile = () => {
                 )}
 
                 {/* Discord Verification Indicator - Top Right */}
-                <Tooltip content={
-                  <>
-                    {playerData.is_verified ? "Verified" : "Unverified"}
-                    <br />
-                    Last updated: {new Date(playerData.last_updated).toLocaleDateString()}
-                  </>
-                }>
+                <Tooltip 
+                  content={playerData.is_verified ? "Verified" : "Unverified"}
+                  className={playerData.is_verified ? "tooltip-green" : ""}
+                >
                   <div className="absolute top-4 right-4">
                     <CircleCheck 
                       className={`w-5 h-5 ${playerData.is_verified ? 'text-green-500' : 'text-gray-500'}`}
