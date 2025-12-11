@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BarChart3, Trophy, ArrowLeft } from 'lucide-react'
+import { BarChart3, Trophy, ArrowLeft, Skull, Zap } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { Spinner } from '../components/ui/spinner'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
@@ -293,7 +293,7 @@ const ClanHiscores = () => {
               variant="default"
               className={activeTab === 'pvm' ? 'bg-theme-button hover:bg-theme-button-hover' : 'bg-theme-button/60 hover:bg-theme-button/80'}
             >
-              <span className="mr-2">💀</span>
+              <Skull className="w-4 h-4 mr-2" />
               PvM
             </Button>
             <Button
@@ -301,7 +301,7 @@ const ClanHiscores = () => {
               variant="default"
               className={activeTab === 'dxp' ? 'bg-theme-button hover:bg-theme-button-hover' : 'bg-theme-button/60 hover:bg-theme-button/80'}
             >
-              <span className="mr-2">2️⃣</span>
+              <Zap className="w-4 h-4 mr-2" />
               DXP
             </Button>
           </div>
@@ -522,7 +522,10 @@ const ClanHiscores = () => {
           <div className="fantasy-section">
             <div className="mb-4">
               <h3 className="text-white text-xl font-bold text-center" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.1em' }}>
-                Leaderboard
+                {activeTab === 'overall' ? 'Overall Leaderboard' : 
+                 activeTab === 'skill' ? 'Skill Leaderboard' : 
+                 activeTab === 'pvm' ? 'PvM Leaderboard' : 
+                 'DXP Leaderboard'}
               </h3>
               <div className="fantasy-divider" style={{ margin: '1rem 0' }}></div>
             </div>
