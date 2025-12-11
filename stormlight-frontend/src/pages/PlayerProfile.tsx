@@ -866,7 +866,16 @@ const PlayerProfile = () => {
                                 border: '1px solid rgba(205, 127, 50, 0.3)',
                               } : undefined}
                             >
-              <div className="bg-slate-700/30 rounded-lg p-6 mb-4 relative">
+              <div 
+                className="rounded-lg p-6 mb-4 relative"
+                style={overallHiscoresRank === 1 ? {
+                  background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                } : overallHiscoresRank === 2 ? {
+                  background: 'linear-gradient(135deg, rgba(192, 192, 192, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                } : overallHiscoresRank === 3 ? {
+                  background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                } : { background: 'rgba(51, 65, 85, 0.3)' }}
+              >
                 {/* Discord Verification Indicator - Top Right */}
                 <Tooltip content={
                   <>
@@ -982,14 +991,32 @@ const PlayerProfile = () => {
                 {/* Overall Row - Rank left, XP right (seamless row) */}
                 <div className="flex flex-row">
                   {playerData.stats.overall.rank && (
-                    <div className="flex-1 text-center bg-slate-700/30 rounded-l-lg px-4 py-3">
+                    <div 
+                      className="flex-1 text-center rounded-l-lg px-4 py-3"
+                      style={overallHiscoresRank === 1 ? {
+                        background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                      } : overallHiscoresRank === 2 ? {
+                        background: 'linear-gradient(135deg, rgba(192, 192, 192, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                      } : overallHiscoresRank === 3 ? {
+                        background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                      } : { background: 'rgba(51, 65, 85, 0.3)' }}
+                    >
                       <p className="text-xs text-slate-400 mb-1">Overall Rank</p>
                       <p className="text-xl font-bold text-theme-accent-light">
                         #{playerData.stats.overall.rank.toLocaleString()}
                       </p>
                     </div>
                   )}
-                  <div className={`flex-1 text-center bg-slate-700/30 px-4 py-3 ${playerData.stats.overall.rank ? 'rounded-r-lg' : 'rounded-lg'}`}>
+                  <div 
+                    className={`flex-1 text-center px-4 py-3 ${playerData.stats.overall.rank ? 'rounded-r-lg' : 'rounded-lg'}`}
+                    style={overallHiscoresRank === 1 ? {
+                      background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                    } : overallHiscoresRank === 2 ? {
+                      background: 'linear-gradient(135deg, rgba(192, 192, 192, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                    } : overallHiscoresRank === 3 ? {
+                      background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                    } : { background: 'rgba(51, 65, 85, 0.3)' }}
+                  >
                     <p className="text-xs text-slate-400 mb-1">Total XP</p>
                     <p className="text-xl font-bold text-green-400">
                       {formatXpAbbreviated(playerData.stats.overall.xp)}
@@ -1024,7 +1051,16 @@ const PlayerProfile = () => {
                   >
                     <div className="flex flex-row cursor-help hover:opacity-90 transition-opacity">
                       {playerData.clan_rank_number && (
-                        <div className={`flex-1 text-center bg-slate-700/30 px-4 py-3 ${playerData.clan_xp !== undefined && playerData.clan_xp !== null ? 'rounded-l-lg' : 'rounded-lg'}`}>
+                        <div 
+                          className={`flex-1 text-center px-4 py-3 ${playerData.clan_xp !== undefined && playerData.clan_xp !== null ? 'rounded-l-lg' : 'rounded-lg'}`}
+                          style={overallHiscoresRank === 1 ? {
+                            background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                          } : overallHiscoresRank === 2 ? {
+                            background: 'linear-gradient(135deg, rgba(192, 192, 192, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                          } : overallHiscoresRank === 3 ? {
+                            background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                          } : { background: 'rgba(51, 65, 85, 0.3)' }}
+                        >
                           <p className="text-xs text-slate-400 mb-1">Clan Rank</p>
                           <p className="text-xl font-bold text-theme-accent-light">
                             #{playerData.clan_rank_number.toLocaleString()}
@@ -1032,7 +1068,16 @@ const PlayerProfile = () => {
                         </div>
                       )}
                       {playerData.clan_xp !== undefined && playerData.clan_xp !== null && (
-                        <div className={`flex-1 text-center bg-slate-700/30 px-4 py-3 ${playerData.clan_rank_number ? 'rounded-r-lg' : 'rounded-lg'}`}>
+                        <div 
+                          className={`flex-1 text-center px-4 py-3 ${playerData.clan_rank_number ? 'rounded-r-lg' : 'rounded-lg'}`}
+                          style={overallHiscoresRank === 1 ? {
+                            background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                          } : overallHiscoresRank === 2 ? {
+                            background: 'linear-gradient(135deg, rgba(192, 192, 192, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                          } : overallHiscoresRank === 3 ? {
+                            background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                          } : { background: 'rgba(51, 65, 85, 0.3)' }}
+                        >
                           <p className="text-xs text-slate-400 mb-1">Clan XP</p>
                           <p className="text-xl font-bold text-green-400">
                             {formatXpAbbreviated(playerData.clan_xp)}
