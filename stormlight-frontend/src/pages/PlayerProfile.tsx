@@ -4,7 +4,7 @@ import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { ArrowLeft, User, Scroll, Trophy, Package, Activity, BarChart3, Compass, BarChart2, FileText, RefreshCw, Plus, CircleCheck, Sparkle } from 'lucide-react'
+import { ArrowLeft, User, Scroll, Trophy, Package, Activity, BarChart3, Compass, BarChart2, FileText, RefreshCw, Plus, CircleCheck, CircleStar } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { getSkillIcon } from '../utils/skillIcons'
 import { checkPlayerMilestones } from '../utils/gradientUtils'
@@ -880,7 +880,7 @@ const PlayerProfile = () => {
                 {overallHiscoresRank && overallHiscoresRank <= 3 && (
                   <Tooltip content={`Rank #${overallHiscoresRank} in the Overall Clan Hiscores`}>
                     <div className="absolute top-4 left-4">
-                      <Sparkle 
+                      <CircleStar 
                         className={`w-5 h-5 ${
                           overallHiscoresRank === 1 ? 'text-yellow-400' : 
                           overallHiscoresRank === 2 ? 'text-gray-300' : 
