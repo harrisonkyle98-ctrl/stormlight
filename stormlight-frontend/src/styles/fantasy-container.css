@@ -430,9 +430,10 @@
   transition: background 0.2s ease;
 }
 
+/* Remove hover effects from regular profile inner boxes and avatar box */
 .profile-inner-box:hover,
 .profile-avatar-box:hover {
-  background: rgba(51, 65, 85, 0.5);
+  background: rgba(51, 65, 85, 0.3);
 }
 
 .profile-stat-row {
@@ -440,7 +441,13 @@
   transition: background 0.2s ease;
 }
 
+/* Remove hover effect from regular profile stat rows (Overall Rank/Total XP) */
 .profile-stat-row:hover {
+  background: rgba(51, 65, 85, 0.3);
+}
+
+/* Keep hover effect ONLY on clan row for regular profiles */
+.profile-stat-row--clan:hover {
   background: rgba(51, 65, 85, 0.5);
 }
 
