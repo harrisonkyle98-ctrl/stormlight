@@ -316,9 +316,15 @@
   border: 1px solid rgba(255, 215, 0, 0.25) !important;
 }
 
+/* Remove hover effects from gold card inner boxes EXCEPT clan row */
 .profile-card--gold .profile-inner-box:hover,
 .profile-card--gold .profile-avatar-box:hover,
 .profile-card--gold .profile-stat-row:hover {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.12) 0%, rgba(40, 35, 15, 0.6) 100%) !important;
+}
+
+/* Keep hover effect ONLY on clan row for gold cards */
+.profile-card--gold .profile-stat-row--clan:hover {
   background: linear-gradient(135deg, rgba(255, 215, 0, 0.18) 0%, rgba(45, 40, 18, 0.7) 100%) !important;
 }
 
@@ -357,9 +363,15 @@
   border: 1px solid rgba(192, 192, 192, 0.25) !important;
 }
 
+/* Remove hover effects from silver card inner boxes EXCEPT clan row */
 .profile-card--silver .profile-inner-box:hover,
 .profile-card--silver .profile-avatar-box:hover,
 .profile-card--silver .profile-stat-row:hover {
+  background: linear-gradient(135deg, rgba(192, 192, 192, 0.12) 0%, rgba(35, 37, 40, 0.6) 100%) !important;
+}
+
+/* Keep hover effect ONLY on clan row for silver cards */
+.profile-card--silver .profile-stat-row--clan:hover {
   background: linear-gradient(135deg, rgba(192, 192, 192, 0.18) 0%, rgba(40, 42, 45, 0.7) 100%) !important;
 }
 
@@ -398,9 +410,15 @@
   border: 1px solid rgba(205, 127, 50, 0.25) !important;
 }
 
+/* Remove hover effects from bronze card inner boxes EXCEPT clan row */
 .profile-card--bronze .profile-inner-box:hover,
 .profile-card--bronze .profile-avatar-box:hover,
 .profile-card--bronze .profile-stat-row:hover {
+  background: linear-gradient(135deg, rgba(205, 127, 50, 0.12) 0%, rgba(40, 30, 20, 0.6) 100%) !important;
+}
+
+/* Keep hover effect ONLY on clan row for bronze cards */
+.profile-card--bronze .profile-stat-row--clan:hover {
   background: linear-gradient(135deg, rgba(205, 127, 50, 0.18) 0%, rgba(45, 35, 25, 0.7) 100%) !important;
 }
 

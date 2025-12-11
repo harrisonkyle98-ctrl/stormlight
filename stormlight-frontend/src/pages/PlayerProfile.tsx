@@ -1036,7 +1036,7 @@ const PlayerProfile = () => {
                     }
                     placement="top"
                   >
-                    <div className="profile-stat-row flex flex-row cursor-help hover:opacity-90 transition-opacity rounded-lg">
+                    <div className="profile-stat-row profile-stat-row--clan flex flex-row cursor-help hover:opacity-90 transition-opacity rounded-lg">
                       {playerData.clan_rank_number && (
                         <div className="flex-1 text-center px-4 py-3">
                           <p className="text-xs text-slate-400 mb-1">Clan Rank</p>
