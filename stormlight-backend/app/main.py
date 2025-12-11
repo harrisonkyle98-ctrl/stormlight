@@ -4659,11 +4659,14 @@ async def get_clan_members_paginated(
             if db_members and len(db_members) > 0:
                 members = []
                 for member in db_members:
-                    badges = []
-                    if member.badges:
+                    # Handle badges stored as list or JSON string
+                    raw_badges = member.badges or []
+                    if isinstance(raw_badges, list):
+                        badges = raw_badges
+                    else:
                         try:
-                            badges = json.loads(member.badges)
-                        except:
+                            badges = json.loads(raw_badges or "[]")
+                        except (TypeError, json.JSONDecodeError):
                             badges = []
                     
                     members.append({
@@ -4714,11 +4717,14 @@ async def get_clan_members_paginated(
             if db_members and len(db_members) > 0:
                 members = []
                 for member in db_members:
-                    badges = []
-                    if member.badges:
+                    # Handle badges stored as list or JSON string
+                    raw_badges = member.badges or []
+                    if isinstance(raw_badges, list):
+                        badges = raw_badges
+                    else:
                         try:
-                            badges = json.loads(member.badges)
-                        except:
+                            badges = json.loads(raw_badges or "[]")
+                        except (TypeError, json.JSONDecodeError):
                             badges = []
                     
                     members.append({
