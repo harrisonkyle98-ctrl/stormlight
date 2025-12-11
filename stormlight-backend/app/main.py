@@ -5346,6 +5346,44 @@ async def debug_auth_flow(token: str = Depends(verify_token)):
         print(f"🔍 DEBUG AUTH ERROR: {e}")
         return {"error": str(e)}
 
+@api_router.get("/badges")
+async def get_public_badges():
+    """Get all badges (public endpoint for Hiscores page)"""
+    try:
+        if PRISMA_AVAILABLE and prisma:
+            badges = await prisma.custombadge.find_many(
+                order={'createdAt': 'desc'}
+            )
+            # Normalize badge data for frontend consumption
+            normalized_badges = []
+            for badge in badges:
+                # Parse gradientColors if it's a JSON string
+                gradient_colors = badge.gradientColors
+                if isinstance(gradient_colors, str):
+                    try:
+                        gradient_colors = json.loads(gradient_colors)
+                    except:
+                        gradient_colors = None
+                
+                normalized_badges.append({
+                    'id': badge.id,
+                    'name': badge.name,
+                    'description': badge.description,
+                    'imageUrl': badge.imageUrl,
+                    'backgroundColor': badge.backgroundColor,
+                    'gradientColors': gradient_colors,
+                    'category': badge.category,
+                    'hierarchyTier': badge.hierarchyTier,
+                    'hierarchyPath': badge.hierarchyPath,
+                    'isSystemBadge': badge.isSystemBadge,
+                    'allowUsernameColorOverride': badge.allowUsernameColorOverride
+                })
+            return {"badges": normalized_badges}
+        return {"badges": []}
+    except Exception as e:
+        print(f"Error fetching public badges: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching badges")
+
 @api_router.get("/admin/badges")
 async def get_custom_badges(admin_id: str = Depends(verify_admin_access)):
     """Get custom badges"""

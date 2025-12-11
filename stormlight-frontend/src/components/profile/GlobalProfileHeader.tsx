@@ -291,7 +291,7 @@ const GlobalProfileHeader = () => {
       })
       if (response.ok) {
         const data = await response.json()
-        setEligibleBadges(data.badges || [])
+        setEligibleBadges(data.eligibleBadges || [])
         setSelectedBadgeId(data.selectedBadgeId || null)
       }
     } catch (error) {
