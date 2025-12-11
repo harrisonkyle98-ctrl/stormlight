@@ -7,8 +7,10 @@ import { Label } from '../components/ui/label'
 import { toast, Toaster } from 'sonner'
 import '../styles/fantasy-container.css'
 import AnimatedHeader from '../components/AnimatedHeader'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 const LinkAccount = () => {
+  usePageTitle('Link Account')
   const { linkAccount } = useAuth()
   const navigate = useNavigate()
   const [customUsername, setCustomUsername] = useState('')

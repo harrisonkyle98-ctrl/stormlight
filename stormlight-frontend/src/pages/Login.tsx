@@ -4,8 +4,10 @@ import { Button } from '../components/ui/button'
 import { toast } from 'sonner'
 import '../styles/fantasy-container.css'
 import AnimatedHeader from '../components/AnimatedHeader'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 const Login = () => {
+  usePageTitle('Welcome')
   const { login, getAuthUrl } = useAuth()
   const [loading, setLoading] = useState(false)
 

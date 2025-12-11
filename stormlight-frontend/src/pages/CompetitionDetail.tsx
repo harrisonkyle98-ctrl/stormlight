@@ -13,6 +13,7 @@ import { Username } from '../components/ui/username'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { BingoBoard } from '../components/BingoBoard'
 import GlobalProfileHeader from '../components/profile/GlobalProfileHeader'
+import { usePageTitle } from '../hooks/usePageTitle'
 import '../styles/fantasy-container.css'
 
 interface CompetitionLeaderboard {
@@ -72,6 +73,9 @@ const CompetitionDetail = () => {
   const [top10Data, setTop10Data] = useState<CompetitionLeaderboard[]>([])
   const [leaderboardData, setLeaderboardData] = useState<CompetitionLeaderboard[]>([])
   const [firstPlaceData, setFirstPlaceData] = useState<CompetitionLeaderboard | null>(null)
+
+  // Dynamic page title based on competition name
+  usePageTitle(competition?.name || 'Competition')
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 

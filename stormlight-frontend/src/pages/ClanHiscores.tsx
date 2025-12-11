@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { User } from 'lucide-react'
 import { usernameToUrl } from '../utils/urlUtils'
 import GlobalProfileHeader from '../components/profile/GlobalProfileHeader'
+import { usePageTitle } from '../hooks/usePageTitle'
 import '../styles/fantasy-container.css'
 
 interface Badge {
@@ -55,6 +56,7 @@ const DXP_TIER_WEIGHTS: Record<number, number> = {
 }
 
 const ClanHiscores = () => {
+    usePageTitle('Hiscores')
     const [members, setMembers] = useState<MemberWithBadges[]>([])
     const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<TabType>('overall')

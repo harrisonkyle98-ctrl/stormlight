@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button'
 import { Spinner } from '../components/ui/spinner'
 import { getSkillIcon } from '../utils/skillIcons'
 import GlobalProfileHeader from '../components/profile/GlobalProfileHeader'
+import { usePageTitle } from '../hooks/usePageTitle'
 import '../styles/fantasy-container.css'
 
 interface Competition {
@@ -38,6 +39,7 @@ const getCompetitionTypeLabel= (type: string): string => {
 }
 
 const Competitions = () => {
+  usePageTitle('Competitions')
   const [competitionsData, setCompetitionsData] = useState<CompetitionsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'active' | 'upcoming' | 'ended'>('active')

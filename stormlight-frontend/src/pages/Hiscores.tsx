@@ -10,6 +10,7 @@ import { Spinner } from '../components/ui/spinner'
 import { fetchClanMembers } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
 import { Username } from '../components/ui/username'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 interface PlayerStats {
   username: string
@@ -35,6 +36,7 @@ interface HiscoresData {
 }
 
 const Hiscores = () => {
+  usePageTitle('Global Hiscores')
   const [hiscoresData, setHiscoresData] = useState<HiscoresData | null>(null)
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')

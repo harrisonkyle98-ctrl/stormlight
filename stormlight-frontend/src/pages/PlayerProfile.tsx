@@ -22,6 +22,7 @@ import { AnalyticsTab } from '../components/tabs/AnalyticsTab'
 import { CompetitionsTab } from '../components/tabs/CompetitionsTab'
 import { LogTab } from '../components/tabs/LogTab'
 import { AccountStatsCard } from '../components/profile/AccountStatsCard'
+import { usePageTitle } from '../hooks/usePageTitle'
 import { 
   AccountStatsCardSkeleton, 
   ProfileOverviewSkeleton, 
@@ -93,6 +94,11 @@ interface PlayerStats {
 
 const PlayerProfile = () => {
   const { username } = useParams<{ username: string }>()
+  const decodedUsername = username ? urlToUsername(username) : ''
+  
+  // Dynamic page title based on player username
+  usePageTitle(decodedUsername || 'Profile')
+  
   const { user } = useAuth()
   const { publish } = useProfileGains()
   const [playerData, setPlayerData] = useState<PlayerStats | null>(null)

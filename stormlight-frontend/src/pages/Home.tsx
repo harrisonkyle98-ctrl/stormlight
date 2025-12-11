@@ -10,6 +10,7 @@ import { ClanLogRow } from '../components/clanLogs/ClanLogRow'
 import { ActivityLogRow } from '../components/activityLogs/ActivityLogRow'
 import { Username } from '../components/ui/username'
 import GlobalProfileHeader from '../components/profile/GlobalProfileHeader'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 const getRankIcon= (rank: string): string => {
   const rankImageMap: { [key: string]: string } = {
@@ -129,6 +130,7 @@ interface ActivityResponse {
 
 
 const Home = () => {
+  usePageTitle('Home')
   const { user } = useAuth()
   const [clanStats, setClanStats] = useState<ClanStats | null>(null)
   const [activities, setActivities] = useState<Activity[]>([])

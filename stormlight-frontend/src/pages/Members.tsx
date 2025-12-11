@@ -12,6 +12,7 @@ import { MilestoneBadge, checkPlayerMilestones } from '../utils/gradientUtils'
 import { usernameToUrl } from '../utils/urlUtils'
 import { Username } from '../components/ui/username'
 import GlobalProfileHeader from '../components/profile/GlobalProfileHeader'
+import { usePageTitle } from '../hooks/usePageTitle'
 import '../styles/fantasy-container.css'
 
 
@@ -42,6 +43,7 @@ interface MembersData {
 }
 
 const Members = () => {
+  usePageTitle('Members')
   const [membersData, setMembersData] = useState<MembersData | null>(null)
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')

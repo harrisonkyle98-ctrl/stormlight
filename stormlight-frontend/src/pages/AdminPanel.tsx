@@ -9,9 +9,11 @@ import { CompetitionManagementTab } from '../components/admin/CompetitionManagem
 import { RankTrackingTab } from '../components/admin/RankTrackingTab'
 import { MemberLogTab } from '../components/admin/MemberLogTab'
 import GlobalProfileHeader from '../components/profile/GlobalProfileHeader'
+import { usePageTitle } from '../hooks/usePageTitle'
 import '../styles/fantasy-container.css'
 
 const AdminPanel = () => {
+  usePageTitle('Admin Panel')
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('home')
 
