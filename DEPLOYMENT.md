@@ -32,7 +32,7 @@ The local development environment has been successfully initialized with all dep
 ### Local Testing Limitations ⚠️
 
 Full OAuth authentication testing is **not possible locally** because:
-- Discord OAuth redirect URI is configured for production: `https://stormlight.fly.dev/api/auth/callback/discord`
+- Discord OAuth redirect URI is configured for production: `https://stormlightrs.com/api/auth/callback/discord`
 - Discord will reject login attempts from localhost
 - Full application testing requires deployment to Fly.io
 
@@ -78,7 +78,7 @@ DATABASE_URL=postgresql://postgres:PumfAGTaunYekmIM@52.22.132.208:5432/postgres
 DISCORD_CLIENT_ID=1412974739340791900
 DISCORD_CLIENT_SECRET=bJlBq3K1fB3N4dOprcnoL5IFG_WU4YQn
 JWT_SECRET_KEY=G0kP4KqE4Bhs6PjB8n7E2zjYb1pQ2cR9vU6tF3xN4yM1aS7dT8wR5eL2kV9hC0qD
-DISCORD_REDIRECT_URI=https://stormlight.fly.dev/api/auth/callback/discord
+DISCORD_REDIRECT_URI=https://stormlightrs.com/api/auth/callback/discord
 ```
 
 ### Deployment Steps
@@ -101,10 +101,10 @@ DISCORD_REDIRECT_URI=https://stormlight.fly.dev/api/auth/callback/discord
    - Deploy to `stormlight.fly.dev`
 
 3. **Verify deployment**:
-   - **App URL**: https://stormlight.fly.dev/
-   - **API Base**: https://stormlight.fly.dev/api/
-   - **Health Check**: https://stormlight.fly.dev/healthz
-   - **OAuth Redirect**: https://stormlight.fly.dev/api/auth/callback/discord
+   - **App URL**: https://stormlightrs.com/
+   - **API Base**: https://stormlightrs.com/api/
+   - **Health Check**: https://stormlightrs.com/healthz
+   - **OAuth Redirect**: https://stormlightrs.com/api/auth/callback/discord
 
 ### Manual Deployment (Alternative)
 
@@ -118,7 +118,7 @@ flyctl secrets set DATABASE_URL="postgresql://postgres:PumfAGTaunYekmIM@52.22.13
 flyctl secrets set DISCORD_CLIENT_ID="1412974739340791900" -a stormlight
 flyctl secrets set DISCORD_CLIENT_SECRET="bJlBq3K1fB3N4dOprcnoL5IFG_WU4YQn" -a stormlight
 flyctl secrets set JWT_SECRET_KEY="G0kP4KqE4Bhs6PjB8n7E2zjYb1pQ2cR9vU6tF3xN4yM1aS7dT8wR5eL2kV9hC0qD" -a stormlight
-flyctl secrets set DISCORD_REDIRECT_URI="https://stormlight.fly.dev/api/auth/callback/discord" -a stormlight
+flyctl secrets set DISCORD_REDIRECT_URI="https://stormlightrs.com/api/auth/callback/discord" -a stormlight
 
 # Deploy
 flyctl deploy -a stormlight
@@ -139,8 +139,8 @@ After deployment completes:
    ```
 
 3. **Test endpoints**:
-   - Visit https://stormlight.fly.dev/ (should show login page)
-   - Check https://stormlight.fly.dev/healthz (should return `{"status": "ok"}`)
+   - Visit https://stormlightrs.com/ (should show login page)
+   - Check https://stormlightrs.com/healthz (should return `{"status": "ok"}`)
    - Test Discord OAuth login flow
 
 4. **Verify scheduled tasks**:
