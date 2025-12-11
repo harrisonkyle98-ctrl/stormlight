@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BarChart3, Trophy, ArrowLeft, Skull, Zap } from 'lucide-react'
+import { BarChart3, Trophy, Skull, Zap } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { Spinner } from '../components/ui/spinner'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
@@ -260,16 +260,6 @@ const ClanHiscores = () => {
         </div>
 
         <div className="fantasy-content">
-          {/* Back Button */}
-          <div className="mb-4 flex justify-start">
-            <Button asChild className="bg-theme-button hover:bg-theme-button-hover text-white">
-              <Link to="/">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Home
-              </Link>
-            </Button>
-          </div>
-
           {/* Tab Buttons - Same style as Competitions page */}
           <div className="flex items-center space-x-4 p-4 bg-slate-700/30 rounded-lg justify-center mb-6">
             <Button
