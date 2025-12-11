@@ -49,15 +49,7 @@ const Terms = () => {
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold text-white mb-3">3. User Accounts</h2>
-                <p>
-                  You are responsible for maintaining the confidentiality of your account and password. 
-                  You agree to accept responsibility for all activities that occur under your account.
-                </p>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold text-white mb-3">4. Data Collection</h2>
+                <h2 className="text-xl font-semibold text-white mb-3">3. Data Collection</h2>
                 <p>
                   We collect publicly available RuneScape player data through official APIs. This includes 
                   player statistics, achievements, and activity logs. We do not collect personal information 
@@ -66,15 +58,15 @@ const Terms = () => {
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold text-white mb-3">5. Privacy</h2>
+                <h2 className="text-xl font-semibold text-white mb-3">4. Privacy</h2>
                 <p>
-                  Your privacy is important to us. We do not sell or share your personal information with 
-                  third parties. Data collected is used solely for the operation of this service.
+                  Your privacy is important to us. Data collected is used solely for the operation of this 
+                  service. No passwords are stored on this site in any manner.
                 </p>
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold text-white mb-3">6. Disclaimer</h2>
+                <h2 className="text-xl font-semibold text-white mb-3">5. Disclaimer</h2>
                 <p>
                   This service is provided "as is" without any warranties, expressed or implied. We do not 
                   guarantee the accuracy, completeness, or timeliness of the data displayed. RuneScape and 
@@ -83,7 +75,7 @@ const Terms = () => {
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold text-white mb-3">7. Changes to Terms</h2>
+                <h2 className="text-xl font-semibold text-white mb-3">6. Changes to Terms</h2>
                 <p>
                   We reserve the right to modify these terms at any time. Continued use of the service 
                   after any changes constitutes acceptance of the new terms.
@@ -91,10 +83,10 @@ const Terms = () => {
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold text-white mb-3">8. Contact</h2>
+                <h2 className="text-xl font-semibold text-white mb-3">7. Contact</h2>
                 <p>
-                  If you have any questions about these Terms &amp; Conditions, please contact the clan 
-                  leadership through the official clan Discord.
+                  If you have any questions about these Terms &amp; Conditions, please contact lm Kyle 
+                  through the official clan Discord.
                 </p>
               </section>
             </div>
