@@ -127,21 +127,31 @@ const PlayerProfile = () => {
   const [badgeModalLoading, setBadgeModalLoading] = useState(false)
   const [badgeModalError, setBadgeModalError] = useState<string | null>(null)
   const [modalCustomBadges, setModalCustomBadges] = useState<CustomBadge[]>([])
-  const [citadelCaps, setCitadelCaps] = useState<number | null>(null)
-  const [capDates, setCapDates] = useState<string[]>([])
+    const [citadelCaps, setCitadelCaps] = useState<number | null>(null)
+    const [capDates, setCapDates] = useState<string[]>([])
+    const [overallHiscoresRank, setOverallHiscoresRank] = useState<number | null>(null)
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-  useEffect(() => {
-    if (username) {
-      fetchPlayerStats()
-      fetchQuestData()
-      fetchCitadelCaps()
-      if (user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank)) {
-        fetchCustomBadges()
-      }
+    // Badge tier weights for hierarchical badges (same as ClanHiscores)
+    const PVM_TIER_WEIGHTS: Record<number, number> = {
+      1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6,
     }
-  }, [username, period1, period2, user])
+    const DXP_TIER_WEIGHTS: Record<number, number> = {
+      1: 1, 2: 2, 3: 3, 4: 4, 5: 5,
+    }
+
+    useEffect(() => {
+      if (username) {
+        fetchPlayerStats()
+        fetchQuestData()
+        fetchCitadelCaps()
+        fetchOverallHiscoresRank()
+        if (user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank)) {
+          fetchCustomBadges()
+        }
+      }
+    }, [username, period1, period2, user])
 
   const fetchPlayerStats = async () => {
     try {
@@ -210,21 +220,109 @@ const PlayerProfile = () => {
     }
   }
 
-    const fetchCitadelCaps = async () => {
+      const fetchCitadelCaps = async () => {
+        try {
+          const decodedUsername = urlToUsername(username || '')
+          const response = await fetch(`${API_URL}/api/player/${encodeURIComponent(decodedUsername)}/citadel-caps`)
+          if (response.ok) {
+            const data = await response.json()
+            setCitadelCaps(data.total_caps)
+            setCapDates(data.cap_dates || [])
+          }
+        } catch (error) {
+          console.error('Error fetching citadel caps:', error)
+        }
+      }
+
+    // Fetch user's Overall Hiscores rank (1, 2, 3, or null if not in top 3)
+    const fetchOverallHiscoresRank = async () => {
       try {
         const decodedUsername = urlToUsername(username || '')
-        const response = await fetch(`${API_URL}/api/player/${encodeURIComponent(decodedUsername)}/citadel-caps`)
-        if (response.ok) {
-          const data = await response.json()
-          setCitadelCaps(data.total_caps)
-          setCapDates(data.cap_dates || [])
+      
+        // Fetch all clan members with their badges
+        const membersResponse = await fetch(`${API_URL}/api/clan/members?limit=250`)
+        const membersData = await membersResponse.json()
+      
+        // Fetch all custom badges to get category and tier info
+        const badgesResponse = await fetch(`${API_URL}/api/badges`)
+        const badgesData = await badgesResponse.json()
+      
+        const badgeMap = new Map<string, { category?: string; hierarchyTier?: number }>()
+        if (badgesData.badges) {
+          badgesData.badges.forEach((badge: { id: string; category?: string; hierarchyTier?: number }) => {
+            badgeMap.set(badge.id, badge)
+          })
+        }
+      
+        // Process members and calculate badge scores (same logic as ClanHiscores)
+        interface MemberScore {
+          username: string
+          badgeScore: number
+          totalBadges: number
+        }
+      
+        const processedMembers: MemberScore[] = (membersData.members || []).map((member: { username: string; badges?: Array<string | { id: string }> }) => {
+          let skillBadgeScore = 0
+          let pvmBadgeScore = 0
+          let dxpBadgeScore = 0
+          let skillBadgeCount = 0
+          let pvmBadgeCount = 0
+          let dxpBadgeCount = 0
+        
+          if (member.badges && Array.isArray(member.badges)) {
+            member.badges.forEach((badgeRef: string | { id: string }) => {
+              const badgeId = typeof badgeRef === 'string' ? badgeRef : badgeRef.id
+              const badgeInfo = badgeMap.get(badgeId)
+            
+              if (badgeInfo) {
+                const category = badgeInfo.category?.toUpperCase() || ''
+                const tier = badgeInfo.hierarchyTier || 1
+              
+                if (category === 'SKILL') {
+                  skillBadgeCount++
+                  skillBadgeScore += 1
+                } else if (category === 'PVM') {
+                  pvmBadgeCount++
+                  pvmBadgeScore += PVM_TIER_WEIGHTS[tier] || tier
+                } else if (category === 'DXP') {
+                  dxpBadgeCount++
+                  dxpBadgeScore += DXP_TIER_WEIGHTS[tier] || tier
+                }
+              }
+            })
+          }
+        
+          return {
+            username: member.username,
+            badgeScore: skillBadgeScore + pvmBadgeScore + dxpBadgeScore,
+            totalBadges: skillBadgeCount + pvmBadgeCount + dxpBadgeCount,
+          }
+        })
+      
+        // Sort by overall badge score (same as ClanHiscores Overall tab)
+        processedMembers.sort((a, b) => {
+          if (b.badgeScore !== a.badgeScore) return b.badgeScore - a.badgeScore
+          if (b.totalBadges !== a.totalBadges) return b.totalBadges - a.totalBadges
+          return a.username.localeCompare(b.username)
+        })
+      
+        // Find the user's rank (1-indexed)
+        const userIndex = processedMembers.findIndex(
+          m => m.username.toLowerCase() === decodedUsername.toLowerCase()
+        )
+      
+        if (userIndex >= 0 && userIndex < 3) {
+          setOverallHiscoresRank(userIndex + 1) // 1, 2, or 3
+        } else {
+          setOverallHiscoresRank(null)
         }
       } catch (error) {
-        console.error('Error fetching citadel caps:', error)
+        console.error('Error fetching overall hiscores rank:', error)
+        setOverallHiscoresRank(null)
       }
     }
 
-  const handleRefresh = async () => {
+    const handleRefresh = async () => {
     if (refreshing) return
     
     const now = Date.now()
@@ -751,11 +849,23 @@ const PlayerProfile = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_2.3fr] gap-6">
             <div className="space-y-6">
-              {/* Profile Overview Panel */}
-              {!isStatsReady ? (
-                <ProfileOverviewSkeleton />
-              ) : (
-              <div className="fantasy-section p-6">
+                            {/* Profile Overview Panel */}
+                            {!isStatsReady ? (
+                              <ProfileOverviewSkeleton />
+                            ) : (
+                            <div 
+                              className="fantasy-section p-6"
+                              style={overallHiscoresRank === 1 ? {
+                                background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
+                                border: '1px solid rgba(255, 215, 0, 0.3)',
+                              } : overallHiscoresRank === 2 ? {
+                                background: 'linear-gradient(135deg, rgba(192, 192, 192, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
+                                border: '1px solid rgba(192, 192, 192, 0.3)',
+                              } : overallHiscoresRank === 3 ? {
+                                background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
+                                border: '1px solid rgba(205, 127, 50, 0.3)',
+                              } : undefined}
+                            >
               <div className="bg-slate-700/30 rounded-lg p-6 mb-4 relative">
                 {/* Discord Verification Indicator - Top Right */}
                 <Tooltip content={
