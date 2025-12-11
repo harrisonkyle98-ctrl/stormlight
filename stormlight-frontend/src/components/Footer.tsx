@@ -19,8 +19,8 @@ const Footer = () => {
         <span className="text-slate-400 ml-1">January 1st at 00:00 UTC</span>
       </div>
       <div>
-        <span className="text-slate-300 font-medium">Competition Reset:</span>
-        <span className="text-slate-400 ml-1">Based on competition end date</span>
+                <span className="text-slate-300 font-medium">Competition Reset:</span>
+                <span className="text-slate-400 ml-1">Every hour</span>
       </div>
     </div>
   )
