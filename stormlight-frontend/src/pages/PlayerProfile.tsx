@@ -854,7 +854,7 @@ const PlayerProfile = () => {
                               <ProfileOverviewSkeleton />
                             ) : (
                             <div 
-                              className="fantasy-section p-6"
+                              className={`fantasy-section p-6 ${overallHiscoresRank === 1 ? 'fantasy-section--gold' : overallHiscoresRank === 2 ? 'fantasy-section--silver' : overallHiscoresRank === 3 ? 'fantasy-section--bronze' : ''}`}
                               style={overallHiscoresRank === 1 ? {
                                 background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(30, 41, 59, 0.3) 100%)',
                                 border: '1px solid rgba(255, 215, 0, 0.3)',
@@ -988,35 +988,26 @@ const PlayerProfile = () => {
 
               {/* XP and Rank Stats - Horizontal Rows */}
               <div className="mt-3 flex flex-col gap-4">
-                {/* Overall Row - Rank left, XP right (seamless row) */}
-                <div className="flex flex-row">
+                {/* Overall Row - Rank left, XP right (seamless row with unified background) */}
+                <div 
+                  className="flex flex-row rounded-lg"
+                  style={overallHiscoresRank === 1 ? {
+                    background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                  } : overallHiscoresRank === 2 ? {
+                    background: 'linear-gradient(135deg, rgba(192, 192, 192, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                  } : overallHiscoresRank === 3 ? {
+                    background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                  } : { background: 'rgba(51, 65, 85, 0.3)' }}
+                >
                   {playerData.stats.overall.rank && (
-                    <div 
-                      className="flex-1 text-center rounded-l-lg px-4 py-3"
-                      style={overallHiscoresRank === 1 ? {
-                        background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
-                      } : overallHiscoresRank === 2 ? {
-                        background: 'linear-gradient(135deg, rgba(192, 192, 192, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
-                      } : overallHiscoresRank === 3 ? {
-                        background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
-                      } : { background: 'rgba(51, 65, 85, 0.3)' }}
-                    >
+                    <div className="flex-1 text-center px-4 py-3">
                       <p className="text-xs text-slate-400 mb-1">Overall Rank</p>
                       <p className="text-xl font-bold text-theme-accent-light">
                         #{playerData.stats.overall.rank.toLocaleString()}
                       </p>
                     </div>
                   )}
-                  <div 
-                    className={`flex-1 text-center px-4 py-3 ${playerData.stats.overall.rank ? 'rounded-r-lg' : 'rounded-lg'}`}
-                    style={overallHiscoresRank === 1 ? {
-                      background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
-                    } : overallHiscoresRank === 2 ? {
-                      background: 'linear-gradient(135deg, rgba(192, 192, 192, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
-                    } : overallHiscoresRank === 3 ? {
-                      background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
-                    } : { background: 'rgba(51, 65, 85, 0.3)' }}
-                  >
+                  <div className="flex-1 text-center px-4 py-3">
                     <p className="text-xs text-slate-400 mb-1">Total XP</p>
                     <p className="text-xl font-bold text-green-400">
                       {formatXpAbbreviated(playerData.stats.overall.xp)}
@@ -1024,7 +1015,7 @@ const PlayerProfile = () => {
                   </div>
                 </div>
 
-                {/* Clan Row - Rank left, XP right (seamless row) */}
+                {/* Clan Row - Rank left, XP right (seamless row with unified background) */}
                 {(playerData.clan_xp !== undefined && playerData.clan_xp !== null) || playerData.clan_rank_number ? (
                   <Tooltip
                     title="Clan XP Contribution"
@@ -1049,18 +1040,18 @@ const PlayerProfile = () => {
                     }
                     placement="top"
                   >
-                    <div className="flex flex-row cursor-help hover:opacity-90 transition-opacity">
+                    <div 
+                      className="flex flex-row cursor-help hover:opacity-90 transition-opacity rounded-lg"
+                      style={overallHiscoresRank === 1 ? {
+                        background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                      } : overallHiscoresRank === 2 ? {
+                        background: 'linear-gradient(135deg, rgba(192, 192, 192, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                      } : overallHiscoresRank === 3 ? {
+                        background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                      } : { background: 'rgba(51, 65, 85, 0.3)' }}
+                    >
                       {playerData.clan_rank_number && (
-                        <div 
-                          className={`flex-1 text-center px-4 py-3 ${playerData.clan_xp !== undefined && playerData.clan_xp !== null ? 'rounded-l-lg' : 'rounded-lg'}`}
-                          style={overallHiscoresRank === 1 ? {
-                            background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
-                          } : overallHiscoresRank === 2 ? {
-                            background: 'linear-gradient(135deg, rgba(192, 192, 192, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
-                          } : overallHiscoresRank === 3 ? {
-                            background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
-                          } : { background: 'rgba(51, 65, 85, 0.3)' }}
-                        >
+                        <div className="flex-1 text-center px-4 py-3">
                           <p className="text-xs text-slate-400 mb-1">Clan Rank</p>
                           <p className="text-xl font-bold text-theme-accent-light">
                             #{playerData.clan_rank_number.toLocaleString()}
@@ -1068,16 +1059,7 @@ const PlayerProfile = () => {
                         </div>
                       )}
                       {playerData.clan_xp !== undefined && playerData.clan_xp !== null && (
-                        <div 
-                          className={`flex-1 text-center px-4 py-3 ${playerData.clan_rank_number ? 'rounded-r-lg' : 'rounded-lg'}`}
-                          style={overallHiscoresRank === 1 ? {
-                            background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
-                          } : overallHiscoresRank === 2 ? {
-                            background: 'linear-gradient(135deg, rgba(192, 192, 192, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
-                          } : overallHiscoresRank === 3 ? {
-                            background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.2) 0%, rgba(30, 41, 59, 0.4) 100%)',
-                          } : { background: 'rgba(51, 65, 85, 0.3)' }}
-                        >
+                        <div className="flex-1 text-center px-4 py-3">
                           <p className="text-xs text-slate-400 mb-1">Clan XP</p>
                           <p className="text-xl font-bold text-green-400">
                             {formatXpAbbreviated(playerData.clan_xp)}

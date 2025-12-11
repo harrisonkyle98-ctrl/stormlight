@@ -239,6 +239,42 @@
   opacity: 1;
 }
 
+/* Gold spotlight variant for #1 ranked users */
+.fantasy-section--gold::after {
+  background:
+    radial-gradient(
+      ellipse at top center,
+      rgba(255, 215, 0, 0.12) 0%,
+      rgba(255, 215, 0, 0.05) 40%,
+      rgba(255, 215, 0, 0) 70%
+    ),
+    linear-gradient(180deg, rgba(255, 215, 0, 0.04) 0%, transparent 100%);
+}
+
+/* Silver spotlight variant for #2 ranked users - same as default white */
+.fantasy-section--silver::after {
+  background:
+    radial-gradient(
+      ellipse at top center,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.03) 40%,
+      rgba(255, 255, 255, 0) 70%
+    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+}
+
+/* Bronze spotlight variant for #3 ranked users */
+.fantasy-section--bronze::after {
+  background:
+    radial-gradient(
+      ellipse at top center,
+      rgba(205, 127, 50, 0.12) 0%,
+      rgba(205, 127, 50, 0.05) 40%,
+      rgba(205, 127, 50, 0) 70%
+    ),
+    linear-gradient(180deg, rgba(205, 127, 50, 0.04) 0%, transparent 100%);
+}
+
 /* Stats row styling */
 .fantasy-stats-row {
   display: grid;
