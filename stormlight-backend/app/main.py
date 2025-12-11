@@ -8800,7 +8800,8 @@ async def repair_member_leave_state(dry_run: bool = True):
         
         # Find ghost members (in DB as active but not in live API)
         ghost_candidates = []
-        now = datetime.now()
+        from datetime import timezone
+        now = datetime.now(timezone.utc)
         
         for db_member in all_active_members:
             db_norm = normalize_username(db_member.username)
