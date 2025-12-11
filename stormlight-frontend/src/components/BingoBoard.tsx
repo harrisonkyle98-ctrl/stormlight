@@ -146,7 +146,7 @@ export const BingoBoard = ({
                       <>
                         <div className="absolute inset-0 flex items-center justify-center">
                           <img
-                            src={`https://stormlight.fly.dev${item.imageUrl}`}
+                            src={`https://stormlightrs.com${item.imageUrl}`}
                             alt={item.itemName}
                             className={`transition-all ${
                               isCompleted ? '' : 'opacity-50'
@@ -191,7 +191,7 @@ export const BingoBoard = ({
               <div className="space-y-4">
                 <div className="flex flex-col items-center space-y-2 pb-3 border-b border-slate-600">
                   <img 
-                    src={`https://stormlight.fly.dev${dropStats.item.imageUrl}`}
+                    src={`https://stormlightrs.com${dropStats.item.imageUrl}`}
                     alt={dropStats.item.name}
                     style={{ width: '32px', height: '32px' }}
                   />

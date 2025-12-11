@@ -430,7 +430,7 @@ export const BadgeManagementTab = () => {
                     }}
                   >
                     <img
-                      src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
+                      src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlightrs.com${badge.imageUrl}`}
                       alt={badge.name} 
                       className="w-4 h-4"
                     />
@@ -492,7 +492,7 @@ export const BadgeManagementTab = () => {
                 >
                   {badge.imageUrl && (
                     <img
-                      src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
+                      src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlightrs.com${badge.imageUrl}`}
                       alt={badge.name} 
                       className="w-4 h-4"
                     />
@@ -533,7 +533,7 @@ export const BadgeManagementTab = () => {
                 >
                   {badge.imageUrl && (
                     <img
-                      src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
+                      src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlightrs.com${badge.imageUrl}`}
                       alt={badge.name} 
                       className="w-4 h-4 object-contain"
                     />
@@ -575,7 +575,7 @@ export const BadgeManagementTab = () => {
                 >
                   {badge.imageUrl && (
                     <img
-                      src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
+                      src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlightrs.com${badge.imageUrl}`}
                       alt={badge.name} 
                       className="w-4 h-4"
                     />
@@ -619,7 +619,7 @@ export const BadgeManagementTab = () => {
                   >
                     {badge.imageUrl && (
                       <img
-                        src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
+                        src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlightrs.com${badge.imageUrl}`}
                         alt={badge.name} 
                         className="w-4 h-4"
                       />
@@ -664,7 +664,7 @@ export const BadgeManagementTab = () => {
                     >
                       {badge.imageUrl && (
                         <img
-                          src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
+                          src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlightrs.com${badge.imageUrl}`}
                           alt={badge.name} 
                           className="w-4 h-4"
                         />

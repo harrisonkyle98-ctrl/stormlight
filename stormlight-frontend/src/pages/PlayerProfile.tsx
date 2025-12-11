@@ -395,7 +395,7 @@ const PlayerProfile = () => {
             ...badge,
             imageUrl: badge.imageUrl.startsWith('http') 
               ? badge.imageUrl 
-              : `https://stormlight.fly.dev${badge.imageUrl}`
+              : `https://stormlightrs.com${badge.imageUrl}`
           }))
         setModalCustomBadges(badges)
       } else {

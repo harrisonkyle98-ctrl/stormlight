@@ -1893,7 +1893,7 @@ async def discord_login():
     redirect_uri = os.environ.get("DISCORD_REDIRECT_URI")
     if not redirect_uri:
         # Fallback to production if not set, but prefer secret to avoid mismatches
-        redirect_uri = "https://stormlight.fly.dev/api/auth/callback/discord"
+        redirect_uri = "https://stormlightrs.com/api/auth/callback/discord"
     return {
         "auth_url": f"https://discord.com/api/oauth2/authorize?client_id={os.getenv('DISCORD_CLIENT_ID')}&redirect_uri={redirect_uri}&response_type=code&scope=identify%20email"
     }

@@ -727,7 +727,7 @@ const GlobalProfileHeader = () => {
                             title={badge.description || badge.name}
                           >
                             <img 
-                              src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlight.fly.dev${badge.imageUrl}`}
+                              src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlightrs.com${badge.imageUrl}`}
                               alt={badge.name} 
                               className="w-4 h-4"
                             />
