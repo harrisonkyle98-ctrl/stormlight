@@ -1513,7 +1513,8 @@ async def sync_clan_members_to_database_with_queue():
                         'kills': member_data.get('kills', 0),
                         'lastUpdated': datetime.now(),
                         'lastSeenInApi': datetime.now(),
-                        'active': True
+                        'active': True,
+                        'leftAt': None  # Clear leftAt when member is seen in API (active)
                     }
                     
                     create_data = {
@@ -1618,7 +1619,8 @@ async def sync_clan_members_to_database_with_queue():
                 await asyncio.sleep(3)
         
         print("🔍 Checking for members who left the clan...")
-        api_usernames = {member['username'].lower().strip() for member in clan_data}
+        # Use normalize_username for consistent comparison (handles NBSP, whitespace, case)
+        api_usernames = {normalize_username(member['username']) for member in clan_data}
         
         all_db_members = await prisma.clanmember.find_many(
             where={'active': True}
@@ -1626,19 +1628,21 @@ async def sync_clan_members_to_database_with_queue():
         
         db_active_count = len(all_db_members)
         api_count = len(clan_data)
-        min_expected = min(EXPECTED_ROSTER_COUNT, db_active_count)
-        sanity_threshold = 0.8  # 80% threshold
         
-        print(f"📊 Roster comparison: API={api_count}, DB_active={db_active_count}, Expected={EXPECTED_ROSTER_COUNT}, Min_expected={min_expected}")
-        print(f"📊 First 5 API usernames: {[m['username'] for m in clan_data[:5]]}")
+        print(f"📊 Roster comparison: API={api_count}, DB_active={db_active_count}, Expected={EXPECTED_ROSTER_COUNT}")
+        print(f"📊 First 5 API usernames (normalized): {list(api_usernames)[:5]}")
         print(f"📊 First 5 DB active usernames: {[m.username for m in all_db_members[:5]]}")
         
-        if api_count < min_expected * sanity_threshold:
-            print(f"⚠️ ROSTER SANITY CHECK FAILED: API returned only {api_count} members (expected at least {int(min_expected * sanity_threshold)})")
+        # Improved sanity check: only skip if API returns 0 or catastrophically few members
+        # compared to what we currently have in DB (not hardcoded expected count)
+        if api_count == 0:
+            print(f"⚠️ ROSTER SANITY CHECK FAILED: API returned 0 members")
             print(f"⚠️ Skipping leave detection to prevent false 'everyone left' spam")
-            print(f"⚠️ This could indicate an API blip, network issue, or parsing error")
+        elif db_active_count > 50 and api_count < db_active_count * 0.3:
+            print(f"⚠️ ROSTER SANITY CHECK FAILED: API returned only {api_count} members but DB has {db_active_count} active")
+            print(f"⚠️ Skipping leave detection - this looks like an API blip (< 30% of DB count)")
         else:
-            print(f"✅ Roster sanity check passed: {api_count} >= {int(min_expected * sanity_threshold)}")
+            print(f"✅ Roster sanity check passed: API={api_count}, DB_active={db_active_count}")
             
             grace_period = timedelta(hours=3)
             now = datetime.now()
@@ -1646,28 +1650,41 @@ async def sync_clan_members_to_database_with_queue():
             left_candidates = []
             
             for db_member in all_db_members:
-                if db_member.username.lower().strip() not in api_usernames:
+                db_norm = normalize_username(db_member.username)
+                if db_norm not in api_usernames:
                     left_candidates.append(db_member.username)
             
             print(f"📊 Found {len(left_candidates)} members not in API roster")
             if left_candidates:
-                print(f"📊 First 5 left candidates: {left_candidates[:5]}")
+                print(f"📊 First 10 left candidates: {left_candidates[:10]}")
             
             for db_member in all_db_members:
-                if db_member.username.lower().strip() not in api_usernames:
+                db_norm = normalize_username(db_member.username)
+                if db_norm not in api_usernames:
+                    # Handle members with lastSeenInApi = None (legacy records)
+                    # These are likely ghosts from before the field was added
                     if db_member.lastSeenInApi is None:
-                        print(f"⚠️ {db_member.username} not in API but lastSeenInApi is None - skipping leave detection (first-run protection)")
-                        continue
+                        # Check if they were created recently (within last 6 hours) - might be a sync timing issue
+                        if db_member.createdAt and (now - db_member.createdAt) < timedelta(hours=6):
+                            print(f"⏳ {db_member.username} not in API, lastSeenInApi is None, but created recently ({(now - db_member.createdAt).total_seconds()/3600:.1f}h ago) - skipping")
+                            continue
+                        # Otherwise, treat as a ghost that should be marked as left
+                        print(f"👻 {db_member.username} not in API and lastSeenInApi is None (legacy ghost) - marking as left")
+                    else:
+                        time_since_last_seen = now - db_member.lastSeenInApi
+                        if time_since_last_seen < grace_period:
+                            print(f"⏳ {db_member.username} not in API but within grace period ({time_since_last_seen.total_seconds()/3600:.1f}h < 3h) - not marking as left yet")
+                            continue
+                        print(f"📝 [Member Sync] {db_member.username} not in API for {time_since_last_seen.total_seconds()/3600:.1f}h (> 3h grace period)")
                     
-                    time_since_last_seen = now - db_member.lastSeenInApi
-                    if time_since_last_seen < grace_period:
-                        print(f"⏳ {db_member.username} not in API but within grace period ({time_since_last_seen.total_seconds()/3600:.1f}h < 3h) - not marking as left yet")
-                        continue
-                    
-                    print(f"📝 [Member Sync] Logging Leave event for {db_member.username} (was {db_member.clanRank}, last seen {time_since_last_seen.total_seconds()/3600:.1f}h ago)")
+                    # Mark member as left with timestamp
+                    leave_time = now
                     await prisma.clanmember.update(
                         where={'username': db_member.username},
-                        data={'active': False}
+                        data={
+                            'active': False,
+                            'leftAt': leave_time
+                        }
                     )
                     
                     await log_clan_event_if_new(
@@ -8744,6 +8761,135 @@ async def repopulate_clan_members():
             "status": "error", 
             "message": f"Failed to repopulate clan_members table: {str(e)}"
         }
+
+@app.get("/api/admin/repair-member-leave-state")
+async def repair_member_leave_state(dry_run: bool = True):
+    """
+    Repair pass to clean up ghost members who should be marked as inactive.
+    
+    This function:
+    1. Fetches the current live clan roster from RuneScape API
+    2. Compares against all active members in the database
+    3. Marks members not in the live roster as inactive with leftAt timestamp
+    
+    Args:
+        dry_run: If True, only logs what would be changed without making changes (default: True)
+    """
+    try:
+        print("=" * 80)
+        print(f"🔧 [REPAIR] Starting member leave state repair (dry_run={dry_run})")
+        print("=" * 80)
+        
+        # Fetch live clan roster
+        live_set, from_live_api = await get_live_active_set()
+        if not from_live_api:
+            return {
+                "status": "error",
+                "message": "Could not fetch live clan roster from RuneScape API. Aborting repair to prevent data loss.",
+                "dry_run": dry_run
+            }
+        
+        print(f"📊 [REPAIR] Fetched {len(live_set)} members from live API")
+        
+        # Get all active members from database
+        all_active_members = await prisma.clanmember.find_many(
+            where={'active': True}
+        )
+        
+        print(f"📊 [REPAIR] Found {len(all_active_members)} active members in database")
+        
+        # Find ghost members (in DB as active but not in live API)
+        ghost_candidates = []
+        now = datetime.now()
+        
+        for db_member in all_active_members:
+            db_norm = normalize_username(db_member.username)
+            if db_norm not in live_set:
+                ghost_candidates.append({
+                    'username': db_member.username,
+                    'rank': db_member.clanRank,
+                    'lastSeenInApi': db_member.lastSeenInApi,
+                    'createdAt': db_member.createdAt,
+                    'id': db_member.id
+                })
+        
+        print(f"👻 [REPAIR] Found {len(ghost_candidates)} ghost candidates (active in DB but not in live API)")
+        
+        if ghost_candidates:
+            print(f"📋 [REPAIR] Ghost candidates:")
+            for i, ghost in enumerate(ghost_candidates[:20]):  # Show first 20
+                last_seen_str = ghost['lastSeenInApi'].isoformat() if ghost['lastSeenInApi'] else 'Never'
+                print(f"  {i+1}. {ghost['username']} (rank: {ghost['rank']}, lastSeenInApi: {last_seen_str})")
+            if len(ghost_candidates) > 20:
+                print(f"  ... and {len(ghost_candidates) - 20} more")
+        
+        # Process ghost members
+        repaired_count = 0
+        skipped_count = 0
+        
+        for ghost in ghost_candidates:
+            # Skip if created very recently (within 1 hour) - might be timing issue
+            if ghost['createdAt'] and (now - ghost['createdAt']) < timedelta(hours=1):
+                print(f"⏭️  [REPAIR] Skipping {ghost['username']} - created recently ({(now - ghost['createdAt']).total_seconds()/60:.0f}m ago)")
+                skipped_count += 1
+                continue
+            
+            if dry_run:
+                print(f"🔍 [DRY RUN] Would mark {ghost['username']} as inactive (was {ghost['rank']})")
+            else:
+                # Mark as inactive with leftAt timestamp
+                await prisma.clanmember.update(
+                    where={'id': ghost['id']},
+                    data={
+                        'active': False,
+                        'leftAt': now
+                    }
+                )
+                
+                # Log the leave event
+                await log_clan_event_if_new(
+                    username=ghost['username'],
+                    event_type='Leave',
+                    old_rank=ghost['rank'],
+                    new_rank=None,
+                    window_minutes=60
+                )
+                
+                print(f"👋 [REPAIR] Marked {ghost['username']} as inactive (was {ghost['rank']})")
+            
+            repaired_count += 1
+        
+        # Clear cache after repair
+        if not dry_run and repaired_count > 0:
+            clan_members_cache['data'] = []
+            clan_members_cache['timestamp'] = 0
+            print(f"🔄 [REPAIR] Cleared clan members cache")
+        
+        print("=" * 80)
+        print(f"✅ [REPAIR] Repair complete: {repaired_count} members {'would be' if dry_run else ''} marked as inactive, {skipped_count} skipped")
+        print("=" * 80)
+        
+        return {
+            "status": "success",
+            "dry_run": dry_run,
+            "live_roster_count": len(live_set),
+            "db_active_count": len(all_active_members),
+            "ghost_candidates": len(ghost_candidates),
+            "repaired_count": repaired_count,
+            "skipped_count": skipped_count,
+            "message": f"{'Would mark' if dry_run else 'Marked'} {repaired_count} ghost members as inactive"
+        }
+        
+    except Exception as e:
+        print(f"❌ [REPAIR] Error during repair: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "status": "error",
+            "message": f"Failed to repair member leave state: {str(e)}",
+            "dry_run": dry_run
+        }
+
 async def _run_repopulation_background():
     """Background task to repopulate drops without blocking HTTP response"""
     try:

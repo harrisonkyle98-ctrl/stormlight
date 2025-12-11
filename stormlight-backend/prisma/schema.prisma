@@ -43,6 +43,7 @@ model ClanMember {
   joinDate           DateTime?          @map("join_date")
   active             Boolean            @default(true)
   lastSeenInApi      DateTime?          @map("last_seen_in_api")
+  leftAt             DateTime?          @map("left_at")
   totalCaps          Int                @default(0) @map("total_caps")
   competitionEntries CompetitionEntry[]
 
