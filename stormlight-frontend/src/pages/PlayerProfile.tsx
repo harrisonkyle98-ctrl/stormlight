@@ -886,7 +886,6 @@ const PlayerProfile = () => {
                           overallHiscoresRank === 2 ? 'text-gray-300' : 
                           'text-amber-600'
                         }`}
-                        fill="currentColor"
                       />
                     </div>
                   </Tooltip>
