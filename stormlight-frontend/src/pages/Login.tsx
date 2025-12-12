@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Button } from '../components/ui/button'
 import { toast } from 'sonner'
@@ -8,30 +8,13 @@ import { usePageTitle } from '../hooks/usePageTitle'
 
 const Login = () => {
   usePageTitle('Welcome')
-  const { login, getAuthUrl } = useAuth()
+  const { getAuthUrl } = useAuth()
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const code = urlParams.get('code')
-
-    if (code) {
-      handleCallback(code)
-    }
-  }, [])
-
-  const handleCallback = async (code: string) => {
-    setLoading(true)
-    try {
-      await login(code)
-      window.history.replaceState({}, document.title, window.location.pathname)
-      window.location.assign('/')
-    } catch (error) {
-      toast.error('Authentication failed. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
+  // OAuth callback is now handled entirely by the backend
+  // Discord redirects to /api/auth/callback/discord which exchanges the code
+  // and redirects to / with the token in a cookie
+  // No need to handle ?code= in the frontend anymore
 
   const handleDiscordLogin = async () => {
     setLoading(true)

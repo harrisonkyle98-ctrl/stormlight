@@ -2037,6 +2037,8 @@ async def discord_callback(code: str = Query(None)):
             if not user_dict['isLinked'] and user_dict['requiresLinking']:
                 redirect_url = "/?linking=required"
             
+            # Token is passed via httponly cookie for security
+            # Also pass in URL for frontend to pick up (will be removed from URL after reading)
             redirect_url += f"&token={jwt_token}" if "?" in redirect_url else f"?token={jwt_token}"
             
             response = RedirectResponse(url=redirect_url, status_code=302)
