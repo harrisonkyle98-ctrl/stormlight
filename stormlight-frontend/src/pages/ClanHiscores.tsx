@@ -6,6 +6,7 @@ import { Spinner } from '../components/ui/spinner'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { User } from 'lucide-react'
 import { usernameToUrl } from '../utils/urlUtils'
+import { Username } from '../components/ui/username'
 import GlobalProfileHeader from '../components/profile/GlobalProfileHeader'
 import { usePageTitle } from '../hooks/usePageTitle'
 import '../styles/fantasy-container.css'
@@ -564,13 +565,16 @@ const ClanHiscores = () => {
                         </AvatarFallback>
                       </Avatar>
                       
-                      {/* Username */}
-                      <Link 
-                        to={`/clan-member/${usernameToUrl(member.username)}`}
-                        className="font-medium hover:text-theme-accent-light transition-colors text-white"
-                      >
-                        {member.username}
-                      </Link>
+                                            {/* Username */}
+                                            <Link 
+                                              to={`/clan-member/${usernameToUrl(member.username)}`}
+                                              className="font-medium hover:text-theme-accent-light transition-colors"
+                                            >
+                                              <Username
+                                                username={member.username}
+                                                clanRank={member.clan_rank}
+                                              />
+                                            </Link>
                       
                       {/* Medal for top 3 */}
                       {rank <= 3 && (
