@@ -130,6 +130,34 @@ export function getBadgeTooltipConfig(
     }
   }
 
+  // Handle tiered competition badges (SKILL, PVM, DXP) - matches Hiscores tooltip format exactly
+  const badgeWithCategory = badge as MilestoneBadge & { id: string; category?: string; hierarchyTier?: number }
+  if (badgeWithCategory.category && ['SKILL', 'PVM', 'DXP'].includes(badgeWithCategory.category.toUpperCase())) {
+    const tierLabel = badgeWithCategory.hierarchyTier ? `Tier ${badgeWithCategory.hierarchyTier}` : undefined
+    const rawCategory = badgeWithCategory.category
+    const categoryLabel = rawCategory
+      ? rawCategory.charAt(0).toUpperCase() + rawCategory.slice(1).toLowerCase()
+      : undefined
+
+    return {
+      title: badge.name,
+      imageSrc: badge.icon,
+      className: 'skill-tooltip',
+      headerTag: tierLabel ? (
+        <span
+          className="tooltip-skill-tag"
+          style={{
+            background: badge.gradientBackground || badge.backgroundColor || '#6b7280',
+            color: '#fff',
+          }}
+        >
+          {tierLabel}
+        </span>
+      ) : undefined,
+      footerText: categoryLabel ? `${categoryLabel} Badge` : undefined,
+    }
+  }
+
   return {
     title: badge.name,
     imageSrc: badge.icon,

@@ -4682,7 +4682,10 @@ async def get_clan_members_paginated(
         try:
             print("🔄 Fetching clan member data from database...")
             t_db0 = time_module.time()
-            db_members = await prisma.clanmember.find_many()
+            # Only fetch active members (exclude those who have left the clan)
+            db_members = await prisma.clanmember.find_many(
+                where={'active': True}
+            )
             t_db = time_module.time()
             
             if db_members and len(db_members) > 0:
@@ -4741,7 +4744,10 @@ async def get_clan_members_paginated(
                 
         except Exception as api_error:
             print(f"❌ API error, falling back to database: {api_error}")
-            db_members = await prisma.clanmember.find_many()
+            # Only fetch active members (exclude those who have left the clan)
+            db_members = await prisma.clanmember.find_many(
+                where={'active': True}
+            )
             t_db = time_module.time()
             if db_members and len(db_members) > 0:
                 members = []

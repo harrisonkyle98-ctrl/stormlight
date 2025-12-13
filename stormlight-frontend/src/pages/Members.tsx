@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Input } from '../components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { Badge } from '../components/ui/badge'
 import { Search, User } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
@@ -253,98 +252,108 @@ const Members = () => {
                           </CardContent>
                         </Card>
 
-                        <div className="grid gap-4">
+                        <div className="space-y-2">
               {displayData.map((member, index) => {
                 const memberRank = (currentPage - 1) * pageSize + index + 1
                 return (
-                  <Card key={member.username} className="members-card bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="flex items-center">
-                            <div className="w-14 mr-3 flex-shrink-0">
-                              <Badge variant="outline" className="text-yellow-400 border-yellow-400 w-full justify-center tabular-nums">
-                                #{memberRank}
-                              </Badge>
-                            </div>
-                            <Avatar className="w-10 h-10 mr-3 flex-shrink-0">
-                              <AvatarImage
-                                src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(member.username.replace(/\u00A0/g, ' '))}/chat.png`}
-                                alt={member.username}
-                              />
-                              <AvatarFallback className="bg-theme-button text-white">
-                                <User className="w-5 h-5" />
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <Link
-                                to={`/clan-member/${usernameToUrl(member.username)}`}
-                                className="text-lg font-semibold hover:text-theme-accent-light transition-colors block truncate"
-                                style={{
-                                  textAlign: 'left',
-                                  margin: 0,
-                                  padding: 0,
-                                  textIndent: 0,
-                                  paddingLeft: '1px'
-                                }}
-                              >
-                                <Username
-                                  username={member.username}
-                                  clanRank={member.clan_rank}
-                                />
-                              </Link>
-                              <div className="flex items-center mt-1">
-                                {member.badgesLoading ? (
-                                  <div className="w-24 h-6 bg-slate-600 rounded animate-pulse"></div>
-                                ) : member.badges.length > 0 ? (
-                                  (() => {
-                                    const rankBadge = member.badges[0]
-                                    return (
-                                      <div
-                                        className="px-2 py-1 text-xs font-semibold flex items-center gap-1 rounded-md text-white"
-                                        style={{
-                                          background: rankBadge.gradientBackground || rankBadge.backgroundColor
-                                        }}
-                                        title={rankBadge.name}
-                                      >
-                                        <img
-                                          src={rankBadge.icon}
-                                          alt={rankBadge.name}
-                                          className="w-3 h-3"
-                                        />
-                                        <span>{rankBadge.name}</span>
-                                      </div>
-                                    )
-                                  })()
-                                ) : (
-                                  <div className="px-2 py-1 text-xs font-semibold flex items-center gap-1 rounded-md text-white bg-slate-600">
-                                    <span>{member.clan_rank || 'Member'}</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="text-right">
-                          <div className="flex items-center space-x-4">
-                            <div>
-                              <p className="text-sm text-slate-400">Clan XP</p>
-                              <p className="text-xl font-bold text-green-400">
-                                {member.total_xp.toLocaleString()}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-slate-400">Kills</p>
-                              <p className="text-lg font-semibold text-red-400">
-                                {member.kills.toLocaleString()}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
+                  <div
+                    key={member.username}
+                    className={`flex items-center justify-between p-3 transition-colors ${
+                      memberRank === 1
+                        ? 'bg-gradient-to-r from-yellow-600/20 to-yellow-800/20 border border-yellow-600/30' 
+                        : memberRank === 2
+                        ? 'bg-gradient-to-r from-gray-400/20 to-gray-600/20 border border-gray-400/30'
+                        : memberRank === 3
+                        ? 'bg-gradient-to-r from-amber-600/20 to-amber-800/20 border border-amber-600/30'
+                        : 'bg-slate-700/30 hover:bg-slate-700/50 border border-slate-700/50'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-4">
+                      {/* Rank */}
+                      <div className={`w-8 h-8 flex items-center justify-center rounded text-sm font-bold ${
+                        memberRank === 1 ? 'bg-yellow-600/30 text-yellow-400 border border-yellow-500/50' :
+                        memberRank === 2 ? 'bg-gray-500/30 text-gray-300 border border-gray-400/50' :
+                        memberRank === 3 ? 'bg-amber-600/30 text-amber-400 border border-amber-500/50' :
+                        'bg-slate-700/50 text-slate-400 border border-slate-600/50'
+                      }`}>
+                        #{memberRank}
                       </div>
-                    </CardContent>
-                  </Card>
+                      
+                      {/* Avatar */}
+                      <Avatar className="w-10 h-10 flex-shrink-0">
+                        <AvatarImage
+                          src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(member.username.replace(/\u00A0/g, ' '))}/chat.png`}
+                          alt={member.username}
+                        />
+                        <AvatarFallback className="bg-slate-700 text-slate-400">
+                          <User className="w-5 h-5" />
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      {/* Username */}
+                      <Link 
+                        to={`/clan-member/${usernameToUrl(member.username)}`}
+                        className="font-medium hover:text-theme-accent-light transition-colors"
+                      >
+                        <Username
+                          username={member.username}
+                          clanRank={member.clan_rank}
+                        />
+                      </Link>
+                      
+                      {/* Medal for top 3 */}
+                      {memberRank <= 3 && (
+                        <span className="text-lg">
+                          {memberRank === 1 ? '🥇' : memberRank === 2 ? '🥈' : '🥉'}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center space-x-4">
+                      {/* Rank Badge */}
+                      <div className="flex items-center">
+                        {member.badgesLoading ? (
+                          <div className="w-20 h-6 bg-slate-600 rounded animate-pulse"></div>
+                        ) : member.badges.length > 0 ? (
+                          (() => {
+                            const rankBadge = member.badges[0]
+                            return (
+                              <div
+                                className="px-2 py-1 text-xs font-semibold flex items-center gap-1 rounded-md text-white"
+                                style={{
+                                  background: rankBadge.gradientBackground || rankBadge.backgroundColor
+                                }}
+                                title={rankBadge.name}
+                              >
+                                <img
+                                  src={rankBadge.icon}
+                                  alt={rankBadge.name}
+                                  className="w-3 h-3"
+                                />
+                                <span>{rankBadge.name}</span>
+                              </div>
+                            )
+                          })()
+                        ) : (
+                          <div className="px-2 py-1 text-xs font-semibold flex items-center gap-1 rounded-md text-white bg-slate-600">
+                            <span>{member.clan_rank || 'Member'}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Clan XP */}
+                      <div className="text-right min-w-[80px]">
+                        <p className="text-sm text-slate-400">Clan XP</p>
+                        <p className="text-lg font-bold text-green-400">{member.total_xp.toLocaleString()}</p>
+                      </div>
+                      
+                      {/* Kills */}
+                      <div className="text-right min-w-[60px]">
+                        <p className="text-sm text-slate-400">Kills</p>
+                        <p className="text-lg font-bold text-red-400">{member.kills.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </div>
                 )
               })}
                       </div>
