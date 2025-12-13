@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BarChart3, Trophy, Skull, Zap } from 'lucide-react'
+import { BarChart3, Trophy, Skull, Zap, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { Spinner } from '../components/ui/spinner'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
@@ -56,11 +56,14 @@ const DXP_TIER_WEIGHTS: Record<number, number> = {
   5: 5,   // DXP Completionist
 }
 
+const ITEMS_PER_PAGE = 15
+
 const ClanHiscores = () => {
     usePageTitle('Hiscores')
     const [members, setMembers] = useState<MemberWithBadges[]>([])
     const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<TabType>('overall')
+  const [currentPage, setCurrentPage] = useState(1)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -234,6 +237,13 @@ const ClanHiscores = () => {
 
     const sortedMembers = getSortedMembers()
     const top3 = sortedMembers.slice(0, 3)
+    
+    // Pagination calculations
+    const totalMembers = sortedMembers.length
+    const totalPages = Math.ceil(totalMembers / ITEMS_PER_PAGE)
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+    const endIndex = startIndex + ITEMS_PER_PAGE
+    const paginatedMembers = sortedMembers.slice(startIndex, endIndex)
 
     if (loading) {
     return (
@@ -265,38 +275,38 @@ const ClanHiscores = () => {
         <div className="fantasy-content">
           {/* Tab Buttons - Same style as Competitions page */}
           <div className="flex items-center space-x-4 p-4 bg-slate-700/30 rounded-lg justify-center mb-6">
-            <Button
-              onClick={() => setActiveTab('overall')}
-              variant="default"
-              className={activeTab === 'overall' ? 'bg-theme-button hover:bg-theme-button-hover' : 'bg-theme-button/60 hover:bg-theme-button/80'}
-            >
-              <Trophy className="w-4 h-4 mr-2" />
-              Overall
-            </Button>
-            <Button
-              onClick={() => setActiveTab('skill')}
-              variant="default"
-              className={activeTab === 'skill' ? 'bg-theme-button hover:bg-theme-button-hover' : 'bg-theme-button/60 hover:bg-theme-button/80'}
-            >
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Skill
-            </Button>
-            <Button
-              onClick={() => setActiveTab('pvm')}
-              variant="default"
-              className={activeTab === 'pvm' ? 'bg-theme-button hover:bg-theme-button-hover' : 'bg-theme-button/60 hover:bg-theme-button/80'}
-            >
-              <Skull className="w-4 h-4 mr-2" />
-              PvM
-            </Button>
-            <Button
-              onClick={() => setActiveTab('dxp')}
-              variant="default"
-              className={activeTab === 'dxp' ? 'bg-theme-button hover:bg-theme-button-hover' : 'bg-theme-button/60 hover:bg-theme-button/80'}
-            >
-              <Zap className="w-4 h-4 mr-2" />
-              DXP
-            </Button>
+                        <Button
+                          onClick={() => { setActiveTab('overall'); setCurrentPage(1); }}
+                          variant="default"
+                          className={activeTab === 'overall' ? 'bg-theme-button hover:bg-theme-button-hover' : 'bg-theme-button/60 hover:bg-theme-button/80'}
+                        >
+                          <Trophy className="w-4 h-4 mr-2" />
+                          Overall
+                        </Button>
+                        <Button
+                          onClick={() => { setActiveTab('skill'); setCurrentPage(1); }}
+                          variant="default"
+                          className={activeTab === 'skill' ? 'bg-theme-button hover:bg-theme-button-hover' : 'bg-theme-button/60 hover:bg-theme-button/80'}
+                        >
+                          <BarChart3 className="w-4 h-4 mr-2" />
+                          Skill
+                        </Button>
+                        <Button
+                          onClick={() => { setActiveTab('pvm'); setCurrentPage(1); }}
+                          variant="default"
+                          className={activeTab === 'pvm' ? 'bg-theme-button hover:bg-theme-button-hover' : 'bg-theme-button/60 hover:bg-theme-button/80'}
+                        >
+                          <Skull className="w-4 h-4 mr-2" />
+                          PvM
+                        </Button>
+                        <Button
+                          onClick={() => { setActiveTab('dxp'); setCurrentPage(1); }}
+                          variant="default"
+                          className={activeTab === 'dxp' ? 'bg-theme-button hover:bg-theme-button-hover' : 'bg-theme-button/60 hover:bg-theme-button/80'}
+                        >
+                          <Zap className="w-4 h-4 mr-2" />
+                          DXP
+                        </Button>
           </div>
 
                     {/* Top 3 Display - Competition Reward Card Style */}
@@ -524,11 +534,11 @@ const ClanHiscores = () => {
             </div>
 
             <div className="space-y-2">
-              {sortedMembers.map((member, index) => {
+              {paginatedMembers.map((member, index) => {
                 const badges = getBadgesForTab(member)
                 const score = getScoreForTab(member)
                 const badgeCount = getBadgeCountForTab(member)
-                const rank = index + 1
+                const rank = startIndex + index + 1
                 
                 return (
                   <div
@@ -618,10 +628,54 @@ const ClanHiscores = () => {
               })}
             </div>
 
-            {sortedMembers.length > 0 && (
-              <div className="flex items-center justify-center px-4 py-3 mt-4 bg-slate-800/50 border border-slate-700">
+            {/* Pagination Controls */}
+            {totalMembers > 0 && (
+              <div className="flex flex-col md:flex-row items-center justify-between px-4 py-3 mt-4 bg-slate-800/50 border border-slate-700 gap-4">
                 <div className="text-sm text-slate-400">
-                  Showing all {sortedMembers.length} clan members
+                  Showing {startIndex + 1}-{Math.min(endIndex, totalMembers)} of {totalMembers} members
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600 disabled:opacity-50"
+                  >
+                    First
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600 disabled:opacity-50"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Previous
+                  </Button>
+                  <span className="text-white text-sm px-3">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage >= totalPages}
+                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600 disabled:opacity-50"
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage >= totalPages}
+                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600 disabled:opacity-50"
+                  >
+                    Last
+                  </Button>
                 </div>
               </div>
             )}
