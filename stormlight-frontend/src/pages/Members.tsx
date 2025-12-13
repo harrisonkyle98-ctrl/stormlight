@@ -258,24 +258,11 @@ const Members = () => {
                 return (
                   <div
                     key={member.username}
-                    className={`flex items-center justify-between p-3 transition-colors ${
-                      memberRank === 1
-                        ? 'bg-gradient-to-r from-yellow-600/20 to-yellow-800/20 border border-yellow-600/30' 
-                        : memberRank === 2
-                        ? 'bg-gradient-to-r from-gray-400/20 to-gray-600/20 border border-gray-400/30'
-                        : memberRank === 3
-                        ? 'bg-gradient-to-r from-amber-600/20 to-amber-800/20 border border-amber-600/30'
-                        : 'bg-slate-700/30 hover:bg-slate-700/50 border border-slate-700/50'
-                    }`}
+                    className="flex items-center justify-between p-3 transition-colors bg-slate-700/30 hover:bg-slate-700/50 border border-slate-700/50"
                   >
                     <div className="flex items-center space-x-4">
                       {/* Rank */}
-                      <div className={`w-8 h-8 flex items-center justify-center rounded text-sm font-bold ${
-                        memberRank === 1 ? 'bg-yellow-600/30 text-yellow-400 border border-yellow-500/50' :
-                        memberRank === 2 ? 'bg-gray-500/30 text-gray-300 border border-gray-400/50' :
-                        memberRank === 3 ? 'bg-amber-600/30 text-amber-400 border border-amber-500/50' :
-                        'bg-slate-700/50 text-slate-400 border border-slate-600/50'
-                      }`}>
+                      <div className="w-8 h-8 flex items-center justify-center rounded text-sm font-bold bg-slate-700/50 text-slate-400 border border-slate-600/50">
                         #{memberRank}
                       </div>
                       
@@ -300,13 +287,6 @@ const Members = () => {
                           clanRank={member.clan_rank}
                         />
                       </Link>
-                      
-                      {/* Medal for top 3 */}
-                      {memberRank <= 3 && (
-                        <span className="text-lg">
-                          {memberRank === 1 ? '🥇' : memberRank === 2 ? '🥈' : '🥉'}
-                        </span>
-                      )}
                     </div>
                     
                     <div className="flex items-center space-x-4">
