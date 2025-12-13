@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { User } from 'lucide-react'
 import { usernameToUrl } from '../utils/urlUtils'
 import { Username } from '../components/ui/username'
+import { Tooltip } from '../components/ui/tooltip'
 import GlobalProfileHeader from '../components/profile/GlobalProfileHeader'
 import { usePageTitle } from '../hooks/usePageTitle'
 import '../styles/fantasy-container.css'
@@ -235,6 +236,32 @@ const ClanHiscores = () => {
     }
   }
 
+  // Get tooltip config for a badge (matches profile page styling)
+  const getBadgeTooltip = (badge: Badge) => {
+    const tierLabel = badge.hierarchyTier ? `Tier ${badge.hierarchyTier}` : undefined
+    const categoryLabel = badge.category ? badge.category.charAt(0).toUpperCase() + badge.category.slice(1).toLowerCase() : undefined
+    
+    return {
+      title: badge.name,
+      imageSrc: badge.imageUrl,
+      className: 'skill-tooltip',
+      headerTag: tierLabel ? (
+        <span
+          className="tooltip-skill-tag"
+          style={{
+            background: badge.gradientColors 
+              ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
+              : badge.backgroundColor || '#6b7280',
+            color: '#fff'
+          }}
+        >
+          {tierLabel}
+        </span>
+      ) : undefined,
+      footerText: categoryLabel ? `${categoryLabel} Badge` : undefined
+    }
+  }
+
     const sortedMembers = getSortedMembers()
     const top3 = sortedMembers.slice(0, 3)
     
@@ -351,27 +378,39 @@ const ClanHiscores = () => {
                               {/* Badge Display - Profile-style stacked layout */}
                               {getBadgesForTab(top3[0]).length > 0 ? (
                                 <div className="flex flex-col gap-2 mt-3">
-                                  {getBadgesForTab(top3[0]).map((badge) => (
-                                    <div
-                                      key={badge.id}
-                                      className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white"
-                                      style={{
-                                        background: badge.gradientColors 
-                                          ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
-                                          : badge.backgroundColor || '#6b7280'
-                                      }}
-                                    >
-                                      {badge.imageUrl && (
-                                        <img 
-                                          src={badge.imageUrl}
-                                          alt={badge.name}
-                                          className="w-4 h-4 object-contain"
-                                          style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
-                                        />
-                                      )}
-                                      <span>{badge.name}</span>
-                                    </div>
-                                  ))}
+                                  {getBadgesForTab(top3[0]).map((badge) => {
+                                    const tooltipConfig = getBadgeTooltip(badge)
+                                    return (
+                                      <Tooltip
+                                        key={badge.id}
+                                        className={tooltipConfig.className}
+                                        title={tooltipConfig.title}
+                                        imageSrc={tooltipConfig.imageSrc}
+                                        headerTag={tooltipConfig.headerTag}
+                                        footerText={tooltipConfig.footerText}
+                                        placement="top"
+                                      >
+                                        <div
+                                          className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white cursor-help"
+                                          style={{
+                                            background: badge.gradientColors 
+                                              ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
+                                              : badge.backgroundColor || '#6b7280'
+                                          }}
+                                        >
+                                          {badge.imageUrl && (
+                                            <img 
+                                              src={badge.imageUrl}
+                                              alt={badge.name}
+                                              className="w-4 h-4 object-contain"
+                                              style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
+                                            />
+                                          )}
+                                          <span>{badge.name}</span>
+                                        </div>
+                                      </Tooltip>
+                                    )
+                                  })}
                                 </div>
                               ) : (
                                 <div className="text-center text-slate-400 text-sm mt-3">
@@ -421,27 +460,39 @@ const ClanHiscores = () => {
                               {/* Badge Display - Profile-style stacked layout */}
                               {getBadgesForTab(top3[1]).length > 0 ? (
                                 <div className="flex flex-col gap-2 mt-3">
-                                  {getBadgesForTab(top3[1]).map((badge) => (
-                                    <div
-                                      key={badge.id}
-                                      className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white"
-                                      style={{
-                                        background: badge.gradientColors 
-                                          ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
-                                          : badge.backgroundColor || '#6b7280'
-                                      }}
-                                    >
-                                      {badge.imageUrl && (
-                                        <img 
-                                          src={badge.imageUrl}
-                                          alt={badge.name}
-                                          className="w-4 h-4 object-contain"
-                                          style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
-                                        />
-                                      )}
-                                      <span>{badge.name}</span>
-                                    </div>
-                                  ))}
+                                  {getBadgesForTab(top3[1]).map((badge) => {
+                                    const tooltipConfig = getBadgeTooltip(badge)
+                                    return (
+                                      <Tooltip
+                                        key={badge.id}
+                                        className={tooltipConfig.className}
+                                        title={tooltipConfig.title}
+                                        imageSrc={tooltipConfig.imageSrc}
+                                        headerTag={tooltipConfig.headerTag}
+                                        footerText={tooltipConfig.footerText}
+                                        placement="top"
+                                      >
+                                        <div
+                                          className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white cursor-help"
+                                          style={{
+                                            background: badge.gradientColors 
+                                              ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
+                                              : badge.backgroundColor || '#6b7280'
+                                          }}
+                                        >
+                                          {badge.imageUrl && (
+                                            <img 
+                                              src={badge.imageUrl}
+                                              alt={badge.name}
+                                              className="w-4 h-4 object-contain"
+                                              style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
+                                            />
+                                          )}
+                                          <span>{badge.name}</span>
+                                        </div>
+                                      </Tooltip>
+                                    )
+                                  })}
                                 </div>
                               ) : (
                                 <div className="text-center text-slate-400 text-sm mt-3">
@@ -491,27 +542,39 @@ const ClanHiscores = () => {
                               {/* Badge Display - Profile-style stacked layout */}
                               {getBadgesForTab(top3[2]).length > 0 ? (
                                 <div className="flex flex-col gap-2 mt-3">
-                                  {getBadgesForTab(top3[2]).map((badge) => (
-                                    <div
-                                      key={badge.id}
-                                      className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white"
-                                      style={{
-                                        background: badge.gradientColors 
-                                          ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
-                                          : badge.backgroundColor || '#6b7280'
-                                      }}
-                                    >
-                                      {badge.imageUrl && (
-                                        <img 
-                                          src={badge.imageUrl}
-                                          alt={badge.name}
-                                          className="w-4 h-4 object-contain"
-                                          style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
-                                        />
-                                      )}
-                                      <span>{badge.name}</span>
-                                    </div>
-                                  ))}
+                                  {getBadgesForTab(top3[2]).map((badge) => {
+                                    const tooltipConfig = getBadgeTooltip(badge)
+                                    return (
+                                      <Tooltip
+                                        key={badge.id}
+                                        className={tooltipConfig.className}
+                                        title={tooltipConfig.title}
+                                        imageSrc={tooltipConfig.imageSrc}
+                                        headerTag={tooltipConfig.headerTag}
+                                        footerText={tooltipConfig.footerText}
+                                        placement="top"
+                                      >
+                                        <div
+                                          className="px-3 py-1 text-sm font-semibold flex items-center justify-center space-x-2 rounded-md text-white cursor-help"
+                                          style={{
+                                            background: badge.gradientColors 
+                                              ? `linear-gradient(135deg, ${badge.gradientColors[0]}, ${badge.gradientColors[1]})`
+                                              : badge.backgroundColor || '#6b7280'
+                                          }}
+                                        >
+                                          {badge.imageUrl && (
+                                            <img 
+                                              src={badge.imageUrl}
+                                              alt={badge.name}
+                                              className="w-4 h-4 object-contain"
+                                              style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
+                                            />
+                                          )}
+                                          <span>{badge.name}</span>
+                                        </div>
+                                      </Tooltip>
+                                    )
+                                  })}
                                 </div>
                               ) : (
                                 <div className="text-center text-slate-400 text-sm mt-3">
@@ -598,18 +661,29 @@ const ClanHiscores = () => {
                     </div>
                     
                     <div className="flex items-center space-x-4">
-                      {/* Badge Icons (small, no styling) */}
+                      {/* Badge Icons (small, with tooltips) */}
                       <div className="flex items-center space-x-1 max-w-[200px] overflow-hidden">
-                        {badges.slice(0, 8).map((badge) => (
-                          <img
-                            key={badge.id}
-                            src={badge.imageUrl}
-                            alt={badge.name}
-                            title={badge.name}
-                            className="w-5 h-5 object-contain"
-                            style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
-                          />
-                        ))}
+                        {badges.slice(0, 8).map((badge) => {
+                          const tooltipConfig = getBadgeTooltip(badge)
+                          return (
+                            <Tooltip
+                              key={badge.id}
+                              className={tooltipConfig.className}
+                              title={tooltipConfig.title}
+                              imageSrc={tooltipConfig.imageSrc}
+                              headerTag={tooltipConfig.headerTag}
+                              footerText={tooltipConfig.footerText}
+                              placement="top"
+                            >
+                              <img
+                                src={badge.imageUrl}
+                                alt={badge.name}
+                                className="w-5 h-5 object-contain cursor-help"
+                                style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
+                              />
+                            </Tooltip>
+                          )
+                        })}
                         {badges.length > 8 && (
                           <span className="text-xs text-slate-400">+{badges.length - 8}</span>
                         )}

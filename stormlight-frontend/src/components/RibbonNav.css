@@ -27,6 +27,8 @@
   padding-left: 40px; /* Shifted slightly left for better alignment */
   /* Prevent clipping of ribbon bottom V-shape */
   overflow: visible !important;
+  /* Subtle drop shadow under navigation ribbons */
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.25));
 }
 
 /* ========================================

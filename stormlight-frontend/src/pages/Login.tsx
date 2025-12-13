@@ -4,6 +4,7 @@ import { Button } from '../components/ui/button'
 import { toast } from 'sonner'
 import '../styles/fantasy-container.css'
 import AnimatedHeader from '../components/AnimatedHeader'
+import Footer from '../components/Footer'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 const Login = () => {
@@ -94,6 +95,7 @@ const Login = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   )
 }

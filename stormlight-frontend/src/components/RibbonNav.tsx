@@ -17,8 +17,8 @@ const RibbonNav = () => {
     const navItems: NavItem[] = [
       { path: '/', label: 'Home', icon: Home, variant: 'blue' },
       { path: '/members', label: 'Members', icon: Users, variant: 'blue' },
-      { path: '/competitions', label: 'Competitions', icon: Trophy, variant: 'blue' },
-      { path: '/clan-hiscores', label: 'Clan Hiscores', icon: Star, variant: 'blue' },
+      { path: '/competitions', label: 'Competitions', icon: Star, variant: 'blue' },
+      { path: '/clan-hiscores', label: 'Clan Hiscores', icon: Trophy, variant: 'blue' },
     ]
 
   const isActive = (path: string) => location.pathname === path
