@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Trophy, Calendar, Users, BarChart3 } from 'lucide-react'
+import { Star, Calendar, Users, BarChart3 } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { Spinner } from '../components/ui/spinner'
 import { getSkillIcon } from '../utils/skillIcons'
@@ -133,7 +133,7 @@ const Competitions = () => {
               variant="default"
               className={activeTab === 'active' ? 'bg-theme-button hover:bg-theme-button-hover' : 'bg-theme-button/60 hover:bg-theme-button/80'}
             >
-              <Trophy className="w-4 h-4 mr-2" />
+              <Star className="w-4 h-4 mr-2" />
               Active
             </Button>
             <Button
@@ -243,7 +243,7 @@ const Competitions = () => {
                           )}
                           {competition.type === 'BOSS_KILLS' && competition.boardSize && (
                             <div className="flex items-center space-x-2">
-                              <Trophy className="w-4 h-4 text-slate-400" />
+                              <Star className="w-4 h-4 text-slate-400" />
                               <div>
                                 <p className="text-sm text-slate-400">Grid Size</p>
                                 <p className="text-white font-medium">
@@ -320,7 +320,7 @@ const Competitions = () => {
           {competitions.length === 0 && !loading && (
             <div className="fantasy-section">
               <div className="p-8 text-center">
-                <Trophy className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                <Star className="w-16 h-16 text-slate-600 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-white mb-2">
                   No {activeTab} competitions found
                 </h3>

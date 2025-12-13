@@ -72,7 +72,7 @@
     0 calc(100% - var(--r))
   );
   
-  /* Material styling - matches header ribbon lighting system (reduced) */
+  /* Material styling - matches header ribbon lighting system exactly */
   background:
     /* Top highlight - subtle top-edge highlight */
     linear-gradient(
@@ -81,10 +81,10 @@
       rgba(255, 255, 255, 0.04) 3%,
       rgba(255, 255, 255, 0) 8%
     ),
-    /* Ambient fantasy glow - subtle magical sheen */
+    /* Ambient fantasy glow - subtle magical sheen (matches header's 0.12) */
     radial-gradient(
       circle at center,
-      rgba(255, 255, 255, 0.10) 0%,
+      rgba(255, 255, 255, 0.12) 0%,
       rgba(255, 255, 255, 0) 70%
     ),
     /* Ribbon fold shading - left side */
@@ -103,10 +103,10 @@
       var(--nav-color-bot)
     );
   
-  /* Same style of depth as banner (reduced lighting) */
+  /* Same style of depth as banner (matches header exactly) */
   box-shadow:
-    0 6px 10px rgba(0, 0, 0, 0.18),
-    inset 0 0 12px rgba(255, 255, 255, 0.12);
+    0 6px 10px rgba(0, 0, 0, 0.25),
+    inset 0 0 12px rgba(255, 255, 255, 0.15);
   
   /* Hover animation - simple upward movement */
   transition: transform 0.2s ease;
@@ -115,7 +115,7 @@
   pointer-events: auto;
 }
 
-/* Cloth fiber grain + ripple/drape effect overlay - matches header ribbon (reduced lighting) */
+/* Cloth fiber grain + ripple/drape effect overlay - matches header ribbon exactly */
 .nav-ribbon::before {
   content: "";
   position: absolute;
@@ -124,24 +124,24 @@
   z-index: 1;
   
   background:
-    /* Cloth fiber grain - barely visible vertical woven texture */
+    /* Cloth fiber grain - barely visible vertical woven texture (matches header's 0.006) */
     repeating-linear-gradient(
       0deg,
-      rgba(255, 255, 255, 0.008) 0px,
-      rgba(255, 255, 255, 0.008) 1px,
+      rgba(255, 255, 255, 0.006) 0px,
+      rgba(255, 255, 255, 0.006) 1px,
       transparent 1px,
       transparent 3px
     ),
-    /* Ripple bulge highlight - cloth drape center (reduced) */
+    /* Ripple bulge highlight - cloth drape center (matches header's 0.08) */
     radial-gradient(
       ellipse at center,
-      rgba(255, 255, 255, 0.06) 0%,
+      rgba(255, 255, 255, 0.08) 0%,
       rgba(255, 255, 255, 0) 70%
     ),
-    /* Vertical fade from top - drape shadow (reduced) */
+    /* Vertical fade from top - drape shadow (matches header's 0.10) */
     linear-gradient(
       to bottom,
-      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.10) 0%,
       rgba(255, 255, 255, 0) 30%
     );
 }
