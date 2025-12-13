@@ -1899,10 +1899,37 @@ async def discord_login():
     }
 
 @api_router.get("/auth/callback/discord")
-async def discord_callback(code: str = Query(None)):
-    """Handle Discord OAuth callback with performance optimizations"""
+async def discord_callback(request: Request, code: str = Query(None)):
+    """Handle Discord OAuth callback with performance optimizations
+    
+    This endpoint ALWAYS returns a 302 redirect, never JSON.
+    All errors redirect to /?error=... to avoid leaving the callback URL visible.
+    """
+    # Helper to create a redirect response with proper headers
+    def create_oauth_redirect(url: str, error: str = None) -> RedirectResponse:
+        if error:
+            url = f"/?error={error}"
+        response = RedirectResponse(url=url, status_code=302)
+        # Prevent caching and indexing of OAuth callback
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        response.headers["X-Robots-Tag"] = "noindex, nofollow, nosnippet"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
+    
+    # Log request details for debugging
+    user_agent = request.headers.get("user-agent", "unknown")
+    referer = request.headers.get("referer", "none")
+    client_ip = request.client.host if request.client else "unknown"
+    forwarded_for = request.headers.get("x-forwarded-for", "none")
+    code_prefix = code[:10] if code else "none"
+    print(f"🔐 OAUTH CALLBACK: code={code_prefix}..., UA={user_agent[:80]}, IP={client_ip}, XFF={forwarded_for}, Ref={referer}")
+    
     if not code:
-        raise HTTPException(status_code=400, detail="Missing authorization code")
+        print(f"❌ OAUTH ERROR: Missing authorization code")
+        return create_oauth_redirect("/", error="missing_code")
         
     start = time_module.time()
     
@@ -1914,8 +1941,8 @@ async def discord_callback(code: str = Query(None)):
     global used_oauth_codes
     with oauth_code_lock:
         if code in used_oauth_codes:
-            print(f"❌ OAUTH ERROR: Code already used: {code[:10]}...")
-            raise HTTPException(status_code=400, detail="Authorization code already used")
+            print(f"❌ OAUTH ERROR: Code already used: {code_prefix}...")
+            return create_oauth_redirect("/", error="code_already_used")
         
         used_oauth_codes.add(code)
         
@@ -1943,7 +1970,7 @@ async def discord_callback(code: str = Query(None)):
             if token_response.status_code != 200:
                 error_detail = token_response.text
                 print(f"❌ OAUTH ERROR: Token exchange failed: {error_detail}")
-                raise HTTPException(status_code=400, detail=f"Failed to get access token: {error_detail}")
+                return create_oauth_redirect("/", error="token_exchange_failed")
             
             token_json = token_response.json()
             access_token = token_json['access_token']
@@ -1957,7 +1984,7 @@ async def discord_callback(code: str = Query(None)):
             if user_response.status_code != 200:
                 error_detail = user_response.text
                 print(f"❌ OAUTH ERROR: Failed to get user info: {error_detail}")
-                raise HTTPException(status_code=400, detail=f"Failed to get user info: {error_detail}")
+                return create_oauth_redirect("/", error="user_info_failed")
             
             user_data = user_response.json()
             user_id = user_data['id']
@@ -2041,7 +2068,8 @@ async def discord_callback(code: str = Query(None)):
             # Also pass in URL for frontend to pick up (will be removed from URL after reading)
             redirect_url += f"&token={jwt_token}" if "?" in redirect_url else f"?token={jwt_token}"
             
-            response = RedirectResponse(url=redirect_url, status_code=302)
+            # Use the helper to create redirect with proper headers
+            response = create_oauth_redirect(redirect_url)
             
             response.set_cookie(
                 key="access_token",
@@ -2055,13 +2083,12 @@ async def discord_callback(code: str = Query(None)):
             
             return response
             
-    except HTTPException:
-        raise
     except Exception as e:
         print(f"❌ OAUTH CRITICAL ERROR: {str(e)}")
         import traceback
         print(f"❌ OAUTH TRACEBACK: {traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail=f"Authentication failed: {str(e)}")
+        # Always redirect, never return JSON from OAuth callback
+        return create_oauth_redirect("/", error="auth_failed")
 
 
 @api_router.post("/auth/link-account")
