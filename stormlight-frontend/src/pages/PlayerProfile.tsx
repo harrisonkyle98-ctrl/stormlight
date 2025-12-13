@@ -929,7 +929,7 @@ const PlayerProfile = () => {
                             <img
                               src={rankBadge.icon}
                               alt={rankBadge.name}
-                              className="w-4 h-4"
+                              className="w-4 h-4 object-contain"
                             />
                             <span>{rankBadge.name}</span>
                           </div>
@@ -980,7 +980,7 @@ const PlayerProfile = () => {
                             <img
                               src={badge.icon}
                               alt={badge.name}
-                              className="w-4 h-4"
+                              className="w-4 h-4 object-contain"
                             />
                             <span>{badge.name}</span>
                           </div>
