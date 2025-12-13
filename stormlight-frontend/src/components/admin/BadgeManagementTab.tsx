@@ -432,7 +432,8 @@ export const BadgeManagementTab = () => {
                     <img
                       src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlightrs.com${badge.imageUrl}`}
                       alt={badge.name} 
-                      className="w-4 h-4"
+                      className="w-4 h-4 object-contain"
+                      style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
                     />
                     <span>{badge.name}</span>
                     {badge.competitions && badge.competitions.length > 0 && (
@@ -494,7 +495,8 @@ export const BadgeManagementTab = () => {
                     <img
                       src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlightrs.com${badge.imageUrl}`}
                       alt={badge.name} 
-                      className="w-4 h-4"
+                      className="w-4 h-4 object-contain"
+                      style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
                     />
                   )}
                   <span>{badge.name}</span>
@@ -536,6 +538,7 @@ export const BadgeManagementTab = () => {
                       src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlightrs.com${badge.imageUrl}`}
                       alt={badge.name} 
                       className="w-4 h-4 object-contain"
+                      style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
                     />
                   )}
                   <span>{badge.name}</span>
@@ -577,7 +580,8 @@ export const BadgeManagementTab = () => {
                     <img
                       src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlightrs.com${badge.imageUrl}`}
                       alt={badge.name} 
-                      className="w-4 h-4"
+                      className="w-4 h-4 object-contain"
+                      style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
                     />
                   )}
                   <span>{badge.name}</span>
@@ -621,7 +625,8 @@ export const BadgeManagementTab = () => {
                       <img
                         src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlightrs.com${badge.imageUrl}`}
                         alt={badge.name} 
-                        className="w-4 h-4"
+                        className="w-4 h-4 object-contain"
+                        style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
                       />
                     )}
                     <span>{badge.name}</span>
@@ -666,7 +671,8 @@ export const BadgeManagementTab = () => {
                         <img
                           src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlightrs.com${badge.imageUrl}`}
                           alt={badge.name} 
-                          className="w-4 h-4"
+                          className="w-4 h-4 object-contain"
+                          style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
                         />
                       )}
                       <span>{badge.name}</span>

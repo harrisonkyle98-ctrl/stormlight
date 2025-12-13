@@ -729,7 +729,8 @@ const GlobalProfileHeader = () => {
                             <img 
                               src={badge.imageUrl?.startsWith('http') ? badge.imageUrl : `https://stormlightrs.com${badge.imageUrl}`}
                               alt={badge.name} 
-                              className="w-4 h-4"
+                              className="w-4 h-4 object-contain"
+                              style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
                             />
                             <span>{badge.name}</span>
                           </button>

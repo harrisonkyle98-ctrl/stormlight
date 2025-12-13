@@ -98,6 +98,7 @@ export const DropSearchModal = ({ isOpen, onClose, onSelect, position }: DropSea
                         src={drop.file}
                         alt={drop.item_name}
                         className="w-8 h-8 mr-3 object-contain"
+                        style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
                       />
                       <div className="flex-1 text-left">
                         <div className="font-medium">{drop.item_name}</div>

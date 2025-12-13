@@ -148,7 +148,8 @@ export const RankTrackingTab = () => {
         <img
           src={badge.icon}
           alt={badge.name}
-          className="w-3 h-3"
+          className="w-3 h-3 object-contain"
+          style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
         />
         <span>{badge.name}</span>
       </div>

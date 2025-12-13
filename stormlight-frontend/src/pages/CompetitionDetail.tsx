@@ -394,7 +394,8 @@ const CompetitionDetail = () => {
                           <img 
                             src={competition.rewardBadge.imageUrl}
                             alt={competition.rewardBadge.name}
-                            className="w-4 h-4"
+                            className="w-4 h-4 object-contain"
+                            style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display = 'none'
                             }}
