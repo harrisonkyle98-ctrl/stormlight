@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { Spinner } from './components/ui/spinner'
 import AnimatedHeader from './components/AnimatedHeader'
@@ -19,13 +19,39 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import { ProfileGainsProvider } from './contexts/ProfileGainsContext'
 import './App.css'
 
+// Public routes that don't require authentication
+const PUBLIC_ROUTES = ['/terms']
+
 function AppContent() {
   const { user, loading } = useAuth()
+  const location = useLocation()
+
+  // Check if current route is a public route
+  const isPublicRoute = PUBLIC_ROUTES.includes(location.pathname)
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Spinner size="lg" />
+      </div>
+    )
+  }
+
+  // Allow public routes to be accessed without authentication
+  if (isPublicRoute) {
+    return (
+      <div>
+        {/* AnimatedHeader only shown when user is logged in */}
+        {user && <AnimatedHeader />}
+        <main className="w-full px-6 py-4">
+          <div className="max-w-7xl mx-auto">
+            <Routes>
+              <Route path="/terms" element={<Terms />} />
+            </Routes>
+          </div>
+        </main>
+        <Footer />
+        <Toaster />
       </div>
     )
   }
