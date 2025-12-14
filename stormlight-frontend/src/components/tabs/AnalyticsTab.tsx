@@ -201,18 +201,56 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
       return orderedData
     }
     
-    if (skill === 'overall') {
-      return points.map((p: any) => ({
-        label: new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        ...p.by_skill
-      }))
-    } else {
-      return points.map((p: any) => ({
-        label: new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        gain: p.xp_gain
-      }))
+    // view === 'day': Generate full month of days with consistent spacing
+    // Build map: dayOfMonth -> point, restricted to selected year/month only
+    const byDay = new Map<number, any>()
+    points.forEach((p: any) => {
+      const [yStr, mStr, dStr] = p.date.split('-')
+      const y = Number(yStr)
+      const m = Number(mStr)
+      const d = Number(dStr)
+      // Only include points from the selected year and month
+      if (y === year && m === month) {
+        byDay.set(d, p)
+      }
+    })
+
+    // Get the number of days in the selected month
+    const daysInMonth = new Date(year, month, 0).getDate()
+    const result: any[] = []
+
+    // Generate data for every day of the month (day 1 to last day)
+    for (let day = 1; day <= daysInMonth; day++) {
+      const existing = byDay.get(day)
+      // Create date from numeric parts to avoid timezone issues
+      const dateObj = new Date(year, month - 1, day)
+      const label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
+      if (skill === 'overall') {
+        if (existing) {
+          result.push({
+            label,
+            ...existing.by_skill,
+          })
+        } else {
+          // Zero out all skills for missing days
+          const zeroSkills: Record<string, number> = {}
+          SKILL_ORDER.forEach(sk => { zeroSkills[sk] = 0 })
+          result.push({
+            label,
+            ...zeroSkills,
+          })
+        }
+      } else {
+        result.push({
+          label,
+          gain: existing ? existing.xp_gain : 0,
+        })
+      }
     }
-  }, [data, view, skill])
+
+    return result
+  }, [data, view, skill, year, month])
 
   if (loading) {
     return (

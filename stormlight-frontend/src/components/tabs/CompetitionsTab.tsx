@@ -180,7 +180,7 @@ export const CompetitionsTab = ({ username, playerData: _playerData, API_URL }: 
               
                 {/* Content section */}
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4 text-slate-400" />
                       <div>
@@ -236,15 +236,6 @@ export const CompetitionsTab = ({ username, playerData: _playerData, API_URL }: 
                         </div>
                       </div>
                     )}
-                    <div className="flex items-center space-x-2">
-                      <Users className="w-4 h-4 text-slate-400" />
-                      <div>
-                        <p className="text-sm text-slate-400">Participants</p>
-                        <p className="text-white font-medium">
-                          {competition.participantCount || 0}
-                        </p>
-                      </div>
-                    </div>
                   </div>
                   
                   {(competition.rewardFirstGp || competition.rewardSecondGp || competition.rewardThirdGp) && (
