@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
 import { ArrowLeft, Trophy, Calendar, Users, BarChart3, User } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 import { Spinner } from '../components/ui/spinner'
@@ -590,78 +589,106 @@ const CompetitionDetail = () => {
             <div className="fantasy-divider" style={{ margin: '1rem 0' }}></div>
           </div>
           {competition.type === 'XP_GAIN' ? (
-            <Table className="text-slate-300">
-              <TableHeader>
-                <TableRow className="border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50">
-                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Rank</TableHead>
-                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Player</TableHead>
-                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Starting XP</TableHead>
-                  <TableHead className="text-slate-400 font-medium py-3 h-auto">Ending XP</TableHead>
-                  <TableHead className="text-slate-400 font-medium py-3 h-auto">XP Gained</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {leaderboardData.map((player) => {
-                  return (
-                    <TableRow 
-                      key={player.username} 
-                      className={`border-b border-[rgba(51,65,85,0.6)] hover:bg-slate-800/50 ${
-                        player.rank === 1 ? 'bg-gradient-to-r from-yellow-600/10 to-yellow-800/10' :
-                        player.rank === 2 ? 'bg-gradient-to-r from-gray-400/10 to-gray-600/10' :
-                        player.rank === 3 ? 'bg-gradient-to-r from-amber-600/10 to-amber-800/10' : ''
-                      }`}
-                    >
-                      <TableCell className="py-3">
-                        <Badge 
-                          variant="outline" 
-                          className={
-                            player.rank === 1 ? 'rank-badge rank-1-badge' :
-                            player.rank === 2 ? 'rank-badge rank-2-badge' :
-                            player.rank === 3 ? 'rank-badge rank-3-badge' :
-                            'rank-badge rank-border'
-                          }
-                        >
-                          #{player.rank || '—'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="py-3">
-                        <div className="flex items-center space-x-2">
-                          <Link 
-                            to={`/clan-member/${usernameToUrl(player.username)}`}
-                            className="font-medium hover:text-theme-accent-light transition-colors"
-                          >
-                            <Username
-                              username={player.username}
-                              clanRank={clanMembers.find(m => m.username === player.username)?.clan_rank}
-                            />
-                          </Link>
-                          {player.rank && player.rank <= 3 && (
-                            <span className="text-lg">
-                              {player.rank === 1 ? '🥇' : player.rank === 2 ? '🥈' : '🥉'}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="py-3">
-                        <span className="text-slate-300">
-                          {player.starting_xp !== undefined ? formatFullNumber(player.starting_xp) : '—'} XP
+            <div className="space-y-2">
+              {/* Header Row */}
+              <div className="flex items-center justify-between p-3 bg-slate-800/50 border border-slate-700/50 text-slate-400 text-sm font-medium">
+                <div className="flex items-center space-x-4">
+                  <div className="w-8">Rank</div>
+                  <div className="w-10"></div>
+                  <div>Player</div>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="text-right min-w-[100px]">Starting XP</div>
+                  <div className="text-right min-w-[100px]">Ending XP</div>
+                  <div className="text-right min-w-[100px]">XP Gained</div>
+                </div>
+              </div>
+              {/* Data Rows */}
+              {leaderboardData.map((player) => {
+                const rank = player.rank || 0
+                return (
+                  <div
+                    key={player.username}
+                    className={`flex items-center justify-between p-3 transition-colors ${
+                      rank === 1
+                        ? 'bg-gradient-to-r from-yellow-600/20 to-yellow-800/20 border border-yellow-600/30' 
+                        : rank === 2
+                        ? 'bg-gradient-to-r from-gray-400/20 to-gray-600/20 border border-gray-400/30'
+                        : rank === 3
+                        ? 'bg-gradient-to-r from-amber-600/20 to-amber-800/20 border border-amber-600/30'
+                        : 'bg-slate-700/30 hover:bg-slate-700/50 border border-slate-700/50'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-4">
+                      {/* Rank */}
+                      <div className={`w-8 h-8 flex items-center justify-center rounded text-sm font-bold ${
+                        rank === 1 ? 'bg-yellow-600/30 text-yellow-400 border border-yellow-500/50' :
+                        rank === 2 ? 'bg-gray-500/30 text-gray-300 border border-gray-400/50' :
+                        rank === 3 ? 'bg-amber-600/30 text-amber-400 border border-amber-500/50' :
+                        'bg-slate-700/50 text-slate-400 border border-slate-600/50'
+                      }`}>
+                        #{rank || '—'}
+                      </div>
+                      
+                      {/* Avatar */}
+                      <Avatar className="w-10 h-10 flex-shrink-0">
+                        <AvatarImage
+                          src={`https://secure.runescape.com/m=avatar-rs/${encodeURIComponent(player.username.replace(/\u00A0/g, ' '))}/chat.png`}
+                          alt={player.username}
+                        />
+                        <AvatarFallback className="bg-slate-700 text-slate-400">
+                          <User className="w-5 h-5" />
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      {/* Username */}
+                      <Link 
+                        to={`/clan-member/${usernameToUrl(player.username)}`}
+                        className="font-medium hover:text-theme-accent-light transition-colors"
+                      >
+                        <Username
+                          username={player.username}
+                          clanRank={clanMembers.find(m => m.username === player.username)?.clan_rank}
+                        />
+                      </Link>
+                      
+                      {/* Medal for top 3 */}
+                      {rank <= 3 && rank > 0 && (
+                        <span className="text-lg">
+                          {rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'}
                         </span>
-                      </TableCell>
-                      <TableCell className="py-3">
-                        <span className="text-slate-300">
-                          {player.ending_xp !== undefined ? formatFullNumber(player.ending_xp) : '—'} XP
-                        </span>
-                      </TableCell>
-                      <TableCell className="py-3">
-                        <span className="text-green-400 font-bold">
-                          {formatFullNumber(player.xp_gain || 0)} XP
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center space-x-4">
+                      {/* Starting XP */}
+                      <div className="text-right min-w-[100px]">
+                        <p className="text-sm text-slate-400 md:hidden">Starting</p>
+                        <p className="text-slate-300">
+                          {player.starting_xp !== undefined ? formatFullNumber(player.starting_xp) : '—'}
+                        </p>
+                      </div>
+                      
+                      {/* Ending XP */}
+                      <div className="text-right min-w-[100px]">
+                        <p className="text-sm text-slate-400 md:hidden">Ending</p>
+                        <p className="text-slate-300">
+                          {player.ending_xp !== undefined ? formatFullNumber(player.ending_xp) : '—'}
+                        </p>
+                      </div>
+                      
+                      {/* XP Gained */}
+                      <div className="text-right min-w-[100px]">
+                        <p className="text-sm text-slate-400 md:hidden">Gained</p>
+                        <p className="text-lg font-bold text-green-400">
+                          {formatFullNumber(player.xp_gain || 0)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           ) : (
             <div className="space-y-4">
               {leaderboardData.map((player) => (
