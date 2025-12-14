@@ -55,6 +55,7 @@ model ClanMember {
 model Competition {
   id               String             @id @default(cuid())
   name             String
+  slug             String?            @unique
   description      String?
   type             CompetitionType
   skill            String?

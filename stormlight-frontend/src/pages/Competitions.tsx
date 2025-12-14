@@ -10,6 +10,7 @@ import '../styles/fantasy-container.css'
 
 interface Competition {
   id: string
+  slug?: string
   name: string
   description: string
   type: 'XP_GAIN' | 'BOSS_KILLS'
@@ -292,7 +293,7 @@ const Competitions = () => {
                               )}
                             </div>
                             <Button asChild variant="default" className="bg-theme-button hover:bg-theme-button-hover">
-                              <Link to={`/competitions/${competition.id}`}>
+                              <Link to={`/competitions/${competition.slug || competition.id}`}>
                                 View Leaderboard
                               </Link>
                             </Button>
@@ -301,7 +302,7 @@ const Competitions = () => {
                         {!(competition.rewardFirstGp || competition.rewardSecondGp || competition.rewardThirdGp) && (
                           <div className="flex justify-end pt-4 border-t border-slate-700">
                             <Button asChild variant="default" className="bg-theme-button hover:bg-theme-button-hover">
-                              <Link to={`/competitions/${competition.id}`}>
+                              <Link to={`/competitions/${competition.slug || competition.id}`}>
                                 View Leaderboard
                               </Link>
                             </Button>

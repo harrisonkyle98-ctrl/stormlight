@@ -252,6 +252,120 @@ def validate_midnight_utc(dt: datetime) -> bool:
     """Validate that a datetime is at midnight UTC (00:00:00)"""
     return dt.hour == 0 and dt.minute == 0 and dt.second == 0 and dt.microsecond == 0
 
+import unicodedata
+
+def slugify_competition_name(name: str) -> str:
+    """Generate a URL-safe slug from a competition name while preserving capitalization.
+    
+    Rules:
+    - Replace whitespace with single dash
+    - Keep only letters, digits, and dashes
+    - Preserve original case
+    - Collapse multiple dashes
+    - Trim leading/trailing dashes
+    """
+    # Normalize unicode
+    normalized = unicodedata.normalize("NFKD", name)
+    
+    # Replace whitespace with single dash
+    s = re.sub(r"\s+", "-", normalized.strip())
+    
+    # Keep only letters, digits, and dashes; preserve case
+    s = re.sub(r"[^A-Za-z0-9\-]", "", s)
+    
+    # Collapse multiple dashes
+    s = re.sub(r"-{2,}", "-", s)
+    
+    # Trim leading/trailing dashes
+    return s.strip("-")
+
+async def generate_unique_slug(name: str, exclude_id: str = None) -> str:
+    """Generate a unique slug for a competition, handling collisions by appending numbers."""
+    base_slug = slugify_competition_name(name)
+    slug = base_slug
+    counter = 2
+    
+    while True:
+        # Check if slug already exists
+        where_clause = {'slug': slug}
+        existing = await prisma.competition.find_first(where=where_clause)
+        
+        # If no existing competition with this slug, or it's the same competition we're updating
+        if not existing or (exclude_id and existing.id == exclude_id):
+            return slug
+        
+        # Collision - try with numeric suffix
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+        
+        # Safety limit to prevent infinite loops
+        if counter > 100:
+            # Fallback to adding timestamp
+            slug = f"{base_slug}-{int(time.time())}"
+            break
+    
+    return slug
+
+async def get_competition_by_identifier(identifier: str, include: dict = None):
+    """Get a competition by either ID or slug.
+    
+    First tries to find by ID (cuid format), then falls back to slug lookup.
+    This provides backward compatibility for old ID-based URLs.
+    """
+    if not PRISMA_AVAILABLE or not prisma:
+        return None
+    
+    include_clause = include or {
+        'entries': {'include': {'member': True}},
+        'rewardBadge': True
+    }
+    
+    # First try to find by ID
+    competition = await prisma.competition.find_unique(
+        where={'id': identifier},
+        include=include_clause
+    )
+    
+    if competition:
+        return competition
+    
+    # If not found by ID, try to find by slug
+    competition = await prisma.competition.find_first(
+        where={'slug': identifier},
+        include=include_clause
+    )
+    
+    return competition
+
+async def ensure_competition_slugs():
+    """Ensure all competitions have slugs. Called on startup to backfill missing slugs."""
+    if not PRISMA_AVAILABLE or not prisma:
+        return
+    
+    try:
+        # Find competitions without slugs
+        competitions_without_slugs = await prisma.competition.find_many(
+            where={'slug': None}
+        )
+        
+        if not competitions_without_slugs:
+            print("✅ All competitions have slugs")
+            return
+        
+        print(f"🔄 Backfilling slugs for {len(competitions_without_slugs)} competitions...")
+        
+        for comp in competitions_without_slugs:
+            slug = await generate_unique_slug(comp.name, comp.id)
+            await prisma.competition.update(
+                where={'id': comp.id},
+                data={'slug': slug}
+            )
+            print(f"  ✅ {comp.name} -> {slug}")
+        
+        print(f"✅ Backfilled slugs for {len(competitions_without_slugs)} competitions")
+    except Exception as e:
+        print(f"⚠️ Error backfilling competition slugs: {e}")
+
 competitions_db = {
     1: {
         "id": 1,
@@ -3196,6 +3310,7 @@ async def get_competitions(status: Optional[str] = None):
                         
                         comp_dict = {
                             'id': comp.id,
+                            'slug': comp.slug,
                             'name': comp.name,
                             'description': comp.description,
                             'type': comp.type,
@@ -3296,28 +3411,26 @@ async def calculate_drop_leaderboard(competition, members):
     leaderboard.sort(key=lambda x: x['drop_count'], reverse=True)
     return leaderboard
 
-@api_router.get("/competitions/{competition_id}")
-async def get_competition(competition_id: str, page: int = 1, per_page: int = 25):
-    """Get specific competition with leaderboard (on-demand calculation)"""
+@api_router.get("/competitions/{identifier}")
+async def get_competition(identifier: str, page: int = 1, per_page: int = 25):
+    """Get specific competition with leaderboard (on-demand calculation).
+    
+    Accepts either competition ID (cuid) or slug for backward compatibility.
+    """
     try:
-        print(f"[get_competition] Received competition_id='{competition_id}' (type={type(competition_id).__name__})")
+        print(f"[get_competition] Received identifier='{identifier}' (type={type(identifier).__name__})")
         
         if PRISMA_AVAILABLE and prisma:
             live_active_set, is_from_live = await get_live_active_set()
             print(f"[get_competition] Using {'live API' if is_from_live else 'DB fallback'} active set with {len(live_active_set)} members")
             
-            competition = await prisma.competition.find_unique(
-                where={'id': competition_id},
-                include={
-                    'entries': {'include': {'member': True}},
-                    'rewardBadge': True
-                }
-            )
+            # Use helper function that tries ID first, then slug
+            competition = await get_competition_by_identifier(identifier)
             
-            print(f"[get_competition] Prisma lookup result: {'FOUND' if competition else 'NOT FOUND'}")
+            print(f"[get_competition] Lookup result: {'FOUND' if competition else 'NOT FOUND'}")
             
             if not competition:
-                print(f"[get_competition] Competition '{competition_id}' not found in database")
+                print(f"[get_competition] Competition '{identifier}' not found by ID or slug")
                 raise HTTPException(status_code=404, detail="Competition not found")
             
             leaderboard = []
@@ -3653,11 +3766,14 @@ async def get_competition(competition_id: str, page: int = 1, per_page: int = 25
 _live_competition_cache = {}
 _live_competition_cache_ttl = 60  # seconds
 
-@api_router.get("/competitions/{competition_id}/live")
-async def get_competition_live(competition_id: str, page: int = 1, per_page: int = 25):
-    """Get competition with live XP tracking and time series for line graph"""
+@api_router.get("/competitions/{identifier}/live")
+async def get_competition_live(identifier: str, page: int = 1, per_page: int = 25):
+    """Get competition with live XP tracking and time series for line graph.
+    
+    Accepts either competition ID (cuid) or slug for backward compatibility.
+    """
     try:
-        cache_key = f"{competition_id}"
+        cache_key = f"{identifier}"
         if cache_key in _live_competition_cache:
             cached_data, cached_time = _live_competition_cache[cache_key]
             from datetime import timezone
@@ -3671,9 +3787,11 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         live_active_set, is_from_live = await get_live_active_set()
         print(f"[get_competition_live] Using {'live API' if is_from_live else 'DB fallback'} active set with {len(live_active_set)} members")
         
-        competition = await prisma.competition.find_unique(
-            where={'id': competition_id}
-        )
+        # Use helper function that tries ID first, then slug
+        competition = await get_competition_by_identifier(identifier, include=None)
+        # Re-fetch without include to get just the competition
+        if competition:
+            competition = await prisma.competition.find_unique(where={'id': competition.id})
         
         if not competition:
             raise HTTPException(status_code=404, detail="Competition not found")
@@ -3682,7 +3800,7 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
             raise HTTPException(status_code=400, detail="Live tracking only available for XP competitions")
         
         entries = await prisma.competitionentry.find_many(
-            where={'competitionId': competition_id, 'isActive': True},
+            where={'competitionId': competition.id, 'isActive': True},
             include={'member': True},
             order={'xpGained': 'desc'}
         )
@@ -3977,15 +4095,16 @@ async def get_competition_live(competition_id: str, page: int = 1, per_page: int
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-@api_router.get("/competitions/{competition_id}/drop-stats")
-async def get_competition_drop_stats(competition_id: str, position: Optional[int] = None):
-    """Get drop statistics for a PvM competition"""
+@api_router.get("/competitions/{identifier}/drop-stats")
+async def get_competition_drop_stats(identifier: str, position: Optional[int] = None):
+    """Get drop statistics for a PvM competition.
+    
+    Accepts either competition ID (cuid) or slug for backward compatibility.
+    """
     try:
         if PRISMA_AVAILABLE and prisma:
-            competition = await prisma.competition.find_unique(
-                where={'id': competition_id},
-                include={'entries': True}
-            )
+            # Use helper function that tries ID first, then slug
+            competition = await get_competition_by_identifier(identifier, include={'entries': True})
             
             if not competition:
                 raise HTTPException(status_code=404, detail="Competition not found")
@@ -4265,6 +4384,7 @@ async def get_player_competitions(username: str):
                 
                 player_competitions.append({
                     'id': comp.id,
+                    'slug': comp.slug,
                     'name': comp.name,
                     'description': comp.description,
                     'type': comp.type,
@@ -6736,8 +6856,12 @@ async def create_admin_competition(
             elif comp_type in ['DROPS', 'PVM']:
                 comp_type = 'BOSS_KILLS'
             
+            # Generate unique slug for the competition
+            slug = await generate_unique_slug(competition_data['name'])
+            
             create_data = {
                 'name': competition_data['name'],
+                'slug': slug,
                 'description': competition_data.get('description', ''),
                 'type': comp_type,
                 'startDate': start_date,
@@ -9573,6 +9697,12 @@ async def startup_event():
                 await backfill_total_caps_from_activities(conn)
         except Exception as e:
             print(f"❌ Error during total_caps backfill: {e}")
+        
+        # Backfill slugs for any competitions that don't have them
+        try:
+            await ensure_competition_slugs()
+        except Exception as e:
+            print(f"❌ Error during competition slug backfill: {e}")
         
         app.state.snapshot_lock = asyncio.Lock()
         app.state.sync_lock = asyncio.Lock()

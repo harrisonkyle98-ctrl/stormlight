@@ -14,6 +14,7 @@ interface TabProps {
 
 interface Competition {
   id: number;
+  slug?: string;
   name: string;
   description: string;
   type: 'XP_GAIN' | 'BOSS_KILLS';
@@ -267,7 +268,7 @@ export const CompetitionsTab = ({ username, playerData: _playerData, API_URL }: 
                         )}
                       </div>
                       <Button asChild variant="default" className="bg-theme-button hover:bg-theme-button-hover">
-                        <Link to={`/competitions/${competition.id}`}>
+                        <Link to={`/competitions/${competition.slug || competition.id}`}>
                           View Leaderboard
                         </Link>
                       </Button>
@@ -276,7 +277,7 @@ export const CompetitionsTab = ({ username, playerData: _playerData, API_URL }: 
                   {!(competition.rewardFirstGp || competition.rewardSecondGp || competition.rewardThirdGp) && (
                     <div className="flex justify-end pt-4 border-t border-slate-700">
                       <Button asChild variant="default" className="bg-theme-button hover:bg-theme-button-hover">
-                        <Link to={`/competitions/${competition.id}`}>
+                        <Link to={`/competitions/${competition.slug || competition.id}`}>
                           View Leaderboard
                         </Link>
                       </Button>
