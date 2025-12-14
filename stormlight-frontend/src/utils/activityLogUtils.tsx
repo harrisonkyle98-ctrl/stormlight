@@ -1,4 +1,4 @@
-import { LucideIcon, Compass, BarChart4, Castle, Package, Sword, Dices, Music } from 'lucide-react'
+import { LucideIcon, Compass, BarChart4, Castle, Package, Sword, Dices, Music, Shovel } from 'lucide-react'
 
 export interface ActivityEntry {
   username: string
@@ -17,8 +17,17 @@ export interface ActivityVisual {
  * Categorizes activity text based on RuneMetrics categories
  * Reference: https://runescape.wiki/w/RuneMetrics/Adventurer%27s_Log
  */
-export function categorizeActivity(text: string): 'quest' | 'skill' | 'minigame' | 'item' | 'monster' | 'citadel' | 'song' {
+export function categorizeActivity(text: string): 'quest' | 'skill' | 'minigame' | 'item' | 'monster' | 'citadel' | 'song' | 'archaeology' {
   const lowerText = text.toLowerCase()
+  
+  // Archaeology - check early for restored collections, archaeological items, tetracompass
+  if (
+    lowerText.includes('restored a collection of') ||
+    lowerText.includes('archaeological') ||
+    lowerText.includes('tetracompass')
+  ) {
+    return 'archaeology'
+  }
   
   // Song unlocks - check early before item fallback
   if (
@@ -127,6 +136,12 @@ export function getActivityVisual(activity: ActivityEntry): ActivityVisual {
       return {
         color: '#83cca9', // Teal/mint green
         Icon: Music
+      }
+    
+    case 'archaeology':
+      return {
+        color: '#C0C0C0', // Silver
+        Icon: Shovel
       }
   }
 }
