@@ -278,10 +278,10 @@ const Members = () => {
                       </Avatar>
                       
                       {/* Username and Rank Badge */}
-                      <div className="flex flex-col">
+                      <div className="flex flex-col items-start">
                         <Link 
                           to={`/clan-member/${usernameToUrl(member.username)}`}
-                          className="font-medium hover:text-theme-accent-light transition-colors"
+                          className="font-medium hover:text-theme-accent-light transition-colors text-left"
                         >
                           <Username
                             username={member.username}
