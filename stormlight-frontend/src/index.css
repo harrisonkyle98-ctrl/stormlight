@@ -59,13 +59,13 @@ html {
 :root {
   --page-bg: linear-gradient(180deg, #081d47 0%, #0b2c78 100%);
   
-  /* Default button colors (Sapphire theme) - prevents transparent buttons before JS loads */
-  --color-button: #2563eb;
-  --color-button-hover: #1d4ed8;
-  --color-button-active: #1e40af;
-  --theme-button: #2563eb;
-  --theme-button-hover: #1d4ed8;
-  --theme-button-active: #1e40af;
+  /* Default button colors - aligned with header ribbon blue hue */
+  --color-button: #4a6bc0;
+  --color-button-hover: #3f5db0;
+  --color-button-active: #354f9a;
+  --theme-button: #4a6bc0;
+  --theme-button-hover: #3f5db0;
+  --theme-button-active: #354f9a;
 }
 
 /* Page background is now fixed - ribbon color selection does not affect it */
@@ -295,14 +295,14 @@ html {
     --color-slate-200-rgb: 226 232 240;
     --color-slate-100-rgb: 241 245 249;
     
-    --color-accent: #3b82f6;
-    --color-accent-hover: #2563eb;
-    --color-accent-light: #60a5fa;
-    --color-accent-dark: #1e40af;
+    --color-accent: #5a78d0;
+    --color-accent-hover: #4a6bc0;
+    --color-accent-light: #7090dc;
+    --color-accent-dark: #354f9a;
     
-    --color-button: #2563eb;
-    --color-button-hover: #1d4ed8;
-    --color-button-active: #1e40af;
+    --color-button: #4a6bc0;
+    --color-button-hover: #3f5db0;
+    --color-button-active: #354f9a;
     
     --color-card-bg: rgba(30, 41, 59, 0.8);
     --color-card-bg-hover: rgba(30, 41, 59, 0.95);

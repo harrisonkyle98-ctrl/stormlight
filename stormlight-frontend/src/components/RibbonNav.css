@@ -42,10 +42,10 @@
   --s: 1.2em; /* ribbon side width for fold shading */
   --d: 0.6em; /* depth / drop for fold shading */
   
-  /* Color stops - default blue with slightly increased saturation */
-  --nav-color-top: #7a92d4;
-  --nav-color-mid: #6580c8;
-  --nav-color-bot: #506dbc;
+  /* Color stops - default blue with increased saturation for nav visibility */
+  --nav-color-top: #7090dc;
+  --nav-color-mid: #5a78d0;
+  --nav-color-bot: #4866c4;
   
   /* Layout */
   position: relative;
@@ -166,11 +166,11 @@
   transition: transform 200ms ease-in;
 }
 
-/* Active state - slightly brighter (desaturated) */
+/* Active state - slightly brighter with increased saturation */
 .nav-ribbon--active {
-  --nav-color-top: #5a7ac7;
-  --nav-color-mid: #4f6ebc;
-  --nav-color-bot: #445ea1;
+  --nav-color-top: #5580d8;
+  --nav-color-mid: #4a70cc;
+  --nav-color-bot: #3f60b8;
 }
 
 .nav-ribbon--active .nav-ribbon-icon {
@@ -187,12 +187,12 @@
    COLOR VARIANTS
    ======================================== */
 
-/* Blue variant - slightly more saturated for nav visibility */
+/* Blue variant - increased saturation for nav visibility */
 /* All navigation ribbons now use this blue */
 .nav-ribbon--blue {
-  --nav-color-top: #7a92d4;
-  --nav-color-mid: #6580c8;
-  --nav-color-bot: #506dbc;
+  --nav-color-top: #7090dc;
+  --nav-color-mid: #5a78d0;
+  --nav-color-bot: #4866c4;
 }
 
 /* Magenta-red variant (Competitions) - brightened for nav visibility */
