@@ -8223,6 +8223,42 @@ async def get_player_xp_analytics(
         print(f"[XP Analytics] Error for {decoded_username}: {e}")
         raise HTTPException(status_code=500, detail="Failed to compute XP analytics")
 
+@api_router.get("/player/{username}/xp-analytics/available-years")
+async def get_player_available_years(username: str):
+    """
+    Get available years that have snapshot data for a player.
+    Returns list of years from first snapshot year to current year.
+    """
+    from urllib.parse import unquote
+    from datetime import date
+    decoded_username = unquote(username).replace('-', ' ')
+    
+    try:
+        try:
+            from .database import get_db_connection, get_first_snapshot_date
+        except ImportError:
+            from database import get_db_connection, get_first_snapshot_date
+        
+        conn = await get_db_connection()
+        async with conn:
+            first_date = await get_first_snapshot_date(conn, decoded_username)
+        
+        today = date.today()
+        current_year = today.year
+        
+        if first_date:
+            first_year = first_date.year
+            # Return years from first snapshot year to current year
+            available_years = list(range(current_year, first_year - 1, -1))
+        else:
+            # No data yet, just return current year
+            available_years = [current_year]
+        
+        return {"username": decoded_username, "available_years": available_years}
+    except Exception as e:
+        print(f"[Available Years] Error for {decoded_username}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get available years")
+
 @app.get("/api/player/{username}/stats/history")
 async def get_player_stats_with_history(
     username: str, 

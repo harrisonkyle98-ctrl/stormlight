@@ -96,6 +96,7 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
   const [loading, setLoading] = useState<boolean>(true)
   const [data, setData] = useState<any | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [availableYears, setAvailableYears] = useState<number[]>([now.getFullYear()])
 
   const skillOptions = useMemo(() => {
     const stats = playerData?.stats || {}
@@ -103,6 +104,28 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
     if (!keys.includes('overall')) keys.unshift('overall')
     return keys
   }, [playerData])
+
+  // Fetch available years for this player
+  useEffect(() => {
+    async function fetchAvailableYears() {
+      try {
+        const res = await fetch(`${API_URL}/api/player/${encodeURIComponent(username)}/xp-analytics/available-years`)
+        if (res.ok) {
+          const json = await res.json()
+          if (json.available_years && json.available_years.length > 0) {
+            setAvailableYears(json.available_years)
+            // If current year selection is not in available years, select the most recent
+            if (!json.available_years.includes(year)) {
+              setYear(json.available_years[0])
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch available years:', e)
+      }
+    }
+    fetchAvailableYears()
+  }, [API_URL, username])
 
   async function load() {
     try {
@@ -267,10 +290,9 @@ export const AnalyticsTab = ({ username, playerData, API_URL }: TabProps) => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-slate-700 border-slate-600">
-              {Array.from({ length: 6 }).map((_, i) => {
-                const y = now.getFullYear() - i
-                return <SelectItem key={y} value={String(y)} className="text-white">{y}</SelectItem>
-              })}
+              {availableYears.map((y) => (
+                <SelectItem key={y} value={String(y)} className="text-white">{y}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
