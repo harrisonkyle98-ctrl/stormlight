@@ -113,6 +113,17 @@ export const RankTrackingTab = () => {
     setEditJoinDate(member.joinDate ? member.joinDate.split('T')[0] : '')
   }
 
+  // Format join date as date-only string to avoid timezone issues
+  // This treats the date as a calendar date, not a datetime
+  const formatJoinDate = (dateValue?: string | null): string => {
+    if (!dateValue) return 'Not set'
+    // Extract just the date part (YYYY-MM-DD) from ISO string or date-only string
+    const datePart = dateValue.split('T')[0]
+    // Format as locale-friendly date (MM/DD/YYYY or DD/MM/YYYY depending on locale)
+    const [year, month, day] = datePart.split('-')
+    return `${month}/${day}/${year}`
+  }
+
   const getRankPriority = (rank: string): number => {
     const rankPriority: { [key: string]: number } = {
       'Owner': 1, 'Deputy Owner': 2, 'Overseer': 3, 'Coordinator': 4,
@@ -258,12 +269,9 @@ export const RankTrackingTab = () => {
                       {renderRankBadge(tracking.rankNeeded, tracking.username)}
                     </TableCell>
                     <TableCell className="py-3">
-                      <span className="text-slate-300">
-                        {tracking.joinDate 
-                          ? new Date(tracking.joinDate).toLocaleDateString()
-                          : 'Not set'
-                        }
-                      </span>
+                                            <span className="text-slate-300">
+                                              {formatJoinDate(tracking.joinDate)}
+                                            </span>
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-theme-accent-light font-medium">{tracking.daysInClan}</span>
@@ -356,12 +364,9 @@ export const RankTrackingTab = () => {
                       {renderRankBadge(tracking.rankNeeded, tracking.username)}
                     </TableCell>
                     <TableCell className="py-3">
-                      <span className="text-slate-300">
-                        {tracking.joinDate 
-                          ? new Date(tracking.joinDate).toLocaleDateString()
-                          : 'Not set'
-                        }
-                      </span>
+                                            <span className="text-slate-300">
+                                              {formatJoinDate(tracking.joinDate)}
+                                            </span>
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-theme-accent-light font-medium">{tracking.daysInClan}</span>
@@ -476,12 +481,9 @@ export const RankTrackingTab = () => {
                       <Badge className="bg-[#ffb74d] text-white pointer-events-none">Leadership</Badge>
                     </TableCell>
                     <TableCell className="py-3">
-                      <span className="text-slate-300">
-                        {tracking.joinDate 
-                          ? new Date(tracking.joinDate).toLocaleDateString()
-                          : 'Not set'
-                        }
-                      </span>
+                                            <span className="text-slate-300">
+                                              {formatJoinDate(tracking.joinDate)}
+                                            </span>
                     </TableCell>
                     <TableCell className="py-3">
                       <span className="text-theme-accent-light font-medium">{tracking.daysInClan}</span>

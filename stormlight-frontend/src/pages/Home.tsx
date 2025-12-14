@@ -229,7 +229,12 @@ const Home = () => {
 
   const calculateDaysInClan = () => {
     if (!playerData?.join_date) return null
-    const joinDate = new Date(playerData.join_date)
+    // Extract date-only part to avoid timezone issues
+    // This treats the join date as a calendar date, not a datetime
+    const datePart = playerData.join_date.split('T')[0]
+    const [year, month, day] = datePart.split('-').map(Number)
+    // Create date at noon local time to avoid DST edge cases
+    const joinDate = new Date(year, month - 1, day, 12, 0, 0)
     const now = new Date()
     const diffTime = Math.abs(now.getTime() - joinDate.getTime())
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
