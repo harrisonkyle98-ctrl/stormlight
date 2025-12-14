@@ -277,50 +277,51 @@ const Members = () => {
                         </AvatarFallback>
                       </Avatar>
                       
-                      {/* Username */}
-                      <Link 
-                        to={`/clan-member/${usernameToUrl(member.username)}`}
-                        className="font-medium hover:text-theme-accent-light transition-colors"
-                      >
-                        <Username
-                          username={member.username}
-                          clanRank={member.clan_rank}
-                        />
-                      </Link>
+                      {/* Username and Rank Badge */}
+                      <div className="flex flex-col">
+                        <Link 
+                          to={`/clan-member/${usernameToUrl(member.username)}`}
+                          className="font-medium hover:text-theme-accent-light transition-colors"
+                        >
+                          <Username
+                            username={member.username}
+                            clanRank={member.clan_rank}
+                          />
+                        </Link>
+                        {/* Rank Badge - directly under username */}
+                        <div className="flex items-center mt-1">
+                          {member.badgesLoading ? (
+                            <div className="w-20 h-6 bg-slate-600 rounded animate-pulse"></div>
+                          ) : member.badges.length > 0 ? (
+                            (() => {
+                              const rankBadge = member.badges[0]
+                              return (
+                                <div
+                                  className="px-2 py-1 text-xs font-semibold flex items-center gap-1 rounded-md text-white"
+                                  style={{
+                                    background: rankBadge.gradientBackground || rankBadge.backgroundColor
+                                  }}
+                                  title={rankBadge.name}
+                                >
+                                  <img
+                                    src={rankBadge.icon}
+                                    alt={rankBadge.name}
+                                    className="w-3 h-3"
+                                  />
+                                  <span>{rankBadge.name}</span>
+                                </div>
+                              )
+                            })()
+                          ) : (
+                            <div className="px-2 py-1 text-xs font-semibold flex items-center gap-1 rounded-md text-white bg-slate-600">
+                              <span>{member.clan_rank || 'Member'}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                     
                     <div className="flex items-center space-x-4">
-                      {/* Rank Badge */}
-                      <div className="flex items-center">
-                        {member.badgesLoading ? (
-                          <div className="w-20 h-6 bg-slate-600 rounded animate-pulse"></div>
-                        ) : member.badges.length > 0 ? (
-                          (() => {
-                            const rankBadge = member.badges[0]
-                            return (
-                              <div
-                                className="px-2 py-1 text-xs font-semibold flex items-center gap-1 rounded-md text-white"
-                                style={{
-                                  background: rankBadge.gradientBackground || rankBadge.backgroundColor
-                                }}
-                                title={rankBadge.name}
-                              >
-                                <img
-                                  src={rankBadge.icon}
-                                  alt={rankBadge.name}
-                                  className="w-3 h-3"
-                                />
-                                <span>{rankBadge.name}</span>
-                              </div>
-                            )
-                          })()
-                        ) : (
-                          <div className="px-2 py-1 text-xs font-semibold flex items-center gap-1 rounded-md text-white bg-slate-600">
-                            <span>{member.clan_rank || 'Member'}</span>
-                          </div>
-                        )}
-                      </div>
-                      
                       {/* Clan XP */}
                       <div className="text-right min-w-[80px]">
                         <p className="text-sm text-slate-400">Clan XP</p>
