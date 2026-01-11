@@ -8547,16 +8547,23 @@ async def get_player_stats_with_history(
                 
                 print(f"[History] Live API fetched for {decoded_username} (overall xp={current_stats['stats']['overall']['xp']:,})")
                 
-                from datetime import timezone
+                from datetime import timezone, timedelta
                 today = datetime.now(timezone.utc).date()
+                yesterday = today - timedelta(days=1)
                 
-                baseline_json_for_today = await get_snapshot_json_on_date(conn, decoded_username, today)
+                # For "Today" baseline, use yesterday's snapshot (represents XP at END of yesterday / START of today at 00:00 UTC)
+                # This matches how the sparkline computes daily gains: today_snapshot - yesterday_snapshot
+                # We do NOT use today's snapshot as baseline because it may have been created after gains occurred
+                baseline_json_for_today = await get_snapshot_json_on_date(conn, decoded_username, yesterday)
                 if not baseline_json_for_today:
-                    # Fallback to most recent snapshot if today's doesn't exist yet
-                    baseline_json_for_today = await get_snapshot_json_on_or_before(conn, decoded_username, today)
-                    print(f"[History] No today snapshot found, using fallback baseline from on_or_before({today})")
+                    # Fallback to most recent snapshot before yesterday if yesterday's doesn't exist
+                    baseline_json_for_today = await get_snapshot_json_on_or_before(conn, decoded_username, yesterday)
+                    print(f"[History] No yesterday snapshot found, using fallback baseline from on_or_before({yesterday})")
+                else:
+                    print(f"[History] Using yesterday's snapshot ({yesterday}) as Today baseline (00:00 UTC day boundary)")
                 
-                await ensure_today_snapshot(conn, decoded_username, current_stats)
+                # Note: We intentionally do NOT call ensure_today_snapshot() here to avoid poisoning the baseline
+                # The daily snapshot job at 00:00 UTC creates the authoritative baseline snapshots
                 
                 changes_data = await get_player_stats_for_periods(conn, decoded_username, period1, period2)
                 
@@ -8565,11 +8572,11 @@ async def get_player_stats_with_history(
                 
                 print(f"[History] Period window check: p1_end={p1_end}, today={today}, condition_met={p1_end == today}")
                 if p1_end == today and period1.lower() == 'today':
-                    print(f"[History] Computing live 'Today' gains: live_xp - today_baseline_xp")
+                    print(f"[History] Computing live 'Today' gains: live_xp - yesterday_baseline_xp (00:00 UTC day boundary)")
                     
                     baseline_json = baseline_json_for_today
                     cnt = len(baseline_json or {})
-                    print(f"[History] Using today's baseline with {cnt} skills")
+                    print(f"[History] Using yesterday's snapshot ({yesterday}) as baseline with {cnt} skills")
                     if baseline_json:
                         sample_skill = list(baseline_json.keys())[0]
                         sample_data = baseline_json[sample_skill]
@@ -8591,7 +8598,7 @@ async def get_player_stats_with_history(
                             level_delta = max(cur_level - base_level, 0)
                             rank_delta = base_rank - cur_rank
                             
-                            print(f"[History] {skill_name}: live_xp={cur_xp:,} today_baseline_xp={base_xp:,} today_gain={xp_gain_p1:,}")
+                            print(f"[History] {skill_name}: live_xp={cur_xp:,} yesterday_baseline_xp={base_xp:,} today_gain={xp_gain_p1:,}")
                             
                             cd = changes_data.get(skill_name, {})
                             cd.update({
