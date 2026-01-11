@@ -8570,17 +8570,23 @@ async def get_player_stats_with_history(
                 p1_start, p1_end = get_period_window(period1)
                 p2_start, p2_end = get_period_window(period2)
                 
-                print(f"[History] Period window check: p1_end={p1_end}, today={today}, condition_met={p1_end == today}")
-                if p1_end == today and period1.lower() == 'today':
-                    print(f"[History] Computing live 'Today' gains: live_xp - yesterday_baseline_xp (00:00 UTC day boundary)")
+                print(f"[History] Period window check: p1=({p1_start}, {p1_end}), p2=({p2_start}, {p2_end}), today={today}")
+                
+                # UNIFIED RULE: If a period's end boundary is "today", use live XP as the end value
+                # This is because snapshot(today) is the 00:00 UTC baseline and will always be missing today's gains
+                # This applies to: Today, Week, Month, and any other "to-date" periods ending today
+                
+                # Helper function to compute gains using live XP as end value
+                async def compute_live_period_gains(period_name: str, start_date, period_key: str):
+                    """Compute gains for a period ending today using live XP as end value"""
+                    # Get the baseline snapshot for the start of the period
+                    baseline_json = await get_snapshot_json_on_date(conn, decoded_username, start_date)
+                    if not baseline_json:
+                        baseline_json = await get_snapshot_json_on_or_before(conn, decoded_username, start_date)
+                        print(f"[History] {period_name}: No exact snapshot for {start_date}, using fallback on_or_before")
                     
-                    baseline_json = baseline_json_for_today
                     cnt = len(baseline_json or {})
-                    print(f"[History] Using yesterday's snapshot ({yesterday}) as baseline with {cnt} skills")
-                    if baseline_json:
-                        sample_skill = list(baseline_json.keys())[0]
-                        sample_data = baseline_json[sample_skill]
-                        print(f"[History] Sample baseline: {sample_skill} = level:{sample_data.get('level')}, xp:{sample_data.get('xp'):,}, rank:{sample_data.get('rank')}")
+                    print(f"[History] {period_name}: Using live XP as end value, snapshot({start_date}) as baseline ({cnt} skills)")
                     
                     for skill_name in current_stats['stats'].keys():
                         cur_level = current_stats['stats'][skill_name].get('level', 0)
@@ -8594,33 +8600,55 @@ async def get_player_stats_with_history(
                             base_xp = baseline_data.get('xp', 0)
                             base_rank = baseline_data.get('rank') or 0
                             
-                            xp_gain_p1 = max(cur_xp - base_xp, 0)
+                            xp_gain = max(cur_xp - base_xp, 0)
                             level_delta = max(cur_level - base_level, 0)
                             rank_delta = base_rank - cur_rank
                             
-                            print(f"[History] {skill_name}: live_xp={cur_xp:,} yesterday_baseline_xp={base_xp:,} today_gain={xp_gain_p1:,}")
-                            
                             cd = changes_data.get(skill_name, {})
                             cd.update({
-                                'xp_period1': cur_xp,
-                                'xp_gain_period1': xp_gain_p1,
-                                'level_change': level_delta,
-                                'xp_change': cur_xp - base_xp,
-                                'rank_change': rank_delta
+                                f'xp_{period_key}': cur_xp,
+                                f'xp_gain_{period_key}': xp_gain,
                             })
+                            # For period1, also update level_change, xp_change, rank_change
+                            if period_key == 'period1':
+                                cd.update({
+                                    'level_change': level_delta,
+                                    'xp_change': cur_xp - base_xp,
+                                    'rank_change': rank_delta
+                                })
                             changes_data[skill_name] = cd
                         else:
-                            print(f"[History] No baseline snapshot found for {skill_name}, showing 0 gains")
                             cd = changes_data.get(skill_name, {})
                             cd.update({
-                                'xp_period1': cur_xp,
-                                'xp_gain_period1': 0,
-                                'level_change': 0,
-                                'xp_change': 0,
-                                'rank_change': 0
+                                f'xp_{period_key}': cur_xp,
+                                f'xp_gain_{period_key}': 0,
                             })
+                            if period_key == 'period1':
+                                cd.update({
+                                    'level_change': 0,
+                                    'xp_change': 0,
+                                    'rank_change': 0
+                                })
                             changes_data[skill_name] = cd
                     
+                    # Log overall gain for this period
+                    overall_gain = changes_data.get('overall', {}).get(f'xp_gain_{period_key}', 0)
+                    print(f"[History] {period_name}: overall live_xp - baseline = {overall_gain:,} XP")
+                
+                # Process period1 if it ends today (Today, Week, Month, etc.)
+                if p1_end == today:
+                    period1_name = period1.capitalize()
+                    print(f"[History] {period1_name} ends today -> using live XP as end value")
+                    await compute_live_period_gains(period1_name, p1_start, 'period1')
+                
+                # Process period2 if it ends today (rare but possible)
+                if p2_end == today:
+                    period2_name = period2.capitalize()
+                    print(f"[History] {period2_name} ends today -> using live XP as end value")
+                    await compute_live_period_gains(period2_name, p2_start, 'period2')
+                
+                # Upsert today's gains to player_today_gains table (only when period1 is 'today')
+                if period1.lower() == 'today':
                     try:
                         from .database import upsert_today_skill_gains_unified
                         from .skill_mapping import SKILL_NAMES
