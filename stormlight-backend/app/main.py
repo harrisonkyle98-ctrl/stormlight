@@ -7363,6 +7363,123 @@ async def fix_stale_active_flags(admin_id: str = Depends(verify_admin_access)):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
+async def detect_member_leaves() -> dict:
+    """
+    Detect members who have left the clan by comparing live API roster against database.
+    Returns a summary of detected leaves and any issues encountered.
+    """
+    try:
+        if not PRISMA_AVAILABLE or not prisma:
+            return {
+                "status": "error",
+                "error": "Database not available",
+                "members_marked_left": 0,
+                "members_unchanged": 0
+            }
+        
+        clan_members_live = await fetch_clan_members()
+        api_count = len(clan_members_live)
+        
+        if api_count == 0:
+            return {
+                "status": "error",
+                "error": "API returned 0 members - possible API issue, skipping leave detection",
+                "members_marked_left": 0,
+                "members_unchanged": 0,
+                "api_count": 0
+            }
+        
+        live_usernames = {normalize_username(m['username']) for m in clan_members_live}
+        
+        db_members = await prisma.clanmember.find_many(where={'active': True})
+        db_active_count = len(db_members)
+        
+        if db_active_count > 50 and api_count < db_active_count * 0.3:
+            return {
+                "status": "error",
+                "error": f"API returned only {api_count} members but DB has {db_active_count} active - possible API blip, skipping",
+                "members_marked_left": 0,
+                "members_unchanged": 0,
+                "api_count": api_count,
+                "db_active_count": db_active_count
+            }
+        
+        now = datetime.now()
+        members_marked_left = []
+        members_unchanged = 0
+        
+        for db_member in db_members:
+            db_norm = normalize_username(db_member.username)
+            if db_norm not in live_usernames:
+                await prisma.clanmember.update(
+                    where={'username': db_member.username},
+                    data={
+                        'active': False,
+                        'leftAt': now
+                    }
+                )
+                
+                await log_clan_event_if_new(
+                    username=db_member.username,
+                    event_type='Leave',
+                    old_rank=db_member.clanRank,
+                    new_rank=None,
+                    window_minutes=60
+                )
+                
+                members_marked_left.append({
+                    "username": db_member.username,
+                    "previous_rank": db_member.clanRank
+                })
+                print(f"👋 [Leave Detection] {db_member.username} left the clan (was {db_member.clanRank})")
+            else:
+                members_unchanged += 1
+        
+        clan_members_cache['data'] = []
+        clan_members_cache['timestamp'] = 0
+        
+        return {
+            "status": "success",
+            "members_marked_left": len(members_marked_left),
+            "members_marked_left_details": members_marked_left,
+            "members_unchanged": members_unchanged,
+            "api_count": api_count,
+            "db_active_count": db_active_count
+        }
+        
+    except Exception as e:
+        print(f"Error in detect_member_leaves: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "status": "error",
+            "error": str(e),
+            "members_marked_left": 0,
+            "members_unchanged": 0
+        }
+
+@api_router.post("/admin/detect-leaves")
+async def run_leave_detection(admin_info: dict = Depends(verify_admin_access)):
+    """
+    Manually trigger leave detection to find and mark members who have left the clan.
+    Compares current clan roster from RuneScape API against database active members.
+    """
+    admin_id = admin_info['admin_id']
+    admin_username = admin_info['username']
+    
+    print(f"🔍 [Leave Detection] Manual trigger by admin {admin_username} ({admin_id})")
+    
+    result = await detect_member_leaves()
+    
+    if result["status"] == "success":
+        await log_admin_action(
+            admin_id=admin_id,
+            action="detect_leaves",
+            details=f"Detected {result['members_marked_left']} member(s) who left the clan"
+        )
+    
+    return result
+
 @api_router.get("/admin/rank-tracking")
 async def get_rank_tracking(admin_id: str = Depends(verify_admin_access)):
     """Get rank tracking data"""
