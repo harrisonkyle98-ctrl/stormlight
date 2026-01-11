@@ -9996,12 +9996,14 @@ async def startup_event():
         app.state.snapshot_lock = asyncio.Lock()
         app.state.sync_lock = asyncio.Lock()
         app.state.last_snapshot_date_utc = None
+        app.state.scheduler_tick_count = 0
         
         async def hourly_scheduler():
             """Single 1-hour scheduler for all clan data updates"""
-            print("🚀 [Scheduler] Hourly scheduler task created, waiting 120s before first run...")
+            machine_id = os.getenv('FLY_MACHINE_ID', 'local')
+            print(f"🚀 [Scheduler] Hourly scheduler task created on machine {machine_id}, waiting 120s before first run...")
             await asyncio.sleep(120)
-            print("✅ [Scheduler] Initial wait complete, starting scheduler loop")
+            print(f"✅ [Scheduler] Initial wait complete, starting scheduler loop (machine: {machine_id})")
             
             last_sync_hour = None
             
@@ -10013,126 +10015,176 @@ async def startup_event():
                     current_hour = now.hour
                     has_run_today = (getattr(app.state, "last_snapshot_date_utc", None) == today)
                     
-                    print(f"⏰ [Scheduler] Tick at {now.isoformat()}Z - current_hour={current_hour}, last_sync_hour={last_sync_hour}")
+                    # Heartbeat logging - always log to confirm scheduler is alive
+                    app.state.scheduler_tick_count = getattr(app.state, 'scheduler_tick_count', 0) + 1
+                    print(f"💓 [Scheduler][HEARTBEAT] Tick #{app.state.scheduler_tick_count} at {now.isoformat()}Z - hour={current_hour}, last_sync_hour={last_sync_hour} (machine: {machine_id})")
                     
                     if last_sync_hour != current_hour:
-                        machine_id = os.getenv('FLY_MACHINE_ID', 'local')
-                        print(f"🔄 [Scheduler][HOURLY] Hour changed! Starting clan member sync at {now.isoformat()}Z (machine: {machine_id})")
+                        print(f"🔄 [Scheduler][HOURLY] Hour changed! Starting hourly tasks at {now.isoformat()}Z (machine: {machine_id})")
                         
+                        # Use advisory lock to ensure only one machine runs hourly tasks
+                        # This prevents duplicate runs when multiple Fly.io machines are running
                         try:
-                            async with app.state.sync_lock:
-                                await sync_clan_members_to_database_with_queue()
-                            print(f"✅ [Scheduler][HOURLY] Clan member sync completed at {datetime.now(timezone.utc).isoformat()}Z (machine: {machine_id})")
-                        except Exception as e:
-                            print(f"❌ [Scheduler][HOURLY] Error in clan member sync: {e} (machine: {machine_id})")
-                            import traceback
-                            traceback.print_exc()
+                            from database import get_db_connection
+                        except ImportError:
+                            from .database import get_db_connection
                         
-                        if current_hour == 0 and not has_run_today:
-                            print(f"🚀 [Scheduler][DAILY] Entering midnight snapshot branch at {now.isoformat()}Z (machine: {machine_id})")
-                            
-                            async def run_daily_snapshots():
+                        hourly_lock_acquired = False
+                        conn = await get_db_connection()
+                        try:
+                            async with conn:
+                                # Advisory lock ID 123456789 for hourly scheduler
+                                cursor = await conn.execute("SELECT pg_try_advisory_lock(123456789)")
+                                hourly_lock_acquired = (await cursor.fetchone())[0]
+                                
+                                if not hourly_lock_acquired:
+                                    print(f"⏭️ [Scheduler][HOURLY] Another machine is running hourly tasks (advisory lock not acquired). Skipping. (machine: {machine_id})")
+                                    last_sync_hour = current_hour
+                                    await asyncio.sleep(300)
+                                    continue
+                                
+                                print(f"🔒 [Scheduler][HOURLY] Advisory lock acquired, proceeding with hourly tasks (machine: {machine_id})")
+                                
+                                # 1. Clan member sync
                                 try:
-                                    try:
-                                        from .database import get_db_connection
-                                    except ImportError:
-                                        from database import get_db_connection
-                                    
-                                    conn = await get_db_connection()
-                                    async with conn:
-                                        cursor = await conn.execute("SELECT pg_try_advisory_lock(987654321)")
-                                        lock_acquired = (await cursor.fetchone())[0]
-                                        
-                                        if not lock_acquired:
-                                            print(f"[Scheduler][DAILY] Another instance is already running snapshots (advisory lock not acquired). Skipping. (machine: {machine_id})")
-                                            return
-                                        
-                                        try:
-                                            print(f"[Scheduler][DAILY] Advisory lock acquired, starting snapshot collection (machine: {machine_id})")
-                                            async with app.state.snapshot_lock:
-                                                done_count, remaining_count = await collect_daily_player_stats_multi_cycle()
-                                            app.state.last_snapshot_date_utc = today
-                                            completion_time = datetime.now(timezone.utc).isoformat()
-                                            print(f"✅ [Scheduler][DAILY] Snapshot collection completed at {completion_time}Z: {done_count} processed, {remaining_count} remaining (machine: {machine_id})")
-                                        finally:
-                                            await conn.execute("SELECT pg_advisory_unlock(987654321)")
-                                            print(f"[Scheduler][DAILY] Advisory lock released (machine: {machine_id})")
+                                    async with app.state.sync_lock:
+                                        await sync_clan_members_to_database_with_queue()
+                                    print(f"✅ [Scheduler][HOURLY] Clan member sync completed at {datetime.now(timezone.utc).isoformat()}Z (machine: {machine_id})")
                                 except Exception as e:
-                                    print(f"❌ [Scheduler][DAILY] Error in snapshot collection: {e} (machine: {machine_id})")
+                                    print(f"❌ [Scheduler][HOURLY] Error in clan member sync: {e} (machine: {machine_id})")
                                     import traceback
                                     traceback.print_exc()
-                            
-                            asyncio.create_task(run_daily_snapshots())
-                            print(f"📋 [Scheduler][DAILY] Snapshot collection task created (running in background) (machine: {machine_id})")
-                        elif current_hour == 0:
-                            print(f"⏭️  [Scheduler][DAILY] Snapshot already ran today ({today.isoformat()}), skipping (machine: {machine_id})")
-                        
-                        print(f"🚀 [Scheduler][HOURLY] Starting activity/drop collection at {now.isoformat()}Z")
-                        try:
-                            processed_count, failed_count = await collect_daily_activities_and_drops()
-                            completion_time = datetime.now(timezone.utc).isoformat()
-                            print(f"✅ [Scheduler][HOURLY] Activity/drop collection completed at {completion_time}Z: {processed_count} processed, {failed_count} failed")
-                            
-                            conn = await get_db_connection()
-                            async with conn:
-                                activity_count = await conn.fetchval("SELECT COUNT(*) FROM clan_activities")
-                                drop_count = await conn.fetchval("SELECT COUNT(*) FROM clan_drops") 
-                                print(f"📊 [Scheduler][HOURLY] Database totals: {activity_count} activities, {drop_count} drops")
-                        except Exception as e:
-                            print(f"❌ [Scheduler][HOURLY] Error in activity/drop collection: {e}")
-                            import traceback
-                            traceback.print_exc()
-                        
-                        print(f"🏆 [Scheduler][HOURLY] Checking competition events at {now.isoformat()}Z")
-                        try:
-                            await check_and_log_competition_events()
-                            print(f"✅ [Scheduler][HOURLY] Competition event check completed")
-                        except Exception as e:
-                            print(f"❌ [Scheduler][HOURLY] Error checking competition events: {e}")
-                            import traceback
-                            traceback.print_exc()
-                        
-                        print(f"📊 [Scheduler][HOURLY] Checking competition XP captures at {now.isoformat()}Z")
-                        try:
-                            await check_and_capture_competition_xp()
-                            print(f"✅ [Scheduler][HOURLY] Competition XP capture check completed")
-                        except Exception as e:
-                            print(f"❌ [Scheduler][HOURLY] Error checking competition XP captures: {e}")
-                            import traceback
-                            traceback.print_exc()
-                        
-                        print(f"📊 [Scheduler][HOURLY] Starting Today XP gains calculation at {now.isoformat()}Z (machine: {machine_id})")
-                        try:
-                            updated_count = await update_today_gains_for_all_members_strict()
-                            completion_time = datetime.now(timezone.utc).isoformat()
-                            print(f"✅ [Scheduler][HOURLY] Today XP gains calculation completed at {completion_time}Z: {updated_count} members with gains (machine: {machine_id})")
-                        except Exception as e:
-                            print(f"❌ [Scheduler][HOURLY] Error calculating Today XP gains: {e} (machine: {machine_id})")
-                            import traceback
-                            traceback.print_exc()
-                        
-                        print(f"📊 [Scheduler][HOURLY] Starting per-skill XP gains calculation at {now.isoformat()}Z (machine: {machine_id})")
-                        try:
-                            skill_updated_count = await update_today_skill_gains_for_all_members()
-                            skill_completion_time = datetime.now(timezone.utc).isoformat()
-                            print(f"✅ [Scheduler][HOURLY] Per-skill XP gains calculation completed at {skill_completion_time}Z: {skill_updated_count} members with gains (machine: {machine_id})")
-                        except Exception as e:
-                            print(f"❌ [Scheduler][HOURLY] Error calculating per-skill XP gains: {e} (machine: {machine_id})")
-                            import traceback
-                            traceback.print_exc()
-                        
-                        print(f"📊 [Scheduler][HOURLY] Starting active competition XP update at {now.isoformat()}Z (machine: {machine_id})")
-                        try:
-                            comp_updated_count = await update_active_competition_xp()
-                            comp_completion_time = datetime.now(timezone.utc).isoformat()
-                            print(f"✅ [Scheduler][HOURLY] Active competition XP update completed at {comp_completion_time}Z: {comp_updated_count} entries updated (machine: {machine_id})")
-                        except Exception as e:
-                            print(f"❌ [Scheduler][HOURLY] Error updating active competition XP: {e} (machine: {machine_id})")
-                            import traceback
-                            traceback.print_exc()
-                        
-                        last_sync_hour = current_hour
-                        print(f"✅ [Scheduler][HOURLY] All hourly tasks completed for hour {current_hour}. Next run: {(current_hour + 1) % 24}:00 UTC")
+                                
+                                # 2. Leave detection - detect members who left the clan
+                                print(f"👋 [Scheduler][HOURLY] Starting leave detection at {datetime.now(timezone.utc).isoformat()}Z (machine: {machine_id})")
+                                try:
+                                    leave_result = await detect_member_leaves()
+                                    if leave_result["status"] == "success":
+                                        left_count = leave_result["members_marked_left"]
+                                        unchanged_count = leave_result["members_unchanged"]
+                                        api_count = leave_result.get("api_count", 0)
+                                        print(f"✅ [Scheduler][HOURLY] Leave detection completed: {left_count} left, {unchanged_count} unchanged, {api_count} in API (machine: {machine_id})")
+                                        if left_count > 0:
+                                            left_names = [m["username"] for m in leave_result.get("members_marked_left_details", [])]
+                                            print(f"👋 [Scheduler][HOURLY] Members who left: {', '.join(left_names)}")
+                                    else:
+                                        print(f"⚠️ [Scheduler][HOURLY] Leave detection skipped: {leave_result.get('error', 'Unknown error')} (machine: {machine_id})")
+                                except Exception as e:
+                                    print(f"❌ [Scheduler][HOURLY] Error in leave detection: {e} (machine: {machine_id})")
+                                    import traceback
+                                    traceback.print_exc()
+                                
+                                # 3. Daily snapshots at midnight UTC
+                                if current_hour == 0 and not has_run_today:
+                                    print(f"🚀 [Scheduler][DAILY] Entering midnight snapshot branch at {now.isoformat()}Z (machine: {machine_id})")
+                                    
+                                    # Check if snapshot already exists for today (idempotency)
+                                    try:
+                                        snapshot_conn = await get_db_connection()
+                                        async with snapshot_conn:
+                                            existing_snapshot = await snapshot_conn.fetchval(
+                                                "SELECT COUNT(*) FROM player_daily_snapshots WHERE snapshot_date = %s",
+                                                (today,)
+                                            )
+                                            if existing_snapshot and existing_snapshot > 0:
+                                                print(f"⏭️ [Scheduler][DAILY] Snapshots already exist for {today.isoformat()} ({existing_snapshot} records). Skipping. (machine: {machine_id})")
+                                                app.state.last_snapshot_date_utc = today
+                                            else:
+                                                print(f"[Scheduler][DAILY] No snapshots for {today.isoformat()} yet, starting collection (machine: {machine_id})")
+                                                async with app.state.snapshot_lock:
+                                                    done_count, remaining_count = await collect_daily_player_stats_multi_cycle()
+                                                app.state.last_snapshot_date_utc = today
+                                                completion_time = datetime.now(timezone.utc).isoformat()
+                                                print(f"✅ [Scheduler][DAILY] Snapshot collection completed at {completion_time}Z: {done_count} processed, {remaining_count} remaining (machine: {machine_id})")
+                                    except Exception as e:
+                                        print(f"❌ [Scheduler][DAILY] Error in snapshot collection: {e} (machine: {machine_id})")
+                                        import traceback
+                                        traceback.print_exc()
+                                elif current_hour == 0:
+                                    print(f"⏭️  [Scheduler][DAILY] Snapshot already ran today ({today.isoformat()}), skipping (machine: {machine_id})")
+                                
+                                # 4. Activity/drop collection
+                                print(f"🚀 [Scheduler][HOURLY] Starting activity/drop collection at {datetime.now(timezone.utc).isoformat()}Z (machine: {machine_id})")
+                                try:
+                                    processed_count, failed_count = await collect_daily_activities_and_drops()
+                                    completion_time = datetime.now(timezone.utc).isoformat()
+                                    print(f"✅ [Scheduler][HOURLY] Activity/drop collection completed at {completion_time}Z: {processed_count} processed, {failed_count} failed (machine: {machine_id})")
+                                    
+                                    stats_conn = await get_db_connection()
+                                    async with stats_conn:
+                                        activity_count = await stats_conn.fetchval("SELECT COUNT(*) FROM clan_activities")
+                                        drop_count = await stats_conn.fetchval("SELECT COUNT(*) FROM clan_drops") 
+                                        print(f"📊 [Scheduler][HOURLY] Database totals: {activity_count} activities, {drop_count} drops (machine: {machine_id})")
+                                except Exception as e:
+                                    print(f"❌ [Scheduler][HOURLY] Error in activity/drop collection: {e} (machine: {machine_id})")
+                                    import traceback
+                                    traceback.print_exc()
+                                
+                                # 5. Competition events
+                                print(f"🏆 [Scheduler][HOURLY] Checking competition events at {datetime.now(timezone.utc).isoformat()}Z (machine: {machine_id})")
+                                try:
+                                    await check_and_log_competition_events()
+                                    print(f"✅ [Scheduler][HOURLY] Competition event check completed (machine: {machine_id})")
+                                except Exception as e:
+                                    print(f"❌ [Scheduler][HOURLY] Error checking competition events: {e} (machine: {machine_id})")
+                                    import traceback
+                                    traceback.print_exc()
+                                
+                                # 6. Competition XP captures
+                                print(f"📊 [Scheduler][HOURLY] Checking competition XP captures at {datetime.now(timezone.utc).isoformat()}Z (machine: {machine_id})")
+                                try:
+                                    await check_and_capture_competition_xp()
+                                    print(f"✅ [Scheduler][HOURLY] Competition XP capture check completed (machine: {machine_id})")
+                                except Exception as e:
+                                    print(f"❌ [Scheduler][HOURLY] Error checking competition XP captures: {e} (machine: {machine_id})")
+                                    import traceback
+                                    traceback.print_exc()
+                                
+                                # 7. Today XP gains calculation
+                                print(f"📊 [Scheduler][HOURLY] Starting Today XP gains calculation at {datetime.now(timezone.utc).isoformat()}Z (machine: {machine_id})")
+                                try:
+                                    updated_count = await update_today_gains_for_all_members_strict()
+                                    completion_time = datetime.now(timezone.utc).isoformat()
+                                    print(f"✅ [Scheduler][HOURLY] Today XP gains calculation completed at {completion_time}Z: {updated_count} members with gains (machine: {machine_id})")
+                                except Exception as e:
+                                    print(f"❌ [Scheduler][HOURLY] Error calculating Today XP gains: {e} (machine: {machine_id})")
+                                    import traceback
+                                    traceback.print_exc()
+                                
+                                # 8. Per-skill XP gains calculation
+                                print(f"📊 [Scheduler][HOURLY] Starting per-skill XP gains calculation at {datetime.now(timezone.utc).isoformat()}Z (machine: {machine_id})")
+                                try:
+                                    skill_updated_count = await update_today_skill_gains_for_all_members()
+                                    skill_completion_time = datetime.now(timezone.utc).isoformat()
+                                    print(f"✅ [Scheduler][HOURLY] Per-skill XP gains calculation completed at {skill_completion_time}Z: {skill_updated_count} members with gains (machine: {machine_id})")
+                                except Exception as e:
+                                    print(f"❌ [Scheduler][HOURLY] Error calculating per-skill XP gains: {e} (machine: {machine_id})")
+                                    import traceback
+                                    traceback.print_exc()
+                                
+                                # 9. Active competition XP update
+                                print(f"📊 [Scheduler][HOURLY] Starting active competition XP update at {datetime.now(timezone.utc).isoformat()}Z (machine: {machine_id})")
+                                try:
+                                    comp_updated_count = await update_active_competition_xp()
+                                    comp_completion_time = datetime.now(timezone.utc).isoformat()
+                                    print(f"✅ [Scheduler][HOURLY] Active competition XP update completed at {comp_completion_time}Z: {comp_updated_count} entries updated (machine: {machine_id})")
+                                except Exception as e:
+                                    print(f"❌ [Scheduler][HOURLY] Error updating active competition XP: {e} (machine: {machine_id})")
+                                    import traceback
+                                    traceback.print_exc()
+                                
+                                last_sync_hour = current_hour
+                                print(f"✅ [Scheduler][HOURLY] All hourly tasks completed for hour {current_hour}. Next run: {(current_hour + 1) % 24}:00 UTC (machine: {machine_id})")
+                        finally:
+                            # Always release the advisory lock
+                            if hourly_lock_acquired:
+                                try:
+                                    release_conn = await get_db_connection()
+                                    async with release_conn:
+                                        await release_conn.execute("SELECT pg_advisory_unlock(123456789)")
+                                    print(f"🔓 [Scheduler][HOURLY] Advisory lock released (machine: {machine_id})")
+                                except Exception as e:
+                                    print(f"⚠️ [Scheduler][HOURLY] Error releasing advisory lock: {e} (machine: {machine_id})")
                     
                 except Exception as e:
                     print(f"❌ [Scheduler] Critical error in hourly scheduler: {e}")
