@@ -10925,72 +10925,224 @@ async def get_merchant_next_occurrence(item: str = Query(..., min_length=1, desc
         }
 
 
-# Wilderness Flash Events rotation (14-hour cycle)
-# Reference: Jan 12, 2026 18:00 UTC = Ramokee Incursion (index 0)
-WILDY_EVENTS_ROTATION = [
-    {"name": "Ramokee Incursion", "type": "combat", "special": False},
-    {"name": "Displaced Energy", "type": "skilling", "special": False},
-    {"name": "Evil Bloodwood Tree", "type": "skilling", "special": True},
-    {"name": "Spider Swarm", "type": "combat", "special": False},
-    {"name": "Unnatural Outcrop", "type": "skilling", "special": False},
-    {"name": "Stryke the Wyrm", "type": "combat", "special": True},
-    {"name": "Demon Stragglers", "type": "combat", "special": False},
-    {"name": "Butterfly Swarm", "type": "skilling", "special": False},
-    {"name": "King Black Dragon Rampage", "type": "combat", "special": True},
-    {"name": "Forgotten Soldiers", "type": "combat", "special": False},
-    {"name": "Surprising Seedlings", "type": "skilling", "special": False},
-    {"name": "Hellhound Pack", "type": "combat", "special": False},
-    {"name": "Infernal Star", "type": "skilling", "special": True},
-    {"name": "Lost Souls", "type": "skilling", "special": False},
-]
-# Reference timestamp: Jan 12, 2026 18:00 UTC = index 0
-WILDY_REFERENCE_TIMESTAMP = datetime(2026, 1, 12, 18, 0, 0, tzinfo=timezone.utc)
+# ============================================================================
+# WILDERNESS FLASH EVENTS (Wiki-sourced rotation)
+# ============================================================================
 
-def get_wildy_events_for_date(target_date: date) -> dict:
-    """Compute Wilderness Flash Events schedule for a given UTC date."""
+# Authoritative event type mapping (wiki does not expose types)
+# Combat: Spider Swarm, Demon Stragglers, King Black Dragon Rampage, Forgotten Soldiers,
+#         Hellhound Pack, Ramokee Incursion, Stryke the Wyrm
+# Skilling: Unnatural Outcrop, Butterfly Swarm, Surprising Seedlings, Displaced Energy
+# Mixed: Lost Souls, Infernal Star, Evil Bloodwood Tree
+WILDY_EVENT_TYPES = {
+    'Spider Swarm': 'combat',
+    'Demon Stragglers': 'combat',
+    'King Black Dragon Rampage': 'combat',
+    'Forgotten Soldiers': 'combat',
+    'Hellhound Pack': 'combat',
+    'Ramokee Incursion': 'combat',
+    'Stryke the Wyrm': 'combat',
+    'Unnatural Outcrop': 'skilling',
+    'Butterfly Swarm': 'skilling',
+    'Surprising Seedlings': 'skilling',
+    'Displaced Energy': 'skilling',
+    'Lost Souls': 'mixed',
+    'Infernal Star': 'mixed',
+    'Evil Bloodwood Tree': 'mixed',
+}
+
+# Cache for wiki-parsed wildy events rotation (6-12 hour TTL)
+_wildy_rotation_cache = {
+    'rotation': [],           # List of {name, special} in order
+    'anchor_ms': None,        # data-rotation-start from wiki
+    'timestamp': 0,
+    'error': None
+}
+_WILDY_ROTATION_TTL = 28800  # 8 hours
+
+
+async def build_wildy_rotation_index() -> dict:
+    """Build the Wilderness Flash Events rotation index from wiki using BeautifulSoup.
+    
+    Parses the rotation table from https://runescape.wiki/w/Wilderness_Flash_Events
+    to get the event order and special flags. Event types come from WILDY_EVENT_TYPES mapping.
+    """
+    now = time.time()
+    
+    # Check cache
+    if (_wildy_rotation_cache['timestamp'] > 0 and
+        now - _wildy_rotation_cache['timestamp'] < _WILDY_ROTATION_TTL and
+        _wildy_rotation_cache['rotation']):
+        return {
+            'rotation': _wildy_rotation_cache['rotation'],
+            'anchor_ms': _wildy_rotation_cache['anchor_ms'],
+            'cached': True,
+            'error': _wildy_rotation_cache['error']
+        }
+    
     try:
-        now = datetime.now(timezone.utc)
-        target_start = datetime(target_date.year, target_date.month, target_date.day, 0, 0, 0, tzinfo=timezone.utc)
-        
-        # Calculate hours since reference for the start of target date
-        hours_since_ref = int((target_start - WILDY_REFERENCE_TIMESTAMP).total_seconds() / 3600)
-        
-        # Get current event (for "now" if target_date is today)
-        current_event = None
-        next_event_in = None
-        if target_date == now.date():
-            current_hours_since_ref = int((now - WILDY_REFERENCE_TIMESTAMP).total_seconds() / 3600)
-            current_index = current_hours_since_ref % len(WILDY_EVENTS_ROTATION)
-            current_event = WILDY_EVENTS_ROTATION[current_index].copy()
-            current_event['startsAt'] = (WILDY_REFERENCE_TIMESTAMP + timedelta(hours=current_hours_since_ref)).isoformat()
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            url = "https://runescape.wiki/api.php"
+            params = {
+                'action': 'parse',
+                'page': 'Wilderness_Flash_Events',
+                'prop': 'text',
+                'format': 'json'
+            }
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
             
-            # Calculate time until next event
-            next_event_time = (WILDY_REFERENCE_TIMESTAMP + timedelta(hours=current_hours_since_ref + 1))
-            seconds_until_next = (next_event_time - now).total_seconds()
-            minutes = int(seconds_until_next // 60)
-            seconds = int(seconds_until_next % 60)
-            next_event_in = f"{minutes:02d}:{seconds:02d}"
+            html_content = data.get('parse', {}).get('text', {}).get('*', '')
+            
+            # Parse with BeautifulSoup
+            soup = BeautifulSoup(html_content, 'lxml')
+            
+            # Find the rotation table
+            rotation_table = soup.find('table', class_='rotation-group')
+            if not rotation_table:
+                raise ValueError("Could not find rotation-group table in wiki page")
+            
+            # Extract anchor timestamp from data-rotation-start attribute
+            anchor_ms = rotation_table.get('data-rotation-start')
+            if not anchor_ms:
+                raise ValueError("Could not find data-rotation-start attribute")
+            anchor_ms = int(anchor_ms)
+            
+            # Extract rotation items in order
+            rotation = []
+            rotation_items = rotation_table.find_all('tr', class_='rotation-item')
+            
+            for item in rotation_items:
+                classes = item.get('class', [])
+                label = item.find('div', class_='rotation-label-text')
+                if label:
+                    event_link = label.find('a')
+                    if event_link:
+                        event_name = event_link.text.strip()
+                        # Special flag comes from wiki CSS class
+                        is_special = 'rotation-item-wfe-special' in classes
+                        # Type comes from our authoritative mapping
+                        event_type = WILDY_EVENT_TYPES.get(event_name, 'combat')
+                        
+                        rotation.append({
+                            'name': event_name,
+                            'type': event_type,
+                            'special': is_special
+                        })
+            
+            if not rotation:
+                raise ValueError("No rotation items found in wiki table")
+            
+            # Update cache
+            _wildy_rotation_cache['rotation'] = rotation
+            _wildy_rotation_cache['anchor_ms'] = anchor_ms
+            _wildy_rotation_cache['timestamp'] = now
+            _wildy_rotation_cache['error'] = None
+            
+            print(f"[Wildy Events] Parsed {len(rotation)} events from wiki, anchor_ms={anchor_ms}")
+            
+            return {
+                'rotation': rotation,
+                'anchor_ms': anchor_ms,
+                'cached': False,
+                'error': None
+            }
+            
+    except Exception as e:
+        error_msg = str(e)
+        # Only log once per TTL window
+        if _wildy_rotation_cache['error'] != error_msg:
+            print(f"[Wildy Events] Error parsing wiki: {e}")
+            _wildy_rotation_cache['error'] = error_msg
         
-        # Generate upcoming events for the day (24 hours)
+        # Return cached data if available, otherwise return error
+        if _wildy_rotation_cache['rotation']:
+            return {
+                'rotation': _wildy_rotation_cache['rotation'],
+                'anchor_ms': _wildy_rotation_cache['anchor_ms'],
+                'cached': True,
+                'error': error_msg
+            }
+        
+        return {
+            'rotation': [],
+            'anchor_ms': None,
+            'cached': False,
+            'error': error_msg
+        }
+
+async def get_wildy_events_schedule() -> dict:
+    """Compute Wilderness Flash Events schedule using wiki-sourced rotation.
+    
+    Returns current event, countdown, and 48 hours of upcoming events.
+    Uses wiki anchor timestamp and rotation order for deterministic computation.
+    """
+    try:
+        # Get wiki-parsed rotation
+        rotation_data = await build_wildy_rotation_index()
+        
+        if not rotation_data.get('rotation') or not rotation_data.get('anchor_ms'):
+            return {'unavailable': True, 'error': rotation_data.get('error', 'Failed to parse wiki rotation')}
+        
+        rotation = rotation_data['rotation']
+        anchor_ms = rotation_data['anchor_ms']
+        rotation_length = len(rotation)
+        
+        # Convert anchor from ms to datetime
+        anchor_datetime = datetime.fromtimestamp(anchor_ms / 1000, tz=timezone.utc)
+        
+        now = datetime.now(timezone.utc)
+        
+        # Current hour boundary (events start on the hour)
+        current_hour = now.replace(minute=0, second=0, microsecond=0)
+        
+        # Calculate hours since anchor
+        hours_since_anchor = int((current_hour - anchor_datetime).total_seconds() / 3600)
+        current_index = hours_since_anchor % rotation_length
+        
+        # Current event
+        current_event = rotation[current_index].copy()
+        current_event['startsAt'] = current_hour.isoformat()
+        
+        # Next event time and countdown
+        next_hour = current_hour + timedelta(hours=1)
+        seconds_until_next = (next_hour - now).total_seconds()
+        minutes = int(seconds_until_next // 60)
+        seconds = int(seconds_until_next % 60)
+        next_event_in = f"{minutes:02d}:{seconds:02d}"
+        
+        # Generate upcoming events for 48 hours (AFKscape parity)
         upcoming = []
-        for hour_offset in range(24):
-            event_hours_since_ref = hours_since_ref + hour_offset
-            event_index = event_hours_since_ref % len(WILDY_EVENTS_ROTATION)
-            event = WILDY_EVENTS_ROTATION[event_index].copy()
-            event_time = target_start + timedelta(hours=hour_offset)
-            event['startsAt'] = event_time.isoformat()
-            event['hour'] = event_time.strftime('%H:%M')
+        for hour_offset in range(48):
+            event_hour = current_hour + timedelta(hours=hour_offset)
+            event_hours_since_anchor = hours_since_anchor + hour_offset
+            event_index = event_hours_since_anchor % rotation_length
+            
+            event = rotation[event_index].copy()
+            event['startsAt'] = event_hour.isoformat()
+            event['hour'] = event_hour.strftime('%H:%M')
             upcoming.append(event)
         
         return {
             'current': current_event,
+            'nextStartsAt': next_hour.isoformat(),
             'nextEventIn': next_event_in,
             'upcoming': upcoming,
-            'date': target_date.isoformat()
+            'meta': {
+                'rotationSource': 'runescape.wiki',
+                'anchorMs': anchor_ms,
+                'rotationLength': rotation_length,
+                'cached': rotation_data.get('cached', False),
+                'fetchedAt': now.isoformat()
+            }
         }
+        
     except Exception as e:
-        print(f"[Dailyscape][WildyEvents] Error computing schedule: {e}")
-        return None
+        print(f"[Wildy Events] Error computing schedule: {e}")
+        import traceback
+        traceback.print_exc()
+        return {'unavailable': True, 'error': str(e)}
 
 async def fetch_merchant_data(target_date: date) -> dict:
     """Fetch Travelling Merchant data from RuneScape Wiki API.
@@ -11245,13 +11397,15 @@ async def get_wiki_dailyscape(date: Optional[str] = Query(None, description="UTC
         
         fetch_start = time.time()
         
-        # Fetch all data concurrently
+        # Fetch all data concurrently (including wildy events which now uses wiki API)
         merchant_task = fetch_merchant_data(target_date)
         viswax_task = fetch_viswax_data(target_date)
+        wildy_task = get_wildy_events_schedule()
         
-        merchant_result, viswax_result = await asyncio.gather(
+        merchant_result, viswax_result, wildy_result = await asyncio.gather(
             merchant_task,
             viswax_task,
+            wildy_task,
             return_exceptions=True
         )
         
@@ -11272,8 +11426,18 @@ async def get_wiki_dailyscape(date: Optional[str] = Query(None, description="UTC
         elif isinstance(viswax_result, Exception):
             print(f"[Dailyscape] VisWax fetch exception: {viswax_result}")
         
-        # Compute wildy events (no external API needed)
-        wildy_data = get_wildy_events_for_date(target_date)
+        # Process wildy events result
+        wildy_data = None
+        wildy_cached = False
+        if isinstance(wildy_result, dict) and wildy_result:
+            if wildy_result.get('unavailable'):
+                wildy_data = {'unavailable': True, 'error': wildy_result.get('error')}
+            else:
+                wildy_data = wildy_result
+                wildy_cached = wildy_result.get('meta', {}).get('cached', False)
+        elif isinstance(wildy_result, Exception):
+            print(f"[Dailyscape] Wildy events fetch exception: {wildy_result}")
+            wildy_data = {'unavailable': True, 'error': str(wildy_result)}
         
         fetch_duration = time.time() - fetch_start
         
@@ -11287,7 +11451,7 @@ async def get_wiki_dailyscape(date: Optional[str] = Query(None, description="UTC
                 'cached': {
                     'merchant': merchant_cached,
                     'visWax': viswax_cached,
-                    'wildyEvents': False  # Always computed
+                    'wildyEvents': wildy_cached
                 },
                 'fetchDurationMs': int(fetch_duration * 1000)
             }
