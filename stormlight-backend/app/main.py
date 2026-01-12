@@ -10953,12 +10953,84 @@ WILDY_EVENT_TYPES = {
 
 # Cache for wiki-parsed wildy events rotation (6-12 hour TTL)
 _wildy_rotation_cache = {
-    'rotation': [],           # List of {name, special} in order
+    'rotation': [],           # List of {name, special, type, location} in order
     'anchor_ms': None,        # data-rotation-start from wiki
+    'locations': {},          # Map of event_name -> location string
     'timestamp': 0,
     'error': None
 }
 _WILDY_ROTATION_TTL = 28800  # 8 hours
+
+
+def normalize_location(location_phrase: str) -> str:
+    """Normalize a location phrase to display-ready format.
+    
+    - Capitalize first letter
+    - Remove trailing !
+    - Ensure ends with .
+    - Trim whitespace
+    """
+    if not location_phrase:
+        return None
+    
+    # Trim whitespace
+    location = location_phrase.strip()
+    
+    # Remove trailing !
+    if location.endswith('!'):
+        location = location[:-1]
+    
+    # Capitalize first letter
+    if location:
+        location = location[0].upper() + location[1:]
+    
+    # Ensure ends with .
+    if location and not location.endswith('.'):
+        location = location + '.'
+    
+    return location
+
+
+def extract_wildy_event_locations(soup) -> dict:
+    """Extract event locations from wiki broadcast messages in span.RSFont elements.
+    
+    Returns a dict mapping event_name -> normalized location string.
+    """
+    import re
+    
+    locations = {}
+    
+    # Find all RSFont spans (broadcast messages)
+    rsfont_spans = soup.find_all('span', class_='RSFont')
+    
+    # Primary regex: "Wilderness Flash Events: [Event] has started [location]!"
+    primary_pattern = re.compile(r'Wilderness Flash Events:\s*(.+?)\s+has started\s+(.+?)!', re.IGNORECASE)
+    
+    # Secondary regex for Forgotten Soldiers: "have arrived [location]!"
+    secondary_pattern = re.compile(r'Forgotten Soldiers\s+have arrived\s+(.+?)!', re.IGNORECASE)
+    
+    for span in rsfont_spans:
+        text = span.get_text(strip=True)
+        
+        # Try primary pattern first
+        match = primary_pattern.search(text)
+        if match:
+            event_name = match.group(1).strip()
+            location_phrase = match.group(2).strip()
+            normalized = normalize_location(location_phrase)
+            if normalized:
+                locations[event_name] = normalized
+            continue
+        
+        # Try secondary pattern for Forgotten Soldiers
+        match = secondary_pattern.search(text)
+        if match:
+            location_phrase = match.group(1).strip()
+            normalized = normalize_location(location_phrase)
+            if normalized:
+                locations['Forgotten Soldiers'] = normalized
+    
+    return locations
 
 
 async def build_wildy_rotation_index() -> dict:
@@ -10976,6 +11048,7 @@ async def build_wildy_rotation_index() -> dict:
         return {
             'rotation': _wildy_rotation_cache['rotation'],
             'anchor_ms': _wildy_rotation_cache['anchor_ms'],
+            'locations': _wildy_rotation_cache.get('locations', {}),
             'cached': True,
             'error': _wildy_rotation_cache['error']
         }
@@ -10997,6 +11070,9 @@ async def build_wildy_rotation_index() -> dict:
             
             # Parse with BeautifulSoup
             soup = BeautifulSoup(html_content, 'lxml')
+            
+            # Extract event locations from broadcast messages
+            locations = extract_wildy_event_locations(soup)
             
             # Find the rotation table
             rotation_table = soup.find('table', class_='rotation-group')
@@ -11024,27 +11100,37 @@ async def build_wildy_rotation_index() -> dict:
                         is_special = 'rotation-item-wfe-special' in classes
                         # Type comes from our authoritative mapping
                         event_type = WILDY_EVENT_TYPES.get(event_name, 'combat')
+                        # Location from broadcast messages (null if not found)
+                        event_location = locations.get(event_name, None)
                         
                         rotation.append({
                             'name': event_name,
                             'type': event_type,
-                            'special': is_special
+                            'special': is_special,
+                            'location': event_location
                         })
             
             if not rotation:
                 raise ValueError("No rotation items found in wiki table")
             
+            # Log missing locations once per TTL window
+            missing_locations = [e['name'] for e in rotation if not e.get('location')]
+            if missing_locations:
+                print(f"[Wildy Events] Missing locations for: {', '.join(missing_locations)}")
+            
             # Update cache
             _wildy_rotation_cache['rotation'] = rotation
             _wildy_rotation_cache['anchor_ms'] = anchor_ms
+            _wildy_rotation_cache['locations'] = locations
             _wildy_rotation_cache['timestamp'] = now
             _wildy_rotation_cache['error'] = None
             
-            print(f"[Wildy Events] Parsed {len(rotation)} events from wiki, anchor_ms={anchor_ms}")
+            print(f"[Wildy Events] Parsed {len(rotation)} events from wiki, anchor_ms={anchor_ms}, locations={len(locations)}")
             
             return {
                 'rotation': rotation,
                 'anchor_ms': anchor_ms,
+                'locations': locations,
                 'cached': False,
                 'error': None
             }
@@ -11061,6 +11147,7 @@ async def build_wildy_rotation_index() -> dict:
             return {
                 'rotation': _wildy_rotation_cache['rotation'],
                 'anchor_ms': _wildy_rotation_cache['anchor_ms'],
+                'locations': _wildy_rotation_cache.get('locations', {}),
                 'cached': True,
                 'error': error_msg
             }
@@ -11068,6 +11155,7 @@ async def build_wildy_rotation_index() -> dict:
         return {
             'rotation': [],
             'anchor_ms': None,
+            'locations': {},
             'cached': False,
             'error': error_msg
         }

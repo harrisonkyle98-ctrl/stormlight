@@ -61,6 +61,7 @@ interface WildyEvent {
   special: boolean
   startsAt: string
   hour?: string
+  location?: string | null
 }
 
 interface WildyEventsData {
@@ -565,6 +566,9 @@ const DailyscapeCard = () => {
                         <div className="flex-1 min-w-0">
                           <span className="text-sm text-white truncate block">{nextEvent.name}</span>
                           <span className="text-xs text-slate-400">{nextEvent.hour} UTC</span>
+                          {nextEvent.location && (
+                            <span className="text-xs text-slate-500 truncate block">{nextEvent.location}</span>
+                          )}
                         </div>
                         {/* Right-aligned tags: Special first, then icon tag */}
                         <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -647,35 +651,42 @@ const DailyscapeCard = () => {
                               </div>
                             </div>
                           </div>
-                          {/* Expanded section showing other occurrences of this event */}
-                          {isExpanded && sameEventOccurrences.length > 0 && (
+                          {/* Expanded section showing location and other occurrences of this event */}
+                          {isExpanded && (
                             <div className="p-2 bg-slate-800/50 rounded-lg">
-                              <p className="text-xs text-slate-400 mb-1.5">Other occurrences in 48h:</p>
-                              <div className="space-y-1">
-                                {sameEventOccurrences.map((occurrence, occIndex) => {
-                                  // Format full date + time from startsAt ISO string
-                                  const occDate = new Date(occurrence.startsAt)
-                                  const formattedDate = occDate.toLocaleDateString('en-US', { 
-                                    month: 'short', 
-                                    day: 'numeric',
-                                    timeZone: 'UTC'
-                                  })
-                                  const formattedTime = occDate.toLocaleTimeString('en-US', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: false,
-                                    timeZone: 'UTC'
-                                  })
-                                  return (
-                                    <div key={occIndex} className="flex items-center gap-2 text-xs">
-                                      <span className="text-slate-400">{formattedDate}, {formattedTime} UTC</span>
-                                      {occurrence.special && (
-                                        <span className="text-amber-400">(Special)</span>
-                                      )}
-                                    </div>
-                                  )
-                                })}
-                              </div>
+                              {event.location && (
+                                <p className="text-xs text-slate-500 mb-1.5 truncate">{event.location}</p>
+                              )}
+                              {sameEventOccurrences.length > 0 && (
+                                <>
+                                  <p className="text-xs text-slate-400 mb-1.5">Other occurrences in 48h:</p>
+                                  <div className="space-y-1">
+                                    {sameEventOccurrences.map((occurrence, occIndex) => {
+                                      // Format full date + time from startsAt ISO string
+                                      const occDate = new Date(occurrence.startsAt)
+                                      const formattedDate = occDate.toLocaleDateString('en-US', { 
+                                        month: 'short', 
+                                        day: 'numeric',
+                                        timeZone: 'UTC'
+                                      })
+                                      const formattedTime = occDate.toLocaleTimeString('en-US', {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: false,
+                                        timeZone: 'UTC'
+                                      })
+                                      return (
+                                        <div key={occIndex} className="flex items-center gap-2 text-xs">
+                                          <span className="text-slate-400">{formattedDate}, {formattedTime} UTC</span>
+                                          {occurrence.special && (
+                                            <span className="text-amber-400">(Special)</span>
+                                          )}
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                </>
+                              )}
                             </div>
                           )}
                         </div>
