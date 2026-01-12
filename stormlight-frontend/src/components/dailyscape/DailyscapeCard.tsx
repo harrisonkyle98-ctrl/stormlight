@@ -653,7 +653,13 @@ const DailyscapeCard = () => {
                 </div>
 
                 {/* Scrollable upcoming events list - full 48h */}
-                <div className="max-h-64 overflow-y-auto pr-1 space-y-1.5 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
+                <div 
+                  className="max-h-64 overflow-y-auto pr-1 space-y-1.5 wildy-events-scroll"
+                  style={{
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: 'rgb(71 85 105) transparent'
+                  }}
+                >
                   {data.wildyEvents.upcoming
                     .slice(1) // Skip current event
                     .filter(event => !showSpecialOnly || event.special)
