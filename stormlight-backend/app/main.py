@@ -10471,6 +10471,369 @@ async def debug_today_gains():
         traceback.print_exc()
         return {"error": str(e)}
 
+# ============================================================================
+# DAILYSCAPE WIKI API ENDPOINT
+# ============================================================================
+
+# Cache for wiki dailyscape data (10-minute TTL)
+_dailyscape_cache = {
+    'merchant': {'data': None, 'timestamp': 0, 'date': None},
+    'viswax': {'data': None, 'timestamp': 0, 'date': None},
+}
+_DAILYSCAPE_CACHE_TTL = 600  # 10 minutes
+
+# Wilderness Flash Events rotation (14-hour cycle)
+# Reference: Jan 12, 2026 18:00 UTC = Ramokee Incursion (index 0)
+WILDY_EVENTS_ROTATION = [
+    {"name": "Ramokee Incursion", "type": "combat", "special": False},
+    {"name": "Displaced Energy", "type": "skilling", "special": False},
+    {"name": "Evil Bloodwood Tree", "type": "skilling", "special": True},
+    {"name": "Spider Swarm", "type": "combat", "special": False},
+    {"name": "Unnatural Outcrop", "type": "skilling", "special": False},
+    {"name": "Stryke the Wyrm", "type": "combat", "special": True},
+    {"name": "Demon Stragglers", "type": "combat", "special": False},
+    {"name": "Butterfly Swarm", "type": "skilling", "special": False},
+    {"name": "King Black Dragon Rampage", "type": "combat", "special": True},
+    {"name": "Forgotten Soldiers", "type": "combat", "special": False},
+    {"name": "Surprising Seedlings", "type": "skilling", "special": False},
+    {"name": "Hellhound Pack", "type": "combat", "special": False},
+    {"name": "Infernal Star", "type": "skilling", "special": True},
+    {"name": "Lost Souls", "type": "skilling", "special": False},
+]
+# Reference timestamp: Jan 12, 2026 18:00 UTC = index 0
+WILDY_REFERENCE_TIMESTAMP = datetime(2026, 1, 12, 18, 0, 0, tzinfo=timezone.utc)
+
+def get_wildy_events_for_date(target_date: date) -> dict:
+    """Compute Wilderness Flash Events schedule for a given UTC date."""
+    try:
+        now = datetime.now(timezone.utc)
+        target_start = datetime(target_date.year, target_date.month, target_date.day, 0, 0, 0, tzinfo=timezone.utc)
+        
+        # Calculate hours since reference for the start of target date
+        hours_since_ref = int((target_start - WILDY_REFERENCE_TIMESTAMP).total_seconds() / 3600)
+        
+        # Get current event (for "now" if target_date is today)
+        current_event = None
+        next_event_in = None
+        if target_date == now.date():
+            current_hours_since_ref = int((now - WILDY_REFERENCE_TIMESTAMP).total_seconds() / 3600)
+            current_index = current_hours_since_ref % len(WILDY_EVENTS_ROTATION)
+            current_event = WILDY_EVENTS_ROTATION[current_index].copy()
+            current_event['startsAt'] = (WILDY_REFERENCE_TIMESTAMP + timedelta(hours=current_hours_since_ref)).isoformat()
+            
+            # Calculate time until next event
+            next_event_time = (WILDY_REFERENCE_TIMESTAMP + timedelta(hours=current_hours_since_ref + 1))
+            seconds_until_next = (next_event_time - now).total_seconds()
+            minutes = int(seconds_until_next // 60)
+            seconds = int(seconds_until_next % 60)
+            next_event_in = f"{minutes:02d}:{seconds:02d}"
+        
+        # Generate upcoming events for the day (24 hours)
+        upcoming = []
+        for hour_offset in range(24):
+            event_hours_since_ref = hours_since_ref + hour_offset
+            event_index = event_hours_since_ref % len(WILDY_EVENTS_ROTATION)
+            event = WILDY_EVENTS_ROTATION[event_index].copy()
+            event_time = target_start + timedelta(hours=hour_offset)
+            event['startsAt'] = event_time.isoformat()
+            event['hour'] = event_time.strftime('%H:%M')
+            upcoming.append(event)
+        
+        return {
+            'current': current_event,
+            'nextEventIn': next_event_in,
+            'upcoming': upcoming,
+            'date': target_date.isoformat()
+        }
+    except Exception as e:
+        print(f"[Dailyscape][WildyEvents] Error computing schedule: {e}")
+        return None
+
+async def fetch_merchant_data(target_date: date) -> dict:
+    """Fetch Travelling Merchant data from RuneScape Wiki API."""
+    cache_key = target_date.isoformat()
+    now = time.time()
+    
+    # Check cache
+    if (_dailyscape_cache['merchant']['data'] is not None and 
+        _dailyscape_cache['merchant']['date'] == cache_key and
+        now - _dailyscape_cache['merchant']['timestamp'] < _DAILYSCAPE_CACHE_TTL):
+        return {'data': _dailyscape_cache['merchant']['data'], 'cached': True}
+    
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            # Fetch the Travelling Merchant's Shop page with the icons template
+            url = "https://runescape.wiki/api.php"
+            params = {
+                'action': 'parse',
+                'page': "Travelling_Merchant's_Shop",
+                'prop': 'text',
+                'format': 'json',
+                'section': 0
+            }
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+            
+            html_content = data.get('parse', {}).get('text', {}).get('*', '')
+            
+            # Parse the HTML to extract today's items
+            # Look for the wikitable with today's stock
+            items = []
+            
+            # Use regex to find item links and images in the table
+            # Pattern: <a href="/w/Item_Name" title="Item Name">
+            import re
+            
+            # Find the table with "Stock for" in the caption
+            stock_table_match = re.search(r'Stock for.*?</table>', html_content, re.DOTALL)
+            if stock_table_match:
+                table_html = stock_table_match.group(0)
+                
+                # Extract items from inventory-image cells
+                item_cells = re.findall(r'<td class="inventory-image">(.*?)</td>', table_html, re.DOTALL)
+                
+                for cell in item_cells:
+                    # Extract item name from title attribute
+                    name_match = re.search(r'title="([^"]+)"', cell)
+                    # Extract icon URL from img src
+                    icon_match = re.search(r'src="([^"]+)"', cell)
+                    
+                    if name_match:
+                        item_name = name_match.group(1)
+                        icon_url = f"https://runescape.wiki{icon_match.group(1)}" if icon_match else None
+                        
+                        # Skip the map (slot 1 is always the same)
+                        if 'Uncharted island map' not in item_name:
+                            items.append({
+                                'name': item_name,
+                                'iconUrl': icon_url,
+                                'wikiUrl': f"https://runescape.wiki/w/{item_name.replace(' ', '_')}"
+                            })
+            
+            # If we couldn't parse the table, try the Future page for the specific date
+            if not items:
+                future_url = "https://runescape.wiki/api.php"
+                future_params = {
+                    'action': 'parse',
+                    'page': "Travelling_Merchant's_Shop/Future",
+                    'prop': 'text',
+                    'format': 'json'
+                }
+                future_response = await client.get(future_url, params=future_params)
+                future_response.raise_for_status()
+                future_data = future_response.json()
+                
+                future_html = future_data.get('parse', {}).get('text', {}).get('*', '')
+                
+                # Find the row for target_date
+                date_str = target_date.strftime('%d %B %Y').lstrip('0')  # e.g., "12 January 2026"
+                # Also try without leading zero
+                date_patterns = [
+                    target_date.strftime('%d %B %Y'),
+                    target_date.strftime('%-d %B %Y') if hasattr(target_date, 'strftime') else date_str,
+                    f"{target_date.day} {target_date.strftime('%B')} {target_date.year}"
+                ]
+                
+                for date_pattern in date_patterns:
+                    row_match = re.search(rf'<tr>\s*<td>{re.escape(date_pattern)}</td>(.*?)</tr>', future_html, re.DOTALL)
+                    if row_match:
+                        row_html = row_match.group(1)
+                        item_cells = re.findall(r'<td class="inventory-image">(.*?)</td>', row_html, re.DOTALL)
+                        
+                        for cell in item_cells:
+                            name_match = re.search(r'title="([^"]+)"', cell)
+                            icon_match = re.search(r'src="([^"]+)"', cell)
+                            
+                            if name_match:
+                                item_name = name_match.group(1)
+                                icon_url = f"https://runescape.wiki{icon_match.group(1)}" if icon_match else None
+                                items.append({
+                                    'name': item_name,
+                                    'iconUrl': icon_url,
+                                    'wikiUrl': f"https://runescape.wiki/w/{item_name.replace(' ', '_')}"
+                                })
+                        break
+            
+            result = {
+                'items': items,
+                'date': target_date.strftime('%d %B %Y')
+            }
+            
+            # Update cache
+            _dailyscape_cache['merchant'] = {
+                'data': result,
+                'timestamp': now,
+                'date': cache_key
+            }
+            
+            return {'data': result, 'cached': False}
+            
+    except Exception as e:
+        print(f"[Dailyscape][Merchant] Error fetching data: {e}")
+        return None
+
+async def fetch_viswax_data(target_date: date) -> dict:
+    """Fetch Vis Wax data from RuneScape Wiki API."""
+    cache_key = target_date.isoformat()
+    now = time.time()
+    
+    # Check cache
+    if (_dailyscape_cache['viswax']['data'] is not None and 
+        _dailyscape_cache['viswax']['date'] == cache_key and
+        now - _dailyscape_cache['viswax']['timestamp'] < _DAILYSCAPE_CACHE_TTL):
+        return {'data': _dailyscape_cache['viswax']['data'], 'cached': True}
+    
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            url = "https://runescape.wiki/api.php"
+            params = {
+                'action': 'parse',
+                'page': 'Rune_Goldberg_Machine',
+                'prop': 'text',
+                'format': 'json',
+                'section': 1
+            }
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+            
+            html_content = data.get('parse', {}).get('text', {}).get('*', '')
+            
+            import re
+            
+            # Parse slot 1 rune
+            slot1 = None
+            slot1_match = re.search(r'<td rowspan="3">.*?title="([^"]+rune)".*?</td>\s*<td rowspan="3">.*?coins[^>]*>([0-9,]+)</span>', html_content, re.DOTALL)
+            if slot1_match:
+                rune_name = slot1_match.group(1).replace(' rune', '')
+                cost_str = slot1_match.group(2).replace(',', '')
+                slot1 = {
+                    'rune': rune_name,
+                    'cost': int(cost_str),
+                    'iconUrl': f"https://runescape.wiki/images/{rune_name}_rune.png"
+                }
+            
+            # Parse slot 2 options
+            slot2_options = []
+            # Find all slot 2 rune entries
+            slot2_matches = re.findall(r'<td>.*?title="([^"]+rune)".*?</td>\s*<td>.*?coins[^>]*>([0-9,]+)</span>', html_content, re.DOTALL)
+            for match in slot2_matches[:3]:  # Take first 3 options
+                rune_name = match[0].replace(' rune', '')
+                cost_str = match[1].replace(',', '')
+                slot2_options.append({
+                    'rune': rune_name,
+                    'cost': int(cost_str),
+                    'iconUrl': f"https://runescape.wiki/images/{rune_name}_rune.png"
+                })
+            
+            result = {
+                'slot1': slot1,
+                'slot2Options': slot2_options,
+                'slot3': 'Random',
+                'date': target_date.strftime('%d %B %Y')
+            }
+            
+            # Update cache
+            _dailyscape_cache['viswax'] = {
+                'data': result,
+                'timestamp': now,
+                'date': cache_key
+            }
+            
+            return {'data': result, 'cached': False}
+            
+    except Exception as e:
+        print(f"[Dailyscape][VisWax] Error fetching data: {e}")
+        return None
+
+@app.get("/api/wiki/dailyscape")
+async def get_wiki_dailyscape(date: Optional[str] = Query(None, description="UTC date in YYYY-MM-DD format")):
+    """
+    Get Dailyscape data: Travelling Merchant items, Vis Wax combinations, and Wilderness Flash Events.
+    
+    - **date**: Optional UTC date (YYYY-MM-DD). Defaults to today.
+    
+    Returns merchant items, vis wax rune combinations, and wildy events schedule.
+    Each section can fail independently without breaking the others.
+    """
+    try:
+        # Parse target date (default to today UTC)
+        if date:
+            try:
+                target_date = datetime.strptime(date, '%Y-%m-%d').date()
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
+        else:
+            target_date = datetime.now(timezone.utc).date()
+        
+        fetch_start = time.time()
+        
+        # Fetch all data concurrently
+        merchant_task = fetch_merchant_data(target_date)
+        viswax_task = fetch_viswax_data(target_date)
+        
+        merchant_result, viswax_result = await asyncio.gather(
+            merchant_task,
+            viswax_task,
+            return_exceptions=True
+        )
+        
+        # Process results with graceful fallbacks
+        merchant_data = None
+        merchant_cached = False
+        if isinstance(merchant_result, dict) and merchant_result:
+            merchant_data = merchant_result.get('data')
+            merchant_cached = merchant_result.get('cached', False)
+        elif isinstance(merchant_result, Exception):
+            print(f"[Dailyscape] Merchant fetch exception: {merchant_result}")
+        
+        viswax_data = None
+        viswax_cached = False
+        if isinstance(viswax_result, dict) and viswax_result:
+            viswax_data = viswax_result.get('data')
+            viswax_cached = viswax_result.get('cached', False)
+        elif isinstance(viswax_result, Exception):
+            print(f"[Dailyscape] VisWax fetch exception: {viswax_result}")
+        
+        # Compute wildy events (no external API needed)
+        wildy_data = get_wildy_events_for_date(target_date)
+        
+        fetch_duration = time.time() - fetch_start
+        
+        return {
+            'merchant': merchant_data,
+            'visWax': viswax_data,
+            'wildyEvents': wildy_data,
+            'meta': {
+                'fetchedAt': datetime.now(timezone.utc).isoformat(),
+                'requestedDate': target_date.isoformat(),
+                'cached': {
+                    'merchant': merchant_cached,
+                    'visWax': viswax_cached,
+                    'wildyEvents': False  # Always computed
+                },
+                'fetchDurationMs': int(fetch_duration * 1000)
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[Dailyscape] Unexpected error: {e}")
+        import traceback
+        traceback.print_exc()
+        # Return partial data even on error
+        return {
+            'merchant': None,
+            'visWax': None,
+            'wildyEvents': None,
+            'meta': {
+                'fetchedAt': datetime.now(timezone.utc).isoformat(),
+                'error': str(e)
+            }
+        }
+
 @app.get("/api/admin/debug/scheduler-health")
 async def debug_scheduler_health():
     """Diagnostic endpoint to check scheduler state across machines"""
