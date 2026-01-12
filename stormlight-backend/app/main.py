@@ -10978,7 +10978,7 @@ async def fetch_vos_data() -> dict:
     Returns current and previous districts, next change time, and countdown.
     Tracks previous districts by caching the last known state before rotation.
     """
-    import aiohttp
+    import httpx
     from datetime import datetime, timezone, timedelta
     
     now = time.time()
@@ -11012,59 +11012,59 @@ async def fetch_vos_data() -> dict:
     
     # Fetch fresh data from WeirdGloop API
     try:
-        async with aiohttp.ClientSession() as session:
-            headers = {
-                'User-Agent': 'Stormlight RS3 Tracker (https://stormlightrs.com) - contact: harrisonkyle98@gmail.com'
-            }
-            async with session.get(
+        headers = {
+            'User-Agent': 'Stormlight RS3 Tracker (https://stormlightrs.com) - contact: harrisonkyle98@gmail.com'
+        }
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(
                 'https://api.weirdgloop.org/runescape/vos',
-                headers=headers,
-                timeout=aiohttp.ClientTimeout(total=10)
-            ) as response:
-                if response.status != 200:
-                    print(f"[VoS] WeirdGloop API returned status {response.status}")
-                    return {
-                        'unavailable': True,
-                        'error': f'API returned status {response.status}'
-                    }
-                
-                data = await response.json()
-                
-                # Parse response: {"timestamp":"2026-01-12T21:00:00.000Z","district1":"Ithell","district2":"Crwys","source":"alt1-crowdsourced"}
-                new_timestamp = data.get('timestamp')
-                new_current = [data.get('district1'), data.get('district2')]
-                
-                # Check if rotation happened (timestamp changed)
-                if _vos_cache['timestamp'] and _vos_cache['timestamp'] != new_timestamp:
-                    # Rotation happened - shift current to previous
-                    _vos_cache['previous'] = _vos_cache['current'].copy() if _vos_cache['current'] else []
-                    print(f"[VoS] Rotation detected: {_vos_cache['previous']} -> {new_current}")
-                
-                # Update cache
-                _vos_cache['current'] = new_current
-                _vos_cache['timestamp'] = new_timestamp
-                _vos_cache['fetched_at'] = now
-                _vos_cache['error'] = None
-                
-                # Compute next change time
-                vos_start = datetime.fromisoformat(new_timestamp.replace('Z', '+00:00'))
-                next_change = vos_start + timedelta(hours=1)
-                now_dt = datetime.now(timezone.utc)
-                seconds_until = max(0, int((next_change - now_dt).total_seconds()))
-                
+                headers=headers
+            )
+            
+            if response.status_code != 200:
+                print(f"[VoS] WeirdGloop API returned status {response.status_code}")
                 return {
-                    'current': new_current,
-                    'previous': _vos_cache['previous'] if _vos_cache['previous'] else None,
-                    'nextChangeAt': next_change.isoformat().replace('+00:00', 'Z'),
-                    'nextChangeIn': seconds_until,
-                    'meta': {
-                        'source': 'weirdgloop',
-                        'cached': False,
-                        'fetchedAt': datetime.now(timezone.utc).isoformat()
-                    }
+                    'unavailable': True,
+                    'error': f'API returned status {response.status_code}'
                 }
+            
+            data = response.json()
+            
+            # Parse response: {"timestamp":"2026-01-12T21:00:00.000Z","district1":"Ithell","district2":"Crwys","source":"alt1-crowdsourced"}
+            new_timestamp = data.get('timestamp')
+            new_current = [data.get('district1'), data.get('district2')]
+            
+            # Check if rotation happened (timestamp changed)
+            if _vos_cache['timestamp'] and _vos_cache['timestamp'] != new_timestamp:
+                # Rotation happened - shift current to previous
+                _vos_cache['previous'] = _vos_cache['current'].copy() if _vos_cache['current'] else []
+                print(f"[VoS] Rotation detected: {_vos_cache['previous']} -> {new_current}")
+            
+            # Update cache
+            _vos_cache['current'] = new_current
+            _vos_cache['timestamp'] = new_timestamp
+            _vos_cache['fetched_at'] = now
+            _vos_cache['error'] = None
+            
+            # Compute next change time
+            vos_start = datetime.fromisoformat(new_timestamp.replace('Z', '+00:00'))
+            next_change = vos_start + timedelta(hours=1)
+            now_dt = datetime.now(timezone.utc)
+            seconds_until = max(0, int((next_change - now_dt).total_seconds()))
+            
+            return {
+                'current': new_current,
+                'previous': _vos_cache['previous'] if _vos_cache['previous'] else None,
+                'nextChangeAt': next_change.isoformat().replace('+00:00', 'Z'),
+                'nextChangeIn': seconds_until,
+                'meta': {
+                    'source': 'weirdgloop',
+                    'cached': False,
+                    'fetchedAt': datetime.now(timezone.utc).isoformat()
+                }
+            }
                 
-    except asyncio.TimeoutError:
+    except httpx.TimeoutException:
         print("[VoS] WeirdGloop API timeout")
         _vos_cache['error'] = 'API timeout'
         return {'unavailable': True, 'error': 'API timeout'}
