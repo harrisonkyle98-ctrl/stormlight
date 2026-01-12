@@ -25,6 +25,7 @@ from collections import defaultdict
 import threading
 import re
 import uuid
+from bs4 import BeautifulSoup
 import shutil
 from pathlib import Path
 try:
@@ -10482,6 +10483,403 @@ _dailyscape_cache = {
 }
 _DAILYSCAPE_CACHE_TTL = 600  # 10 minutes
 
+# ============================================================================
+# MERCHANT FORECAST INDEX (6-hour TTL)
+# ============================================================================
+
+# Permanent merchant slot (always available)
+MERCHANT_PERMANENT_ITEM = {
+    'name': 'Uncharted island map (Deep Sea Fishing)',
+    'iconUrl': 'https://runescape.wiki/images/Uncharted_island_map_%28Deep_Sea_Fishing%29.png',
+    'wikiUrl': 'https://runescape.wiki/w/Uncharted_island_map_(Deep_Sea_Fishing)'
+}
+
+# Merchant forecast index cache
+_merchant_forecast_cache = {
+    'date_to_items': {},      # date_str -> [item1, item2, item3]
+    'item_to_dates': {},      # item_name -> [date_str1, date_str2, ...]
+    'item_metadata': {},      # item_name -> {iconUrl, wikiUrl}
+    'all_dates': [],          # sorted list of all dates
+    'all_items': [],          # sorted list of all item names
+    'timestamp': 0,
+    'error': None
+}
+_MERCHANT_FORECAST_TTL = 21600  # 6 hours
+
+
+def parse_wiki_date_to_iso(date_str: str) -> str:
+    """Convert wiki date format '12 January 2026' to ISO format '2026-01-12'."""
+    try:
+        dt = datetime.strptime(date_str.strip(), '%d %B %Y')
+        return dt.strftime('%Y-%m-%d')
+    except ValueError:
+        return None
+
+
+async def build_merchant_forecast_index() -> dict:
+    """Build the merchant forecast index from the wiki Future page using BeautifulSoup."""
+    now = time.time()
+    
+    # Check cache
+    if (_merchant_forecast_cache['timestamp'] > 0 and
+        now - _merchant_forecast_cache['timestamp'] < _MERCHANT_FORECAST_TTL and
+        _merchant_forecast_cache['date_to_items']):
+        return {
+            'date_to_items': _merchant_forecast_cache['date_to_items'],
+            'item_to_dates': _merchant_forecast_cache['item_to_dates'],
+            'item_metadata': _merchant_forecast_cache['item_metadata'],
+            'all_dates': _merchant_forecast_cache['all_dates'],
+            'all_items': _merchant_forecast_cache['all_items'],
+            'cached': True,
+            'error': _merchant_forecast_cache['error']
+        }
+    
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            url = "https://runescape.wiki/api.php"
+            params = {
+                'action': 'parse',
+                'page': "Travelling_Merchant's_Shop/Future",
+                'prop': 'text',
+                'format': 'json'
+            }
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+            
+            html_content = data.get('parse', {}).get('text', {}).get('*', '')
+            
+            # Parse with BeautifulSoup
+            soup = BeautifulSoup(html_content, 'lxml')
+            
+            # Find the forecast table (wikitable with sticky-header)
+            table = soup.find('table', class_='wikitable')
+            if not table:
+                raise ValueError("Could not find merchant forecast table")
+            
+            date_to_items = {}
+            item_to_dates = defaultdict(list)
+            item_metadata = {}
+            all_dates = []
+            
+            # Find all table rows (skip header)
+            rows = table.find_all('tr')
+            for row in rows[1:]:  # Skip header row
+                cells = row.find_all('td')
+                if len(cells) < 5:
+                    continue
+                
+                # First cell is the date
+                date_cell = cells[0]
+                date_text = date_cell.get_text(strip=True)
+                iso_date = parse_wiki_date_to_iso(date_text)
+                if not iso_date:
+                    continue
+                
+                all_dates.append(iso_date)
+                items_for_date = []
+                
+                # Cells 2, 3, 4 are Slot A, B, C (cell 1 is Runedate)
+                for slot_idx in [2, 3, 4]:
+                    if slot_idx >= len(cells):
+                        continue
+                    
+                    slot_cell = cells[slot_idx]
+                    
+                    # Find item link
+                    link = slot_cell.find('a', title=True)
+                    if not link:
+                        continue
+                    
+                    item_name = link.get('title', '').strip()
+                    if not item_name:
+                        continue
+                    
+                    # Find icon URL
+                    img = slot_cell.find('img')
+                    icon_url = None
+                    if img and img.get('src'):
+                        src = img.get('src')
+                        if src.startswith('/'):
+                            icon_url = f"https://runescape.wiki{src}"
+                        else:
+                            icon_url = src
+                    
+                    # Build wiki URL
+                    href = link.get('href', '')
+                    if href.startswith('/w/'):
+                        wiki_url = f"https://runescape.wiki{href}"
+                    else:
+                        wiki_url = f"https://runescape.wiki/w/{item_name.replace(' ', '_')}"
+                    
+                    items_for_date.append(item_name)
+                    item_to_dates[item_name].append(iso_date)
+                    
+                    # Store metadata (only once per item)
+                    if item_name not in item_metadata:
+                        item_metadata[item_name] = {
+                            'iconUrl': icon_url,
+                            'wikiUrl': wiki_url
+                        }
+                
+                if items_for_date:
+                    date_to_items[iso_date] = items_for_date
+            
+            # Sort dates and items
+            all_dates.sort()
+            all_items = sorted(item_metadata.keys())
+            
+            # Update cache
+            _merchant_forecast_cache['date_to_items'] = date_to_items
+            _merchant_forecast_cache['item_to_dates'] = dict(item_to_dates)
+            _merchant_forecast_cache['item_metadata'] = item_metadata
+            _merchant_forecast_cache['all_dates'] = all_dates
+            _merchant_forecast_cache['all_items'] = all_items
+            _merchant_forecast_cache['timestamp'] = now
+            _merchant_forecast_cache['error'] = None
+            
+            print(f"[Merchant][Forecast] Built index: {len(date_to_items)} dates, {len(all_items)} items")
+            
+            return {
+                'date_to_items': date_to_items,
+                'item_to_dates': dict(item_to_dates),
+                'item_metadata': item_metadata,
+                'all_dates': all_dates,
+                'all_items': all_items,
+                'cached': False,
+                'error': None
+            }
+            
+    except Exception as e:
+        print(f"[Merchant][Forecast] Error building index: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Return cached data if available, otherwise empty
+        if _merchant_forecast_cache['date_to_items']:
+            return {
+                'date_to_items': _merchant_forecast_cache['date_to_items'],
+                'item_to_dates': _merchant_forecast_cache['item_to_dates'],
+                'item_metadata': _merchant_forecast_cache['item_metadata'],
+                'all_dates': _merchant_forecast_cache['all_dates'],
+                'all_items': _merchant_forecast_cache['all_items'],
+                'cached': True,
+                'error': str(e)
+            }
+        
+        _merchant_forecast_cache['error'] = str(e)
+        return {
+            'date_to_items': {},
+            'item_to_dates': {},
+            'item_metadata': {},
+            'all_dates': [],
+            'all_items': [],
+            'cached': False,
+            'error': str(e)
+        }
+
+
+def get_merchant_items_for_date_from_index(forecast: dict, target_date: str) -> list:
+    """Get merchant items for a specific date from the forecast index.
+    Always returns 4 items: permanent slot + 3 rotating slots."""
+    items = [MERCHANT_PERMANENT_ITEM.copy()]
+    
+    rotating_items = forecast.get('date_to_items', {}).get(target_date, [])
+    metadata = forecast.get('item_metadata', {})
+    
+    for item_name in rotating_items[:3]:  # Max 3 rotating items
+        item_meta = metadata.get(item_name, {})
+        items.append({
+            'name': item_name,
+            'iconUrl': item_meta.get('iconUrl'),
+            'wikiUrl': item_meta.get('wikiUrl', f"https://runescape.wiki/w/{item_name.replace(' ', '_')}")
+        })
+    
+    return items
+
+
+@app.get("/api/wiki/merchant/dates")
+async def get_merchant_dates(days: int = Query(60, ge=1, le=365, description="Number of days to return")):
+    """
+    Get a list of upcoming merchant dates for the Pick Date dropdown.
+    Returns dates from today to +N days (default 60).
+    """
+    try:
+        forecast = await build_merchant_forecast_index()
+        
+        if forecast.get('error') and not forecast.get('all_dates'):
+            return {
+                'dates': [],
+                'meta': {
+                    'fetchedAt': datetime.now(timezone.utc).isoformat(),
+                    'cached': forecast.get('cached', False),
+                    'error': forecast.get('error')
+                }
+            }
+        
+        today = datetime.now(timezone.utc).date()
+        today_str = today.isoformat()
+        
+        # Filter dates from today onwards, up to N days
+        end_date = (today + timedelta(days=days)).isoformat()
+        filtered_dates = [
+            d for d in forecast.get('all_dates', [])
+            if today_str <= d <= end_date
+        ]
+        
+        return {
+            'dates': filtered_dates,
+            'meta': {
+                'fetchedAt': datetime.now(timezone.utc).isoformat(),
+                'cached': forecast.get('cached', False),
+                'totalDatesInIndex': len(forecast.get('all_dates', []))
+            }
+        }
+        
+    except Exception as e:
+        print(f"[Merchant][Dates] Error: {e}")
+        return {
+            'dates': [],
+            'meta': {
+                'fetchedAt': datetime.now(timezone.utc).isoformat(),
+                'error': str(e)
+            }
+        }
+
+
+@app.get("/api/wiki/merchant/search")
+async def search_merchant_items(q: str = Query(..., min_length=1, description="Search query")):
+    """
+    Search for merchant items by name (case-insensitive substring match).
+    Returns matching items with their metadata.
+    """
+    try:
+        forecast = await build_merchant_forecast_index()
+        
+        if forecast.get('error') and not forecast.get('all_items'):
+            return {
+                'items': [],
+                'meta': {
+                    'fetchedAt': datetime.now(timezone.utc).isoformat(),
+                    'cached': forecast.get('cached', False),
+                    'error': forecast.get('error')
+                }
+            }
+        
+        query = q.lower().strip()
+        matching_items = []
+        
+        for item_name in forecast.get('all_items', []):
+            if query in item_name.lower():
+                meta = forecast.get('item_metadata', {}).get(item_name, {})
+                matching_items.append({
+                    'name': item_name,
+                    'iconUrl': meta.get('iconUrl'),
+                    'wikiUrl': meta.get('wikiUrl')
+                })
+        
+        return {
+            'items': matching_items,
+            'query': q,
+            'meta': {
+                'fetchedAt': datetime.now(timezone.utc).isoformat(),
+                'cached': forecast.get('cached', False),
+                'matchCount': len(matching_items)
+            }
+        }
+        
+    except Exception as e:
+        print(f"[Merchant][Search] Error: {e}")
+        return {
+            'items': [],
+            'query': q,
+            'meta': {
+                'fetchedAt': datetime.now(timezone.utc).isoformat(),
+                'error': str(e)
+            }
+        }
+
+
+@app.get("/api/wiki/merchant/next")
+async def get_merchant_next_occurrence(item: str = Query(..., min_length=1, description="Item name")):
+    """
+    Get the next occurrence dates for a specific merchant item.
+    Returns the next 5 dates starting from today UTC.
+    """
+    try:
+        forecast = await build_merchant_forecast_index()
+        
+        if forecast.get('error') and not forecast.get('item_to_dates'):
+            return {
+                'item': item,
+                'next': None,
+                'upcoming': [],
+                'meta': {
+                    'fetchedAt': datetime.now(timezone.utc).isoformat(),
+                    'cached': forecast.get('cached', False),
+                    'error': forecast.get('error')
+                }
+            }
+        
+        # Find item (case-insensitive, tolerate minor spacing)
+        item_lower = item.lower().strip()
+        item_to_dates = forecast.get('item_to_dates', {})
+        
+        matched_item = None
+        for known_item in item_to_dates.keys():
+            if known_item.lower() == item_lower:
+                matched_item = known_item
+                break
+        
+        if not matched_item:
+            # Try partial match
+            for known_item in item_to_dates.keys():
+                if item_lower in known_item.lower():
+                    matched_item = known_item
+                    break
+        
+        if not matched_item:
+            return {
+                'item': item,
+                'next': None,
+                'upcoming': [],
+                'meta': {
+                    'fetchedAt': datetime.now(timezone.utc).isoformat(),
+                    'cached': forecast.get('cached', False),
+                    'error': 'Item not found'
+                }
+            }
+        
+        today = datetime.now(timezone.utc).date().isoformat()
+        all_dates = item_to_dates.get(matched_item, [])
+        
+        # Filter to dates >= today and take first 5
+        upcoming = [d for d in sorted(all_dates) if d >= today][:5]
+        
+        return {
+            'item': matched_item,
+            'next': upcoming[0] if upcoming else None,
+            'upcoming': upcoming,
+            'meta': {
+                'fetchedAt': datetime.now(timezone.utc).isoformat(),
+                'cached': forecast.get('cached', False),
+                'totalOccurrences': len(all_dates)
+            }
+        }
+        
+    except Exception as e:
+        print(f"[Merchant][Next] Error: {e}")
+        return {
+            'item': item,
+            'next': None,
+            'upcoming': [],
+            'meta': {
+                'fetchedAt': datetime.now(timezone.utc).isoformat(),
+                'error': str(e)
+            }
+        }
+
+
 # Wilderness Flash Events rotation (14-hour cycle)
 # Reference: Jan 12, 2026 18:00 UTC = Ramokee Incursion (index 0)
 WILDY_EVENTS_ROTATION = [
@@ -10550,7 +10948,11 @@ def get_wildy_events_for_date(target_date: date) -> dict:
         return None
 
 async def fetch_merchant_data(target_date: date) -> dict:
-    """Fetch Travelling Merchant data from RuneScape Wiki API."""
+    """Fetch Travelling Merchant data from RuneScape Wiki API.
+    
+    Uses the forecast index first (fast, cached), with fallback to direct parsing.
+    Always returns 4 items: permanent slot + 3 rotating slots.
+    """
     cache_key = target_date.isoformat()
     now = time.time()
     
@@ -10561,6 +10963,31 @@ async def fetch_merchant_data(target_date: date) -> dict:
         return {'data': _dailyscape_cache['merchant']['data'], 'cached': True}
     
     try:
+        # Try forecast index first (fast, 6-hour cache)
+        forecast = await build_merchant_forecast_index()
+        
+        if forecast.get('date_to_items') and cache_key in forecast.get('date_to_items', {}):
+            items = get_merchant_items_for_date_from_index(forecast, cache_key)
+            
+            if len(items) >= 4:
+                result = {
+                    'items': items,
+                    'date': target_date.strftime('%d %B %Y')
+                }
+                
+                # Update cache
+                _dailyscape_cache['merchant'] = {
+                    'data': result,
+                    'timestamp': now,
+                    'date': cache_key
+                }
+                
+                print(f"[Dailyscape][Merchant] Using forecast index for {cache_key}")
+                return {'data': result, 'cached': forecast.get('cached', False)}
+        
+        # Fallback: direct parsing from wiki
+        print(f"[Dailyscape][Merchant] Falling back to direct parsing for {cache_key}")
+        
         async with httpx.AsyncClient(timeout=10.0) as client:
             # Fetch the Travelling Merchant's Shop page with the icons template
             url = "https://runescape.wiki/api.php"
@@ -10653,8 +11080,14 @@ async def fetch_merchant_data(target_date: date) -> dict:
                                 })
                         break
             
+            # Ensure we always have 4 items (permanent slot + 3 rotating)
+            # Add permanent item at the beginning if not already present
+            has_permanent = any('Uncharted island map' in item.get('name', '') for item in items)
+            if not has_permanent:
+                items.insert(0, MERCHANT_PERMANENT_ITEM.copy())
+            
             result = {
-                'items': items,
+                'items': items[:4],  # Ensure max 4 items
                 'date': target_date.strftime('%d %B %Y')
             }
             
