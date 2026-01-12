@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Input } from '../ui/input'
-import { ShoppingBag, Sparkles, Search, Calendar, ChevronDown, Flame, Swords, Pickaxe, Shuffle } from 'lucide-react'
+import { ShoppingBag, Sparkles, Search, Calendar, ChevronDown, Flame, Swords, BarChart2, Shuffle } from 'lucide-react'
 
 interface MerchantItem {
   name: string
@@ -102,6 +102,7 @@ const DailyscapeCard = () => {
   // Wildy Events state
   const [wildyCountdown, setWildyCountdown] = useState<string>('')
   const [showSpecialOnly, setShowSpecialOnly] = useState(false)
+  const [expandedEventName, setExpandedEventName] = useState<string | null>(null)
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -533,45 +534,55 @@ const DailyscapeCard = () => {
 
           <TabsContent value="wildy">
             {data?.wildyEvents && !data.wildyEvents.unavailable ? (
-              <div className="space-y-4">
-                {/* Current event with countdown */}
-                <div className="bg-slate-700/30 rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs text-slate-400">Current Event</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-400">Next in</span>
-                      <span className="text-sm font-mono text-amber-400">{wildyCountdown || data.wildyEvents.nextEventIn}</span>
+              <div className="space-y-3">
+                {/* NEXT event header with countdown (not current) */}
+                {(() => {
+                  const nextEvent = data.wildyEvents.upcoming[1] // First upcoming after current
+                  if (!nextEvent) return null
+                  return (
+                    <div className="bg-slate-700/30 rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs text-slate-400">Next Event</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-slate-400">Starts in</span>
+                          <span className="text-sm font-mono text-amber-400">{wildyCountdown || data.wildyEvents.nextEventIn}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded flex items-center justify-center ${
+                          nextEvent.type === 'combat' ? 'bg-red-500/20' :
+                          nextEvent.type === 'skilling' ? 'bg-green-500/20' :
+                          'bg-purple-500/20'
+                        }`}>
+                          {nextEvent.type === 'combat' ? (
+                            <Swords className="w-4 h-4 text-red-400" />
+                          ) : nextEvent.type === 'skilling' ? (
+                            <BarChart2 className="w-4 h-4 text-green-400" />
+                          ) : (
+                            <Shuffle className="w-4 h-4 text-purple-400" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm text-white truncate block">{nextEvent.name}</span>
+                          <span className="text-xs text-slate-400">{nextEvent.hour} UTC</span>
+                        </div>
+                        {/* Right-aligned tags: Special first, then Type */}
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {nextEvent.special && (
+                            <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">Special</span>
+                          )}
+                          <span className={`text-xs px-2 py-0.5 rounded capitalize ${
+                            nextEvent.type === 'combat' ? 'bg-red-500/20 text-red-400' :
+                            nextEvent.type === 'skilling' ? 'bg-green-500/20 text-green-400' :
+                            'bg-purple-500/20 text-purple-400'
+                          }`}>
+                            {nextEvent.type}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded flex items-center justify-center ${
-                      data.wildyEvents.current.type === 'combat' ? 'bg-red-500/20' :
-                      data.wildyEvents.current.type === 'skilling' ? 'bg-green-500/20' :
-                      'bg-purple-500/20'
-                    }`}>
-                      {data.wildyEvents.current.type === 'combat' ? (
-                        <Swords className="w-4 h-4 text-red-400" />
-                      ) : data.wildyEvents.current.type === 'skilling' ? (
-                        <Pickaxe className="w-4 h-4 text-green-400" />
-                      ) : (
-                        <Shuffle className="w-4 h-4 text-purple-400" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm text-white truncate block">{data.wildyEvents.current.name}</span>
-                      <span className={`text-xs capitalize ${
-                        data.wildyEvents.current.type === 'combat' ? 'text-red-400' :
-                        data.wildyEvents.current.type === 'skilling' ? 'text-green-400' :
-                        'text-purple-400'
-                      }`}>
-                        {data.wildyEvents.current.type}
-                      </span>
-                    </div>
-                    {data.wildyEvents.current.special && (
-                      <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">Special</span>
-                    )}
-                  </div>
-                </div>
+                  )
+                })()}
 
                 {/* Special-only filter toggle */}
                 <div className="flex items-center justify-between">
@@ -588,37 +599,75 @@ const DailyscapeCard = () => {
                   </button>
                 </div>
 
-                {/* Upcoming events list */}
-                <div className="space-y-1.5">
+                {/* Scrollable upcoming events list - full 48h */}
+                <div className="max-h-64 overflow-y-auto pr-1 space-y-1.5 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800/50">
                   {data.wildyEvents.upcoming
                     .slice(1) // Skip current event
                     .filter(event => !showSpecialOnly || event.special)
-                    .slice(0, 12) // Show up to 12 events
-                    .map((event, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-2 p-2 bg-slate-700/20 rounded-lg"
-                      >
-                        <span className="text-xs text-slate-500 w-12 flex-shrink-0">{event.hour}</span>
-                        <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
-                          event.type === 'combat' ? 'bg-red-500/20' :
-                          event.type === 'skilling' ? 'bg-green-500/20' :
-                          'bg-purple-500/20'
-                        }`}>
-                          {event.type === 'combat' ? (
-                            <Swords className="w-3 h-3 text-red-400" />
-                          ) : event.type === 'skilling' ? (
-                            <Pickaxe className="w-3 h-3 text-green-400" />
-                          ) : (
-                            <Shuffle className="w-3 h-3 text-purple-400" />
+                    .map((event, index) => {
+                      const isExpanded = expandedEventName === `${event.name}-${index}`
+                      // Find all occurrences of this event in the 48h window
+                      const sameEventOccurrences = data.wildyEvents!.upcoming
+                        .slice(1)
+                        .filter(e => e.name === event.name && e.startsAt !== event.startsAt)
+                      
+                      return (
+                        <div key={`${event.name}-${index}`}>
+                          <div
+                            onClick={() => setExpandedEventName(isExpanded ? null : `${event.name}-${index}`)}
+                            className={`flex items-center gap-2 p-2 bg-slate-700/20 rounded-lg cursor-pointer hover:bg-slate-700/30 transition-colors ${
+                              isExpanded ? 'bg-slate-700/40' : ''
+                            }`}
+                          >
+                            <span className="text-xs text-slate-500 w-12 flex-shrink-0">{event.hour}</span>
+                            <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
+                              event.type === 'combat' ? 'bg-red-500/20' :
+                              event.type === 'skilling' ? 'bg-green-500/20' :
+                              'bg-purple-500/20'
+                            }`}>
+                              {event.type === 'combat' ? (
+                                <Swords className="w-3 h-3 text-red-400" />
+                              ) : event.type === 'skilling' ? (
+                                <BarChart2 className="w-3 h-3 text-green-400" />
+                              ) : (
+                                <Shuffle className="w-3 h-3 text-purple-400" />
+                              )}
+                            </div>
+                            <span className="text-xs text-white flex-1 truncate min-w-0">{event.name}</span>
+                            {/* Right-aligned tags: Special first, then Type */}
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              {event.special && (
+                                <span className="text-xs bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">Special</span>
+                              )}
+                              <span className={`text-xs px-1.5 py-0.5 rounded capitalize ${
+                                event.type === 'combat' ? 'bg-red-500/20 text-red-400' :
+                                event.type === 'skilling' ? 'bg-green-500/20 text-green-400' :
+                                'bg-purple-500/20 text-purple-400'
+                              }`}>
+                                {event.type}
+                              </span>
+                            </div>
+                          </div>
+                          {/* Expanded section showing other occurrences of this event */}
+                          {isExpanded && sameEventOccurrences.length > 0 && (
+                            <div className="ml-14 mt-1 mb-2 p-2 bg-slate-800/50 rounded-lg border-l-2 border-slate-600">
+                              <p className="text-xs text-slate-400 mb-1.5">Other occurrences in 48h:</p>
+                              <div className="space-y-1">
+                                {sameEventOccurrences.map((occurrence, occIndex) => (
+                                  <div key={occIndex} className="flex items-center gap-2 text-xs">
+                                    <span className="text-slate-500 w-12">{occurrence.hour}</span>
+                                    <span className="text-slate-300">{occurrence.name}</span>
+                                    {occurrence.special && (
+                                      <span className="text-amber-400 text-xs">(Special)</span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
                           )}
                         </div>
-                        <span className="text-xs text-white flex-1 truncate min-w-0">{event.name}</span>
-                        {event.special && (
-                          <span className="text-xs bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded flex-shrink-0">Special</span>
-                        )}
-                      </div>
-                    ))}
+                      )
+                    })}
                 </div>
               </div>
             ) : (
