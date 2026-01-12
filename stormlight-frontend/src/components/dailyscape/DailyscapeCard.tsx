@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Input } from '../ui/input'
-import { ShoppingBag, Sparkles, Search, Calendar, ChevronDown, Flame, Swords, BarChart2, Shuffle } from 'lucide-react'
+import { ShoppingBag, Sparkles, Search, Calendar, ChevronDown, Flame, Swords, BarChart2, Shuffle, Hourglass } from 'lucide-react'
 
 interface MerchantItem {
   name: string
@@ -31,6 +31,7 @@ interface DailyscapeResponse {
   merchant: MerchantData | null
   visWax: VisWaxData | null
   wildyEvents: WildyEventsData | null
+  vos: VoSData | null
   meta: {
     fetchedAt: string
     requestedDate: string
@@ -38,6 +39,7 @@ interface DailyscapeResponse {
       merchant: boolean
       visWax: boolean
       wildyEvents: boolean
+      vos: boolean
     }
     fetchDurationMs: number
   }
@@ -80,6 +82,20 @@ interface WildyEventsData {
   error?: string
 }
 
+interface VoSData {
+  current: string[]
+  previous: string[] | null
+  nextChangeAt: string
+  nextChangeIn: number
+  meta: {
+    source: string
+    cached: boolean
+    fetchedAt: string
+  }
+  unavailable?: boolean
+  error?: string
+}
+
 const DailyscapeCard = () => {
   const [data, setData] = useState<DailyscapeResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -105,6 +121,10 @@ const DailyscapeCard = () => {
   const [showSpecialOnly, setShowSpecialOnly] = useState(false)
   const [expandedEventName, setExpandedEventName] = useState<string | null>(null)
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  // VoS state
+  const [vosCountdown, setVosCountdown] = useState<string>('')
+  const vosCountdownIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -268,6 +288,32 @@ const DailyscapeCard = () => {
     }
   }, [data?.wildyEvents?.nextStartsAt, data?.wildyEvents?.unavailable])
 
+  // VoS countdown timer - updates every second
+  useEffect(() => {
+    if (!data?.vos?.nextChangeAt || data.vos.unavailable) {
+      return
+    }
+
+    const updateVosCountdown = () => {
+      const nextChange = new Date(data.vos!.nextChangeAt).getTime()
+      const now = Date.now()
+      const diff = Math.max(0, nextChange - now)
+      
+      const minutes = Math.floor(diff / 60000)
+      const seconds = Math.floor((diff % 60000) / 1000)
+      setVosCountdown(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`)
+    }
+
+    updateVosCountdown()
+    vosCountdownIntervalRef.current = setInterval(updateVosCountdown, 1000)
+
+    return () => {
+      if (vosCountdownIntervalRef.current) {
+        clearInterval(vosCountdownIntervalRef.current)
+      }
+    }
+  }, [data?.vos?.nextChangeAt, data?.vos?.unavailable])
+
   // Format date for display
   const formatDateDisplay = (dateStr: string) => {
     const date = new Date(dateStr + 'T00:00:00Z')
@@ -336,6 +382,13 @@ const DailyscapeCard = () => {
             >
               <Flame className="w-4 h-4 mr-2" />
               Wildy
+            </TabsTrigger>
+            <TabsTrigger 
+              value="vos" 
+              className="flex-1 data-[state=active]:bg-slate-600 data-[state=active]:text-white text-slate-300"
+            >
+              <Hourglass className="w-4 h-4 mr-2" />
+              VoS
             </TabsTrigger>
           </TabsList>
 
@@ -681,6 +734,56 @@ const DailyscapeCard = () => {
               </div>
             ) : (
               <UnavailableState section="Wildy Events" />
+            )}
+          </TabsContent>
+
+          <TabsContent value="vos">
+            {data?.vos && !data.vos.unavailable ? (
+              <div className="space-y-3">
+                {/* Current Voice of Seren */}
+                <div className="bg-slate-700/30 rounded-lg p-3">
+                  <p className="text-xs text-slate-400 mb-2">Current Voice of Seren</p>
+                  <div className="flex items-center gap-2">
+                    {data.vos.current.map((district, index) => (
+                      <span key={index} className="text-sm text-white bg-slate-600/50 px-3 py-1 rounded">
+                        {district}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Previous Voice of Seren */}
+                {data.vos.previous && data.vos.previous.length > 0 && (
+                  <div className="bg-slate-700/30 rounded-lg p-3">
+                    <p className="text-xs text-slate-400 mb-2">Previous Voice of Seren</p>
+                    <div className="flex items-center gap-2">
+                      {data.vos.previous.map((district, index) => (
+                        <span key={index} className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded">
+                          {district}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Next change countdown */}
+                <div className="bg-slate-700/30 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-slate-400">Next change in</p>
+                    <span className="text-sm font-mono text-amber-400">{vosCountdown || '--:--'}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {data.vos.nextChangeAt ? new Date(data.vos.nextChangeAt).toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false,
+                      timeZone: 'UTC'
+                    }) + ' UTC' : ''}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <UnavailableState section="Voice of Seren" />
             )}
           </TabsContent>
         </Tabs>

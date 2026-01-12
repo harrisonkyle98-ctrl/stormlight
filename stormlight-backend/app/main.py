@@ -10961,6 +10961,118 @@ _wildy_rotation_cache = {
 }
 _WILDY_ROTATION_TTL = 28800  # 8 hours
 
+# Cache for Voice of Seren data from WeirdGloop API
+_vos_cache = {
+    'current': [],            # [district1, district2] - current active districts
+    'previous': [],           # [district1, district2] - previous active districts
+    'timestamp': None,        # ISO timestamp when current VoS started
+    'fetched_at': 0,          # Unix timestamp of last fetch
+    'error': None
+}
+_VOS_CACHE_TTL = 300  # 5 minutes
+
+
+async def fetch_vos_data() -> dict:
+    """Fetch Voice of Seren data from WeirdGloop API.
+    
+    Returns current and previous districts, next change time, and countdown.
+    Tracks previous districts by caching the last known state before rotation.
+    """
+    import aiohttp
+    from datetime import datetime, timezone, timedelta
+    
+    now = time.time()
+    
+    # Check cache
+    if (_vos_cache['fetched_at'] > 0 and
+        now - _vos_cache['fetched_at'] < _VOS_CACHE_TTL and
+        _vos_cache['current']):
+        
+        # Compute dynamic countdown from cached data
+        if _vos_cache['timestamp']:
+            try:
+                vos_start = datetime.fromisoformat(_vos_cache['timestamp'].replace('Z', '+00:00'))
+                next_change = vos_start + timedelta(hours=1)
+                now_dt = datetime.now(timezone.utc)
+                seconds_until = max(0, int((next_change - now_dt).total_seconds()))
+                
+                return {
+                    'current': _vos_cache['current'],
+                    'previous': _vos_cache['previous'],
+                    'nextChangeAt': next_change.isoformat().replace('+00:00', 'Z'),
+                    'nextChangeIn': seconds_until,
+                    'meta': {
+                        'source': 'weirdgloop',
+                        'cached': True,
+                        'fetchedAt': datetime.fromtimestamp(_vos_cache['fetched_at'], tz=timezone.utc).isoformat()
+                    }
+                }
+            except Exception as e:
+                print(f"[VoS] Cache timestamp parse error: {e}")
+    
+    # Fetch fresh data from WeirdGloop API
+    try:
+        async with aiohttp.ClientSession() as session:
+            headers = {
+                'User-Agent': 'Stormlight RS3 Tracker (https://stormlightrs.com) - contact: harrisonkyle98@gmail.com'
+            }
+            async with session.get(
+                'https://api.weirdgloop.org/runescape/vos',
+                headers=headers,
+                timeout=aiohttp.ClientTimeout(total=10)
+            ) as response:
+                if response.status != 200:
+                    print(f"[VoS] WeirdGloop API returned status {response.status}")
+                    return {
+                        'unavailable': True,
+                        'error': f'API returned status {response.status}'
+                    }
+                
+                data = await response.json()
+                
+                # Parse response: {"timestamp":"2026-01-12T21:00:00.000Z","district1":"Ithell","district2":"Crwys","source":"alt1-crowdsourced"}
+                new_timestamp = data.get('timestamp')
+                new_current = [data.get('district1'), data.get('district2')]
+                
+                # Check if rotation happened (timestamp changed)
+                if _vos_cache['timestamp'] and _vos_cache['timestamp'] != new_timestamp:
+                    # Rotation happened - shift current to previous
+                    _vos_cache['previous'] = _vos_cache['current'].copy() if _vos_cache['current'] else []
+                    print(f"[VoS] Rotation detected: {_vos_cache['previous']} -> {new_current}")
+                
+                # Update cache
+                _vos_cache['current'] = new_current
+                _vos_cache['timestamp'] = new_timestamp
+                _vos_cache['fetched_at'] = now
+                _vos_cache['error'] = None
+                
+                # Compute next change time
+                vos_start = datetime.fromisoformat(new_timestamp.replace('Z', '+00:00'))
+                next_change = vos_start + timedelta(hours=1)
+                now_dt = datetime.now(timezone.utc)
+                seconds_until = max(0, int((next_change - now_dt).total_seconds()))
+                
+                return {
+                    'current': new_current,
+                    'previous': _vos_cache['previous'] if _vos_cache['previous'] else None,
+                    'nextChangeAt': next_change.isoformat().replace('+00:00', 'Z'),
+                    'nextChangeIn': seconds_until,
+                    'meta': {
+                        'source': 'weirdgloop',
+                        'cached': False,
+                        'fetchedAt': datetime.now(timezone.utc).isoformat()
+                    }
+                }
+                
+    except asyncio.TimeoutError:
+        print("[VoS] WeirdGloop API timeout")
+        _vos_cache['error'] = 'API timeout'
+        return {'unavailable': True, 'error': 'API timeout'}
+    except Exception as e:
+        print(f"[VoS] Error fetching data: {e}")
+        _vos_cache['error'] = str(e)
+        return {'unavailable': True, 'error': str(e)}
+
 
 def normalize_location(location_phrase: str) -> str:
     """Normalize a location phrase to display-ready format.
@@ -11466,11 +11578,11 @@ async def fetch_viswax_data(target_date: date) -> dict:
 @app.get("/api/wiki/dailyscape")
 async def get_wiki_dailyscape(date: Optional[str] = Query(None, description="UTC date in YYYY-MM-DD format")):
     """
-    Get Dailyscape data: Travelling Merchant items, Vis Wax combinations, and Wilderness Flash Events.
+    Get Dailyscape data: Travelling Merchant items, Vis Wax combinations, Wilderness Flash Events, and Voice of Seren.
     
     - **date**: Optional UTC date (YYYY-MM-DD). Defaults to today.
     
-    Returns merchant items, vis wax rune combinations, and wildy events schedule.
+    Returns merchant items, vis wax rune combinations, wildy events schedule, and VoS districts.
     Each section can fail independently without breaking the others.
     """
     try:
@@ -11485,15 +11597,17 @@ async def get_wiki_dailyscape(date: Optional[str] = Query(None, description="UTC
         
         fetch_start = time.time()
         
-        # Fetch all data concurrently (including wildy events which now uses wiki API)
+        # Fetch all data concurrently (including wildy events and VoS)
         merchant_task = fetch_merchant_data(target_date)
         viswax_task = fetch_viswax_data(target_date)
         wildy_task = get_wildy_events_schedule()
+        vos_task = fetch_vos_data()
         
-        merchant_result, viswax_result, wildy_result = await asyncio.gather(
+        merchant_result, viswax_result, wildy_result, vos_result = await asyncio.gather(
             merchant_task,
             viswax_task,
             wildy_task,
+            vos_task,
             return_exceptions=True
         )
         
@@ -11527,19 +11641,34 @@ async def get_wiki_dailyscape(date: Optional[str] = Query(None, description="UTC
             print(f"[Dailyscape] Wildy events fetch exception: {wildy_result}")
             wildy_data = {'unavailable': True, 'error': str(wildy_result)}
         
+        # Process VoS result
+        vos_data = None
+        vos_cached = False
+        if isinstance(vos_result, dict) and vos_result:
+            if vos_result.get('unavailable'):
+                vos_data = {'unavailable': True, 'error': vos_result.get('error')}
+            else:
+                vos_data = vos_result
+                vos_cached = vos_result.get('meta', {}).get('cached', False)
+        elif isinstance(vos_result, Exception):
+            print(f"[Dailyscape] VoS fetch exception: {vos_result}")
+            vos_data = {'unavailable': True, 'error': str(vos_result)}
+        
         fetch_duration = time.time() - fetch_start
         
         return {
             'merchant': merchant_data,
             'visWax': viswax_data,
             'wildyEvents': wildy_data,
+            'vos': vos_data,
             'meta': {
                 'fetchedAt': datetime.now(timezone.utc).isoformat(),
                 'requestedDate': target_date.isoformat(),
                 'cached': {
                     'merchant': merchant_cached,
                     'visWax': viswax_cached,
-                    'wildyEvents': wildy_cached
+                    'wildyEvents': wildy_cached,
+                    'vos': vos_cached
                 },
                 'fetchDurationMs': int(fetch_duration * 1000)
             }
@@ -11556,6 +11685,7 @@ async def get_wiki_dailyscape(date: Optional[str] = Query(None, description="UTC
             'merchant': None,
             'visWax': None,
             'wildyEvents': None,
+            'vos': None,
             'meta': {
                 'fetchedAt': datetime.now(timezone.utc).isoformat(),
                 'error': str(e)
