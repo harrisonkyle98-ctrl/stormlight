@@ -539,6 +539,13 @@ const Home = () => {
           </div>
         </div>
 
+        {/* Dailyscape Section - full width above Your Recent Progress / Members Active Today */}
+        <div className="fantasy-grid-2">
+          <div className="col-span-2">
+            <DailyscapeCard />
+          </div>
+        </div>
+
         {/* Your Recent Progress & Members Active Today Section */}
         {user?.username && user?.isLinked && (
           <div className="fantasy-grid-2">
@@ -705,12 +712,6 @@ const Home = () => {
             </div>
           </div>
         )}
-
-        {/* Dailyscape Section - positioned under Your Recent Progress / Members Active Today */}
-        <div className="fantasy-grid-2">
-          <DailyscapeCard />
-          <div></div>
-        </div>
 
         {/* Clan Log & Recent Activity Section */}
         <div className="fantasy-grid-2">

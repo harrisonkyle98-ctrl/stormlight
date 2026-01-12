@@ -10603,13 +10603,11 @@ async def fetch_merchant_data(target_date: date) -> dict:
                         item_name = name_match.group(1)
                         icon_url = f"https://runescape.wiki{icon_match.group(1)}" if icon_match else None
                         
-                        # Skip the map (slot 1 is always the same)
-                        if 'Uncharted island map' not in item_name:
-                            items.append({
-                                'name': item_name,
-                                'iconUrl': icon_url,
-                                'wikiUrl': f"https://runescape.wiki/w/{item_name.replace(' ', '_')}"
-                            })
+                        items.append({
+                            'name': item_name,
+                            'iconUrl': icon_url,
+                            'wikiUrl': f"https://runescape.wiki/w/{item_name.replace(' ', '_')}"
+                        })
             
             # If we couldn't parse the table, try the Future page for the specific date
             if not items:

@@ -184,7 +184,7 @@ const DailyscapeCard = () => {
                         }}
                       />
                       <span className="text-sm text-white flex-1 truncate min-w-0">{data.visWax.slot1.rune} rune</span>
-                      <span className="text-xs text-yellow-400 flex-shrink-0">{formatCost(data.visWax.slot1.cost)} gp</span>
+                      <span className="text-xs text-green-400 flex-shrink-0">{formatCost(data.visWax.slot1.cost)} GP</span>
                     </div>
                   </div>
                 )}
@@ -204,7 +204,7 @@ const DailyscapeCard = () => {
                             }}
                           />
                           <span className="text-sm text-white flex-1 truncate min-w-0">{option.rune} rune</span>
-                          <span className="text-xs text-yellow-400 flex-shrink-0">{formatCost(option.cost)} gp</span>
+                          <span className="text-xs text-green-400 flex-shrink-0">{formatCost(option.cost)} GP</span>
                         </div>
                       ))}
                     </div>
