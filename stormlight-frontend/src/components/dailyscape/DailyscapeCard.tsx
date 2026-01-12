@@ -678,8 +678,8 @@ const DailyscapeCard = () => {
                               isExpanded ? 'bg-slate-700/40' : ''
                             }`}
                           >
-                            <span className="text-xs text-slate-500 w-12 flex-shrink-0">{event.hour}</span>
-                            <span className="text-xs text-white flex-1 truncate min-w-0">{event.name}</span>
+                                                        <span className="text-xs text-slate-500 w-12 flex-shrink-0">{event.hour}</span>
+                                                        <span className="text-xs text-white flex-1 truncate min-w-0 text-left">{event.name}</span>
                             {/* Right-aligned tags: Special first, then icon tag */}
                             <div className="flex items-center gap-1 flex-shrink-0">
                               {event.special && (
