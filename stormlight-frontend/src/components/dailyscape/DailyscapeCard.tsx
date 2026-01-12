@@ -570,25 +570,10 @@ const DailyscapeCard = () => {
                             <span className="text-xs text-slate-500 truncate block">{nextEvent.location}</span>
                           )}
                         </div>
-                        {/* Right-aligned tags: Special first, then icon tag */}
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          {nextEvent.special && (
-                            <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">Special</span>
-                          )}
-                          <div className={`w-6 h-6 rounded flex items-center justify-center ${
-                            nextEvent.type === 'combat' ? 'bg-red-500/20' :
-                            nextEvent.type === 'skilling' ? 'bg-green-500/20' :
-                            'bg-purple-500/20'
-                          }`}>
-                            {nextEvent.type === 'combat' ? (
-                              <Swords className="w-3.5 h-3.5 text-red-400" />
-                            ) : nextEvent.type === 'skilling' ? (
-                              <BarChart2 className="w-3.5 h-3.5 text-green-400" />
-                            ) : (
-                              <Shuffle className="w-3.5 h-3.5 text-purple-400" />
-                            )}
-                          </div>
-                        </div>
+                        {/* Right-aligned: Special tag only (when applicable) */}
+                        {nextEvent.special && (
+                          <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded flex-shrink-0">Special</span>
+                        )}
                       </div>
                     </div>
                   )
@@ -610,7 +595,7 @@ const DailyscapeCard = () => {
                 </div>
 
                 {/* Scrollable upcoming events list - full 48h */}
-                <div className="max-h-64 overflow-y-auto pr-1 space-y-1.5 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800/50">
+                <div className="max-h-64 overflow-y-auto pr-1 space-y-1.5 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
                   {data.wildyEvents.upcoming
                     .slice(1) // Skip current event
                     .filter(event => !showSpecialOnly || event.special)
@@ -653,7 +638,7 @@ const DailyscapeCard = () => {
                           </div>
                           {/* Expanded section showing location and other occurrences of this event */}
                           {isExpanded && (
-                            <div className="p-2 bg-slate-800/50 rounded-lg">
+                            <div className="p-2 bg-slate-800/50 rounded-lg border-l-4 border-[rgba(51,65,85,0.6)]">
                               {event.location && (
                                 <p className="text-xs text-slate-500 mb-1.5 truncate">{event.location}</p>
                               )}
