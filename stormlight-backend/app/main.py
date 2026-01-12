@@ -10491,7 +10491,49 @@ _DAILYSCAPE_CACHE_TTL = 600  # 10 minutes
 MERCHANT_PERMANENT_ITEM = {
     'name': 'Uncharted island map (Deep Sea Fishing)',
     'iconUrl': 'https://runescape.wiki/images/Uncharted_island_map_%28Deep_Sea_Fishing%29.png',
-    'wikiUrl': 'https://runescape.wiki/w/Uncharted_island_map_(Deep_Sea_Fishing)'
+    'wikiUrl': 'https://runescape.wiki/w/Uncharted_island_map_(Deep_Sea_Fishing)',
+    'price': 800000
+}
+
+# Merchant item prices from https://runescape.wiki/w/Travelling_Merchant%27s_Shop
+# Prices are in GP and derived from the official wiki page
+MERCHANT_ITEM_PRICES = {
+    # Slot 1 (permanent)
+    'Uncharted island map (Deep Sea Fishing)': 800000,
+    
+    # Slot A/B items (shared pool)
+    'Unstable air rune': 250000,
+    'Silverhawk down': 750000,
+    'Advanced pulse core': 800000,
+    'Anima crystal': 150000,
+    'Small goebie burial charm': 50000,
+    'Medium goebie burial charm': 100000,
+    'Large goebie burial charm': 150000,
+    'Menaphite gift offering (small)': 100000,
+    'Menaphite gift offering (medium)': 200000,
+    'Menaphite gift offering (large)': 350000,
+    'Gift for the Reaper': 1250000,
+    'Shattered anima': 750000,
+    'Broken fishing rod': 500000,
+    'Barrel of bait': 50000,
+    'Tangled fishbowl': 250000,
+    'Sacred clay': 300000,
+    'Sacred clay (Deep Sea Fishing)': 300000,
+    'Unfocused damage enhancer': 500000,
+    'Unfocused reward enhancer': 1000000,
+    'Harmonic dust': 2000000,
+    
+    # Slot C items (separate pool)
+    'Deathtouched dart': 5000000,
+    'Dungeoneering Wildcard': 400000,
+    'Distraction & Diversion reset token (daily)': 250000,
+    'Distraction & Diversion reset token (weekly)': 500000,
+    'Taijitu': 800000,
+    'Starved ancient effigy': 2000000,
+    'Crystal triskelion': 2000000,
+    'Dragonkin lamp': 500000,
+    'Message in a bottle': 500000,
+    'Livid plant': 500000,
 }
 
 # Merchant forecast index cache
@@ -10681,8 +10723,11 @@ async def build_merchant_forecast_index() -> dict:
 
 def get_merchant_items_for_date_from_index(forecast: dict, target_date: str) -> list:
     """Get merchant items for a specific date from the forecast index.
-    Always returns 4 items: permanent slot + 3 rotating slots."""
-    items = [MERCHANT_PERMANENT_ITEM.copy()]
+    Always returns 4 items: permanent slot + 3 rotating slots.
+    Each item includes name, iconUrl, and price (from MERCHANT_ITEM_PRICES)."""
+    permanent = MERCHANT_PERMANENT_ITEM.copy()
+    permanent['price'] = MERCHANT_ITEM_PRICES.get(permanent['name'], None)
+    items = [permanent]
     
     rotating_items = forecast.get('date_to_items', {}).get(target_date, [])
     metadata = forecast.get('item_metadata', {})
@@ -10692,7 +10737,7 @@ def get_merchant_items_for_date_from_index(forecast: dict, target_date: str) -> 
         items.append({
             'name': item_name,
             'iconUrl': item_meta.get('iconUrl'),
-            'wikiUrl': item_meta.get('wikiUrl', f"https://runescape.wiki/w/{item_name.replace(' ', '_')}")
+            'price': MERCHANT_ITEM_PRICES.get(item_name, None)
         })
     
     return items
@@ -10775,7 +10820,7 @@ async def search_merchant_items(q: str = Query(..., min_length=1, description="S
                 matching_items.append({
                     'name': item_name,
                     'iconUrl': meta.get('iconUrl'),
-                    'wikiUrl': meta.get('wikiUrl')
+                    'price': MERCHANT_ITEM_PRICES.get(item_name, None)
                 })
         
         return {

@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
-import { ExternalLink, ShoppingBag, Sparkles, Search, Calendar, ChevronDown } from 'lucide-react'
+import { Input } from '../ui/input'
+import { ShoppingBag, Sparkles, Search, Calendar, ChevronDown } from 'lucide-react'
 
 interface MerchantItem {
   name: string
   iconUrl: string | null
-  wikiUrl: string
+  price: number | null
 }
 
 interface MerchantData {
@@ -45,7 +46,7 @@ interface DailyscapeResponse {
 interface SearchItem {
   name: string
   iconUrl: string | null
-  wikiUrl: string | null
+  price: number | null
 }
 
 interface NextOccurrence {
@@ -197,16 +198,16 @@ const DailyscapeCard = () => {
     }
   }, [selectedDate, merchantSubTab, fetchMerchantForDate])
 
-  // Debounced search
+  // Debounced search - 200ms debounce, show suggestions on every keystroke including single letter
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (searchQuery.length >= 2) {
+      if (searchQuery.length >= 1) {
         searchMerchantItems(searchQuery)
       } else {
         setSearchResults([])
         setShowSearchResults(false)
       }
-    }, 300)
+    }, 200)
     return () => clearTimeout(timer)
   }, [searchQuery, searchMerchantItems])
 
@@ -329,21 +330,19 @@ const DailyscapeCard = () => {
                 </div>
               </div>
 
-              {/* Search bar */}
+              {/* Search bar - styled to match Members page exactly */}
               <div className="relative">
-                <div className="flex items-center gap-2 bg-slate-800/50 rounded-lg px-3 py-2">
-                  <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search items..."
-                    className="flex-1 bg-transparent text-sm text-white placeholder-slate-500 outline-none min-w-0"
-                  />
-                  {searchLoading && (
-                    <div className="w-4 h-4 border-2 border-slate-500 border-t-white rounded-full animate-spin flex-shrink-0" />
-                  )}
-                </div>
+                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search items..."
+                  className="pl-10 bg-slate-700 border-slate-600 text-white"
+                />
+                {searchLoading && (
+                  <div className="absolute right-3 top-3 w-4 h-4 border-2 border-slate-500 border-t-white rounded-full animate-spin" />
+                )}
                 
                 {/* Search results dropdown */}
                 {showSearchResults && searchResults.length > 0 && (
@@ -377,19 +376,16 @@ const DailyscapeCard = () => {
                 </div>
               )}
 
-              {/* Merchant items list */}
+              {/* Merchant items list - prices instead of wiki links */}
               {merchantLoading ? (
                 <LoadingSkeleton />
               ) : merchantData ? (
                 <div className="space-y-2">
                   <p className="text-xs text-slate-400">{merchantData.date}</p>
                   {merchantData.items.map((item, index) => (
-                    <a
+                    <div
                       key={index}
-                      href={item.wikiUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-2 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors group"
+                      className="flex items-center gap-3 p-2 bg-slate-700/30 rounded-lg"
                     >
                       {item.iconUrl ? (
                         <img 
@@ -406,8 +402,10 @@ const DailyscapeCard = () => {
                         </div>
                       )}
                       <span className="text-sm text-white flex-1 truncate min-w-0">{item.name}</span>
-                      <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-blue-400 flex-shrink-0" />
-                    </a>
+                      <span className="text-xs text-green-400 flex-shrink-0">
+                        {item.price ? `${formatCost(item.price)} GP` : '—'}
+                      </span>
+                    </div>
                   ))}
                 </div>
               ) : (
