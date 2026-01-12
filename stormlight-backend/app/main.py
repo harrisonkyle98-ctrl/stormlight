@@ -3922,13 +3922,12 @@ async def get_competition_live(identifier: str, page: int = 1, per_page: int = 2
                 'stats': stats
             })
         
-        # For active competitions with missing/stale data, fetch from RuneScape API
+        # For active competitions, ALWAYS fetch live XP from RuneScape API
+        # This ensures ending_xp = live total skill XP (same as profile)
+        # INVARIANT: For active competitions, we must use live XP, not cached daily gains
         if is_active:
-            missing_usernames = []
-            for entry in entries_to_process:
-                skill_gain_data = skill_gains_map.get(entry.username)
-                if not skill_gain_data or skill_gain_data.get('is_stale', True):
-                    missing_usernames.append(entry.username)
+            # Fetch live XP for ALL participants to ensure accurate ending_xp
+            missing_usernames = [entry.username for entry in entries_to_process]
             
             if missing_usernames:
                 print(f"[Live Competition] Fetching live XP for {len(missing_usernames)} members with missing/stale data")
