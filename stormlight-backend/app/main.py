@@ -1148,9 +1148,12 @@ def is_refresh_rate_limited(client_ip: str, username: str) -> bool:
     refresh_rate_limit_storage[key].append(current_time)
     return False
 
-def get_history_cache_key(username: str, period1: str, period2: str) -> str:
-    """Generate cache key for history endpoint"""
-    return f"{username}:{period1}:{period2}"
+def get_history_cache_key(username: str, period1: str, period2: str, reference_date_utc: date = None) -> str:
+    """Generate cache key for history endpoint, including UTC date to prevent cross-day cache pollution"""
+    if reference_date_utc is None:
+        from datetime import timezone
+        reference_date_utc = datetime.now(timezone.utc).date()
+    return f"{username}:{period1}:{period2}:{reference_date_utc.isoformat()}"
 
 def invalidate_player_cache(username: str):
     """Invalidate all cached entries for a specific player"""
@@ -8393,10 +8396,20 @@ async def get_player_stats_with_history(
     """Get player stats with historical changes"""
     try:
         from urllib.parse import unquote
+        from datetime import timezone, timedelta
         decoded_username = unquote(username).replace('-', ' ')
         
+        # CRITICAL: Compute reference_date_utc ONCE at the start of the request
+        # This ensures all date calculations use the same "today" value
+        reference_date_utc = datetime.now(timezone.utc).date()
+        
         current_time = time_module.time()
-        cache_key = get_history_cache_key(decoded_username, period1, period2)
+        # Include reference_date_utc in cache key to prevent cross-day cache pollution
+        cache_key = get_history_cache_key(decoded_username, period1, period2, reference_date_utc)
+        
+        # Diagnostic logging for debugging Today/Yesterday flip
+        print(f"[History][DEBUG] Request: username={decoded_username}, period1={period1}, period2={period2}")
+        print(f"[History][DEBUG] reference_date_utc={reference_date_utc.isoformat()}, cache_key={cache_key}")
         
         if refresh:
             client_ip = "unknown"  # In production, extract from request
@@ -8406,6 +8419,8 @@ async def get_player_stats_with_history(
         elif (cache_key in profile_history_cache['data'] and 
             cache_key in profile_history_cache['timestamps'] and
             current_time - profile_history_cache['timestamps'][cache_key] < profile_history_cache['ttl']):
+            cache_age = current_time - profile_history_cache['timestamps'][cache_key]
+            print(f"[History][DEBUG] CACHE HIT: key={cache_key}, age={cache_age:.1f}s")
             print(f"Returning cached history data for {decoded_username} ({period1} vs {period2})")
             cached_data = profile_history_cache['data'][cache_key].copy()
             
@@ -8547,9 +8562,12 @@ async def get_player_stats_with_history(
                 
                 print(f"[History] Live API fetched for {decoded_username} (overall xp={current_stats['stats']['overall']['xp']:,})")
                 
-                from datetime import timezone, timedelta
-                today = datetime.now(timezone.utc).date()
+                # Use the SAME reference_date_utc computed at the start of the request
+                # This ensures all date calculations within this request use the same "today" value
+                today = reference_date_utc
                 yesterday = today - timedelta(days=1)
+                
+                print(f"[History][DEBUG] Using reference_date_utc={today.isoformat()} for all period calculations")
                 
                 # For "Today" baseline, use yesterday's snapshot (represents XP at END of yesterday / START of today at 00:00 UTC)
                 # This matches how the sparkline computes daily gains: today_snapshot - yesterday_snapshot
@@ -8565,12 +8583,14 @@ async def get_player_stats_with_history(
                 # Note: We intentionally do NOT call ensure_today_snapshot() here to avoid poisoning the baseline
                 # The daily snapshot job at 00:00 UTC creates the authoritative baseline snapshots
                 
-                changes_data = await get_player_stats_for_periods(conn, decoded_username, period1, period2)
+                # Pass reference_date_utc explicitly to ensure consistent date handling
+                changes_data = await get_player_stats_for_periods(conn, decoded_username, period1, period2, reference_date_utc)
                 
-                p1_start, p1_end = get_period_window(period1)
-                p2_start, p2_end = get_period_window(period2)
+                # Pass reference_date_utc explicitly to get_period_window
+                p1_start, p1_end = get_period_window(period1, reference_date_utc)
+                p2_start, p2_end = get_period_window(period2, reference_date_utc)
                 
-                print(f"[History] Period window check: p1=({p1_start}, {p1_end}), p2=({p2_start}, {p2_end}), today={today}")
+                print(f"[History][DEBUG] Period windows: p1=({p1_start}, {p1_end}), p2=({p2_start}, {p2_end}), reference_date={today}")
                 
                 # UNIFIED RULE: If a period's end boundary is "today", use live XP as the end value
                 # This is because snapshot(today) is the 00:00 UTC baseline and will always be missing today's gains

@@ -798,10 +798,19 @@ async def upsert_today_skill_gains_unified(conn, username: str, display_username
     
     await conn.execute(sql, param_values)
 
-async def get_player_stats_for_periods(conn, username: str, period1: str, period2: str):
-    """Get player stats comparison between two time periods using consolidated snapshots"""
-    d1 = get_date_for_period(period1)
-    d2 = get_date_for_period(period2)
+async def get_player_stats_for_periods(conn, username: str, period1: str, period2: str, reference_date: date = None):
+    """Get player stats comparison between two time periods using consolidated snapshots.
+    
+    Args:
+        conn: Database connection
+        username: Player username
+        period1: First period name (e.g., 'today', 'week')
+        period2: Second period name (e.g., 'yesterday', 'month')
+        reference_date: UTC reference date for period calculations. If None, uses date.today() (not recommended).
+    """
+    # Pass reference_date to ensure consistent date handling across the request
+    d1 = get_date_for_period(period1, reference_date)
+    d2 = get_date_for_period(period2, reference_date)
 
     snap1 = await get_snapshot_json_on_date(conn, username, d1) or await get_snapshot_json_on_or_before(conn, username, d1) or {}
     snap2 = await get_snapshot_json_on_date(conn, username, d2) or await get_snapshot_json_on_or_before(conn, username, d2) or {}
@@ -823,8 +832,9 @@ async def get_player_stats_for_periods(conn, username: str, period1: str, period
             'xp_gain_period2': 0
         }
 
-    start1, end1 = get_period_window(period1)
-    start2, end2 = get_period_window(period2)
+    # Pass reference_date to get_period_window for consistent date handling
+    start1, end1 = get_period_window(period1, reference_date)
+    start2, end2 = get_period_window(period2, reference_date)
     end1_json = await get_snapshot_json_on_or_before(conn, username, end1) or {}
     start1_json = await get_snapshot_json_on_or_before(conn, username, start1) or {}
     end2_json = await get_snapshot_json_on_or_before(conn, username, end2) or {}
