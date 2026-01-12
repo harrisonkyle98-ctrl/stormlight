@@ -566,18 +566,24 @@ const DailyscapeCard = () => {
                           <span className="text-sm text-white truncate block">{nextEvent.name}</span>
                           <span className="text-xs text-slate-400">{nextEvent.hour} UTC</span>
                         </div>
-                        {/* Right-aligned tags: Special first, then Type */}
+                        {/* Right-aligned tags: Special first, then icon tag */}
                         <div className="flex items-center gap-1.5 flex-shrink-0">
                           {nextEvent.special && (
                             <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">Special</span>
                           )}
-                          <span className={`text-xs px-2 py-0.5 rounded capitalize ${
-                            nextEvent.type === 'combat' ? 'bg-red-500/20 text-red-400' :
-                            nextEvent.type === 'skilling' ? 'bg-green-500/20 text-green-400' :
-                            'bg-purple-500/20 text-purple-400'
+                          <div className={`w-6 h-6 rounded flex items-center justify-center ${
+                            nextEvent.type === 'combat' ? 'bg-red-500/20' :
+                            nextEvent.type === 'skilling' ? 'bg-green-500/20' :
+                            'bg-purple-500/20'
                           }`}>
-                            {nextEvent.type}
-                          </span>
+                            {nextEvent.type === 'combat' ? (
+                              <Swords className="w-3.5 h-3.5 text-red-400" />
+                            ) : nextEvent.type === 'skilling' ? (
+                              <BarChart2 className="w-3.5 h-3.5 text-green-400" />
+                            ) : (
+                              <Shuffle className="w-3.5 h-3.5 text-purple-400" />
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -620,48 +626,55 @@ const DailyscapeCard = () => {
                             }`}
                           >
                             <span className="text-xs text-slate-500 w-12 flex-shrink-0">{event.hour}</span>
-                            <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
-                              event.type === 'combat' ? 'bg-red-500/20' :
-                              event.type === 'skilling' ? 'bg-green-500/20' :
-                              'bg-purple-500/20'
-                            }`}>
-                              {event.type === 'combat' ? (
-                                <Swords className="w-3 h-3 text-red-400" />
-                              ) : event.type === 'skilling' ? (
-                                <BarChart2 className="w-3 h-3 text-green-400" />
-                              ) : (
-                                <Shuffle className="w-3 h-3 text-purple-400" />
-                              )}
-                            </div>
                             <span className="text-xs text-white flex-1 truncate min-w-0">{event.name}</span>
-                            {/* Right-aligned tags: Special first, then Type */}
+                            {/* Right-aligned tags: Special first, then icon tag */}
                             <div className="flex items-center gap-1 flex-shrink-0">
                               {event.special && (
                                 <span className="text-xs bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">Special</span>
                               )}
-                              <span className={`text-xs px-1.5 py-0.5 rounded capitalize ${
-                                event.type === 'combat' ? 'bg-red-500/20 text-red-400' :
-                                event.type === 'skilling' ? 'bg-green-500/20 text-green-400' :
-                                'bg-purple-500/20 text-purple-400'
+                              <div className={`w-5 h-5 rounded flex items-center justify-center ${
+                                event.type === 'combat' ? 'bg-red-500/20' :
+                                event.type === 'skilling' ? 'bg-green-500/20' :
+                                'bg-purple-500/20'
                               }`}>
-                                {event.type}
-                              </span>
+                                {event.type === 'combat' ? (
+                                  <Swords className="w-3 h-3 text-red-400" />
+                                ) : event.type === 'skilling' ? (
+                                  <BarChart2 className="w-3 h-3 text-green-400" />
+                                ) : (
+                                  <Shuffle className="w-3 h-3 text-purple-400" />
+                                )}
+                              </div>
                             </div>
                           </div>
                           {/* Expanded section showing other occurrences of this event */}
                           {isExpanded && sameEventOccurrences.length > 0 && (
-                            <div className="ml-14 mt-1 mb-2 p-2 bg-slate-800/50 rounded-lg border-l-2 border-slate-600">
+                            <div className="p-2 bg-slate-800/50 rounded-lg">
                               <p className="text-xs text-slate-400 mb-1.5">Other occurrences in 48h:</p>
                               <div className="space-y-1">
-                                {sameEventOccurrences.map((occurrence, occIndex) => (
-                                  <div key={occIndex} className="flex items-center gap-2 text-xs">
-                                    <span className="text-slate-500 w-12">{occurrence.hour}</span>
-                                    <span className="text-slate-300">{occurrence.name}</span>
-                                    {occurrence.special && (
-                                      <span className="text-amber-400 text-xs">(Special)</span>
-                                    )}
-                                  </div>
-                                ))}
+                                {sameEventOccurrences.map((occurrence, occIndex) => {
+                                  // Format full date + time from startsAt ISO string
+                                  const occDate = new Date(occurrence.startsAt)
+                                  const formattedDate = occDate.toLocaleDateString('en-US', { 
+                                    month: 'short', 
+                                    day: 'numeric',
+                                    timeZone: 'UTC'
+                                  })
+                                  const formattedTime = occDate.toLocaleTimeString('en-US', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: false,
+                                    timeZone: 'UTC'
+                                  })
+                                  return (
+                                    <div key={occIndex} className="flex items-center gap-2 text-xs">
+                                      <span className="text-slate-400">{formattedDate}, {formattedTime} UTC</span>
+                                      {occurrence.special && (
+                                        <span className="text-amber-400">(Special)</span>
+                                      )}
+                                    </div>
+                                  )
+                                })}
                               </div>
                             </div>
                           )}
