@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Input } from '../ui/input'
-import { ShoppingBag, Sparkles, Search, Calendar, ChevronDown } from 'lucide-react'
+import { ShoppingBag, Sparkles, Search, Calendar, ChevronDown, Flame, Swords, Pickaxe, Shuffle } from 'lucide-react'
 
 interface MerchantItem {
   name: string
@@ -30,7 +30,7 @@ interface VisWaxData {
 interface DailyscapeResponse {
   merchant: MerchantData | null
   visWax: VisWaxData | null
-  wildyEvents: unknown
+  wildyEvents: WildyEventsData | null
   meta: {
     fetchedAt: string
     requestedDate: string
@@ -55,6 +55,30 @@ interface NextOccurrence {
   upcoming: string[]
 }
 
+interface WildyEvent {
+  name: string
+  type: 'combat' | 'skilling' | 'mixed'
+  special: boolean
+  startsAt: string
+  hour?: string
+}
+
+interface WildyEventsData {
+  current: WildyEvent
+  nextStartsAt: string
+  nextEventIn: string
+  upcoming: WildyEvent[]
+  meta: {
+    rotationSource: string
+    anchorMs: number
+    rotationLength: number
+    cached: boolean
+    fetchedAt: string
+  }
+  unavailable?: boolean
+  error?: string
+}
+
 const DailyscapeCard = () => {
   const [data, setData] = useState<DailyscapeResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -74,6 +98,11 @@ const DailyscapeCard = () => {
   const [searchLoading, setSearchLoading] = useState(false)
   const [nextOccurrence, setNextOccurrence] = useState<NextOccurrence | null>(null)
   const [showSearchResults, setShowSearchResults] = useState(false)
+
+  // Wildy Events state
+  const [wildyCountdown, setWildyCountdown] = useState<string>('')
+  const [showSpecialOnly, setShowSpecialOnly] = useState(false)
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -211,6 +240,32 @@ const DailyscapeCard = () => {
     return () => clearTimeout(timer)
   }, [searchQuery, searchMerchantItems])
 
+  // Wildy Events countdown timer - updates every second
+  useEffect(() => {
+    if (!data?.wildyEvents?.nextStartsAt || data.wildyEvents.unavailable) {
+      return
+    }
+
+    const updateCountdown = () => {
+      const nextStart = new Date(data.wildyEvents!.nextStartsAt).getTime()
+      const now = Date.now()
+      const diff = Math.max(0, nextStart - now)
+      
+      const minutes = Math.floor(diff / 60000)
+      const seconds = Math.floor((diff % 60000) / 1000)
+      setWildyCountdown(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`)
+    }
+
+    updateCountdown()
+    countdownIntervalRef.current = setInterval(updateCountdown, 1000)
+
+    return () => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current)
+      }
+    }
+  }, [data?.wildyEvents?.nextStartsAt, data?.wildyEvents?.unavailable])
+
   // Format date for display
   const formatDateDisplay = (dateStr: string) => {
     const date = new Date(dateStr + 'T00:00:00Z')
@@ -272,6 +327,13 @@ const DailyscapeCard = () => {
             >
               <Sparkles className="w-4 h-4 mr-2" />
               Vis Wax
+            </TabsTrigger>
+            <TabsTrigger 
+              value="wildy" 
+              className="flex-1 data-[state=active]:bg-slate-600 data-[state=active]:text-white text-slate-300"
+            >
+              <Flame className="w-4 h-4 mr-2" />
+              Wildy
             </TabsTrigger>
           </TabsList>
 
@@ -466,6 +528,101 @@ const DailyscapeCard = () => {
               </div>
             ) : (
               <UnavailableState section="Vis Wax" />
+            )}
+          </TabsContent>
+
+          <TabsContent value="wildy">
+            {data?.wildyEvents && !data.wildyEvents.unavailable ? (
+              <div className="space-y-4">
+                {/* Current event with countdown */}
+                <div className="bg-slate-700/30 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs text-slate-400">Current Event</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-400">Next in</span>
+                      <span className="text-sm font-mono text-amber-400">{wildyCountdown || data.wildyEvents.nextEventIn}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded flex items-center justify-center ${
+                      data.wildyEvents.current.type === 'combat' ? 'bg-red-500/20' :
+                      data.wildyEvents.current.type === 'skilling' ? 'bg-green-500/20' :
+                      'bg-purple-500/20'
+                    }`}>
+                      {data.wildyEvents.current.type === 'combat' ? (
+                        <Swords className="w-4 h-4 text-red-400" />
+                      ) : data.wildyEvents.current.type === 'skilling' ? (
+                        <Pickaxe className="w-4 h-4 text-green-400" />
+                      ) : (
+                        <Shuffle className="w-4 h-4 text-purple-400" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm text-white truncate block">{data.wildyEvents.current.name}</span>
+                      <span className={`text-xs capitalize ${
+                        data.wildyEvents.current.type === 'combat' ? 'text-red-400' :
+                        data.wildyEvents.current.type === 'skilling' ? 'text-green-400' :
+                        'text-purple-400'
+                      }`}>
+                        {data.wildyEvents.current.type}
+                      </span>
+                    </div>
+                    {data.wildyEvents.current.special && (
+                      <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">Special</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Special-only filter toggle */}
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-slate-400">Upcoming Events (48h)</p>
+                  <button
+                    onClick={() => setShowSpecialOnly(!showSpecialOnly)}
+                    className={`text-xs px-2 py-1 rounded transition-colors ${
+                      showSpecialOnly 
+                        ? 'bg-amber-500/20 text-amber-400' 
+                        : 'bg-slate-700/50 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {showSpecialOnly ? 'Special Only' : 'Show All'}
+                  </button>
+                </div>
+
+                {/* Upcoming events list */}
+                <div className="space-y-1.5">
+                  {data.wildyEvents.upcoming
+                    .slice(1) // Skip current event
+                    .filter(event => !showSpecialOnly || event.special)
+                    .slice(0, 12) // Show up to 12 events
+                    .map((event, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 p-2 bg-slate-700/20 rounded-lg"
+                      >
+                        <span className="text-xs text-slate-500 w-12 flex-shrink-0">{event.hour}</span>
+                        <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
+                          event.type === 'combat' ? 'bg-red-500/20' :
+                          event.type === 'skilling' ? 'bg-green-500/20' :
+                          'bg-purple-500/20'
+                        }`}>
+                          {event.type === 'combat' ? (
+                            <Swords className="w-3 h-3 text-red-400" />
+                          ) : event.type === 'skilling' ? (
+                            <Pickaxe className="w-3 h-3 text-green-400" />
+                          ) : (
+                            <Shuffle className="w-3 h-3 text-purple-400" />
+                          )}
+                        </div>
+                        <span className="text-xs text-white flex-1 truncate min-w-0">{event.name}</span>
+                        {event.special && (
+                          <span className="text-xs bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded flex-shrink-0">Special</span>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            ) : (
+              <UnavailableState section="Wildy Events" />
             )}
           </TabsContent>
         </Tabs>
