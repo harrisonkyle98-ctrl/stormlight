@@ -3816,7 +3816,7 @@ async def get_competition_live(identifier: str, page: int = 1, per_page: int = 2
             order={'xpGained': 'desc'}
         )
         
-        print(f"[Live Competition] Found {len(entries)} entries for competition {competition_id}")
+        print(f"[Live Competition] Found {len(entries)} entries for competition {competition.id}")
         
         if len(entries) == 0:
             from datetime import timezone
