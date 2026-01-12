@@ -724,7 +724,7 @@ const Home = () => {
               ))}
             </div>
           ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-[500px] overflow-y-auto overflow-x-hidden">
             {clanLogEntries.length > 0 ? (
               clanLogEntries.map((entry) => (
                 <ClanLogRow
@@ -760,7 +760,7 @@ const Home = () => {
               ))}
             </div>
           ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-[500px] overflow-y-auto overflow-x-hidden">
             {activities.length > 0 ? (
               activities.map((activity, index) => (
                 <ActivityLogRow
