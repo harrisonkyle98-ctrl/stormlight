@@ -1155,6 +1155,25 @@ def get_history_cache_key(username: str, period1: str, period2: str, reference_d
         reference_date_utc = datetime.now(timezone.utc).date()
     return f"{username}:{period1}:{period2}:{reference_date_utc.isoformat()}"
 
+def get_history_cache_ttl(period1: str, period2: str) -> int:
+    """Get cache TTL for history endpoint based on whether 'today' is involved.
+    
+    - If period1 or period2 is 'today', use short TTL (120 seconds) so Skills "Today" updates quickly
+    - For purely historical periods (yesterday, week, month, etc.), use long TTL (3600 seconds / 1 hour)
+    """
+    TODAY_TTL = 120  # 2 minutes for periods involving "today"
+    HISTORICAL_TTL = 3600  # 1 hour for purely historical periods
+    
+    p1_lower = period1.lower()
+    p2_lower = period2.lower()
+    
+    # Check if either period is "today"
+    if p1_lower == 'today' or p2_lower == 'today':
+        return TODAY_TTL
+    
+    # All other periods are historical - use long TTL
+    return HISTORICAL_TTL
+
 def invalidate_player_cache(username: str):
     """Invalidate all cached entries for a specific player"""
     keys_to_remove = []
@@ -8411,6 +8430,12 @@ async def get_player_stats_with_history(
         print(f"[History][DEBUG] Request: username={decoded_username}, period1={period1}, period2={period2}")
         print(f"[History][DEBUG] reference_date_utc={reference_date_utc.isoformat()}, cache_key={cache_key}")
         
+        # Determine cache TTL based on whether "today" is involved
+        # - 120 seconds for periods involving "today" (so Skills "Today" updates quickly)
+        # - 3600 seconds (1 hour) for purely historical periods
+        cache_ttl = get_history_cache_ttl(period1, period2)
+        print(f"[History][DEBUG] cache_ttl={cache_ttl}s (today_involved={'today' in period1.lower() or 'today' in period2.lower()})")
+        
         if refresh:
             client_ip = "unknown"  # In production, extract from request
             if is_refresh_rate_limited(client_ip, decoded_username):
@@ -8418,9 +8443,9 @@ async def get_player_stats_with_history(
             print(f"Forcing refresh for {decoded_username} history ({period1} vs {period2})")
         elif (cache_key in profile_history_cache['data'] and 
             cache_key in profile_history_cache['timestamps'] and
-            current_time - profile_history_cache['timestamps'][cache_key] < profile_history_cache['ttl']):
+            current_time - profile_history_cache['timestamps'][cache_key] < cache_ttl):
             cache_age = current_time - profile_history_cache['timestamps'][cache_key]
-            print(f"[History][DEBUG] CACHE HIT: key={cache_key}, age={cache_age:.1f}s")
+            print(f"[History][DEBUG] CACHE HIT: key={cache_key}, age={cache_age:.1f}s, ttl={cache_ttl}s")
             print(f"Returning cached history data for {decoded_username} ({period1} vs {period2})")
             cached_data = profile_history_cache['data'][cache_key].copy()
             
@@ -8762,7 +8787,7 @@ async def get_player_stats_with_history(
         
         profile_history_cache['data'][cache_key] = enhanced_stats
         profile_history_cache['timestamps'][cache_key] = current_time
-        print(f"Cached history data for {decoded_username} ({period1} vs {period2}) for {profile_history_cache['ttl']} seconds")
+        print(f"[History][DEBUG] Cached history data for {decoded_username} ({period1} vs {period2}) for {cache_ttl}s (today_involved={'today' in period1.lower() or 'today' in period2.lower()})")
         
         return JSONResponse(
             content=jsonable_encoder(enhanced_stats),
