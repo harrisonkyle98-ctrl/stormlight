@@ -872,19 +872,23 @@ async def update_active_competition_xp():
     Update XP for all active competitions (hourly scheduler job).
     
     For each active XP_GAIN competition:
-    - Fetch current XP for all participants from player_today_gains
-    - For participants with missing/stale data, fetch from RuneScape API
+    - PRIMARY: Fetch current live XP for all participants from RuneMetrics API
+    - FALLBACK: Use yesterday_snapshot_xp + today_gain (reconstructs live XP without double-counting)
     - Update CompetitionEntry.xpEnd and xpGained in the database
-    - This ensures competition detail pages always show current standings
+    - Allow downward corrections for active competitions (fixes poisoned data)
+    
+    Canonical definition: ending_xp = current live total XP in that skill
     """
     try:
         if not PRISMA_AVAILABLE or not prisma:
             print("[Scheduler][COMP_XP] Prisma not available, skipping active competition XP update")
             return 0
         
-        from datetime import timezone, timedelta
+        from datetime import timezone, timedelta, date
         import asyncio
         now = datetime.now(timezone.utc)
+        today = now.date()
+        yesterday = today - timedelta(days=1)
         
         active_comps = await prisma.competition.find_many(
             where={
@@ -902,6 +906,7 @@ async def update_active_competition_xp():
         print(f"[Scheduler][COMP_XP] Found {len(active_comps)} active XP competitions to update")
         
         total_updates = 0
+        downward_corrections = 0
         
         for comp in active_comps:
             try:
@@ -912,10 +917,10 @@ async def update_active_competition_xp():
                     continue
                 
                 try:
-                    from .database import get_db_connection
+                    from .database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before
                     from .skill_mapping import get_column_name
                 except ImportError:
-                    from database import get_db_connection
+                    from database import get_db_connection, get_snapshot_json_on_date, get_snapshot_json_on_or_before
                     from skill_mapping import get_column_name
                 
                 skill = comp.skill or 'overall'
@@ -926,10 +931,11 @@ async def update_active_competition_xp():
                 
                 conn = await get_db_connection()
                 skill_gains_map = {}
-                snapshots_by_user = {}
+                yesterday_snapshots = {}
                 
                 async with conn:
                     async with conn.cursor() as cur:
+                        # Get today's gains from player_today_gains (for fallback reconstruction)
                         await cur.execute(f"""
                             SELECT username, {skill_column}, updated_at
                             FROM player_today_gains
@@ -950,77 +956,69 @@ async def update_active_competition_xp():
                             is_stale = (now - last_updated) > staleness_threshold if last_updated else True
                             
                             skill_gains_map[username] = {
-                                'xp_gain': xp_gain,
+                                'xp_gain': xp_gain or 0,
                                 'is_stale': is_stale
                             }
                         
-                        # Get snapshots for baseline XP calculation
+                        # Get YESTERDAY's snapshots for fallback reconstruction
+                        # This is the correct baseline: yesterday_snapshot + today_gain = live_xp
                         await cur.execute("""
                             SELECT username, stats
                             FROM player_daily_snapshots
-                            WHERE username = ANY(%s) AND snapshot_date = CURRENT_DATE
-                        """, (usernames,))
+                            WHERE username = ANY(%s) AND snapshot_date = %s
+                        """, (usernames, yesterday))
                         
                         snapshot_rows = await cur.fetchall()
                         for row in snapshot_rows:
                             username = row[0]
                             stats = row[1]
-                            if username not in snapshots_by_user:
-                                snapshots_by_user[username] = []
-                            snapshots_by_user[username].append({'stats': stats})
+                            yesterday_snapshots[username] = stats
                 
-                # Identify participants with missing or stale data that need live API fetch
-                missing_usernames = []
-                for entry in comp.entries:
-                    skill_gain_data = skill_gains_map.get(entry.username)
-                    if not skill_gain_data or skill_gain_data.get('is_stale', True):
-                        missing_usernames.append(entry.username)
-                
-                # Fetch live XP from RuneScape API for missing/stale participants
+                # PRIMARY PATH: Fetch live XP from RuneMetrics API for ALL participants
+                # This is the canonical source of truth for active competition ending XP
                 live_xp_map = {}
-                if missing_usernames:
-                    print(f"[Scheduler][COMP_XP] Fetching live XP for {len(missing_usernames)} participants with missing/stale data")
-                    semaphore = asyncio.Semaphore(8)  # Limit concurrent API calls
+                print(f"[Scheduler][COMP_XP] Fetching live XP for {len(usernames)} participants")
+                semaphore = asyncio.Semaphore(8)  # Limit concurrent API calls
+                
+                async def fetch_with_timeout(username):
+                    async with semaphore:
+                        try:
+                            stats = await asyncio.wait_for(fetch_player_stats(username), timeout=10.0)
+                            return username, stats
+                        except asyncio.TimeoutError:
+                            print(f"[Scheduler][COMP_XP] Timeout fetching stats for {username}")
+                            return username, None
+                        except Exception as e:
+                            print(f"[Scheduler][COMP_XP] Error fetching stats for {username}: {e}")
+                            return username, None
+                
+                # Process in batches to avoid overwhelming the API
+                batch_size = 50
+                for i in range(0, len(usernames), batch_size):
+                    batch = usernames[i:i + batch_size]
+                    results = await asyncio.gather(*[fetch_with_timeout(username) for username in batch])
                     
-                    async def fetch_with_timeout(username):
-                        async with semaphore:
-                            try:
-                                stats = await asyncio.wait_for(fetch_player_stats(username), timeout=10.0)
-                                return username, stats
-                            except asyncio.TimeoutError:
-                                print(f"[Scheduler][COMP_XP] Timeout fetching stats for {username}")
-                                return username, None
-                            except Exception as e:
-                                print(f"[Scheduler][COMP_XP] Error fetching stats for {username}: {e}")
-                                return username, None
-                    
-                    # Process in batches to avoid overwhelming the API
-                    batch_size = 50
-                    for i in range(0, len(missing_usernames), batch_size):
-                        batch = missing_usernames[i:i + batch_size]
-                        results = await asyncio.gather(*[fetch_with_timeout(username) for username in batch])
-                        
-                        for username, stats in results:
-                            if stats and 'stats' in stats:
-                                if skill_normalized == 'overall':
-                                    overall_data = stats['stats'].get('overall', {})
-                                    if isinstance(overall_data, dict) and 'xp' in overall_data:
-                                        live_xp = overall_data.get('xp', 0)
-                                    else:
-                                        live_xp = sum(s.get('xp', 0) for s in stats['stats'].values() if isinstance(s, dict))
+                    for username, stats in results:
+                        if stats and 'stats' in stats:
+                            if skill_normalized == 'overall':
+                                overall_data = stats['stats'].get('overall', {})
+                                if isinstance(overall_data, dict) and 'xp' in overall_data:
+                                    live_xp = overall_data.get('xp', 0)
                                 else:
-                                    skill_data = stats['stats'].get(skill_normalized, {})
-                                    if not skill_data:
-                                        skill_data = stats['stats'].get(skill, {})
-                                    live_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
-                                
-                                live_xp_map[username] = live_xp
-                        
-                        # Small delay between batches to be nice to the API
-                        if i + batch_size < len(missing_usernames):
-                            await asyncio.sleep(1)
+                                    live_xp = sum(s.get('xp', 0) for s in stats['stats'].values() if isinstance(s, dict))
+                            else:
+                                skill_data = stats['stats'].get(skill_normalized, {})
+                                if not skill_data:
+                                    skill_data = stats['stats'].get(skill, {})
+                                live_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
+                            
+                            live_xp_map[username] = live_xp
                     
-                    print(f"[Scheduler][COMP_XP] Successfully fetched live XP for {len(live_xp_map)} participants")
+                    # Small delay between batches to be nice to the API
+                    if i + batch_size < len(usernames):
+                        await asyncio.sleep(1)
+                
+                print(f"[Scheduler][COMP_XP] Successfully fetched live XP for {len(live_xp_map)} participants")
                 
                 updates_for_comp = 0
                 skipped_no_data = 0
@@ -1028,64 +1026,78 @@ async def update_active_competition_xp():
                 for entry in comp.entries:
                     try:
                         starting_xp = int(entry.xpStart or 0)
-                        current_end = int(entry.xpEnd or 0)  # Keep existing value
+                        current_end = int(entry.xpEnd or 0)
                         current_gain = int(entry.xpGained or 0)
                         
-                        # Track if we successfully computed a new value
-                        new_ending_xp = None
+                        # Track the canonical ending XP and its source
+                        canonical_ending_xp = None
+                        source = None
                         
-                        skill_gain_data = skill_gains_map.get(entry.username)
+                        # PRIMARY: Use live XP from RuneMetrics API
+                        if entry.username in live_xp_map:
+                            canonical_ending_xp = live_xp_map[entry.username]
+                            source = 'live'
                         
-                        # First try to use cached data from player_today_gains
-                        if skill_gain_data and not skill_gain_data['is_stale']:
-                            user_snapshots = snapshots_by_user.get(entry.username, [])
-                            if user_snapshots:
-                                latest_snapshot = user_snapshots[-1]
-                                snapshot_stats = latest_snapshot['stats']
+                        # FALLBACK: Reconstruct from yesterday_snapshot + today_gain
+                        # This avoids the double-counting bug (never use today's snapshot as baseline)
+                        if canonical_ending_xp is None:
+                            skill_gain_data = skill_gains_map.get(entry.username)
+                            yesterday_snapshot = yesterday_snapshots.get(entry.username)
+                            
+                            if skill_gain_data and yesterday_snapshot:
+                                # Get yesterday's XP from snapshot
                                 if skill_normalized == 'overall':
-                                    baseline_xp = 0
-                                    if isinstance(snapshot_stats.get('overall'), dict):
-                                        baseline_xp = snapshot_stats['overall'].get('xp', 0) or 0
-                                    if baseline_xp == 0:
-                                        baseline_xp = sum(
-                                            s.get('xp', 0) for k, s in snapshot_stats.items()
+                                    yesterday_xp = 0
+                                    if isinstance(yesterday_snapshot.get('overall'), dict):
+                                        yesterday_xp = yesterday_snapshot['overall'].get('xp', 0) or 0
+                                    if yesterday_xp == 0:
+                                        yesterday_xp = sum(
+                                            s.get('xp', 0) for k, s in yesterday_snapshot.items()
                                             if isinstance(s, dict) and k != 'overall'
                                         )
                                 else:
-                                    skill_data = snapshot_stats.get(skill_normalized, {})
-                                    baseline_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
+                                    skill_data = yesterday_snapshot.get(skill_normalized, {})
+                                    yesterday_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
                                 
-                                xp_gain_today = skill_gain_data.get('xp_gain', 0)
-                                new_ending_xp = baseline_xp + xp_gain_today
+                                xp_gain_today = skill_gain_data.get('xp_gain', 0) or 0
+                                # Reconstruct: yesterday_xp + today_gain = live_xp (no double-counting)
+                                canonical_ending_xp = yesterday_xp + xp_gain_today
+                                source = 'fallback_reconstructed'
                         
-                        # If no cached data, try live API data
-                        if new_ending_xp is None and entry.username in live_xp_map:
-                            new_ending_xp = live_xp_map[entry.username]
-                        
-                        # Only update if we got new data
-                        if new_ending_xp is not None:
-                            # Never let XP go backwards vs start or existing value
-                            if new_ending_xp < starting_xp:
-                                new_ending_xp = starting_xp
-                            if new_ending_xp < current_end and current_end > 0:
-                                # Treat this as bad/partial data; keep the existing value
-                                new_ending_xp = current_end
-                            
-                            new_xp_gained = max(0, new_ending_xp - starting_xp)
-                            
-                            # Only hit the DB if something actually changed
-                            if new_ending_xp != current_end or new_xp_gained != current_gain:
-                                await prisma.competitionentry.update(
-                                    where={'id': entry.id},
-                                    data={
-                                        'xpEnd': new_ending_xp,
-                                        'xpGained': new_xp_gained,
-                                    },
-                                )
-                                updates_for_comp += 1
-                        else:
-                            # No data found - skip this entry, don't overwrite with zeros
+                        # If still no data, keep existing value but log it
+                        if canonical_ending_xp is None:
                             skipped_no_data += 1
+                            continue
+                        
+                        # CANONICAL RULE: ending_xp = max(starting_xp, canonical_ending_xp)
+                        # This allows downward corrections for poisoned data, but never below start
+                        new_ending_xp = max(starting_xp, canonical_ending_xp)
+                        new_xp_gained = max(0, new_ending_xp - starting_xp)
+                        
+                        # Check if this is a downward correction
+                        is_downward_correction = new_ending_xp < current_end and current_end > 0
+                        
+                        # Only hit the DB if something actually changed
+                        if new_ending_xp != current_end or new_xp_gained != current_gain:
+                            await prisma.competitionentry.update(
+                                where={'id': entry.id},
+                                data={
+                                    'xpEnd': new_ending_xp,
+                                    'xpGained': new_xp_gained,
+                                },
+                            )
+                            updates_for_comp += 1
+                            
+                            # Log the update with all required details
+                            if is_downward_correction:
+                                downward_corrections += 1
+                                print(f"[Scheduler][COMP_XP][CORRECTION] {entry.username} | comp={comp.id} | skill={skill} | "
+                                      f"start={starting_xp:,} | prev_end={current_end:,} | new_end={new_ending_xp:,} | "
+                                      f"source={source} | DOWNWARD_CORRECTION")
+                            else:
+                                print(f"[Scheduler][COMP_XP][UPDATE] {entry.username} | comp={comp.id} | skill={skill} | "
+                                      f"start={starting_xp:,} | prev_end={current_end:,} | new_end={new_ending_xp:,} | "
+                                      f"source={source}")
                     
                     except Exception as entry_error:
                         print(f"[Scheduler][COMP_XP] Error updating entry for {entry.username}: {entry_error}")
@@ -1103,7 +1115,7 @@ async def update_active_competition_xp():
                 traceback.print_exc()
                 continue
         
-        print(f"[Scheduler][COMP_XP] Total updates across all competitions: {total_updates}")
+        print(f"[Scheduler][COMP_XP] Total updates: {total_updates}, downward corrections: {downward_corrections}")
         return total_updates
     
     except Exception as e:
