@@ -3573,43 +3573,20 @@ async def get_competition(identifier: str, page: int = 1, per_page: int = 25):
                                     ending_xp = 0
                         
                         elif is_active:
-                            # For active competitions, use xpEnd from database (updated by scheduler)
-                            # This ensures we always show the most recent data without recomputing
+                            # For active competitions: ending_xp = live total skill XP (same as profile)
+                            # INVARIANT: ending_xp must equal the player's current total XP in that skill
+                            # Never use baseline + gain formula as it can double-count
+                            
+                            # Primary: Use stored xpEnd from database (updated by scheduler with live XP)
                             if entry.xpEnd is not None and entry.xpEnd > 0:
                                 ending_xp = int(entry.xpEnd)
                                 xp_gain = max(0, ending_xp - starting_xp)
                             else:
-                                # Fallback to cached data if xpEnd not yet populated by scheduler
-                                skill_gain_data = skill_gains_map.get(entry.username)
-                                
-                                if skill_gain_data and not skill_gain_data['is_stale']:
-                                    user_snapshots = snapshots_by_user.get(entry.username, [])
-                                    if user_snapshots:
-                                        latest_snapshot = user_snapshots[-1]
-                                        snapshot_stats = latest_snapshot['stats']
-                                        if skill_normalized == 'overall':
-                                            baseline_xp = 0
-                                            if isinstance(snapshot_stats.get('overall'), dict):
-                                                baseline_xp = snapshot_stats['overall'].get('xp', 0) or 0
-                                            if baseline_xp == 0:
-                                                baseline_xp = sum(
-                                                    s.get('xp', 0) for k, s in snapshot_stats.items()
-                                                    if isinstance(s, dict) and k != 'overall'
-                                                )
-                                        else:
-                                            skill_data = snapshot_stats.get(skill_normalized, {})
-                                            baseline_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
-                                        
-                                        xp_gain_today = skill_gain_data.get('xp_gain', 0)
-                                        current_xp = baseline_xp + xp_gain_today
-                                        ending_xp = current_xp
-                                        xp_gain = max(0, current_xp - starting_xp)
-                                    else:
-                                        ending_xp = 0
-                                        xp_gain = 0
-                                else:
-                                    ending_xp = 0
-                                    xp_gain = 0
+                                # Fallback: If xpEnd not yet populated, return 0 rather than fabricate
+                                # The scheduler will populate it with live XP on next run
+                                # Do NOT use baseline + gain formula as it causes double-counting
+                                ending_xp = 0
+                                xp_gain = 0
                         
                         leaderboard.append({
                             'username': entry.username,
@@ -4000,9 +3977,11 @@ async def get_competition_live(identifier: str, page: int = 1, per_page: int = 2
                         
                         xp_gain = max(0, live_xp - baseline_xp)
                         
+                        # Store live_xp directly - this is the canonical ending XP
+                        # INVARIANT: ending_xp = live total skill XP (same as profile)
                         skill_gains_map[username] = {
                             'xp_gain': xp_gain,
-                            'baseline_xp': baseline_xp,
+                            'live_xp': live_xp,  # Store live XP directly for use as ending_xp
                             'last_updated': now,
                             'is_stale': False
                         }
@@ -4019,29 +3998,23 @@ async def get_competition_live(identifier: str, page: int = 1, per_page: int = 2
                     current_xp = xp_end
                     live_xp_gain = max(0, xp_end - xp_start)
                 else:
+                    # For active competitions: ending_xp = live total skill XP (same as profile)
+                    # INVARIANT: ending_xp must equal the player's current total XP in that skill
                     skill_gain_data = skill_gains_map.get(entry.username)
                     
-                    if skill_gain_data:
-                        baseline_xp = skill_gain_data.get('baseline_xp', 0)
-                        xp_gain_today = skill_gain_data.get('xp_gain', 0)
-                        current_xp = baseline_xp + xp_gain_today
+                    if skill_gain_data and 'live_xp' in skill_gain_data:
+                        # Use live XP directly - this is the canonical ending XP
+                        current_xp = skill_gain_data['live_xp']
+                        live_xp_gain = max(0, current_xp - xp_start)
+                    elif xp_end > 0:
+                        # Fallback: Use stored xpEnd from database (updated by scheduler)
+                        # Do NOT reconstruct with baseline + gain formula
+                        current_xp = xp_end
                         live_xp_gain = max(0, current_xp - xp_start)
                     else:
-                        user_snapshots = snapshots_by_user.get(entry.username, [])
-                        if user_snapshots:
-                            latest_snapshot = user_snapshots[-1]
-                            snapshot_stats = latest_snapshot['stats']
-                            if skill_normalized == 'overall':
-                                current_xp = sum(s.get('xp', 0) for s in snapshot_stats.values() if isinstance(s, dict))
-                            else:
-                                skill_data = snapshot_stats.get(skill_normalized, {})
-                                if not skill_data:
-                                    skill_data = snapshot_stats.get(skill, {})
-                                current_xp = skill_data.get('xp', 0) if isinstance(skill_data, dict) else 0
-                            live_xp_gain = max(0, current_xp - xp_start)
-                        else:
-                            current_xp = xp_start
-                            live_xp_gain = 0
+                        # No live XP and no stored xpEnd - return 0 rather than fabricate
+                        current_xp = xp_start
+                        live_xp_gain = 0
                     
                     user_timeline = [{
                         'timestamp': competition.startDate.isoformat(),
