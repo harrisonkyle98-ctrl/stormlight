@@ -82,9 +82,14 @@ interface WildyEventsData {
   error?: string
 }
 
+interface VoSDistrict {
+  name: string
+  iconUrl: string | null
+}
+
 interface VoSData {
-  current: string[]
-  previous: string[] | null
+  current: VoSDistrict[]
+  previous: VoSDistrict[] | null
   nextChangeAt: string
   nextChangeIn: number
   meta: {
@@ -740,46 +745,51 @@ const DailyscapeCard = () => {
           <TabsContent value="vos">
             {data?.vos && !data.vos.unavailable ? (
               <div className="space-y-3">
-                {/* Current Voice of Seren */}
-                <div className="bg-slate-700/30 rounded-lg p-3">
-                  <p className="text-xs text-slate-400 mb-2">Current Voice of Seren</p>
-                  <div className="flex items-center gap-2">
-                    {data.vos.current.map((district, index) => (
-                      <span key={index} className="text-sm text-white bg-slate-600/50 px-3 py-1 rounded">
-                        {district}
-                      </span>
-                    ))}
-                  </div>
+                {/* Current Voice of Seren - Header with inline countdown (Wildy-style) */}
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-slate-400">Current Voice of Seren</p>
+                  <span className="text-xs text-slate-400">
+                    Next: <span className="font-mono text-amber-400">{vosCountdown || '--:--'}</span>
+                  </span>
                 </div>
 
-                {/* Previous Voice of Seren */}
-                {data.vos.previous && data.vos.previous.length > 0 && (
-                  <div className="bg-slate-700/30 rounded-lg p-3">
-                    <p className="text-xs text-slate-400 mb-2">Previous Voice of Seren</p>
-                    <div className="flex items-center gap-2">
+                {/* Current districts - Two large centered containers (mini-cards) */}
+                <div className="flex items-center justify-center gap-4">
+                  {data.vos.current.map((district, index) => (
+                    <div key={index} className="bg-slate-700/50 rounded-lg p-4 flex flex-col items-center min-w-[100px]">
+                      {district.iconUrl && (
+                        <img 
+                          src={district.iconUrl} 
+                          alt={district.name} 
+                          className="w-10 h-10 mb-2"
+                        />
+                      )}
+                      <span className="text-sm text-white font-medium">{district.name}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Previous Voice of Seren - Smaller/muted style */}
+                <div className="pt-2 border-t border-slate-700/50">
+                  <p className="text-xs text-slate-500 mb-2">Previous Voice of Seren</p>
+                  {data.vos.previous && data.vos.previous.length > 0 ? (
+                    <div className="flex items-center justify-center gap-3">
                       {data.vos.previous.map((district, index) => (
-                        <span key={index} className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded">
-                          {district}
-                        </span>
+                        <div key={index} className="bg-slate-800/50 rounded-lg p-2 flex flex-col items-center min-w-[80px]">
+                          {district.iconUrl && (
+                            <img 
+                              src={district.iconUrl} 
+                              alt={district.name} 
+                              className="w-6 h-6 mb-1 opacity-60"
+                            />
+                          )}
+                          <span className="text-xs text-slate-400">{district.name}</span>
+                        </div>
                       ))}
                     </div>
-                  </div>
-                )}
-
-                {/* Next change countdown */}
-                <div className="bg-slate-700/30 rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-slate-400">Next change in</p>
-                    <span className="text-sm font-mono text-amber-400">{vosCountdown || '--:--'}</span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {data.vos.nextChangeAt ? new Date(data.vos.nextChangeAt).toLocaleTimeString('en-US', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: false,
-                      timeZone: 'UTC'
-                    }) + ' UTC' : ''}
-                  </p>
+                  ) : (
+                    <p className="text-xs text-slate-500 text-center">Unavailable</p>
+                  )}
                 </div>
               </div>
             ) : (

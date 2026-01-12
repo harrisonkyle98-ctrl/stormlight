@@ -10971,6 +10971,26 @@ _vos_cache = {
 }
 _VOS_CACHE_TTL = 300  # 5 minutes
 
+# Server-side mapping of VoS district names to their wiki icon URLs
+# These are the 8 elven clans in Prifddinas
+_VOS_DISTRICT_ICONS = {
+    'Amlodd': 'https://runescape.wiki/images/Amlodd_Clan.png',
+    'Cadarn': 'https://runescape.wiki/images/Cadarn_Clan.png',
+    'Crwys': 'https://runescape.wiki/images/Crwys_Clan.png',
+    'Hefin': 'https://runescape.wiki/images/Hefin_Clan.png',
+    'Iorwerth': 'https://runescape.wiki/images/Iorwerth_Clan.png',
+    'Ithell': 'https://runescape.wiki/images/Ithell_Clan.png',
+    'Meilyr': 'https://runescape.wiki/images/Meilyr_Clan.png',
+    'Trahaearn': 'https://runescape.wiki/images/Trahaearn_Clan.png',
+}
+
+def get_vos_district_with_icon(district_name: str) -> dict:
+    """Convert a district name to an object with name and iconUrl."""
+    return {
+        'name': district_name,
+        'iconUrl': _VOS_DISTRICT_ICONS.get(district_name)
+    }
+
 
 async def fetch_vos_data() -> dict:
     """Fetch Voice of Seren data from WeirdGloop API.
@@ -10996,9 +11016,13 @@ async def fetch_vos_data() -> dict:
                 now_dt = datetime.now(timezone.utc)
                 seconds_until = max(0, int((next_change - now_dt).total_seconds()))
                 
+                # Convert district names to objects with icons
+                current_with_icons = [get_vos_district_with_icon(d) for d in _vos_cache['current']]
+                previous_with_icons = [get_vos_district_with_icon(d) for d in _vos_cache['previous']] if _vos_cache['previous'] else None
+                
                 return {
-                    'current': _vos_cache['current'],
-                    'previous': _vos_cache['previous'],
+                    'current': current_with_icons,
+                    'previous': previous_with_icons,
                     'nextChangeAt': next_change.isoformat().replace('+00:00', 'Z'),
                     'nextChangeIn': seconds_until,
                     'meta': {
@@ -11052,9 +11076,13 @@ async def fetch_vos_data() -> dict:
             now_dt = datetime.now(timezone.utc)
             seconds_until = max(0, int((next_change - now_dt).total_seconds()))
             
+            # Convert district names to objects with icons
+            current_with_icons = [get_vos_district_with_icon(d) for d in new_current]
+            previous_with_icons = [get_vos_district_with_icon(d) for d in _vos_cache['previous']] if _vos_cache['previous'] else None
+            
             return {
-                'current': new_current,
-                'previous': _vos_cache['previous'] if _vos_cache['previous'] else None,
+                'current': current_with_icons,
+                'previous': previous_with_icons,
                 'nextChangeAt': next_change.isoformat().replace('+00:00', 'Z'),
                 'nextChangeIn': seconds_until,
                 'meta': {
