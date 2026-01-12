@@ -3577,15 +3577,14 @@ async def get_competition(identifier: str, page: int = 1, per_page: int = 25):
                             # INVARIANT: ending_xp must equal the player's current total XP in that skill
                             # Never use baseline + gain formula as it can double-count
                             
-                            # Primary: Use stored xpEnd from database (updated by scheduler with live XP)
+                            # Store entry for later live XP fetch (top N only)
+                            # For now, use stored xpEnd as placeholder (will be updated below)
                             if entry.xpEnd is not None and entry.xpEnd > 0:
                                 ending_xp = int(entry.xpEnd)
                                 xp_gain = max(0, ending_xp - starting_xp)
                             else:
-                                # Fallback: If xpEnd not yet populated, return 0 rather than fabricate
-                                # The scheduler will populate it with live XP on next run
-                                # Do NOT use baseline + gain formula as it causes double-counting
-                                ending_xp = 0
+                                # Fallback: Use starting_xp as ending (0 gain) until live fetch
+                                ending_xp = starting_xp
                                 xp_gain = 0
                         
                         leaderboard.append({
@@ -3600,6 +3599,58 @@ async def get_competition(identifier: str, page: int = 1, per_page: int = 25):
                 # For completed competitions, use standard XP gain sorting
                 if is_active:
                     sort_active_competition_leaderboard(leaderboard)
+                    
+                    # LIVE XP FETCH: For active competitions, fetch live XP for top 50 entries
+                    # This ensures the displayed entries show current live XP without hammering RuneMetrics
+                    live_fetch_limit = 50
+                    live_fetches = 0
+                    cache_hits = 0
+                    fetch_failures = 0
+                    
+                    # Create tasks for parallel fetching (top N entries only)
+                    entries_to_fetch = leaderboard[:live_fetch_limit]
+                    
+                    async def fetch_entry_live_xp(entry_idx: int, entry: dict):
+                        nonlocal live_fetches, cache_hits, fetch_failures
+                        username = entry['username']
+                        starting_xp = entry['starting_xp']
+                        
+                        live_xp, source = await get_cached_live_xp(username, competition.skill, competition.id)
+                        
+                        if source == 'cache':
+                            cache_hits += 1
+                        elif source == 'live':
+                            live_fetches += 1
+                        else:
+                            fetch_failures += 1
+                        
+                        if live_xp is not None:
+                            entry['ending_xp'] = live_xp
+                            entry['xp_gain'] = max(0, live_xp - starting_xp)
+                        elif entry['ending_xp'] == 0 or entry['ending_xp'] == starting_xp:
+                            # Fallback: If no stored xpEnd and live fetch failed, keep starting_xp (0 gain)
+                            entry['ending_xp'] = starting_xp
+                            entry['xp_gain'] = 0
+                        # else: keep existing stored xpEnd value
+                        
+                        return entry_idx
+                    
+                    # Fetch live XP in parallel with semaphore to limit concurrency
+                    semaphore = asyncio.Semaphore(10)
+                    
+                    async def fetch_with_semaphore(idx, entry):
+                        async with semaphore:
+                            return await fetch_entry_live_xp(idx, entry)
+                    
+                    tasks = [fetch_with_semaphore(i, entry) for i, entry in enumerate(entries_to_fetch)]
+                    await asyncio.gather(*tasks)
+                    
+                    # Re-sort after live XP update (only top N, rest stay in place)
+                    sort_active_competition_leaderboard(leaderboard)
+                    
+                    # Log observability metrics (rate-limited to avoid spam)
+                    if live_fetches > 0 or fetch_failures > 0:
+                        print(f"[Competition][LIVE_XP] comp={competition.id[:8]} live_fetches={live_fetches} cache_hits={cache_hits} failures={fetch_failures}")
                 else:
                     leaderboard.sort(key=lambda x: x['xp_gain'], reverse=True)
             
@@ -3776,6 +3827,59 @@ async def get_competition(identifier: str, page: int = 1, per_page: int = 25):
 
 _live_competition_cache = {}
 _live_competition_cache_ttl = 60  # seconds
+
+_competition_live_xp_cache = {}
+_competition_live_xp_cache_ttl = 180  # 3 minutes TTL for live XP per user+skill
+
+async def get_cached_live_xp(username: str, skill: str, competition_id: str) -> tuple:
+    """
+    Get live XP for a user+skill with caching.
+    Returns (xp_value, source) where source is 'cache', 'live', or 'failed'.
+    """
+    cache_key = f"{username.lower()}:{skill.lower()}:{competition_id}"
+    now = datetime.now(timezone.utc).timestamp()
+    
+    if cache_key in _competition_live_xp_cache:
+        cached = _competition_live_xp_cache[cache_key]
+        if now - cached['timestamp'] < _competition_live_xp_cache_ttl:
+            return (cached['xp'], 'cache')
+    
+    try:
+        stats = await asyncio.wait_for(fetch_player_stats(username), timeout=5.0)
+        if stats and 'skillvalues' in stats:
+            skill_normalized = skill.lower().replace(' ', '_')
+            skill_id_map = {
+                'attack': 0, 'defence': 1, 'strength': 2, 'constitution': 3,
+                'ranged': 4, 'prayer': 5, 'magic': 6, 'cooking': 7,
+                'woodcutting': 8, 'fletching': 9, 'fishing': 10, 'firemaking': 11,
+                'crafting': 12, 'smithing': 13, 'mining': 14, 'herblore': 15,
+                'agility': 16, 'thieving': 17, 'slayer': 18, 'farming': 19,
+                'runecrafting': 20, 'hunter': 21, 'construction': 22, 'summoning': 23,
+                'dungeoneering': 24, 'divination': 25, 'invention': 26, 'archaeology': 27,
+                'necromancy': 28, 'overall': -1
+            }
+            
+            if skill_normalized == 'overall':
+                live_xp = sum(s.get('xp', 0) // 10 for s in stats['skillvalues'])
+            else:
+                skill_id = skill_id_map.get(skill_normalized, -1)
+                live_xp = 0
+                for s in stats['skillvalues']:
+                    if s.get('id') == skill_id:
+                        live_xp = s.get('xp', 0) // 10
+                        break
+            
+            _competition_live_xp_cache[cache_key] = {
+                'xp': live_xp,
+                'timestamp': now
+            }
+            return (live_xp, 'live')
+    except asyncio.TimeoutError:
+        pass
+    except Exception:
+        pass
+    
+    return (None, 'failed')
 
 @api_router.get("/competitions/{identifier}/live")
 async def get_competition_live(identifier: str, page: int = 1, per_page: int = 25):
