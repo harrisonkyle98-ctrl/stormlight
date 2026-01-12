@@ -3614,6 +3614,7 @@ async def get_competition(identifier: str, page: int = 1, per_page: int = 25):
                         nonlocal live_fetches, cache_hits, fetch_failures
                         username = entry['username']
                         starting_xp = entry['starting_xp']
+                        stored_ending_xp = entry['ending_xp']
                         
                         live_xp, source = await get_cached_live_xp(username, competition.skill, competition.id)
                         
@@ -3624,14 +3625,27 @@ async def get_competition(identifier: str, page: int = 1, per_page: int = 25):
                         else:
                             fetch_failures += 1
                         
+                        final_source = source
                         if live_xp is not None:
                             entry['ending_xp'] = live_xp
                             entry['xp_gain'] = max(0, live_xp - starting_xp)
-                        elif entry['ending_xp'] == 0 or entry['ending_xp'] == starting_xp:
-                            # Fallback: If no stored xpEnd and live fetch failed, keep starting_xp (0 gain)
+                        elif stored_ending_xp > 0 and stored_ending_xp != starting_xp:
+                            # Fallback: Use stored xpEnd if available and non-zero
+                            entry['ending_xp'] = stored_ending_xp
+                            entry['xp_gain'] = max(0, stored_ending_xp - starting_xp)
+                            final_source = 'stored'
+                        else:
+                            # Last resort: Use starting_xp (0 gain)
                             entry['ending_xp'] = starting_xp
                             entry['xp_gain'] = 0
-                        # else: keep existing stored xpEnd value
+                            final_source = 'fallback_starting'
+                        
+                        # Diagnostic logging for specific users (lm Kyle, kittty, ironlazy)
+                        debug_users = ['lm kyle', 'kittty', 'ironlazy']
+                        if username.lower() in debug_users:
+                            print(f"[Competition][DEBUG] user={username} skill={competition.skill} "
+                                  f"live_xp={live_xp} stored_xp={stored_ending_xp} "
+                                  f"final_ending_xp={entry['ending_xp']} source={final_source}")
                         
                         return entry_idx
                     
@@ -3828,56 +3842,49 @@ async def get_competition(identifier: str, page: int = 1, per_page: int = 25):
 _live_competition_cache = {}
 _live_competition_cache_ttl = 60  # seconds
 
-_competition_live_xp_cache = {}
-_competition_live_xp_cache_ttl = 180  # 3 minutes TTL for live XP per user+skill
-
 async def get_cached_live_xp(username: str, skill: str, competition_id: str) -> tuple:
     """
-    Get live XP for a user+skill with caching.
+    Get live XP for a user+skill using the same cache as profiles (live_stats_cache).
     Returns (xp_value, source) where source is 'cache', 'live', or 'failed'.
-    """
-    cache_key = f"{username.lower()}:{skill.lower()}:{competition_id}"
-    now = datetime.now(timezone.utc).timestamp()
     
-    if cache_key in _competition_live_xp_cache:
-        cached = _competition_live_xp_cache[cache_key]
-        if now - cached['timestamp'] < _competition_live_xp_cache_ttl:
-            return (cached['xp'], 'cache')
+    IMPORTANT: Uses fetch_player_stats which has its own 2-minute cache (live_stats_cache).
+    This ensures competition XP matches profile XP exactly (same source, same units).
+    """
+    import time as time_module
+    
+    skill_normalized = skill.lower().replace(' ', '_')
     
     try:
-        stats = await asyncio.wait_for(fetch_player_stats(username), timeout=5.0)
-        if stats and 'skillvalues' in stats:
-            skill_normalized = skill.lower().replace(' ', '_')
-            skill_id_map = {
-                'attack': 0, 'defence': 1, 'strength': 2, 'constitution': 3,
-                'ranged': 4, 'prayer': 5, 'magic': 6, 'cooking': 7,
-                'woodcutting': 8, 'fletching': 9, 'fishing': 10, 'firemaking': 11,
-                'crafting': 12, 'smithing': 13, 'mining': 14, 'herblore': 15,
-                'agility': 16, 'thieving': 17, 'slayer': 18, 'farming': 19,
-                'runecrafting': 20, 'hunter': 21, 'construction': 22, 'summoning': 23,
-                'dungeoneering': 24, 'divination': 25, 'invention': 26, 'archaeology': 27,
-                'necromancy': 28, 'overall': -1
-            }
+        # Use fetch_player_stats which has built-in caching (live_stats_cache, 2-min TTL)
+        # This ensures we get the SAME data as the profile endpoint
+        stats_result = await asyncio.wait_for(
+            fetch_player_stats(username, max_retries=1, use_cache=True, timeout=5.0),
+            timeout=6.0
+        )
+        
+        if stats_result and 'stats' in stats_result:
+            stats = stats_result['stats']
             
+            # Determine source: check if this was a cache hit
+            current_time = time_module.time()
+            source = 'live'
+            if username in live_stats_cache['data'] and username in live_stats_cache['timestamps']:
+                cache_age = current_time - live_stats_cache['timestamps'][username]
+                if cache_age < live_stats_cache['ttl']:
+                    source = 'cache'
+            
+            # Extract XP for the skill (already in correct units from fetch_player_stats)
             if skill_normalized == 'overall':
-                live_xp = sum(s.get('xp', 0) // 10 for s in stats['skillvalues'])
+                live_xp = stats.get('overall', {}).get('xp', 0)
             else:
-                skill_id = skill_id_map.get(skill_normalized, -1)
-                live_xp = 0
-                for s in stats['skillvalues']:
-                    if s.get('id') == skill_id:
-                        live_xp = s.get('xp', 0) // 10
-                        break
+                skill_data = stats.get(skill_normalized, {})
+                live_xp = skill_data.get('xp', 0)
             
-            _competition_live_xp_cache[cache_key] = {
-                'xp': live_xp,
-                'timestamp': now
-            }
-            return (live_xp, 'live')
+            return (live_xp, source)
     except asyncio.TimeoutError:
-        pass
-    except Exception:
-        pass
+        print(f"[Competition][LIVE_XP] Timeout fetching stats for {username}")
+    except Exception as e:
+        print(f"[Competition][LIVE_XP] Error fetching stats for {username}: {e}")
     
     return (None, 'failed')
 
