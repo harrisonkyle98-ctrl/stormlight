@@ -47,19 +47,19 @@ export function ActivityLogRow({
 
       {/* Right content column */}
       <div className="flex-1 p-3 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <Link
-              to={`/clan-member/${usernameToUrl(activity.username)}`}
-              className="text-white font-medium hover:text-blue-300 transition-colors flex-shrink-0"
-            >
-              <Username
-                username={activity.username}
-                clanRank={clanRank}
-              />
-            </Link>
-            <span className="text-slate-300 truncate">{activity.text}</span>
-          </div>
+                <div className="flex items-center justify-between gap-2 overflow-hidden">
+                  <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+                    <Link
+                      to={`/clan-member/${usernameToUrl(activity.username)}`}
+                      className="text-white font-medium hover:text-blue-300 transition-colors flex-shrink-0"
+                    >
+                      <Username
+                        username={activity.username}
+                        clanRank={clanRank}
+                      />
+                    </Link>
+                    <span className="text-slate-300 truncate">{activity.text}</span>
+                  </div>
           <span className="text-slate-400 text-xs whitespace-nowrap ml-2 flex-shrink-0">
             {formatTimeAgo(activity.timestamp)}
           </span>
