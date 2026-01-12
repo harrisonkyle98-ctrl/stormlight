@@ -11,6 +11,7 @@ import { ActivityLogRow } from '../components/activityLogs/ActivityLogRow'
 import { Username } from '../components/ui/username'
 import GlobalProfileHeader from '../components/profile/GlobalProfileHeader'
 import { usePageTitle } from '../hooks/usePageTitle'
+import DailyscapeCard from '../components/dailyscape/DailyscapeCard'
 
 const getRankIcon= (rank: string): string => {
   const rankImageMap: { [key: string]: string } = {
@@ -704,6 +705,12 @@ const Home = () => {
             </div>
           </div>
         )}
+
+        {/* Dailyscape Section - positioned under Your Recent Progress / Members Active Today */}
+        <div className="fantasy-grid-2">
+          <DailyscapeCard />
+          <div></div>
+        </div>
 
         {/* Clan Log & Recent Activity Section */}
         <div className="fantasy-grid-2">
