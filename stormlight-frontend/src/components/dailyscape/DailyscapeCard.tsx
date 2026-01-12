@@ -365,8 +365,15 @@ const DailyscapeCard = () => {
           <p className="text-sm text-slate-400">{error}</p>
         </div>
       ) : (
-        <Tabs defaultValue="merchant" className="w-full">
+        <Tabs defaultValue="wildy" className="w-full">
           <TabsList className="w-full bg-slate-700/30 mb-4">
+            <TabsTrigger 
+              value="wildy" 
+              className="flex-1 data-[state=active]:bg-slate-600 data-[state=active]:text-white text-slate-300"
+            >
+              <Flame className="w-4 h-4 mr-2" />
+              Wildy
+            </TabsTrigger>
             <TabsTrigger 
               value="merchant" 
               className="flex-1 data-[state=active]:bg-slate-600 data-[state=active]:text-white text-slate-300"
@@ -380,13 +387,6 @@ const DailyscapeCard = () => {
             >
               <Sparkles className="w-4 h-4 mr-2" />
               Vis Wax
-            </TabsTrigger>
-            <TabsTrigger 
-              value="wildy" 
-              className="flex-1 data-[state=active]:bg-slate-600 data-[state=active]:text-white text-slate-300"
-            >
-              <Flame className="w-4 h-4 mr-2" />
-              Wildy
             </TabsTrigger>
             <TabsTrigger 
               value="vos" 
