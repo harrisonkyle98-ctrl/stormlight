@@ -29,7 +29,7 @@ export const ribbonColors: Record<string, RibbonColor> = {
   },
   sandstone: {
     id: 'sandstone',
-    name: 'Sandstone',
+    name: 'Tangerine',
     top: '#d98c4a',
     middle: '#c47a3d',
     bottom: '#a66530',
@@ -93,7 +93,7 @@ export const ribbonColors: Record<string, RibbonColor> = {
   }
 }
 
-// Ordered array for UI selectors - exact order: Silver, Gold, Sandstone, Crimson, Cherry, Lavender, Amethyst, Sapphire, Pine, Emerald
+// Ordered array for UI selectors - exact order: Silver, Gold, Tangerine, Crimson, Cherry, Lavender, Amethyst, Sapphire, Pine, Emerald
 export const ribbonColorOrder = ['silver', 'gold', 'sandstone', 'red', 'cherry', 'lavender', 'purple', 'blue', 'pine', 'green']
 
 // Get ribbon colors in the correct order for UI display
@@ -136,6 +136,28 @@ export function applyPageRibbonColor(color: RibbonColor | null) {
 
 // Default page ribbon color (null means use default behavior - Sapphire sitewide, Amethyst for Admin)
 export const defaultPageRibbonColor: string | null = null
+
+// Apply navigation ribbon color - controls the ribbon-style navigation elements
+export function applyNavRibbonColor(color: RibbonColor | null) {
+  const root = document.documentElement
+  
+  if (color) {
+    // Set CSS variables for the navigation ribbon (overrides nav ribbon colors)
+    root.style.setProperty('--nav-ribbon-top', color.top)
+    root.style.setProperty('--nav-ribbon-middle', color.middle)
+    root.style.setProperty('--nav-ribbon-bottom', color.bottom)
+    root.setAttribute('data-nav-ribbon-color', color.id)
+  } else {
+    // Remove nav ribbon override - revert to default behavior
+    root.style.removeProperty('--nav-ribbon-top')
+    root.style.removeProperty('--nav-ribbon-middle')
+    root.style.removeProperty('--nav-ribbon-bottom')
+    root.removeAttribute('data-nav-ribbon-color')
+  }
+}
+
+// Default nav ribbon color (null means use default behavior)
+export const defaultNavRibbonColor: string | null = null
 
 // Legacy exports for backward compatibility during transition
 // The themes object now maps to ribbon colors

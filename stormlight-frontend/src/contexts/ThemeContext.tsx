@@ -1,11 +1,13 @@
 import { createContext, useContext, useState, useLayoutEffect, ReactNode } from 'react'
-import { ribbonColors, defaultRibbonColor, applyRibbonColor, applyPageRibbonColor, defaultPageRibbonColor } from '../config/themes'
+import { ribbonColors, defaultRibbonColor, applyRibbonColor, applyPageRibbonColor, defaultPageRibbonColor, applyNavRibbonColor, defaultNavRibbonColor } from '../config/themes'
 
 interface ThemeContextType {
   theme: string | null
   setTheme: (themeId: string | null) => void
   pageRibbon: string | null
   setPageRibbon: (colorId: string | null) => void
+  navRibbon: string | null
+  setNavRibbon: (colorId: string | null) => void
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
@@ -27,6 +29,7 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children, user, loading }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<string | null>(null)
   const [pageRibbon, setPageRibbonState] = useState<string | null>(defaultPageRibbonColor)
+  const [navRibbon, setNavRibbonState] = useState<string | null>(defaultNavRibbonColor)
 
   // Apply ribbon colors based on user preferences from database (primary source)
   // Falls back to localStorage for anonymous users, then to default
@@ -35,8 +38,10 @@ export function ThemeProvider({ children, user, loading }: ThemeProviderProps) {
       // While loading, apply defaults to prevent flash
       applyRibbonColor(ribbonColors[defaultRibbonColor])
       applyPageRibbonColor(null)
+      applyNavRibbonColor(null)
       setThemeState(defaultRibbonColor)
       setPageRibbonState(null)
+      setNavRibbonState(null)
       return
     }
 
@@ -79,6 +84,19 @@ export function ThemeProvider({ children, user, loading }: ThemeProviderProps) {
         setPageRibbonState(null)
         localStorage.removeItem('pageRibbonColor')
       }
+
+      // Nav ribbon: check new key (null means use default behavior)
+      const userNavRibbon = parsedPrefs['nav-ribbon'] || null
+      if (userNavRibbon && ribbonColors[userNavRibbon]) {
+        applyNavRibbonColor(ribbonColors[userNavRibbon])
+        setNavRibbonState(userNavRibbon)
+        localStorage.setItem('navRibbonColor', userNavRibbon)
+      } else {
+        // No nav ribbon preference - use default behavior
+        applyNavRibbonColor(null)
+        setNavRibbonState(null)
+        localStorage.removeItem('navRibbonColor')
+      }
     } else {
       // For anonymous users, use localStorage or default
       const storedColor = localStorage.getItem('ribbonColor')
@@ -99,6 +117,16 @@ export function ThemeProvider({ children, user, loading }: ThemeProviderProps) {
       } else {
         applyPageRibbonColor(null)
         setPageRibbonState(null)
+      }
+
+      // Nav ribbon for anonymous users
+      const storedNavColor = localStorage.getItem('navRibbonColor')
+      if (storedNavColor && ribbonColors[storedNavColor]) {
+        applyNavRibbonColor(ribbonColors[storedNavColor])
+        setNavRibbonState(storedNavColor)
+      } else {
+        applyNavRibbonColor(null)
+        setNavRibbonState(null)
       }
     }
   }, [user, loading])
@@ -166,8 +194,39 @@ export function ThemeProvider({ children, user, loading }: ThemeProviderProps) {
     }
   }
 
+  const setNavRibbon = async (colorId: string | null) => {
+    // Apply the nav ribbon color immediately
+    if (colorId && ribbonColors[colorId]) {
+      applyNavRibbonColor(ribbonColors[colorId])
+      setNavRibbonState(colorId)
+      localStorage.setItem('navRibbonColor', colorId)
+    } else {
+      applyNavRibbonColor(null)
+      setNavRibbonState(null)
+      localStorage.removeItem('navRibbonColor')
+    }
+    
+    // Save to backend if user is logged in
+    const token = localStorage.getItem('access_token')
+    if (token && user?.username) {
+      try {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+        await fetch(`${API_URL}/api/user/theme`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ 'nav-ribbon': colorId })
+        })
+      } catch (error) {
+        console.error('Error saving nav ribbon color preference:', error)
+      }
+    }
+  }
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, pageRibbon, setPageRibbon }}>
+    <ThemeContext.Provider value={{ theme, setTheme, pageRibbon, setPageRibbon, navRibbon, setNavRibbon }}>
       {children}
     </ThemeContext.Provider>
   )

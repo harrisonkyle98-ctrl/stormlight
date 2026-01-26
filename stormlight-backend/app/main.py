@@ -2628,6 +2628,16 @@ async def update_user_theme(
                 if 'page-ribbon' in preferences:
                     del preferences['page-ribbon']
         
+        # Handle nav-ribbon (new key for navigation ribbon color)
+        if 'nav-ribbon' in body:
+            nav_ribbon = body.get('nav-ribbon')
+            if nav_ribbon and nav_ribbon in valid_colors:
+                preferences['nav-ribbon'] = nav_ribbon
+            elif nav_ribbon is None:
+                # Allow unsetting (revert to default behavior)
+                if 'nav-ribbon' in preferences:
+                    del preferences['nav-ribbon']
+        
         await prisma.user.update(
             where={'discordId': user_id},
             data={'preferences': json.dumps(preferences)}
@@ -2640,7 +2650,8 @@ async def update_user_theme(
         return {
             'success': True, 
             'profile-ribbon': preferences.get('profile-ribbon'),
-            'page-ribbon': preferences.get('page-ribbon')
+            'page-ribbon': preferences.get('page-ribbon'),
+            'nav-ribbon': preferences.get('nav-ribbon')
         }
     
     except HTTPException:

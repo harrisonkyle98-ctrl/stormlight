@@ -42,10 +42,11 @@
   --s: 1.2em; /* ribbon side width for fold shading */
   --d: 0.6em; /* depth / drop for fold shading */
   
-  /* Color stops - default blue with increased saturation for nav visibility */
-  --nav-color-top: #7090dc;
-  --nav-color-mid: #5a78d0;
-  --nav-color-bot: #4866c4;
+  /* Color stops - can be overridden via CSS variables set by JavaScript (--nav-ribbon-top/middle/bottom)
+     If user sets a Navigation Ribbon Color preference, those variables will override these defaults */
+  --nav-color-top: var(--nav-ribbon-top, #7090dc);
+  --nav-color-mid: var(--nav-ribbon-middle, #5a78d0);
+  --nav-color-bot: var(--nav-ribbon-bottom, #4866c4);
   
   /* Layout */
   position: relative;

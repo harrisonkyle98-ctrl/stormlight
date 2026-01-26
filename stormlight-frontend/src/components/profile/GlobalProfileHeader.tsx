@@ -53,7 +53,7 @@ interface PlayerStats {
 
 const GlobalProfileHeader = () => {
   const { user, logout } = useAuth()
-  const { theme: selectedTheme, setTheme: handleThemeChange, pageRibbon: selectedPageRibbon, setPageRibbon: handlePageRibbonChange } = useTheme()
+  const { theme: selectedTheme, setTheme: handleThemeChange, pageRibbon: selectedPageRibbon, setPageRibbon: handlePageRibbonChange, navRibbon: selectedNavRibbon, setNavRibbon: handleNavRibbonChange } = useTheme()
   const navigate = useNavigate()
   
   // Profile card state
@@ -72,6 +72,7 @@ const GlobalProfileHeader = () => {
   const [linkRequestLoading, setLinkRequestLoading] = useState(false)
   const [themeTooltip, setThemeTooltip] = useState<string | null>(null)
   const [pageRibbonTooltip, setPageRibbonTooltip] = useState<string | null>(null)
+  const [navRibbonTooltip, setNavRibbonTooltip] = useState<string | null>(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -851,6 +852,59 @@ const GlobalProfileHeader = () => {
                     </div>
                     <p className="text-xs text-slate-400 mt-2">
                       Override the color of all page header ribbons. Select "Auto" for default behavior.
+                    </p>
+                  </div>
+
+                  {/* Navigation Ribbon Color */}
+                  <div>
+                    <h4 className="text-sm font-medium text-slate-300 mb-3">Navigation Ribbon Color</h4>
+                    <div className="flex flex-wrap gap-3">
+                      {/* Default option (no override) */}
+                      <div className="relative">
+                        <button
+                          onClick={() => handleNavRibbonChange(null)}
+                          onMouseEnter={() => setNavRibbonTooltip('Default')}
+                          onMouseLeave={() => setNavRibbonTooltip(null)}
+                          className={`w-12 h-12 rounded-full transition-all border-2 border-dashed border-slate-500 flex items-center justify-center ${
+                            selectedNavRibbon === null 
+                              ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-800 scale-110' 
+                              : 'hover:scale-105'
+                          }`}
+                          style={{ background: 'transparent' }}
+                          title="Default"
+                        >
+                          <span className="text-slate-400 text-xs">Auto</span>
+                        </button>
+                        {navRibbonTooltip === 'Default' && (
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded whitespace-nowrap z-50">
+                            Default
+                          </div>
+                        )}
+                      </div>
+                      {getOrderedRibbonColors().map((color) => (
+                        <div key={color.id} className="relative">
+                          <button
+                            onClick={() => handleNavRibbonChange(color.id)}
+                            onMouseEnter={() => setNavRibbonTooltip(color.name)}
+                            onMouseLeave={() => setNavRibbonTooltip(null)}
+                            className={`w-12 h-12 rounded-full transition-all ${
+                              selectedNavRibbon === color.id 
+                                ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-800 scale-110' 
+                                : 'hover:scale-105'
+                            }`}
+                            style={{ background: color.gradient }}
+                            title={color.name}
+                          />
+                          {navRibbonTooltip === color.name && (
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded whitespace-nowrap z-50">
+                              {color.name}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-slate-400 mt-2">
+                      Override the color of navigation ribbons. Select "Auto" for default behavior.
                     </p>
                   </div>
                 </div>
