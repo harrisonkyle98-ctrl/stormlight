@@ -11,6 +11,14 @@ export interface RibbonColor {
 }
 
 export const ribbonColors: Record<string, RibbonColor> = {
+  silver: {
+    id: 'silver',
+    name: 'Silver',
+    top: '#c0c0c0',
+    middle: '#a8a8a8',
+    bottom: '#8a8a8a',
+    gradient: 'linear-gradient(135deg, #c0c0c0 0%, #8a8a8a 100%)'
+  },
   gold: {
     id: 'gold',
     name: 'Gold',
@@ -19,38 +27,78 @@ export const ribbonColors: Record<string, RibbonColor> = {
     bottom: '#967e39',   // desaturated 17%
     gradient: 'linear-gradient(135deg, #bfa44b 0%, #967e39 100%)'
   },
-  blue: {
-    id: 'blue',
-    name: 'Sapphire Blue',
-    top: '#4f6ebc',      // desaturated 17%
-    middle: '#445ea1',   // desaturated 17%
-    bottom: '#394f8b',   // desaturated 17%
-    gradient: 'linear-gradient(135deg, #4f6ebc 0%, #394f8b 100%)'
+  sandstone: {
+    id: 'sandstone',
+    name: 'Sandstone',
+    top: '#d4a574',
+    middle: '#c4956a',
+    bottom: '#a67c52',
+    gradient: 'linear-gradient(135deg, #d4a574 0%, #a67c52 100%)'
   },
-  green: {
-    id: 'green',
-    name: 'Emerald Green',
-    top: '#329951',      // desaturated 17%
-    middle: '#2a7d45',   // desaturated 17%
-    bottom: '#205d34',   // desaturated 17%
-    gradient: 'linear-gradient(135deg, #329951 0%, #205d34 100%)'
+  red: {
+    id: 'red',
+    name: 'Crimson',
+    top: '#bc4545',      // further desaturated
+    middle: '#9d3737',   // further desaturated
+    bottom: '#823131',   // further desaturated
+    gradient: 'linear-gradient(135deg, #bc4545 0%, #823131 100%)'
+  },
+  cherry: {
+    id: 'cherry',
+    name: 'Cherry',
+    top: '#d44d5c',
+    middle: '#b8404d',
+    bottom: '#9a3540',
+    gradient: 'linear-gradient(135deg, #d44d5c 0%, #9a3540 100%)'
+  },
+  lavender: {
+    id: 'lavender',
+    name: 'Lavender',
+    top: '#9b7bb8',
+    middle: '#8668a3',
+    bottom: '#6f5588',
+    gradient: 'linear-gradient(135deg, #9b7bb8 0%, #6f5588 100%)'
   },
   purple: {
     id: 'purple',
-    name: 'Amethyst Purple',
+    name: 'Amethyst',
     top: '#7347b9',      // further desaturated
     middle: '#613b9b',   // further desaturated
     bottom: '#50337e',   // further desaturated
     gradient: 'linear-gradient(135deg, #7347b9 0%, #50337e 100%)'
   },
-  red: {
-    id: 'red',
-    name: 'Crimson Red',
-    top: '#bc4545',      // further desaturated
-    middle: '#9d3737',   // further desaturated
-    bottom: '#823131',   // further desaturated
-    gradient: 'linear-gradient(135deg, #bc4545 0%, #823131 100%)'
+  blue: {
+    id: 'blue',
+    name: 'Sapphire',
+    top: '#4f6ebc',      // desaturated 17%
+    middle: '#445ea1',   // desaturated 17%
+    bottom: '#394f8b',   // desaturated 17%
+    gradient: 'linear-gradient(135deg, #4f6ebc 0%, #394f8b 100%)'
+  },
+  pine: {
+    id: 'pine',
+    name: 'Pine',
+    top: '#3d7a5a',
+    middle: '#336649',
+    bottom: '#2a5239',
+    gradient: 'linear-gradient(135deg, #3d7a5a 0%, #2a5239 100%)'
+  },
+  green: {
+    id: 'green',
+    name: 'Emerald',
+    top: '#329951',      // desaturated 17%
+    middle: '#2a7d45',   // desaturated 17%
+    bottom: '#205d34',   // desaturated 17%
+    gradient: 'linear-gradient(135deg, #329951 0%, #205d34 100%)'
   }
+}
+
+// Ordered array for UI selectors - exact order: Silver, Gold, Sandstone, Crimson, Cherry, Lavender, Amethyst, Sapphire, Pine, Emerald
+export const ribbonColorOrder = ['silver', 'gold', 'sandstone', 'red', 'cherry', 'lavender', 'purple', 'blue', 'pine', 'green']
+
+// Get ribbon colors in the correct order for UI display
+export function getOrderedRibbonColors(): RibbonColor[] {
+  return ribbonColorOrder.map(id => ribbonColors[id])
 }
 
 export const defaultRibbonColor = 'purple'
@@ -66,6 +114,28 @@ export function applyRibbonColor(color: RibbonColor) {
   // Store the ribbon color ID for reference
   root.setAttribute('data-ribbon-color', color.id)
 }
+
+// Apply page ribbon color - controls all page header ribbons (including Admin)
+export function applyPageRibbonColor(color: RibbonColor | null) {
+  const root = document.documentElement
+  
+  if (color) {
+    // Set CSS variables for the page ribbon (overrides all page headers)
+    root.style.setProperty('--page-ribbon-top', color.top)
+    root.style.setProperty('--page-ribbon-middle', color.middle)
+    root.style.setProperty('--page-ribbon-bottom', color.bottom)
+    root.setAttribute('data-page-ribbon-color', color.id)
+  } else {
+    // Remove page ribbon override - revert to default behavior
+    root.style.removeProperty('--page-ribbon-top')
+    root.style.removeProperty('--page-ribbon-middle')
+    root.style.removeProperty('--page-ribbon-bottom')
+    root.removeAttribute('data-page-ribbon-color')
+  }
+}
+
+// Default page ribbon color (null means use default behavior - Sapphire sitewide, Amethyst for Admin)
+export const defaultPageRibbonColor: string | null = null
 
 // Legacy exports for backward compatibility during transition
 // The themes object now maps to ribbon colors

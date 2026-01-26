@@ -1,9 +1,11 @@
 import { createContext, useContext, useState, useLayoutEffect, ReactNode } from 'react'
-import { ribbonColors, defaultRibbonColor, applyRibbonColor } from '../config/themes'
+import { ribbonColors, defaultRibbonColor, applyRibbonColor, applyPageRibbonColor, defaultPageRibbonColor } from '../config/themes'
 
 interface ThemeContextType {
   theme: string
   setTheme: (themeId: string) => void
+  pageRibbon: string | null
+  setPageRibbon: (colorId: string | null) => void
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
@@ -24,14 +26,17 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({ children, user, loading }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<string>(defaultRibbonColor)
+  const [pageRibbon, setPageRibbonState] = useState<string | null>(defaultPageRibbonColor)
 
-  // Apply ribbon color based on user preferences from database (primary source)
-  // Falls back to localStorage for anonymous users, then to default (purple)
+  // Apply ribbon colors based on user preferences from database (primary source)
+  // Falls back to localStorage for anonymous users, then to default
   useLayoutEffect(() => {
     if (loading) {
-      // While loading, apply default to prevent flash
+      // While loading, apply defaults to prevent flash
       applyRibbonColor(ribbonColors[defaultRibbonColor])
+      applyPageRibbonColor(null)
       setThemeState(defaultRibbonColor)
+      setPageRibbonState(null)
       return
     }
 
@@ -41,23 +46,37 @@ export function ThemeProvider({ children, user, loading }: ThemeProviderProps) {
       // Parse preferences if it's a string
       const parsedPrefs = typeof prefs === 'string' ? JSON.parse(prefs) : prefs
       
-      // Check multiple possible keys for backward compatibility
-      const userRibbonColor = 
+      // Profile ribbon: check new key first, then legacy keys for backward compatibility
+      // Priority: profile-ribbon > ribbon_color > ribbonColor > theme (legacy)
+      const userProfileRibbon = 
+        parsedPrefs['profile-ribbon'] ||
         parsedPrefs.ribbon_color ||
         parsedPrefs.ribbonColor ||
-        parsedPrefs.theme ||
+        parsedPrefs.theme ||  // Legacy key - treat as profile-ribbon
         (user as any).theme ||
         (user as any).ribbonColor
       
-      if (userRibbonColor && ribbonColors[userRibbonColor]) {
-        applyRibbonColor(ribbonColors[userRibbonColor])
-        setThemeState(userRibbonColor)
-        // Also update localStorage as a cache
-        localStorage.setItem('ribbonColor', userRibbonColor)
+      if (userProfileRibbon && ribbonColors[userProfileRibbon]) {
+        applyRibbonColor(ribbonColors[userProfileRibbon])
+        setThemeState(userProfileRibbon)
+        localStorage.setItem('ribbonColor', userProfileRibbon)
       } else {
         // User has no valid preference - use default (purple)
         applyRibbonColor(ribbonColors[defaultRibbonColor])
         setThemeState(defaultRibbonColor)
+      }
+
+      // Page ribbon: check new key (null means use default behavior)
+      const userPageRibbon = parsedPrefs['page-ribbon'] || null
+      if (userPageRibbon && ribbonColors[userPageRibbon]) {
+        applyPageRibbonColor(ribbonColors[userPageRibbon])
+        setPageRibbonState(userPageRibbon)
+        localStorage.setItem('pageRibbonColor', userPageRibbon)
+      } else {
+        // No page ribbon preference - use default behavior (Sapphire sitewide, Amethyst for Admin)
+        applyPageRibbonColor(null)
+        setPageRibbonState(null)
+        localStorage.removeItem('pageRibbonColor')
       }
     } else {
       // For anonymous users, use localStorage or default
@@ -66,9 +85,18 @@ export function ThemeProvider({ children, user, loading }: ThemeProviderProps) {
         applyRibbonColor(ribbonColors[storedColor])
         setThemeState(storedColor)
       } else {
-        // No stored preference - use default (purple)
         applyRibbonColor(ribbonColors[defaultRibbonColor])
         setThemeState(defaultRibbonColor)
+      }
+
+      // Page ribbon for anonymous users
+      const storedPageColor = localStorage.getItem('pageRibbonColor')
+      if (storedPageColor && ribbonColors[storedPageColor]) {
+        applyPageRibbonColor(ribbonColors[storedPageColor])
+        setPageRibbonState(storedPageColor)
+      } else {
+        applyPageRibbonColor(null)
+        setPageRibbonState(null)
       }
     }
   }, [user, loading])
@@ -93,16 +121,47 @@ export function ThemeProvider({ children, user, loading }: ThemeProviderProps) {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ theme: colorId })
+          body: JSON.stringify({ 'profile-ribbon': colorId })
         })
       } catch (error) {
-        console.error('Error saving ribbon color preference:', error)
+        console.error('Error saving profile ribbon color preference:', error)
+      }
+    }
+  }
+
+  const setPageRibbon = async (colorId: string | null) => {
+    // Apply the page ribbon color immediately
+    if (colorId && ribbonColors[colorId]) {
+      applyPageRibbonColor(ribbonColors[colorId])
+      setPageRibbonState(colorId)
+      localStorage.setItem('pageRibbonColor', colorId)
+    } else {
+      applyPageRibbonColor(null)
+      setPageRibbonState(null)
+      localStorage.removeItem('pageRibbonColor')
+    }
+    
+    // Save to backend if user is logged in
+    const token = localStorage.getItem('access_token')
+    if (token && user?.username) {
+      try {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+        await fetch(`${API_URL}/api/user/theme`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ 'page-ribbon': colorId })
+        })
+      } catch (error) {
+        console.error('Error saving page ribbon color preference:', error)
       }
     }
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, pageRibbon, setPageRibbon }}>
       {children}
     </ThemeContext.Provider>
   )

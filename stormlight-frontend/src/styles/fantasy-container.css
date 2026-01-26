@@ -51,10 +51,12 @@
 }
 
 /* Pure CSS Ribbon Banner */
+/* Page ribbon colors can be overridden via CSS variables set by JavaScript */
+/* If --page-ribbon-top/middle/bottom are set, they override the default colors */
 .fantasy-banner {
-  --banner-color-top: #4f6ebc;    /* twilight blue - desaturated */
-  --banner-color-middle: #445ea1; /* royal storm blue - desaturated */
-  --banner-color-bottom: #394f8b; /* deep fantasy blue - desaturated */
+  --banner-color-top: var(--page-ribbon-top, #4f6ebc);    /* twilight blue - desaturated (default) */
+  --banner-color-middle: var(--page-ribbon-middle, #445ea1); /* royal storm blue - desaturated (default) */
+  --banner-color-bottom: var(--page-ribbon-bottom, #394f8b); /* deep fantasy blue - desaturated (default) */
   --s: 2.2em; /* ribbon side width */
   --d: 1.0em; /* depth / drop */
   --c: 1em;   /* cutout */
@@ -573,10 +575,11 @@
 
 /* Admin Panel Banner Modifier - purple for admin identification */
 /* Further desaturated for premium muted aesthetic */
+/* Note: If user has set page-ribbon preference, it will override this via the base .fantasy-banner rule */
 .fantasy-banner--admin {
-  --banner-color-top: #7347b9;    /* deep purple - further desaturated */
-  --banner-color-middle: #613b9b; /* darker purple - further desaturated */
-  --banner-color-bottom: #50337e; /* darkest purple - further desaturated */
+  --banner-color-top: var(--page-ribbon-top, #7347b9);    /* deep purple - further desaturated (default) */
+  --banner-color-middle: var(--page-ribbon-middle, #613b9b); /* darker purple - further desaturated (default) */
+  --banner-color-bottom: var(--page-ribbon-bottom, #50337e); /* darkest purple - further desaturated (default) */
 }
 
 /* Gold ribbon inside profile header should match panel width (no overhang) */

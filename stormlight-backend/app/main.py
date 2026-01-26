@@ -2569,19 +2569,22 @@ async def update_user_theme(
     request: Request,
     user_id: str = Depends(verify_token)
 ):
-    """Update user's theme preference"""
+    """Update user's theme/ribbon preferences
+    
+    Supports both legacy 'theme' key and new 'profile-ribbon' / 'page-ribbon' keys.
+    - profile-ribbon: Controls the user's profile ribbon color
+    - page-ribbon: Controls all page header ribbon colors (overrides defaults including Admin)
+    - theme (legacy): Treated as profile-ribbon for backward compatibility
+    """
     try:
         global prisma, PRISMA_AVAILABLE
         if not PRISMA_AVAILABLE or not prisma:
             raise HTTPException(status_code=503, detail="Database not available")
         
         body = await request.json()
-        theme = body.get('theme', 'purple')
         
-        # Valid ribbon color IDs - default is now purple
-        valid_themes = ['gold', 'blue', 'green', 'purple', 'red']
-        if theme not in valid_themes:
-            theme = 'purple'
+        # Valid ribbon color IDs (including new colors)
+        valid_colors = ['silver', 'gold', 'sandstone', 'red', 'cherry', 'lavender', 'purple', 'blue', 'pine', 'green']
         
         user = await prisma.user.find_unique(
             where={'discordId': user_id}
@@ -2594,17 +2597,51 @@ async def update_user_theme(
         if isinstance(preferences, str):
             preferences = json.loads(preferences)
         
-        preferences['theme'] = theme
+        # Handle profile-ribbon (new key) or theme (legacy key)
+        if 'profile-ribbon' in body:
+            profile_ribbon = body.get('profile-ribbon')
+            if profile_ribbon and profile_ribbon in valid_colors:
+                preferences['profile-ribbon'] = profile_ribbon
+                # Migrate away from legacy 'theme' key
+                if 'theme' in preferences:
+                    del preferences['theme']
+            elif profile_ribbon is None:
+                # Allow unsetting
+                if 'profile-ribbon' in preferences:
+                    del preferences['profile-ribbon']
+        elif 'theme' in body:
+            # Legacy support: treat 'theme' as 'profile-ribbon'
+            theme = body.get('theme', 'purple')
+            if theme in valid_colors:
+                preferences['profile-ribbon'] = theme
+                # Remove legacy key if present
+                if 'theme' in preferences:
+                    del preferences['theme']
+        
+        # Handle page-ribbon (new key)
+        if 'page-ribbon' in body:
+            page_ribbon = body.get('page-ribbon')
+            if page_ribbon and page_ribbon in valid_colors:
+                preferences['page-ribbon'] = page_ribbon
+            elif page_ribbon is None:
+                # Allow unsetting (revert to default behavior)
+                if 'page-ribbon' in preferences:
+                    del preferences['page-ribbon']
         
         await prisma.user.update(
             where={'discordId': user_id},
             data={'preferences': json.dumps(preferences)}
         )
         
+        # Update in-memory cache
         if user_id in users_db:
-            users_db[user_id]['theme'] = theme
+            users_db[user_id]['preferences'] = preferences
         
-        return {'success': True, 'theme': theme}
+        return {
+            'success': True, 
+            'profile-ribbon': preferences.get('profile-ribbon'),
+            'page-ribbon': preferences.get('page-ribbon')
+        }
     
     except HTTPException:
         raise

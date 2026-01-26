@@ -9,7 +9,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog'
 import { checkPlayerMilestones } from '../../utils/gradientUtils'
-import { ribbonColors } from '../../config/themes'
+import { getOrderedRibbonColors } from '../../config/themes'
 import RibbonNav from '../RibbonNav'
 import '../../styles/fantasy-container.css'
 
@@ -53,7 +53,7 @@ interface PlayerStats {
 
 const GlobalProfileHeader = () => {
   const { user, logout } = useAuth()
-  const { theme: selectedTheme, setTheme: handleThemeChange } = useTheme()
+  const { theme: selectedTheme, setTheme: handleThemeChange, pageRibbon: selectedPageRibbon, setPageRibbon: handlePageRibbonChange } = useTheme()
   const navigate = useNavigate()
   
   // Profile card state
@@ -71,6 +71,7 @@ const GlobalProfileHeader = () => {
   const [newUsername, setNewUsername] = useState('')
   const [linkRequestLoading, setLinkRequestLoading] = useState(false)
   const [themeTooltip, setThemeTooltip] = useState<string | null>(null)
+  const [pageRibbonTooltip, setPageRibbonTooltip] = useState<string | null>(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -746,11 +747,12 @@ const GlobalProfileHeader = () => {
             {settingsSection === 'appearance' && (
             <div className="space-y-3">
               <div className="bg-slate-700/30 rounded-lg p-4">
-                <div className="space-y-4">
+                <div className="space-y-6">
+                  {/* Profile Ribbon Color */}
                   <div>
                     <h4 className="text-sm font-medium text-slate-300 mb-3">Profile Ribbon Color</h4>
                     <div className="flex flex-wrap gap-3">
-                      {Object.values(ribbonColors).map((color) => (
+                      {getOrderedRibbonColors().map((color) => (
                         <div key={color.id} className="relative">
                           <button
                             onClick={() => handleThemeChange(color.id)}
@@ -772,10 +774,63 @@ const GlobalProfileHeader = () => {
                         </div>
                       ))}
                     </div>
+                    <p className="text-xs text-slate-400 mt-2">
+                      Select a color for your profile ribbon. Your preference will be saved.
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-400 mt-2">
-                    Select a color for your profile ribbon. Your preference will be saved.
-                  </p>
+
+                  {/* Page Ribbon Color */}
+                  <div>
+                    <h4 className="text-sm font-medium text-slate-300 mb-3">Page Ribbon Color</h4>
+                    <div className="flex flex-wrap gap-3">
+                      {/* Default option (no override) */}
+                      <div className="relative">
+                        <button
+                          onClick={() => handlePageRibbonChange(null)}
+                          onMouseEnter={() => setPageRibbonTooltip('Default')}
+                          onMouseLeave={() => setPageRibbonTooltip(null)}
+                          className={`w-12 h-12 rounded-full transition-all border-2 border-dashed border-slate-500 flex items-center justify-center ${
+                            selectedPageRibbon === null 
+                              ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-800 scale-110' 
+                              : 'hover:scale-105'
+                          }`}
+                          style={{ background: 'transparent' }}
+                          title="Default"
+                        >
+                          <span className="text-slate-400 text-xs">Auto</span>
+                        </button>
+                        {pageRibbonTooltip === 'Default' && (
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded whitespace-nowrap z-50">
+                            Default
+                          </div>
+                        )}
+                      </div>
+                      {getOrderedRibbonColors().map((color) => (
+                        <div key={color.id} className="relative">
+                          <button
+                            onClick={() => handlePageRibbonChange(color.id)}
+                            onMouseEnter={() => setPageRibbonTooltip(color.name)}
+                            onMouseLeave={() => setPageRibbonTooltip(null)}
+                            className={`w-12 h-12 rounded-full transition-all ${
+                              selectedPageRibbon === color.id 
+                                ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-800 scale-110' 
+                                : 'hover:scale-105'
+                            }`}
+                            style={{ background: color.gradient }}
+                            title={color.name}
+                          />
+                          {pageRibbonTooltip === color.name && (
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded whitespace-nowrap z-50">
+                              {color.name}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-slate-400 mt-2">
+                      Override the color of all page header ribbons. Select "Auto" for default behavior.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
