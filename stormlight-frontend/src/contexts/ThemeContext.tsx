@@ -2,8 +2,8 @@ import { createContext, useContext, useState, useLayoutEffect, ReactNode } from 
 import { ribbonColors, defaultRibbonColor, applyRibbonColor, applyPageRibbonColor, defaultPageRibbonColor } from '../config/themes'
 
 interface ThemeContextType {
-  theme: string
-  setTheme: (themeId: string) => void
+  theme: string | null
+  setTheme: (themeId: string | null) => void
   pageRibbon: string | null
   setPageRibbon: (colorId: string | null) => void
 }
@@ -25,7 +25,7 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children, user, loading }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<string>(defaultRibbonColor)
+  const [theme, setThemeState] = useState<string | null>(null)
   const [pageRibbon, setPageRibbonState] = useState<string | null>(defaultPageRibbonColor)
 
   // Apply ribbon colors based on user preferences from database (primary source)
@@ -61,9 +61,10 @@ export function ThemeProvider({ children, user, loading }: ThemeProviderProps) {
         setThemeState(userProfileRibbon)
         localStorage.setItem('ribbonColor', userProfileRibbon)
       } else {
-        // User has no valid preference - use default (purple)
+        // User has no valid preference (Auto) - use default (purple) but state is null
         applyRibbonColor(ribbonColors[defaultRibbonColor])
-        setThemeState(defaultRibbonColor)
+        setThemeState(null)
+        localStorage.removeItem('ribbonColor')
       }
 
       // Page ribbon: check new key (null means use default behavior)
@@ -85,8 +86,9 @@ export function ThemeProvider({ children, user, loading }: ThemeProviderProps) {
         applyRibbonColor(ribbonColors[storedColor])
         setThemeState(storedColor)
       } else {
+        // No stored preference (Auto) - use default but state is null
         applyRibbonColor(ribbonColors[defaultRibbonColor])
-        setThemeState(defaultRibbonColor)
+        setThemeState(null)
       }
 
       // Page ribbon for anonymous users
@@ -101,14 +103,18 @@ export function ThemeProvider({ children, user, loading }: ThemeProviderProps) {
     }
   }, [user, loading])
 
-  const setTheme = async (colorId: string) => {
-    const ribbonColor = ribbonColors[colorId]
-    if (!ribbonColor) return
-    
-    // Apply the ribbon color immediately
-    applyRibbonColor(ribbonColor)
-    setThemeState(colorId)
-    localStorage.setItem('ribbonColor', colorId)
+  const setTheme = async (colorId: string | null) => {
+    // Handle Auto (null) - apply default but store as unset
+    if (colorId && ribbonColors[colorId]) {
+      applyRibbonColor(ribbonColors[colorId])
+      setThemeState(colorId)
+      localStorage.setItem('ribbonColor', colorId)
+    } else {
+      // Auto - use default color but state is null
+      applyRibbonColor(ribbonColors[defaultRibbonColor])
+      setThemeState(null)
+      localStorage.removeItem('ribbonColor')
+    }
     
     // Save to backend if user is logged in
     const token = localStorage.getItem('access_token')

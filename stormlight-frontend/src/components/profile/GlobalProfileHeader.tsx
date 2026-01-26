@@ -752,6 +752,28 @@ const GlobalProfileHeader = () => {
                   <div>
                     <h4 className="text-sm font-medium text-slate-300 mb-3">Profile Ribbon Color</h4>
                     <div className="flex flex-wrap gap-3">
+                      {/* Auto option (default) */}
+                      <div className="relative">
+                        <button
+                          onClick={() => handleThemeChange(null)}
+                          onMouseEnter={() => setThemeTooltip('Default')}
+                          onMouseLeave={() => setThemeTooltip(null)}
+                          className={`w-12 h-12 rounded-full transition-all border-2 border-dashed border-slate-500 flex items-center justify-center ${
+                            selectedTheme === null 
+                              ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-800 scale-110' 
+                              : 'hover:scale-105'
+                          }`}
+                          style={{ background: 'transparent' }}
+                          title="Default"
+                        >
+                          <span className="text-slate-400 text-xs">Auto</span>
+                        </button>
+                        {themeTooltip === 'Default' && (
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded whitespace-nowrap z-50">
+                            Default
+                          </div>
+                        )}
+                      </div>
                       {getOrderedRibbonColors().map((color) => (
                         <div key={color.id} className="relative">
                           <button
@@ -775,7 +797,7 @@ const GlobalProfileHeader = () => {
                       ))}
                     </div>
                     <p className="text-xs text-slate-400 mt-2">
-                      Select a color for your profile ribbon. Your preference will be saved.
+                      Select a color for your profile ribbon. Select "Auto" for default behavior.
                     </p>
                   </div>
 

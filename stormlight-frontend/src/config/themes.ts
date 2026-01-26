@@ -30,10 +30,10 @@ export const ribbonColors: Record<string, RibbonColor> = {
   sandstone: {
     id: 'sandstone',
     name: 'Sandstone',
-    top: '#d4a574',
-    middle: '#c4956a',
-    bottom: '#a67c52',
-    gradient: 'linear-gradient(135deg, #d4a574 0%, #a67c52 100%)'
+    top: '#d98c4a',
+    middle: '#c47a3d',
+    bottom: '#a66530',
+    gradient: 'linear-gradient(135deg, #d98c4a 0%, #a66530 100%)'
   },
   red: {
     id: 'red',
@@ -78,10 +78,10 @@ export const ribbonColors: Record<string, RibbonColor> = {
   pine: {
     id: 'pine',
     name: 'Pine',
-    top: '#3d7a5a',
-    middle: '#336649',
-    bottom: '#2a5239',
-    gradient: 'linear-gradient(135deg, #3d7a5a 0%, #2a5239 100%)'
+    top: '#3d8a7a',
+    middle: '#337566',
+    bottom: '#2a6054',
+    gradient: 'linear-gradient(135deg, #3d8a7a 0%, #2a6054 100%)'
   },
   green: {
     id: 'green',
