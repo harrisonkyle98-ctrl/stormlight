@@ -42,11 +42,10 @@
   --s: 1.2em; /* ribbon side width for fold shading */
   --d: 0.6em; /* depth / drop for fold shading */
   
-  /* Color stops - can be overridden via CSS variables set by JavaScript (--nav-ribbon-top/middle/bottom)
-     If user sets a Navigation Ribbon Color preference, those variables will override these defaults */
-  --nav-color-top: var(--nav-ribbon-top, #7090dc);
-  --nav-color-mid: var(--nav-ribbon-middle, #5a78d0);
-  --nav-color-bot: var(--nav-ribbon-bottom, #4866c4);
+  /* Default color stops - blue with increased saturation for nav visibility */
+  --nav-color-top-default: #7090dc;
+  --nav-color-mid-default: #5a78d0;
+  --nav-color-bot-default: #4866c4;
   
   /* Layout */
   position: relative;
@@ -96,12 +95,12 @@
     conic-gradient(at right var(--s) bottom var(--d),
       #0004 62.5%, #0008 0 75%, #0000 0
     ) 100% / 50% 100% no-repeat,
-    /* Base gradient - nav colors */
+    /* Base gradient - nav colors (uses root CSS variables if set, otherwise defaults) */
     linear-gradient(
       to bottom,
-      var(--nav-color-top),
-      var(--nav-color-mid) 35%,
-      var(--nav-color-bot)
+      var(--nav-ribbon-top, var(--nav-color-top-default)),
+      var(--nav-ribbon-middle, var(--nav-color-mid-default)) 35%,
+      var(--nav-ribbon-bottom, var(--nav-color-bot-default))
     );
   
   /* Same style of depth as banner (matches header exactly) */
@@ -167,11 +166,11 @@
   transition: transform 200ms ease-in;
 }
 
-/* Active state - slightly brighter with increased saturation */
+/* Active state - slightly brighter with increased saturation (only applies when no user override) */
 .nav-ribbon--active {
-  --nav-color-top: #5580d8;
-  --nav-color-mid: #4a70cc;
-  --nav-color-bot: #3f60b8;
+  --nav-color-top-default: #5580d8;
+  --nav-color-mid-default: #4a70cc;
+  --nav-color-bot-default: #3f60b8;
 }
 
 .nav-ribbon--active .nav-ribbon-icon {
@@ -188,31 +187,31 @@
    COLOR VARIANTS
    ======================================== */
 
-/* Blue variant - increased saturation for nav visibility */
+/* Blue variant - increased saturation for nav visibility (only applies when no user override) */
 /* All navigation ribbons now use this blue */
 .nav-ribbon--blue {
-  --nav-color-top: #7090dc;
-  --nav-color-mid: #5a78d0;
-  --nav-color-bot: #4866c4;
+  --nav-color-top-default: #7090dc;
+  --nav-color-mid-default: #5a78d0;
+  --nav-color-bot-default: #4866c4;
 }
 
-/* Magenta-red variant (Competitions) - brightened for nav visibility */
+/* Magenta-red variant (Competitions) - brightened for nav visibility (only applies when no user override) */
 .nav-ribbon--magenta {
-  --nav-color-top: #b65c7a;
-  --nav-color-mid: #9f4a66;
-  --nav-color-bot: #7e3751;
+  --nav-color-top-default: #b65c7a;
+  --nav-color-mid-default: #9f4a66;
+  --nav-color-bot-default: #7e3751;
 }
 
-/* Green variant (Members) - brightened for nav visibility */
+/* Green variant (Members) - brightened for nav visibility (only applies when no user override) */
 .nav-ribbon--green {
-  --nav-color-top: #3ebf65;
-  --nav-color-mid: #36a35a;
-  --nav-color-bot: #2d8249;
+  --nav-color-top-default: #3ebf65;
+  --nav-color-mid-default: #36a35a;
+  --nav-color-bot-default: #2d8249;
 }
 
-/* Gold variant (optional - for special ribbons) */
+/* Gold variant (optional - for special ribbons) (only applies when no user override) */
 .nav-ribbon--gold {
-  --nav-color-top: #D4AF37;
-  --nav-color-mid: #C9A227;
-  --nav-color-bot: #A88728;
+  --nav-color-top-default: #D4AF37;
+  --nav-color-mid-default: #C9A227;
+  --nav-color-bot-default: #A88728;
 }
