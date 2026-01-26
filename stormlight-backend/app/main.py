@@ -2447,6 +2447,7 @@ async def get_current_user(
                     'requiresLinking': False,
                     'discordId': user_id,
                     'theme': theme,
+                    'preferences': preferences,  # Return full preferences object for ribbon colors
                     'activityLogs': activity_logs
                 }
                 users_db[user_id] = result
@@ -2461,7 +2462,8 @@ async def get_current_user(
                     'isLinked': False,
                     'requiresLinking': True,
                     'discordId': user_id,
-                    'theme': theme
+                    'theme': theme,
+                    'preferences': preferences  # Return full preferences object for ribbon colors
                 }
                 users_db[user_id] = result
                 return result
@@ -2521,6 +2523,7 @@ async def get_current_user(
                         'requiresLinking': False,
                         'discordId': user_id,
                         'theme': theme,
+                        'preferences': prefs,  # Return full preferences object for ribbon colors
                         'activityLogs': activity_logs
                     }
                     users_db[user_id] = result
@@ -2535,7 +2538,8 @@ async def get_current_user(
                         'isLinked': False,
                         'requiresLinking': True,
                         'discordId': user_id,
-                        'theme': theme
+                        'theme': theme,
+                        'preferences': prefs  # Return full preferences object for ribbon colors
                     }
                     users_db[user_id] = result
                     return result
