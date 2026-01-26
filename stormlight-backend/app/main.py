@@ -10058,6 +10058,11 @@ async def startup_event():
         app.state.last_snapshot_date_utc = None
         app.state.scheduler_tick_count = 0
         
+        # Startup log with scheduler info
+        startup_utc = datetime.now(timezone.utc)
+        scheduler_tick_interval_seconds = 300
+        print(f"[Scheduler][STARTUP] UTC time: {startup_utc.isoformat()}Z | tick_interval: {scheduler_tick_interval_seconds}s | first_check_in: 120s")
+        
         async def hourly_scheduler():
             """Single 1-hour scheduler for all clan data updates"""
             machine_id = os.getenv('FLY_MACHINE_ID', 'local')
@@ -10073,11 +10078,10 @@ async def startup_event():
                     now = datetime.now(timezone.utc)
                     today = now.date()
                     current_hour = now.hour
-                    has_run_today = (getattr(app.state, "last_snapshot_date_utc", None) == today)
                     
                     # Heartbeat logging - always log to confirm scheduler is alive
                     app.state.scheduler_tick_count = getattr(app.state, 'scheduler_tick_count', 0) + 1
-                    print(f"💓 [Scheduler][HEARTBEAT] Tick #{app.state.scheduler_tick_count} at {now.isoformat()}Z - hour={current_hour}, last_sync_hour={last_sync_hour} (machine: {machine_id})")
+                    print(f"[Scheduler][SNAPSHOT] tick #{app.state.scheduler_tick_count} at {now.isoformat()}Z hour={current_hour} (machine: {machine_id})")
                     
                     if last_sync_hour != current_hour:
                         print(f"🔄 [Scheduler][HOURLY] Hour changed! Starting hourly tasks at {now.isoformat()}Z (machine: {machine_id})")
@@ -10134,34 +10138,63 @@ async def startup_event():
                                     import traceback
                                     traceback.print_exc()
                                 
-                                # 3. Daily snapshots at midnight UTC
-                                if current_hour == 0 and not has_run_today:
-                                    print(f"🚀 [Scheduler][DAILY] Entering midnight snapshot branch at {now.isoformat()}Z (machine: {machine_id})")
+                                # 3. Daily snapshots - DATABASE is source of truth, fallback runs if missing
+                                # Check DB for existing snapshots (not in-memory state)
+                                try:
+                                    snapshot_check_conn = await get_db_connection()
+                                    async with snapshot_check_conn:
+                                        existing_snapshot = await snapshot_check_conn.fetchval(
+                                            "SELECT 1 FROM player_daily_snapshots WHERE snapshot_date = %s LIMIT 1",
+                                            (today,)
+                                        )
                                     
-                                    # Check if snapshot already exists for today (idempotency)
-                                    try:
-                                        snapshot_conn = await get_db_connection()
-                                        async with snapshot_conn:
-                                            existing_snapshot = await snapshot_conn.fetchval(
-                                                "SELECT COUNT(*) FROM player_daily_snapshots WHERE snapshot_date = %s",
-                                                (today,)
-                                            )
-                                            if existing_snapshot and existing_snapshot > 0:
-                                                print(f"⏭️ [Scheduler][DAILY] Snapshots already exist for {today.isoformat()} ({existing_snapshot} records). Skipping. (machine: {machine_id})")
-                                                app.state.last_snapshot_date_utc = today
-                                            else:
-                                                print(f"[Scheduler][DAILY] No snapshots for {today.isoformat()} yet, starting collection (machine: {machine_id})")
-                                                async with app.state.snapshot_lock:
-                                                    done_count, remaining_count = await collect_daily_player_stats_multi_cycle()
-                                                app.state.last_snapshot_date_utc = today
-                                                completion_time = datetime.now(timezone.utc).isoformat()
-                                                print(f"✅ [Scheduler][DAILY] Snapshot collection completed at {completion_time}Z: {done_count} processed, {remaining_count} remaining (machine: {machine_id})")
-                                    except Exception as e:
-                                        print(f"❌ [Scheduler][DAILY] Error in snapshot collection: {e} (machine: {machine_id})")
-                                        import traceback
-                                        traceback.print_exc()
-                                elif current_hour == 0:
-                                    print(f"⏭️  [Scheduler][DAILY] Snapshot already ran today ({today.isoformat()}), skipping (machine: {machine_id})")
+                                    if existing_snapshot:
+                                        print(f"[Scheduler][SNAPSHOT] already_exists date={today.isoformat()} (machine: {machine_id})")
+                                    else:
+                                        # No snapshots for today - run immediately regardless of hour (fallback)
+                                        print(f"[Scheduler][SNAPSHOT] starting date={today.isoformat()} (machine: {machine_id})")
+                                        
+                                        # Use a separate advisory lock for snapshot collection (ID: 987654321)
+                                        snapshot_lock_conn = await get_db_connection()
+                                        snapshot_lock_acquired = False
+                                        try:
+                                            async with snapshot_lock_conn:
+                                                cursor = await snapshot_lock_conn.execute("SELECT pg_try_advisory_lock(987654321)")
+                                                snapshot_lock_acquired = (await cursor.fetchone())[0]
+                                                
+                                                if not snapshot_lock_acquired:
+                                                    print(f"[Scheduler][SNAPSHOT] advisory_lock_failed (another machine running) (machine: {machine_id})")
+                                                else:
+                                                    print(f"[Scheduler][SNAPSHOT] advisory_lock_acquired (machine: {machine_id})")
+                                                    
+                                                    # Get player count for logging
+                                                    player_count_conn = await get_db_connection()
+                                                    async with player_count_conn:
+                                                        player_count = await player_count_conn.fetchval(
+                                                            "SELECT COUNT(*) FROM clan_members WHERE left_clan = false"
+                                                        )
+                                                    print(f"[Scheduler][SNAPSHOT] starting date={today.isoformat()} players={player_count} (machine: {machine_id})")
+                                                    
+                                                    start_time = datetime.now(timezone.utc)
+                                                    async with app.state.snapshot_lock:
+                                                        done_count, remaining_count = await collect_daily_player_stats_multi_cycle()
+                                                    end_time = datetime.now(timezone.utc)
+                                                    duration_ms = int((end_time - start_time).total_seconds() * 1000)
+                                                    
+                                                    print(f"[Scheduler][SNAPSHOT] success duration_ms={duration_ms} processed={done_count} remaining={remaining_count} (machine: {machine_id})")
+                                        finally:
+                                            if snapshot_lock_acquired:
+                                                try:
+                                                    release_conn = await get_db_connection()
+                                                    async with release_conn:
+                                                        await release_conn.execute("SELECT pg_advisory_unlock(987654321)")
+                                                    print(f"[Scheduler][SNAPSHOT] advisory_lock_released (machine: {machine_id})")
+                                                except Exception as unlock_e:
+                                                    print(f"[Scheduler][SNAPSHOT] error releasing lock: {unlock_e} (machine: {machine_id})")
+                                except Exception as e:
+                                    print(f"[Scheduler][SNAPSHOT] error {e} (machine: {machine_id})")
+                                    import traceback
+                                    traceback.print_exc()
                                 
                                 # 4. Activity/drop collection
                                 print(f"🚀 [Scheduler][HOURLY] Starting activity/drop collection at {datetime.now(timezone.utc).isoformat()}Z (machine: {machine_id})")
