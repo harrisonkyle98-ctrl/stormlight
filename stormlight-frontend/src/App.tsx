@@ -13,6 +13,7 @@ import Login from './pages/Login'
 import LinkAccount from './pages/LinkAccount'
 import AdminPanel from './pages/AdminPanel'
 import Terms from './pages/Terms'
+import TestHome from './pages/TestHome'
 import Footer from './components/Footer'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -78,9 +79,10 @@ function AppContent() {
             <Route path="/clan-member/:username" element={<PlayerProfile />} />
             <Route path="/competitions" element={<Competitions />} />
             <Route path="/competitions/:id" element={<CompetitionDetail />} />
-                      <Route path="/admin" element={<AdminPanel />} />
-                      <Route path="/terms" element={<Terms />} />
-                      <Route path="*" element={<Navigate to="/" replace />} />
+                                            <Route path="/admin" element={<AdminPanel />} />
+                                            <Route path="/terms" element={<Terms />} />
+                                            <Route path="/test" element={<TestHome />} />
+                                            <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
         </div>
           </main>

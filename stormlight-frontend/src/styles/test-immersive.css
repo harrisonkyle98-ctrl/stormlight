@@ -1,0 +1,386 @@
+/* ===========================================
+   TEST IMMERSIVE STYLES - RuneScape Interface Redesign
+   Scoped to /test route only via .test-immersive wrapper
+   
+   Design Philosophy:
+   - Carved rather than drawn
+   - Inset rather than floating
+   - Lit rather than flat
+   - Crafted rather than rendered
+   =========================================== */
+
+/* ========================================
+   BASE CONTAINER - Warm stone/wood feel
+   ======================================== */
+
+.test-immersive .fantasy-container {
+  /* Warmer background tones - aged stone feel */
+  background: linear-gradient(
+    180deg, 
+    rgba(38, 35, 30, 0.97) 0%,    /* warm dark brown-gray */
+    rgba(25, 22, 18, 0.99) 100%   /* deep warm black */
+  );
+  
+  /* Multi-layered frame border - carved stone effect */
+  border: none;
+  box-shadow:
+    /* Outer dark edge - carved into surface */
+    0 0 0 3px rgba(15, 12, 8, 0.9),
+    /* Mid tone - stone depth */
+    0 0 0 5px rgba(60, 52, 42, 0.8),
+    /* Inner highlight - top-lit edge */
+    0 0 0 6px rgba(120, 105, 85, 0.3),
+    /* Inset shadow - carved in feel */
+    inset 0 2px 8px rgba(0, 0, 0, 0.5),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.3),
+    /* Subtle outer glow - ambient torchlight */
+    0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+/* Enhanced texture overlay - parchment/stone grain */
+.test-immersive .fantasy-container::before {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.06;
+  /* Warm tint to texture */
+  mix-blend-mode: overlay;
+}
+
+/* Directional top lighting - torchlight from above */
+.test-immersive .fantasy-container::after {
+  height: 200px;
+  background: 
+    /* Central spotlight cone */
+    radial-gradient(
+      ellipse 80% 60% at 50% 0%,
+      rgba(255, 235, 200, 0.08) 0%,
+      rgba(255, 220, 180, 0.03) 50%,
+      transparent 100%
+    ),
+    /* Ambient top wash */
+    linear-gradient(
+      180deg, 
+      rgba(255, 240, 210, 0.05) 0%, 
+      transparent 100%
+    );
+}
+
+/* ========================================
+   PANELS/SECTIONS - Carved inset feel
+   ======================================== */
+
+.test-immersive .fantasy-section {
+  /* Darker recessed background */
+  background: rgba(20, 18, 14, 0.7);
+  
+  /* Remove flat border, add carved frame */
+  border: none;
+  
+  /* Multi-layered carved frame effect */
+  box-shadow:
+    /* Outer dark groove */
+    inset 0 0 0 1px rgba(10, 8, 5, 0.9),
+    /* Mid stone tone */
+    inset 0 0 0 2px rgba(50, 44, 35, 0.7),
+    /* Inner highlight edge (top-lit) */
+    inset 0 0 0 3px rgba(90, 78, 62, 0.25),
+    /* Deep inset shadow - carved into surface */
+    inset 0 4px 12px rgba(0, 0, 0, 0.5),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.2),
+    /* Subtle inner vignette */
+    inset 0 0 40px rgba(0, 0, 0, 0.15);
+  
+  /* Slightly rounded for aged stone feel */
+  border-radius: 2px;
+}
+
+/* Panel top highlight - directional lighting */
+.test-immersive .fantasy-section::before {
+  height: 3px;
+  background: linear-gradient(
+    90deg, 
+    rgba(100, 85, 65, 0.1) 0%,
+    rgba(180, 155, 120, 0.35) 30%,
+    rgba(200, 175, 140, 0.4) 50%,
+    rgba(180, 155, 120, 0.35) 70%,
+    rgba(100, 85, 65, 0.1) 100%
+  );
+}
+
+/* Panel ambient lighting - top-lit spotlight */
+.test-immersive .fantasy-section::after {
+  height: 100px;
+  background:
+    /* Radial spotlight from top-center */
+    radial-gradient(
+      ellipse 70% 50% at 50% 0%,
+      rgba(255, 235, 200, 0.1) 0%,
+      rgba(255, 220, 180, 0.04) 50%,
+      transparent 100%
+    ),
+    /* Linear falloff */
+    linear-gradient(
+      180deg, 
+      rgba(255, 240, 210, 0.04) 0%, 
+      transparent 80%
+    );
+  opacity: 0.8;
+}
+
+.test-immersive .fantasy-section:hover::after {
+  opacity: 1;
+}
+
+/* ========================================
+   SECTION TITLES - Mounted plaque feel
+   ======================================== */
+
+.test-immersive .fantasy-section-title {
+  /* Stronger contrast - metal plaque feel */
+  color: #d4c4a8;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.8),
+    0 2px 4px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(200, 170, 120, 0.15);
+  
+  /* Plaque-like border treatment */
+  border-bottom: none;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+  position: relative;
+}
+
+/* Plaque underline - engraved groove */
+.test-immersive .fantasy-section-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.4) 0%,
+    rgba(60, 52, 40, 0.6) 50%,
+    rgba(120, 100, 75, 0.3) 100%
+  );
+  border-radius: 1px;
+}
+
+/* ========================================
+   STAT ITEMS - Carved recessed cells
+   ======================================== */
+
+.test-immersive .fantasy-stat-item {
+  /* Darker recessed background */
+  background: rgba(18, 16, 12, 0.8);
+  
+  /* Remove flat border */
+  border: none;
+  
+  /* Carved cell effect */
+  box-shadow:
+    /* Outer dark edge */
+    inset 0 0 0 1px rgba(8, 6, 4, 0.9),
+    /* Inner stone edge */
+    inset 0 0 0 2px rgba(45, 40, 32, 0.6),
+    /* Top-lit highlight */
+    inset 0 1px 0 rgba(100, 88, 70, 0.2),
+    /* Inset depth */
+    inset 0 3px 8px rgba(0, 0, 0, 0.4),
+    inset 0 -1px 4px rgba(0, 0, 0, 0.15);
+  
+  border-radius: 2px;
+}
+
+/* Stat item top highlight */
+.test-immersive .fantasy-stat-item::before {
+  height: 2px;
+  background: linear-gradient(
+    90deg, 
+    transparent 10%,
+    rgba(160, 140, 110, 0.25) 50%,
+    transparent 90%
+  );
+}
+
+.test-immersive .fantasy-stat-item:hover {
+  background: rgba(25, 22, 17, 0.85);
+}
+
+/* ========================================
+   INNER BOXES - Recessed data cells
+   ======================================== */
+
+.test-immersive .bg-slate-700\/30,
+.test-immersive .bg-slate-700\/20 {
+  background: rgba(22, 20, 16, 0.7) !important;
+  border: none !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(10, 8, 5, 0.8),
+    inset 0 2px 6px rgba(0, 0, 0, 0.35),
+    inset 0 -1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 3px !important;
+}
+
+/* ========================================
+   TEXT COLOR ADJUSTMENTS - Warmer tones
+   ======================================== */
+
+/* Warm up slate colors */
+.test-immersive .text-slate-300 {
+  color: #c4b8a4 !important;
+}
+
+.test-immersive .text-slate-400 {
+  color: #9a8e7a !important;
+}
+
+/* Keep white text but slightly warm */
+.test-immersive .text-white {
+  color: #f5f0e8 !important;
+}
+
+/* Warm up borders */
+.test-immersive .border-slate-700 {
+  border-color: rgba(80, 70, 55, 0.4) !important;
+}
+
+/* ========================================
+   DAILYSCAPE CARD - Special treatment
+   ======================================== */
+
+.test-immersive [class*="dailyscape"],
+.test-immersive .fantasy-section:has([class*="dailyscape"]) {
+  /* Same carved treatment */
+  background: rgba(20, 18, 14, 0.7);
+}
+
+/* Tab styling within Dailyscape */
+.test-immersive [role="tablist"] {
+  background: rgba(15, 13, 10, 0.6) !important;
+  border: none !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(10, 8, 5, 0.8),
+    inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  border-radius: 3px !important;
+}
+
+.test-immersive [role="tab"] {
+  color: #a89880 !important;
+}
+
+.test-immersive [role="tab"][data-state="active"] {
+  background: rgba(50, 44, 35, 0.6) !important;
+  color: #d4c4a8 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(120, 100, 75, 0.2),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ========================================
+   MATERIAL TEXTURE - Subtle stone/parchment
+   Applied to larger panels
+   ======================================== */
+
+.test-immersive .fantasy-section {
+  position: relative;
+}
+
+/* Additional texture layer for panels */
+.test-immersive .fantasy-section > *:first-child::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.04;
+  pointer-events: none;
+  z-index: 0;
+  mix-blend-mode: overlay;
+  border-radius: inherit;
+}
+
+/* ========================================
+   VIGNETTE EFFECT - Inner panel darkening
+   ======================================== */
+
+.test-immersive .fantasy-section {
+  /* Add vignette via radial gradient overlay */
+  background-image: 
+    radial-gradient(
+      ellipse at center,
+      transparent 40%,
+      rgba(0, 0, 0, 0.15) 100%
+    );
+  background-blend-mode: multiply;
+}
+
+/* ========================================
+   GOLD ACCENTS - Aged, not bright
+   ======================================== */
+
+.test-immersive .text-green-400 {
+  /* Keep green but warm it slightly */
+  color: #6bc96b !important;
+}
+
+/* Aged gold for any gold elements */
+.test-immersive [class*="gold"],
+.test-immersive [class*="yellow"] {
+  filter: sepia(15%) saturate(85%);
+}
+
+/* ========================================
+   SCROLLBAR STYLING - Carved groove
+   ======================================== */
+
+.test-immersive ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.test-immersive ::-webkit-scrollbar-track {
+  background: rgba(15, 12, 8, 0.8);
+  border: 1px solid rgba(40, 35, 28, 0.5);
+  border-radius: 2px;
+}
+
+.test-immersive ::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(80, 70, 55, 0.8) 0%,
+    rgba(60, 52, 42, 0.9) 100%
+  );
+  border: 1px solid rgba(100, 88, 70, 0.3);
+  border-radius: 2px;
+}
+
+.test-immersive ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(100, 88, 70, 0.9) 0%,
+    rgba(75, 65, 52, 0.95) 100%
+  );
+}
+
+/* ========================================
+   LINKS - Warm hover states
+   ======================================== */
+
+.test-immersive a:hover {
+  color: #d4b896 !important;
+}
+
+/* ========================================
+   CHARTS - Warm up chart colors
+   ======================================== */
+
+.test-immersive .recharts-cartesian-axis-tick text {
+  fill: #9a8e7a !important;
+}
+
+.test-immersive .recharts-tooltip-wrapper {
+  filter: sepia(10%);
+}
