@@ -595,24 +595,24 @@ time,
 }
 
 /* Button hover accent - use theme-specific accent colors */
-/* Exclude .btn-bevel buttons which have their own styling */
-[data-theme='blue'] button:not(:disabled):not(.btn-bevel):hover {
+/* Exclude .btn-hover-glow buttons which have their own styling */
+[data-theme='blue'] button:not(:disabled):not(.btn-hover-glow):hover {
   border-color: #60a5fae6 !important; /* Sapphire blue */
 }
 
-[data-theme='crimson'] button:not(:disabled):not(.btn-bevel):hover {
+[data-theme='crimson'] button:not(:disabled):not(.btn-hover-glow):hover {
   border-color: #ef4444e6 !important; /* Crimson red */
 }
 
-[data-theme='emerald'] button:not(:disabled):not(.btn-bevel):hover {
+[data-theme='emerald'] button:not(:disabled):not(.btn-hover-glow):hover {
   border-color: #22c55ee6 !important; /* Emerald green */
 }
 
-[data-theme='amethyst'] button:not(:disabled):not(.btn-bevel):hover {
+[data-theme='amethyst'] button:not(:disabled):not(.btn-hover-glow):hover {
   border-color: #a855f7e6 !important; /* Amethyst purple */
 }
 
-[data-theme='sunset'] button:not(:disabled):not(.btn-bevel):hover {
+[data-theme='sunset'] button:not(:disabled):not(.btn-hover-glow):hover {
   border-color: #f97316e6 !important; /* Sunset orange */
 }
 
@@ -833,14 +833,15 @@ html[data-theme='obsidian'] button[data-state='active'] {
 }
 
 /* ===========================================
-   BUTTON HOVER GLOW - Inner top/bottom glow on hover
-   Keeps original button styling, adds inner glow effect
+   BUTTON PRESS EFFECT - Press animation on click
+   Keeps original button styling, adds press effect
    =========================================== */
 
-/* Base class for hover glow - applied to all Button components */
+/* Base class for button press effect - applied to all Button components */
 .btn-hover-glow {
   position: relative;
-  overflow: hidden;
+  /* Smooth transition for press effect */
+  transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
 }
 
 /* Remove blue hover border - override global theme button hover rules */
@@ -861,33 +862,9 @@ html[data-theme='obsidian'] button[data-state='active'] {
   border-color: inherit;
 }
 
-/* Inner glow using ::after pseudo-element - only visible on hover */
-.btn-hover-glow::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0;
-  /* Inner top + bottom glow */
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.2) 0%,
-    rgba(255, 255, 255, 0.03) 20%,
-    rgba(255, 255, 255, 0.03) 80%,
-    rgba(255, 255, 255, 0.15) 100%
-  );
-  /* Smooth transition */
-  transition: opacity 0.15s ease-out;
-}
-
-/* Show inner glow on hover */
-.btn-hover-glow:hover:not(:disabled)::after {
-  opacity: 1;
-}
-
-/* No glow on disabled */
-.btn-hover-glow:disabled::after {
-  display: none;
+/* Press effect on click - button appears pressed down */
+.btn-hover-glow:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
