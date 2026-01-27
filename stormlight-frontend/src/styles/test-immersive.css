@@ -547,6 +547,154 @@
 }
 
 /* ========================================
+   DAILYSCAPE INNER PANELS - Same as Clan Summary stats
+   Applies to: Next Event (Wildy), Slot 1/2/3 (Vis Wax), 
+   Current/Previous Voice (VoS)
+   ======================================== */
+
+/* Wildy tab: Next Event container */
+/* Vis Wax tab: Slot 1, Slot 2, Slot 3 containers */
+.test-immersive [role="tabpanel"] > .space-y-3 > .bg-slate-700\/30,
+.test-immersive [role="tabpanel"] > .space-y-4 > .bg-slate-700\/30 {
+  /* Same background as fantasy-stat-item */
+  background: rgba(18, 16, 12, 0.8) !important;
+  border: none !important;
+  
+  /* Same carved cell effect as fantasy-stat-item */
+  box-shadow:
+    /* Outer dark edge */
+    inset 0 0 0 1px rgba(8, 6, 4, 0.9),
+    /* Inner stone edge */
+    inset 0 0 0 2px rgba(45, 40, 32, 0.6),
+    /* Top-lit highlight */
+    inset 0 1px 0 rgba(100, 88, 70, 0.2),
+    /* Inset depth */
+    inset 0 3px 8px rgba(0, 0, 0, 0.4),
+    inset 0 -1px 4px rgba(0, 0, 0, 0.15) !important;
+  
+  border-radius: 2px !important;
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.2s ease;
+}
+
+/* Top highlight bar for Dailyscape inner panels */
+.test-immersive [role="tabpanel"] > .space-y-3 > .bg-slate-700\/30::before,
+.test-immersive [role="tabpanel"] > .space-y-4 > .bg-slate-700\/30::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: linear-gradient(
+    90deg, 
+    transparent 0%,
+    rgba(160, 140, 110, 0.25) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* Hover state for Dailyscape inner panels */
+.test-immersive [role="tabpanel"] > .space-y-3 > .bg-slate-700\/30:hover,
+.test-immersive [role="tabpanel"] > .space-y-4 > .bg-slate-700\/30:hover {
+  background: rgba(25, 22, 17, 0.85) !important;
+}
+
+/* VoS tab: Current Voice containers (bg-slate-700/50) */
+.test-immersive [role="tabpanel"] .bg-slate-700\/50 {
+  /* Same background as fantasy-stat-item */
+  background: rgba(18, 16, 12, 0.8) !important;
+  border: none !important;
+  
+  /* Same carved cell effect as fantasy-stat-item */
+  box-shadow:
+    /* Outer dark edge */
+    inset 0 0 0 1px rgba(8, 6, 4, 0.9),
+    /* Inner stone edge */
+    inset 0 0 0 2px rgba(45, 40, 32, 0.6),
+    /* Top-lit highlight */
+    inset 0 1px 0 rgba(100, 88, 70, 0.2),
+    /* Inset depth */
+    inset 0 3px 8px rgba(0, 0, 0, 0.4),
+    inset 0 -1px 4px rgba(0, 0, 0, 0.15) !important;
+  
+  border-radius: 2px !important;
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.2s ease;
+}
+
+/* Top highlight bar for VoS Current Voice containers */
+.test-immersive [role="tabpanel"] .bg-slate-700\/50::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: linear-gradient(
+    90deg, 
+    transparent 0%,
+    rgba(160, 140, 110, 0.25) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* Hover state for VoS Current Voice containers */
+.test-immersive [role="tabpanel"] .bg-slate-700\/50:hover {
+  background: rgba(25, 22, 17, 0.85) !important;
+}
+
+/* VoS tab: Previous Voice containers (bg-slate-800/50) */
+.test-immersive [role="tabpanel"] .bg-slate-800\/50 {
+  /* Same background as fantasy-stat-item */
+  background: rgba(18, 16, 12, 0.8) !important;
+  border: none !important;
+  
+  /* Same carved cell effect as fantasy-stat-item */
+  box-shadow:
+    /* Outer dark edge */
+    inset 0 0 0 1px rgba(8, 6, 4, 0.9),
+    /* Inner stone edge */
+    inset 0 0 0 2px rgba(45, 40, 32, 0.6),
+    /* Top-lit highlight */
+    inset 0 1px 0 rgba(100, 88, 70, 0.2),
+    /* Inset depth */
+    inset 0 3px 8px rgba(0, 0, 0, 0.4),
+    inset 0 -1px 4px rgba(0, 0, 0, 0.15) !important;
+  
+  border-radius: 2px !important;
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.2s ease;
+}
+
+/* Top highlight bar for VoS Previous Voice containers */
+.test-immersive [role="tabpanel"] .bg-slate-800\/50::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: linear-gradient(
+    90deg, 
+    transparent 0%,
+    rgba(160, 140, 110, 0.25) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* Hover state for VoS Previous Voice containers */
+.test-immersive [role="tabpanel"] .bg-slate-800\/50:hover {
+  background: rgba(25, 22, 17, 0.85) !important;
+}
+
+/* ========================================
    MATERIAL TEXTURE - Subtle stone/parchment
    Applied to larger panels
    ======================================== */
