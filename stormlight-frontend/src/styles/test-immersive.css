@@ -801,3 +801,156 @@
 .test-immersive .recharts-tooltip-wrapper {
   filter: sepia(10%);
 }
+
+/* ========================================
+   PARCHMENT LOG STYLING - Individual torn parchment strips
+   Applies to Clan Log and Recent Activity on /test only
+   ======================================== */
+
+/* Parchment strip base styling for log entries */
+.test-immersive .parchment-log-entry {
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    #d4c4a8 0%,
+    #c9b896 25%,
+    #d1c19f 50%,
+    #c4b48a 75%,
+    #d0c098 100%
+  );
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  
+  /* Subtle parchment texture via noise */
+  background-image: 
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"),
+    linear-gradient(
+      135deg,
+      #d4c4a8 0%,
+      #c9b896 25%,
+      #d1c19f 50%,
+      #c4b48a 75%,
+      #d0c098 100%
+    );
+  background-blend-mode: overlay, normal;
+  
+  /* Soft shadow for stacked parchment effect */
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.15),
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+  
+  /* Torn edge effect using clip-path */
+  clip-path: polygon(
+    /* Left torn edge */
+    0% 0%,
+    2% 8%,
+    0% 15%,
+    3% 25%,
+    1% 35%,
+    2% 45%,
+    0% 55%,
+    3% 65%,
+    1% 75%,
+    2% 85%,
+    0% 92%,
+    2% 100%,
+    /* Bottom edge */
+    98% 100%,
+    /* Right torn edge */
+    100% 92%,
+    97% 85%,
+    100% 75%,
+    98% 65%,
+    100% 55%,
+    97% 45%,
+    100% 35%,
+    98% 25%,
+    100% 15%,
+    97% 8%,
+    100% 0%
+  );
+  
+  /* Ensure content is above pseudo-elements */
+  z-index: 1;
+}
+
+/* Parchment entry text styling - darker for readability */
+.test-immersive .parchment-log-entry .parchment-text {
+  color: #3d3425 !important;
+}
+
+.test-immersive .parchment-log-entry .parchment-text-muted {
+  color: #5c4f3a !important;
+}
+
+.test-immersive .parchment-log-entry .parchment-text-link {
+  color: #4a3f2e !important;
+  font-weight: 600;
+}
+
+.test-immersive .parchment-log-entry .parchment-text-link:hover {
+  color: #2d2518 !important;
+}
+
+/* Icon styling - embossed/printed look, no glow */
+.test-immersive .parchment-log-entry .parchment-icon {
+  background: rgba(60, 50, 35, 0.15) !important;
+  color: #4a3f2e !important;
+  border: none !important;
+  box-shadow: 
+    inset 0 1px 2px rgba(0, 0, 0, 0.1),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.test-immersive .parchment-log-entry .parchment-icon svg {
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.3));
+}
+
+/* Timestamp styling */
+.test-immersive .parchment-log-entry .parchment-timestamp {
+  color: #6b5d48 !important;
+  font-size: 0.75rem;
+}
+
+/* ========================================
+   FULL-WIDTH LAYOUT FIX - /test page only
+   Override App.tsx max-w-7xl and fantasy-container margin
+   ======================================== */
+
+/* Override the max-w-7xl mx-auto from App.tsx for /test page */
+/* This targets the parent container when .test-immersive is present */
+.test-immersive {
+  /* Break out of the max-w-7xl constraint */
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  position: relative;
+}
+
+/* Ensure the fantasy-container inside test-immersive has no side margins */
+.test-immersive .fantasy-container {
+  margin: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+/* Override any inherited padding from main element */
+.test-immersive .test-fullwidth-container {
+  margin: 0 !important;
+  padding: 0.5rem !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+@media (min-width: 1200px) {
+  .test-immersive .test-fullwidth-container {
+    padding: 0.75rem !important;
+  }
+}
+
+@media (min-width: 1600px) {
+  .test-immersive .test-fullwidth-container {
+    padding: 1rem !important;
+  }
+}

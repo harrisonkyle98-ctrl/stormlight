@@ -6,8 +6,8 @@ import '../styles/test-immersive.css'
 import { fetchClanMembers } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
 import { usernameToUrl } from '../utils/urlUtils'
-import { ClanLogRow } from '../components/clanLogs/ClanLogRow'
-import { ActivityLogRow } from '../components/activityLogs/ActivityLogRow'
+import { ParchmentClanLogRow } from '../components/clanLogs/ParchmentClanLogRow'
+import { ParchmentActivityLogRow } from '../components/activityLogs/ParchmentActivityLogRow'
 import { Username } from '../components/ui/username'
 import { usePageTitle } from '../hooks/usePageTitle'
 import DailyscapeCard from '../components/dailyscape/DailyscapeCard'
@@ -579,10 +579,10 @@ const TestHome = () => {
                       ))}
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       {clanLogEntries.length > 0 ? (
                         clanLogEntries.map((entry) => (
-                          <ClanLogRow
+                          <ParchmentClanLogRow
                             key={entry.id}
                             entry={entry}
                             formatTimeAgo={formatTimeAgo}
@@ -612,15 +612,14 @@ const TestHome = () => {
                       ))}
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       {activities.length > 0 ? (
                         activities.map((activity, index) => (
-                          <ActivityLogRow
+                          <ParchmentActivityLogRow
                             key={`${activity.username}-${activity.timestamp}-${index}`}
                             activity={activity}
                             formatTimeAgo={formatTimeAgo}
                             usernameToUrl={usernameToUrl}
-                            clanRank={clanMembers.find(m => m.username === activity.username)?.clan_rank}
                           />
                         ))
                       ) : (
