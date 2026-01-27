@@ -654,7 +654,7 @@ const TestHome = () => {
                         {activeMembers.active_members.map((member: any, index: number) => (
                           <div
                             key={member.username}
-                            className="flex justify-between items-center p-2 bg-slate-700/30 rounded-lg"
+                            className="flex justify-between items-center p-2 test-row-panel"
                           >
                             <div className="flex items-center gap-2">
                               <span className="text-slate-400 font-mono text-xs w-5">
