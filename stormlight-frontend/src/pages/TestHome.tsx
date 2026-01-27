@@ -6,7 +6,6 @@ import '../styles/test-immersive.css'
 import { fetchClanMembers } from '../utils/gradientUtils'
 import { useAuth } from '../contexts/AuthContext'
 import { usernameToUrl } from '../utils/urlUtils'
-import { LineChart, Line, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts'
 import { ClanLogRow } from '../components/clanLogs/ClanLogRow'
 import { ActivityLogRow } from '../components/activityLogs/ActivityLogRow'
 import { Username } from '../components/ui/username'
@@ -147,8 +146,6 @@ const TestHome = () => {
   const [activeMembers, setActiveMembers] = useState<any>(null)
   const [activeMembersLoading, setActiveMembersLoading] = useState(false)
   const [playerData, setPlayerData] = useState<PlayerStats | null>(null)
-  const [recentProgress, setRecentProgress] = useState<any>(null)
-  const [recentProgressLoading, setRecentProgressLoading] = useState(false)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -183,10 +180,7 @@ const TestHome = () => {
   useEffect(() => {
     const loadProfileData = async () => {
       if (user?.username && user?.isLinked) {
-        await Promise.all([
-          fetchPlayerStats(),
-          fetchRecentProgress()
-        ])
+        await fetchPlayerStats()
       }
     }
     loadProfileData()
@@ -206,24 +200,7 @@ const TestHome = () => {
     }
   }
 
-  const fetchRecentProgress = async () => {
-    if (!user?.username) return
-    setRecentProgressLoading(true)
-    try {
-      const encodedUsername = encodeURIComponent(user.username)
-      const response = await fetch(`${API_URL}/api/player/${encodedUsername}/recent-progress`)
-      if (response.ok) {
-        const data = await response.json()
-        setRecentProgress(data)
-      }
-    } catch (error) {
-      console.error('Error fetching recent progress:', error)
-    } finally {
-      setRecentProgressLoading(false)
-    }
-  }
-
-  const calculateDaysInClan = () => {
+  const calculateDaysInClan= () => {
     if (!playerData?.join_date) return null
     const datePart = playerData.join_date.split('T')[0]
     const [year, month, day] = datePart.split('-').map(Number)
@@ -415,9 +392,109 @@ const TestHome = () => {
               </nav>
             </div>
 
+            {/* Clan Summary - Full Width below navigation */}
+            <div className="fantasy-section test-clan-summary-fullwidth">
+              <h3 className="fantasy-section-title">Clan Summary</h3>
+              <div className="fantasy-grid-4">
+                {/* 1. Total Members */}
+                <div className="fantasy-stat-item">
+                  <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <span className="text-sm font-medium text-slate-300">Total Members</span>
+                    <Users className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
+                  </div>
+                  <div>
+                    {loading ? (
+                      <div className="space-y-2 animate-pulse">
+                        <div className="h-8 bg-slate-700/50 rounded w-20"></div>
+                        <div className="h-3 bg-slate-700/30 rounded w-32"></div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="text-2xl font-bold text-white">
+                          {clanStats?.total_members || 0}
+                        </div>
+                        <p className="text-xs text-slate-400">Friends to play with</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. Total Clan XP */}
+                <div className="fantasy-stat-item">
+                  <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <span className="text-sm font-medium text-slate-300">Total Clan XP</span>
+                    <TrendingUp className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
+                  </div>
+                  <div>
+                    {loading ? (
+                      <div className="space-y-2 animate-pulse">
+                        <div className="h-8 bg-slate-700/50 rounded w-24"></div>
+                        <div className="h-3 bg-slate-700/30 rounded w-28"></div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="text-2xl font-bold text-white">
+                          {formatNumber(clanStats?.total_xp || 0)}
+                        </div>
+                        <p className="text-xs text-slate-400">Combined clan XP</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* 3. Time Spent in Clan */}
+                {user?.username && user?.isLinked ? (
+                  <div className="fantasy-stat-item">
+                    <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <span className="text-sm font-medium text-slate-300">Time Spent in Clan</span>
+                      <Calendar className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
+                    </div>
+                    <div>
+                      {loading || !playerData ? (
+                        <div className="space-y-2 animate-pulse">
+                          <div className="h-8 bg-slate-700/50 rounded w-28"></div>
+                          <div className="h-3 bg-slate-700/30 rounded w-32"></div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="text-2xl font-bold text-white">
+                            {calculateDaysInClan() !== null ? `${calculateDaysInClan()} days` : 'N/A'}
+                          </div>
+                          <p className="text-xs text-slate-400">Days as clan member</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* 4. Competitions */}
+                <div className="fantasy-stat-item">
+                  <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <span className="text-sm font-medium text-slate-300">Competitions</span>
+                    <Trophy className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
+                  </div>
+                  <div>
+                    {loading ? (
+                      <div className="space-y-2 animate-pulse">
+                        <div className="h-8 bg-slate-700/50 rounded w-12"></div>
+                        <div className="h-3 bg-slate-700/30 rounded w-36"></div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="text-2xl font-bold text-white">
+                          {activeCompetitionsCount}
+                        </div>
+                        <p className="text-xs text-slate-400">Active competitions</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* 3-Column Client Layout */}
             <div className="test-three-column-layout">
-              {/* ========== LEFT COLUMN - Player / Account ========== */}
+              {/* ========== LEFT COLUMN - Account Only ========== */}
               <div className="test-column-left">
                 {/* Account Panel */}
                 {user?.username && user?.isLinked && (
@@ -481,235 +558,13 @@ const TestHome = () => {
                     </div>
                   </div>
                 )}
-
-                {/* Your Recent Gains */}
-                {user?.username && user?.isLinked && (
-                  <div className="fantasy-section">
-                    <h3 className="fantasy-section-title">Your Recent Gains</h3>
-                    {recentProgressLoading ? (
-                      <div className="space-y-4 animate-pulse">
-                        <div className="h-32 bg-slate-700/50 rounded"></div>
-                      </div>
-                    ) : recentProgress ? (
-                      <>
-                        {/* Stats Grid - vertical for left column */}
-                        <div className="space-y-3 mb-4">
-                          <div className="bg-slate-700/30 rounded-lg p-3">
-                            <p className="text-xs text-slate-400 mb-1">Today</p>
-                            <p className="text-lg font-bold text-green-400">
-                              {formatNumber(recentProgress.xp_today || 0)}
-                            </p>
-                          </div>
-                          <div className="bg-slate-700/30 rounded-lg p-3">
-                            <p className="text-xs text-slate-400 mb-1">7 Days</p>
-                            <p className="text-lg font-bold" style={{ color: '#60a5fa' }}>
-                              {formatNumber(recentProgress.xp_7d)}
-                            </p>
-                          </div>
-                          <div className="bg-slate-700/30 rounded-lg p-3">
-                            <p className="text-xs text-slate-400 mb-1">30 Days</p>
-                            <p className="text-lg font-bold text-purple-400">
-                              {formatNumber(recentProgress.xp_30d)}
-                            </p>
-                          </div>
-                        </div>
-                        {/* Sparkline Chart */}
-                        {recentProgress.sparkline && recentProgress.sparkline.length > 0 && (
-                          <div className="mb-4">
-                            <p className="text-xs text-slate-400 mb-2">30-Day XP</p>
-                            <ResponsiveContainer width="100%" height={80}>
-                              <LineChart data={recentProgress.sparkline}>
-                                <Line
-                                  type="monotone"
-                                  dataKey="xp"
-                                  stroke="#a855f7"
-                                  strokeWidth={2}
-                                  dot={false}
-                                />
-                                <RechartsTooltip
-                                  contentStyle={{
-                                    backgroundColor: '#1e293b',
-                                    border: '1px solid #334155',
-                                    borderRadius: '0.375rem',
-                                    fontSize: '11px'
-                                  }}
-                                  formatter={(value: any) => [formatNumber(value), 'XP']}
-                                />
-                              </LineChart>
-                            </ResponsiveContainer>
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <p className="text-center text-slate-400 py-4 text-sm">No data</p>
-                    )}
-                  </div>
-                )}
               </div>
+              {/* End left column */}
 
-              {/* ========== CENTER COLUMN - World / Systems ========== */}
+              {/* ========== CENTER COLUMN - Activity Spine ========== */}
               <div className="test-column-center">
-                {/* Clan Summary Stats */}
-                <div className="fantasy-section">
-                  <h3 className="fantasy-section-title">Clan Summary</h3>
-                  <div className="fantasy-grid-4">
-              {/* 1. Total Members */}
-              <div className="fantasy-stat-item">
-                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <span className="text-sm font-medium text-slate-300">Total Members</span>
-                  <Users className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
-                </div>
-                <div>
-                  {loading ? (
-                    <div className="space-y-2 animate-pulse">
-                      <div className="h-8 bg-slate-700/50 rounded w-20"></div>
-                      <div className="h-3 bg-slate-700/30 rounded w-32"></div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="text-2xl font-bold text-white">
-                        {clanStats?.total_members || 0}
-                      </div>
-                      <p className="text-xs text-slate-400">Friends to play with</p>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* 2. Total Clan XP */}
-              <div className="fantasy-stat-item">
-                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <span className="text-sm font-medium text-slate-300">Total Clan XP</span>
-                  <TrendingUp className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
-                </div>
-                <div>
-                  {loading ? (
-                    <div className="space-y-2 animate-pulse">
-                      <div className="h-8 bg-slate-700/50 rounded w-24"></div>
-                      <div className="h-3 bg-slate-700/30 rounded w-28"></div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="text-2xl font-bold text-white">
-                        {formatNumber(clanStats?.total_xp || 0)}
-                      </div>
-                      <p className="text-xs text-slate-400">Combined clan XP</p>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* 3. Time Spent in Clan */}
-              {user?.username && user?.isLinked ? (
-                <div className="fantasy-stat-item">
-                  <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <span className="text-sm font-medium text-slate-300">Time Spent in Clan</span>
-                    <Calendar className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
-                  </div>
-                  <div>
-                    {loading || !playerData ? (
-                      <div className="space-y-2 animate-pulse">
-                        <div className="h-8 bg-slate-700/50 rounded w-28"></div>
-                        <div className="h-3 bg-slate-700/30 rounded w-32"></div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="text-2xl font-bold text-white">
-                          {calculateDaysInClan() !== null ? `${calculateDaysInClan()} days` : 'N/A'}
-                        </div>
-                        <p className="text-xs text-slate-400">Days as clan member</p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ) : null}
-
-              {/* 4. Competitions */}
-              <div className="fantasy-stat-item">
-                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <span className="text-sm font-medium text-slate-300">Competitions</span>
-                  <Trophy className="h-4 w-4 stat-icon text-theme-accent-light transition-colors duration-200" />
-                </div>
-                <div>
-                  {loading ? (
-                    <div className="space-y-2 animate-pulse">
-                      <div className="h-8 bg-slate-700/50 rounded w-12"></div>
-                      <div className="h-3 bg-slate-700/30 rounded w-36"></div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="text-2xl font-bold text-white">
-                        {activeCompetitionsCount}
-                      </div>
-                      <p className="text-xs text-slate-400">Active competitions</p>
-                    </>
-                  )}
-                </div>
-              </div>
-                  </div>
-                </div>
-
                 {/* Dailyscape Panel - with tabs */}
                 <DailyscapeCard />
-              </div>
-              {/* End center column */}
-
-              {/* ========== RIGHT COLUMN - Social / Activity ========== */}
-              <div className="test-column-right">
-                {/* Members Active Today */}
-                <div className="fantasy-section">
-                  <h3 className="fantasy-section-title">Members Active Today</h3>
-                  {activeMembersLoading ? (
-                    <div className="space-y-3 animate-pulse">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <div key={i} className="flex justify-between items-center">
-                          <div className="h-4 bg-slate-700/50 rounded w-1/2"></div>
-                          <div className="h-4 bg-slate-700/30 rounded w-1/4"></div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : activeMembers && activeMembers.active_members.length > 0 ? (
-                    <>
-                      <div className="space-y-2 mb-3">
-                        {activeMembers.active_members.map((member: any, index: number) => (
-                          <div
-                            key={member.username}
-                            className="flex justify-between items-center p-2 bg-slate-700/30 rounded-lg"
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className="text-slate-400 font-mono text-xs w-5">
-                                #{index + 1}
-                              </span>
-                              <Link
-                                to={`/clan-member/${usernameToUrl(member.username)}`}
-                                className="text-white text-sm font-medium hover:text-blue-300 transition-colors"
-                              >
-                                <Username
-                                  username={member.username}
-                                  clanRank={clanMembers.find(m => m.username === member.username)?.clan_rank}
-                                />
-                              </Link>
-                            </div>
-                            <span className="text-green-400 text-sm font-semibold">
-                              +{formatNumber(member.xp_gained)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="border-t border-slate-700 pt-2 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Activity className="h-4 w-4 text-green-400" />
-                          <span className="text-xs text-slate-400">Total active</span>
-                        </div>
-                        <span className="text-sm font-bold text-white">
-                          {activeMembers.total_active}
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <p className="text-center text-slate-400 py-4 text-sm">No active members today</p>
-                  )}
-                </div>
 
                 {/* Clan Log */}
                 <div className="fantasy-section">
@@ -774,6 +629,65 @@ const TestHome = () => {
                         </div>
                       )}
                     </div>
+                  )}
+                </div>
+              </div>
+              {/* End center column */}
+
+              {/* ========== RIGHT COLUMN - Members Active Today Only ========== */}
+              <div className="test-column-right">
+                {/* Members Active Today */}
+                <div className="fantasy-section">
+                  <h3 className="fantasy-section-title">Members Active Today</h3>
+                  {activeMembersLoading ? (
+                    <div className="space-y-3 animate-pulse">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <div key={i} className="flex justify-between items-center">
+                          <div className="h-4 bg-slate-700/50 rounded w-1/2"></div>
+                          <div className="h-4 bg-slate-700/30 rounded w-1/4"></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : activeMembers && activeMembers.active_members.length > 0 ? (
+                    <>
+                      <div className="space-y-2 mb-3">
+                        {activeMembers.active_members.map((member: any, index: number) => (
+                          <div
+                            key={member.username}
+                            className="flex justify-between items-center p-2 bg-slate-700/30 rounded-lg"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-slate-400 font-mono text-xs w-5">
+                                #{index + 1}
+                              </span>
+                              <Link
+                                to={`/clan-member/${usernameToUrl(member.username)}`}
+                                className="text-white text-sm font-medium hover:text-blue-300 transition-colors"
+                              >
+                                <Username
+                                  username={member.username}
+                                  clanRank={clanMembers.find(m => m.username === member.username)?.clan_rank}
+                                />
+                              </Link>
+                            </div>
+                            <span className="text-green-400 text-sm font-semibold">
+                              +{formatNumber(member.xp_gained)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="border-t border-slate-700 pt-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Activity className="h-4 w-4 text-green-400" />
+                          <span className="text-xs text-slate-400">Total active</span>
+                        </div>
+                        <span className="text-sm font-bold text-white">
+                          {activeMembers.total_active}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-center text-slate-400 py-4 text-sm">No active members today</p>
                   )}
                 </div>
               </div>

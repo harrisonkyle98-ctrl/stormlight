@@ -106,6 +106,29 @@
 }
 
 /* ========================================
+   CLAN SUMMARY - Full width below navigation
+   Spans all columns like a header stats bar
+   ======================================== */
+
+.test-immersive .test-clan-summary-fullwidth {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.test-immersive .test-clan-summary-fullwidth .fantasy-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .test-immersive .test-clan-summary-fullwidth .fantasy-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+}
+
+/* ========================================
    EMBEDDED NAVIGATION - Minimal, functional
    ======================================== */
 
