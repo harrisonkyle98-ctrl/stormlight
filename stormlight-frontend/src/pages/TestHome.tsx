@@ -364,6 +364,25 @@ const TestHome = () => {
 
   return (
     <>
+      {/* SVG Filter for parchment torn edges - hidden but referenced by CSS */}
+      <svg style={{ position: 'absolute', width: 0, height: 0 }} aria-hidden="true">
+        <defs>
+          <filter id="parchment-torn-edge">
+            <feTurbulence 
+              x="0" 
+              y="0" 
+              baseFrequency="0.04" 
+              numOctaves="5" 
+              seed="2"
+            />
+            <feDisplacementMap 
+              in="SourceGraphic" 
+              scale="8"
+            />
+          </filter>
+        </defs>
+      </svg>
+      
       {/* Test Immersive Wrapper - scopes all immersive styles */}
       {/* NO ribbons on /test - full-width 3-column client-style layout */}
       <div className="test-immersive">
