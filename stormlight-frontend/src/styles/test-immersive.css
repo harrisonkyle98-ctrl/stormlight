@@ -393,9 +393,9 @@
 }
 
 /* ========================================
-   ROW PANEL VARIANT - Left-side spotlight
+   ROW PANEL VARIANT - Left-side spotlight on hover
    Used for Members Active Today rows and Dailyscape list items
-   Same base as fantasy-stat-item but with left highlight instead of top
+   Same base as fantasy-stat-item but with left highlight on hover only
    ======================================== */
 
 .test-immersive .test-row-panel {
@@ -405,22 +405,19 @@
   /* Remove flat border */
   border: none !important;
   
-  /* Same carved cell effect as fantasy-stat-item */
+  /* Carved cell effect - no thick borders */
   box-shadow:
-    /* Outer dark edge */
-    inset 0 0 0 1px rgba(8, 6, 4, 0.9),
-    /* Inner stone edge */
-    inset 0 0 0 2px rgba(45, 40, 32, 0.6),
-    /* Inset depth - no top highlight here, we use pseudo-element for left */
+    /* Subtle inset depth only */
     inset 0 2px 6px rgba(0, 0, 0, 0.3),
     inset 0 -1px 3px rgba(0, 0, 0, 0.1) !important;
   
   border-radius: 2px !important;
   position: relative;
   overflow: hidden;
+  transition: box-shadow 0.2s ease-out;
 }
 
-/* Left-side spotlight highlight - fades top to bottom */
+/* Left-side spotlight highlight - only on hover */
 .test-immersive .test-row-panel::before {
   content: '';
   position: absolute;
@@ -430,16 +427,23 @@
   height: 100%;
   background: linear-gradient(
     180deg,
-    rgba(160, 140, 110, 0.35) 0%,
-    rgba(140, 120, 95, 0.2) 40%,
-    rgba(100, 85, 65, 0.08) 70%,
+    rgba(160, 140, 110, 0.5) 0%,
+    rgba(140, 120, 95, 0.3) 40%,
+    rgba(100, 85, 65, 0.15) 70%,
     transparent 100%
   );
   pointer-events: none;
   z-index: 1;
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
 }
 
-/* Subtle inner left glow overlay */
+/* Show spotlight on hover */
+.test-immersive .test-row-panel:hover::before {
+  opacity: 1;
+}
+
+/* Subtle inner left glow overlay - only on hover */
 .test-immersive .test-row-panel::after {
   content: '';
   position: absolute;
@@ -449,16 +453,24 @@
   height: 100%;
   background: linear-gradient(
     90deg,
-    rgba(255, 240, 210, 0.04) 0%,
+    rgba(255, 240, 210, 0.06) 0%,
     transparent 100%
   );
   pointer-events: none;
   z-index: 0;
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+}
+
+/* Show inner glow on hover */
+.test-immersive .test-row-panel:hover::after {
+  opacity: 1;
 }
 
 /* ========================================
    DAILYSCAPE ROW STYLING - Apply test-row-panel to Dailyscape rows
    Targets the wildy events list items and other Dailyscape rows
+   Spotlight effect only on hover
    ======================================== */
 
 /* Wildy events upcoming list rows */
@@ -466,17 +478,17 @@
   /* Same background as test-row-panel */
   background: rgba(18, 16, 12, 0.8) !important;
   border: none !important;
+  /* Subtle inset depth only - no thick borders */
   box-shadow:
-    inset 0 0 0 1px rgba(8, 6, 4, 0.9),
-    inset 0 0 0 2px rgba(45, 40, 32, 0.6),
     inset 0 2px 6px rgba(0, 0, 0, 0.3),
     inset 0 -1px 3px rgba(0, 0, 0, 0.1) !important;
   border-radius: 2px !important;
   position: relative;
   overflow: hidden;
+  transition: box-shadow 0.2s ease-out;
 }
 
-/* Left-side spotlight for wildy event rows */
+/* Left-side spotlight for wildy event rows - only on hover */
 .test-immersive .wildy-events-scroll > div > div:first-child::before {
   content: '';
   position: absolute;
@@ -486,30 +498,37 @@
   height: 100%;
   background: linear-gradient(
     180deg,
-    rgba(160, 140, 110, 0.35) 0%,
-    rgba(140, 120, 95, 0.2) 40%,
-    rgba(100, 85, 65, 0.08) 70%,
+    rgba(160, 140, 110, 0.5) 0%,
+    rgba(140, 120, 95, 0.3) 40%,
+    rgba(100, 85, 65, 0.15) 70%,
     transparent 100%
   );
   pointer-events: none;
   z-index: 1;
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+}
+
+/* Show spotlight on hover for wildy event rows */
+.test-immersive .wildy-events-scroll > div > div:first-child:hover::before {
+  opacity: 1;
 }
 
 /* Merchant items rows */
 .test-immersive .space-y-2 > div[class*="bg-slate-700/30"] {
   background: rgba(18, 16, 12, 0.8) !important;
   border: none !important;
+  /* Subtle inset depth only - no thick borders */
   box-shadow:
-    inset 0 0 0 1px rgba(8, 6, 4, 0.9),
-    inset 0 0 0 2px rgba(45, 40, 32, 0.6),
     inset 0 2px 6px rgba(0, 0, 0, 0.3),
     inset 0 -1px 3px rgba(0, 0, 0, 0.1) !important;
   border-radius: 2px !important;
   position: relative;
   overflow: hidden;
+  transition: box-shadow 0.2s ease-out;
 }
 
-/* Left-side spotlight for merchant rows */
+/* Left-side spotlight for merchant rows - only on hover */
 .test-immersive .space-y-2 > div[class*="bg-slate-700/30"]::before {
   content: '';
   position: absolute;
@@ -519,13 +538,20 @@
   height: 100%;
   background: linear-gradient(
     180deg,
-    rgba(160, 140, 110, 0.35) 0%,
-    rgba(140, 120, 95, 0.2) 40%,
-    rgba(100, 85, 65, 0.08) 70%,
+    rgba(160, 140, 110, 0.5) 0%,
+    rgba(140, 120, 95, 0.3) 40%,
+    rgba(100, 85, 65, 0.15) 70%,
     transparent 100%
   );
   pointer-events: none;
   z-index: 1;
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+}
+
+/* Show spotlight on hover for merchant rows */
+.test-immersive .space-y-2 > div[class*="bg-slate-700/30"]:hover::before {
+  opacity: 1;
 }
 
 /* ========================================
