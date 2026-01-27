@@ -424,40 +424,17 @@
 }
 
 /* NO ::before element - we don't want the thick top border highlight */
+/* NO ::after element - we don't want the left spotlight on hover */
 
 /* Hover state - slightly darker like fantasy-stat-item */
 .test-immersive .test-row-panel:hover {
   background: rgba(25, 22, 17, 0.85) !important;
 }
 
-/* Subtle inner left glow overlay (spotlight) - only on hover */
-.test-immersive .test-row-panel::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 40px;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 240, 210, 0.1) 0%,
-    transparent 100%
-  );
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0;
-  transition: opacity 0.2s ease-out;
-}
-
-/* Show spotlight on hover */
-.test-immersive .test-row-panel:hover::after {
-  opacity: 1;
-}
-
 /* ========================================
    DAILYSCAPE ROW STYLING - Same as Clan Summary stats but NO top border
    Targets the wildy events list items and other Dailyscape rows
-   Spotlight effect only on hover
+   Background glow on hover only (no left spotlight)
    ======================================== */
 
 /* Wildy events upcoming list rows */
@@ -482,33 +459,9 @@
   transition: background-color 0.2s ease;
 }
 
-/* Hover state for wildy event rows */
+/* Hover state for wildy event rows - background glow only */
 .test-immersive .wildy-events-scroll > div > div:first-child:hover {
   background: rgba(25, 22, 17, 0.85) !important;
-}
-
-/* Left-side spotlight for wildy event rows - only on hover */
-.test-immersive .wildy-events-scroll > div > div:first-child::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 40px;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 240, 210, 0.1) 0%,
-    transparent 100%
-  );
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0;
-  transition: opacity 0.2s ease-out;
-}
-
-/* Show spotlight on hover for wildy event rows */
-.test-immersive .wildy-events-scroll > div > div:first-child:hover::after {
-  opacity: 1;
 }
 
 /* Merchant items rows */
@@ -533,33 +486,9 @@
   transition: background-color 0.2s ease;
 }
 
-/* Hover state for merchant rows */
+/* Hover state for merchant rows - background glow only */
 .test-immersive .space-y-2 > div[class*="bg-slate-700/30"]:hover {
   background: rgba(25, 22, 17, 0.85) !important;
-}
-
-/* Left-side spotlight for merchant rows - only on hover */
-.test-immersive .space-y-2 > div[class*="bg-slate-700/30"]::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 40px;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 240, 210, 0.1) 0%,
-    transparent 100%
-  );
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0;
-  transition: opacity 0.2s ease-out;
-}
-
-/* Show spotlight on hover for merchant rows */
-.test-immersive .space-y-2 > div[class*="bg-slate-700/30"]:hover::after {
-  opacity: 1;
 }
 
 /* ========================================
