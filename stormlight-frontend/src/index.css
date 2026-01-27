@@ -833,258 +833,61 @@ html[data-theme='obsidian'] button[data-state='active'] {
 }
 
 /* ===========================================
-   BEVELED BUTTON STYLING - RuneScape UI Style
-   Outset/beveled borders with soft hover glow
-   Square corners, spotlight effect, subtle texture
+   BUTTON HOVER GLOW - Inner top/bottom glow on hover
+   Keeps original button styling, adds inner glow effect
    =========================================== */
 
-/* Base beveled button class - applied to all Button components */
-.btn-bevel {
+/* Base class for hover glow - applied to all Button components */
+.btn-hover-glow {
   position: relative;
   overflow: hidden;
-  /* SQUARE CORNERS - remove all rounding */
-  border-radius: 0 !important;
-  /* NO OUTER BORDER - bevel defines the shape */
-  border: none !important;
-  /* Outset bevel effect - shadows only, no outer border */
-  box-shadow:
-    /* Top/left highlight - lighter edge */
-    inset 2px 2px 0 0 rgba(255, 255, 255, 0.4),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.25),
-    /* Bottom/right shadow - darker edge (lightened to read as edge, not drop shadow) */
-    inset -2px -2px 0 0 rgba(0, 0, 0, 0.25),
-    inset 0 -1px 0 0 rgba(0, 0, 0, 0.15);
-  /* Smooth transitions for all hover effects */
-  transition: box-shadow 0.2s ease-out, transform 0.1s ease-out;
-  /* Remove any default outline/border - IMPORTANT: prevents blue border */
-  outline: none !important;
-  outline-offset: 0 !important;
 }
 
-/* Remove blue border/outline on all states - comprehensive reset */
-/* Must override global theme button hover rules that add border-color */
-.btn-bevel,
-.btn-bevel:hover,
-.btn-bevel:focus,
-.btn-bevel:active,
-[data-theme] .btn-bevel,
-[data-theme] .btn-bevel:hover,
-[data-theme] .btn-bevel:focus,
-[data-theme] .btn-bevel:active,
-[data-theme='blue'] .btn-bevel:not(:disabled):hover,
-[data-theme='crimson'] .btn-bevel:not(:disabled):hover,
-[data-theme='emerald'] .btn-bevel:not(:disabled):hover,
-[data-theme='amethyst'] .btn-bevel:not(:disabled):hover,
-[data-theme='sunset'] .btn-bevel:not(:disabled):hover,
-[data-theme='obsidian'] .btn-bevel:not(:disabled):hover {
-  outline: none !important;
-  outline-width: 0 !important;
-  outline-color: transparent !important;
-  border: none !important;
-  border-color: transparent !important;
+/* Remove blue hover border - override global theme button hover rules */
+.btn-hover-glow,
+.btn-hover-glow:hover,
+.btn-hover-glow:focus,
+.btn-hover-glow:active,
+[data-theme] .btn-hover-glow,
+[data-theme] .btn-hover-glow:hover,
+[data-theme] .btn-hover-glow:focus,
+[data-theme] .btn-hover-glow:active,
+[data-theme='blue'] .btn-hover-glow:not(:disabled):hover,
+[data-theme='crimson'] .btn-hover-glow:not(:disabled):hover,
+[data-theme='emerald'] .btn-hover-glow:not(:disabled):hover,
+[data-theme='amethyst'] .btn-hover-glow:not(:disabled):hover,
+[data-theme='sunset'] .btn-hover-glow:not(:disabled):hover,
+[data-theme='obsidian'] .btn-hover-glow:not(:disabled):hover {
+  border-color: inherit;
 }
 
-/* Visible texture overlay using ::before pseudo-element */
-.btn-bevel::before {
+/* Inner glow using ::after pseudo-element - only visible on hover */
+.btn-hover-glow::after {
   content: '';
   position: absolute;
-  inset: 2px; /* Inside the bevel */
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  /* Increased opacity for visible texture */
-  opacity: 0.06;
+  inset: 0;
   pointer-events: none;
   z-index: 1;
-  mix-blend-mode: overlay;
-  transition: opacity 0.2s ease-out;
-}
-
-/* Inner glow using ::after pseudo-element - ALWAYS VISIBLE, stronger on hover */
-.btn-bevel::after {
-  content: '';
-  position: absolute;
-  inset: 2px; /* Inside the bevel */
-  /* Subtle inner glow at rest - top and bottom */
+  opacity: 0;
+  /* Inner top + bottom glow */
   background: linear-gradient(
     to bottom,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(255, 255, 255, 0.02) 25%,
-    rgba(255, 255, 255, 0.02) 75%,
-    rgba(255, 255, 255, 0.06) 100%
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(255, 255, 255, 0.03) 20%,
+    rgba(255, 255, 255, 0.03) 80%,
+    rgba(255, 255, 255, 0.15) 100%
   );
-  pointer-events: none;
-  z-index: 2;
-  /* Smooth transition for glow intensity */
-  transition: background 0.2s ease-out;
+  /* Smooth transition */
+  transition: opacity 0.15s ease-out;
 }
 
-/* Hover state - stronger inner glow, subtle outer glow, NO blue border */
-.btn-bevel:hover:not(:disabled) {
-  box-shadow:
-    /* Slightly enhanced bevel on hover */
-    inset 2px 2px 0 0 rgba(255, 255, 255, 0.45),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
-    /* Bottom bevel - lightened to read as edge, not shadow */
-    inset -2px -2px 0 0 rgba(0, 0, 0, 0.28),
-    inset 0 -1px 0 0 rgba(0, 0, 0, 0.18),
-    /* Subtle outer glow only */
-    0 0 6px 1px var(--btn-glow-color, rgba(74, 107, 192, 0.3));
+/* Show inner glow on hover */
+.btn-hover-glow:hover:not(:disabled)::after {
+  opacity: 1;
 }
 
-/* Stronger inner glow on hover - TOP and BOTTOM */
-.btn-bevel:hover:not(:disabled)::after {
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.18) 0%,
-    rgba(255, 255, 255, 0.04) 25%,
-    rgba(255, 255, 255, 0.04) 75%,
-    rgba(255, 255, 255, 0.14) 100%
-  );
-}
-
-/* Active/pressed state - inset effect, reduced inner glow */
-.btn-bevel:active:not(:disabled) {
-  box-shadow:
-    /* Invert bevel for pressed look - lightened values */
-    inset -2px -2px 0 0 rgba(255, 255, 255, 0.15),
-    inset 2px 2px 0 0 rgba(0, 0, 0, 0.2),
-    inset 0 2px 3px 0 rgba(0, 0, 0, 0.25),
-    /* Minimal outer glow when pressed */
-    0 0 3px 0 var(--btn-glow-color, rgba(74, 107, 192, 0.2));
-  transform: translateY(1px);
-}
-
-/* Reduced inner glow on active/pressed */
-.btn-bevel:active:not(:disabled)::after {
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.03) 0%,
-    rgba(0, 0, 0, 0) 25%,
-    rgba(0, 0, 0, 0) 75%,
-    rgba(0, 0, 0, 0.03) 100%
-  );
-}
-
-/* Focus state - subtle inset highlight instead of blue border (keyboard only) */
-.btn-bevel:focus-visible {
-  outline: none !important;
-  outline-width: 0 !important;
-  box-shadow:
-    /* Maintain bevel with lightened bottom */
-    inset 2px 2px 0 0 rgba(255, 255, 255, 0.45),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
-    inset -2px -2px 0 0 rgba(0, 0, 0, 0.25),
-    inset 0 -1px 0 0 rgba(0, 0, 0, 0.15),
-    /* Focus indicator - subtle theme-consistent inner glow */
-    inset 0 0 0 2px var(--btn-glow-color, rgba(74, 107, 192, 0.5));
-}
-
-/* Disabled state - no glow, no inner glow, muted bevel, muted texture */
-.btn-bevel:disabled {
-  box-shadow:
-    inset 1px 1px 0 0 rgba(255, 255, 255, 0.12),
-    inset -1px -1px 0 0 rgba(0, 0, 0, 0.12);
-  cursor: not-allowed;
-}
-
-/* Muted texture on disabled */
-.btn-bevel:disabled::before {
-  opacity: 0.02;
-}
-
-/* No inner glow on disabled */
-.btn-bevel:disabled::after {
-  background: none;
-}
-
-/* Variant-specific glow colors */
-/* Default/Primary - Blue glow */
-.btn-bevel.btn-glow-default {
-  --btn-glow-color: rgba(74, 107, 192, 0.35);
-}
-
-/* Destructive - Red glow */
-.btn-bevel.btn-glow-destructive {
-  --btn-glow-color: rgba(239, 68, 68, 0.35);
-}
-
-/* Secondary - Subtle slate glow */
-.btn-bevel.btn-glow-secondary {
-  --btn-glow-color: rgba(148, 163, 184, 0.3);
-}
-
-/* Outline - Blue glow (matches default) */
-.btn-bevel.btn-glow-outline {
-  --btn-glow-color: rgba(74, 107, 192, 0.3);
-}
-
-/* Ghost - Very subtle glow */
-.btn-bevel.btn-glow-ghost {
-  --btn-glow-color: rgba(148, 163, 184, 0.25);
-}
-
-/* Ghost variant - lighter bevel for transparent background */
-.btn-bevel.btn-variant-ghost {
-  box-shadow:
-    inset 2px 2px 0 0 rgba(255, 255, 255, 0.15),
-    inset -2px -2px 0 0 rgba(0, 0, 0, 0.15);
-}
-
-/* Ghost variant inner glow at rest */
-.btn-bevel.btn-variant-ghost::after {
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.05) 0%,
-    rgba(255, 255, 255, 0.01) 25%,
-    rgba(255, 255, 255, 0.01) 75%,
-    rgba(255, 255, 255, 0.04) 100%
-  );
-}
-
-.btn-bevel.btn-variant-ghost:hover:not(:disabled) {
-  box-shadow:
-    inset 2px 2px 0 0 rgba(255, 255, 255, 0.2),
-    inset -2px -2px 0 0 rgba(0, 0, 0, 0.18),
-    0 0 5px 1px var(--btn-glow-color, rgba(148, 163, 184, 0.25));
-}
-
-/* Ghost variant stronger inner glow on hover */
-.btn-bevel.btn-variant-ghost:hover:not(:disabled)::after {
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.12) 0%,
-    rgba(255, 255, 255, 0.03) 25%,
-    rgba(255, 255, 255, 0.03) 75%,
-    rgba(255, 255, 255, 0.10) 100%
-  );
-}
-
-/* Link variant - no bevel, no texture, just subtle hover effect */
-.btn-bevel.btn-variant-link {
-  box-shadow: none;
-  border: none;
-  border-radius: inherit !important;
-}
-
-.btn-bevel.btn-variant-link::before,
-.btn-bevel.btn-variant-link::after {
+/* No glow on disabled */
+.btn-hover-glow:disabled::after {
   display: none;
-}
-
-.btn-bevel.btn-variant-link:hover:not(:disabled) {
-  box-shadow: none;
-}
-
-/* Outline variant - bevel only, no outer border */
-.btn-bevel.btn-variant-outline {
-  box-shadow:
-    inset 2px 2px 0 0 rgba(255, 255, 255, 0.2),
-    inset -2px -2px 0 0 rgba(0, 0, 0, 0.18);
-}
-
-.btn-bevel.btn-variant-outline:hover:not(:disabled) {
-  box-shadow:
-    inset 2px 2px 0 0 rgba(255, 255, 255, 0.25),
-    inset -2px -2px 0 0 rgba(0, 0, 0, 0.2),
-    0 0 5px 1px var(--btn-glow-color, rgba(74, 107, 192, 0.3));
 }
 
