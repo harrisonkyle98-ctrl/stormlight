@@ -7,7 +7,100 @@
    - Inset rather than floating
    - Lit rather than flat
    - Crafted rather than rendered
+   - NO RIBBONS - embedded game interface feel
    =========================================== */
+
+/* ========================================
+   WIDER CONTAINER - Large interface surface
+   ======================================== */
+
+.test-immersive .test-wide-container {
+  /* Significantly wider than default - game UI stretched across screen */
+  margin: 1.5% 2%;
+  max-width: none;
+}
+
+@media (min-width: 1400px) {
+  .test-immersive .test-wide-container {
+    margin: 1% 1.5%;
+  }
+}
+
+@media (min-width: 1800px) {
+  .test-immersive .test-wide-container {
+    margin: 0.8% 1%;
+  }
+}
+
+/* ========================================
+   EMBEDDED NAVIGATION - Minimal, functional
+   ======================================== */
+
+.test-immersive .test-embedded-nav {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.test-immersive .test-nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: #c4b8a4;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+  background: rgba(30, 27, 22, 0.5);
+  box-shadow:
+    inset 0 0 0 1px rgba(60, 52, 42, 0.5),
+    inset 0 1px 0 rgba(100, 88, 70, 0.15);
+}
+
+.test-immersive .test-nav-item:hover {
+  color: #f5f0e8;
+  background: rgba(50, 44, 35, 0.7);
+  box-shadow:
+    inset 0 0 0 1px rgba(80, 70, 55, 0.6),
+    inset 0 1px 0 rgba(120, 105, 85, 0.25);
+}
+
+.test-immersive .test-nav-item svg {
+  opacity: 0.7;
+}
+
+.test-immersive .test-nav-item:hover svg {
+  opacity: 1;
+}
+
+/* ========================================
+   PROFILE PANEL - Embedded, functional
+   ======================================== */
+
+.test-immersive .test-profile-panel {
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.test-immersive .test-profile-btn {
+  background: rgba(30, 27, 22, 0.6) !important;
+  border: none !important;
+  color: #c4b8a4 !important;
+  font-size: 0.8rem;
+  box-shadow:
+    inset 0 0 0 1px rgba(60, 52, 42, 0.5),
+    inset 0 1px 0 rgba(100, 88, 70, 0.15);
+  transition: all 0.2s ease;
+}
+
+.test-immersive .test-profile-btn:hover {
+  background: rgba(50, 44, 35, 0.8) !important;
+  color: #f5f0e8 !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(80, 70, 55, 0.6),
+    inset 0 1px 0 rgba(120, 105, 85, 0.25);
+}
 
 /* ========================================
    BASE CONTAINER - Warm stone/wood feel

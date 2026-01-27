@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Users, Trophy, TrendingUp, Calendar, Activity } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Users, Trophy, TrendingUp, Calendar, Activity, Home, User, Award, LogOut, Key } from 'lucide-react'
 import '../styles/fantasy-container.css'
 import '../styles/test-immersive.css'
 import { fetchClanMembers } from '../utils/gradientUtils'
@@ -10,9 +10,10 @@ import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip as Recharts
 import { ClanLogRow } from '../components/clanLogs/ClanLogRow'
 import { ActivityLogRow } from '../components/activityLogs/ActivityLogRow'
 import { Username } from '../components/ui/username'
-import GlobalProfileHeader from '../components/profile/GlobalProfileHeader'
 import { usePageTitle } from '../hooks/usePageTitle'
 import DailyscapeCard from '../components/dailyscape/DailyscapeCard'
+import { Button } from '../components/ui/button'
+import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
 
 const getRankIcon= (rank: string): string => {
   const rankImageMap: { [key: string]: string } = {
@@ -133,7 +134,8 @@ interface ActivityResponse {
 
 const TestHome = () => {
   usePageTitle('Test - Immersive UI')
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const [clanStats, setClanStats] = useState<ClanStats | null>(null)
   const [activities, setActivities] = useState<Activity[]>([])
   const [activityLoading, setActivityLoading] = useState(true)
@@ -385,27 +387,103 @@ const TestHome = () => {
 
   return (
     <>
-      {/* Global Profile Header - unified component for all pages */}
-      <GlobalProfileHeader />
-
       {/* Test Immersive Wrapper - scopes all immersive styles */}
+      {/* NO ribbons on /test - embedded game interface feel */}
       <div className="test-immersive">
-        <div className="fantasy-container">
-          {/* Fantasy Banner Header with Ribbons */}
-          <div className="fantasy-banner-wrapper">
-          <div className="fantasy-banner-ribbon-left"></div>
-          <div className="fantasy-banner-ribbon-right"></div>
-          <div className="fantasy-banner">
-            <div className="fantasy-banner-inner">
-              <h1 className="fantasy-banner-title">Test - Immersive UI</h1>
+        <div className="fantasy-container test-wide-container">
+          {/* Main Content Area - no page header ribbon */}
+          <div className="fantasy-content">
+            {/* Embedded Navigation - minimal, functional */}
+            <div className="fantasy-section test-embedded-nav">
+              <nav className="flex items-center justify-center gap-2 flex-wrap">
+                <Link to="/" className="test-nav-item">
+                  <Home className="h-5 w-5" />
+                  <span>Home</span>
+                </Link>
+                <Link to="/members" className="test-nav-item">
+                  <Users className="h-5 w-5" />
+                  <span>Members</span>
+                </Link>
+                <Link to="/competitions" className="test-nav-item">
+                  <Trophy className="h-5 w-5" />
+                  <span>Competitions</span>
+                </Link>
+                <Link to="/clan-hiscores" className="test-nav-item">
+                  <Award className="h-5 w-5" />
+                  <span>Hiscores</span>
+                </Link>
+              </nav>
             </div>
-          </div>
-        </div>
 
-        {/* Main Content Area */}
-        <div className="fantasy-content">
-          {/* Stats Section */}
-          <div className="fantasy-section">
+            {/* Profile Panel - embedded, functional, above stats */}
+            {user?.username && user?.isLinked && (
+              <div className="fantasy-section test-profile-panel">
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  {/* User Avatar and Name */}
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-12 h-12">
+                      <AvatarImage
+                        src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(user.username)}/chat.png`}
+                        alt={user.username}
+                      />
+                      <AvatarFallback className="bg-slate-700 text-white">
+                        <User className="w-6 h-6" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <Link
+                        to={`/clan-member/${usernameToUrl(user.username)}`}
+                        className="text-lg font-semibold text-white hover:text-blue-300 transition-colors"
+                      >
+                        <Username
+                          username={user.username}
+                          clanRank={playerData?.clan_rank}
+                        />
+                      </Link>
+                      {playerData?.clan_rank && (
+                        <p className="text-xs text-slate-400">{playerData.clan_rank}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-2 flex-wrap justify-center sm:ml-auto">
+                    <Button
+                      onClick={() => navigate(`/clan-member/${usernameToUrl(user.username)}`)}
+                      className="test-profile-btn"
+                      size="sm"
+                    >
+                      <User className="w-4 h-4 mr-1" />
+                      Profile
+                    </Button>
+
+                    {/* Admin Panel - only visible for admins */}
+                    {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
+                      <Button
+                        onClick={() => navigate('/admin')}
+                        className="test-profile-btn"
+                        size="sm"
+                      >
+                        <Key className="w-4 h-4 mr-1" />
+                        Admin
+                      </Button>
+                    )}
+
+                    <Button
+                      onClick={logout}
+                      className="test-profile-btn"
+                      size="sm"
+                    >
+                      <LogOut className="w-4 h-4 mr-1" />
+                      Logout
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Stats Section */}
+            <div className="fantasy-section">
             <div className="fantasy-grid-4">
               {/* 1. Total Members */}
               <div className="fantasy-stat-item">
