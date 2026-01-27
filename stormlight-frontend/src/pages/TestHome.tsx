@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Users, Trophy, TrendingUp, Calendar, Activity, ArrowLeft } from 'lucide-react'
+import { Users, Trophy, TrendingUp, Calendar, Activity } from 'lucide-react'
 import '../styles/fantasy-container.css'
 import '../styles/test-immersive.css'
 import { fetchClanMembers } from '../utils/gradientUtils'
@@ -13,7 +13,6 @@ import { Username } from '../components/ui/username'
 import GlobalProfileHeader from '../components/profile/GlobalProfileHeader'
 import { usePageTitle } from '../hooks/usePageTitle'
 import DailyscapeCard from '../components/dailyscape/DailyscapeCard'
-import { Button } from '../components/ui/button'
 
 const getRankIcon= (rank: string): string => {
   const rankImageMap: { [key: string]: string } = {
@@ -391,16 +390,6 @@ const TestHome = () => {
 
       {/* Test Immersive Wrapper - scopes all immersive styles */}
       <div className="test-immersive">
-        {/* Back to Home button */}
-        <div className="mx-[4%] mb-4">
-          <Link to="/">
-            <Button variant="outline" size="sm" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
-            </Button>
-          </Link>
-        </div>
-
         <div className="fantasy-container">
           {/* Fantasy Banner Header with Ribbons */}
           <div className="fantasy-banner-wrapper">
