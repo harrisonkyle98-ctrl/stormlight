@@ -11,32 +11,98 @@
    =========================================== */
 
 /* ========================================
-   WIDER CONTAINER - Large interface surface
-   Fills more of the viewport for expansive game UI feel
+   FULL-WIDTH CONTAINER - Game client interface
+   No side gaps - fills entire viewport width
    ======================================== */
 
-.test-immersive .test-wide-container {
-  /* Much wider - minimal margins for expansive feel */
-  margin: 1% 1%;
-  max-width: none;
+.test-immersive .test-fullwidth-container {
+  /* Full width - no margins on sides */
+  margin: 0;
+  max-width: 100%;
+  width: 100%;
+  min-height: 100vh;
+  padding: 0.5rem;
 }
 
-@media (min-width: 1400px) {
-  .test-immersive .test-wide-container {
-    margin: 0.75% 0.75%;
+@media (min-width: 1200px) {
+  .test-immersive .test-fullwidth-container {
+    padding: 0.75rem;
   }
 }
 
-@media (min-width: 1800px) {
-  .test-immersive .test-wide-container {
-    margin: 0.5% 0.5%;
+@media (min-width: 1600px) {
+  .test-immersive .test-fullwidth-container {
+    padding: 1rem;
   }
 }
 
-@media (min-width: 2200px) {
-  .test-immersive .test-wide-container {
-    margin: 0.4% 0.4%;
+/* ========================================
+   3-COLUMN CLIENT LAYOUT - MMO interface style
+   Left: 22-25% | Center: 50-56% | Right: 22-25%
+   ======================================== */
+
+.test-immersive .test-three-column-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+/* Tablet: 2 columns (left + center merged, right below) */
+@media (min-width: 768px) {
+  .test-immersive .test-three-column-layout {
+    grid-template-columns: 280px 1fr;
+    gap: 1rem;
   }
+  
+  .test-immersive .test-column-right {
+    grid-column: span 2;
+  }
+}
+
+/* Desktop: Full 3-column layout */
+@media (min-width: 1200px) {
+  .test-immersive .test-three-column-layout {
+    grid-template-columns: minmax(240px, 22%) 1fr minmax(240px, 22%);
+    gap: 1rem;
+  }
+  
+  .test-immersive .test-column-right {
+    grid-column: auto;
+  }
+}
+
+/* Large screens: Slightly wider side columns */
+@media (min-width: 1600px) {
+  .test-immersive .test-three-column-layout {
+    grid-template-columns: minmax(280px, 24%) 1fr minmax(280px, 24%);
+    gap: 1.25rem;
+  }
+}
+
+/* Column containers */
+.test-immersive .test-column-left,
+.test-immersive .test-column-center,
+.test-immersive .test-column-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (min-width: 1200px) {
+  .test-immersive .test-column-left,
+  .test-immersive .test-column-center,
+  .test-immersive .test-column-right {
+    gap: 1rem;
+  }
+}
+
+/* ========================================
+   ACCOUNT PANEL - Left column header
+   ======================================== */
+
+.test-immersive .test-account-panel {
+  text-align: center;
 }
 
 /* ========================================
