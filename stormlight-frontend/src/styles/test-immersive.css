@@ -848,8 +848,13 @@
     0 6px 20px rgba(0, 0, 0, 0.15),
     0 0 60px #8f5922 inset;
   
-  /* Apply SVG feTurbulence filter for torn edges on ALL 4 sides */
-  filter: url(#parchment-torn-edge);
+  /* Apply SVG mask for smooth, anti-aliased torn edges on ALL 4 sides */
+  /* Vector-based mask scales cleanly at any resolution */
+  mask: url(#parchment-torn-mask);
+  -webkit-mask: url(#parchment-torn-mask);
+  
+  /* Ensure smooth edge rendering */
+  image-rendering: auto;
 }
 
 /* Content wrapper - renders ABOVE parchment layer */

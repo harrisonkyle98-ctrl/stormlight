@@ -364,21 +364,58 @@ const TestHome = () => {
 
   return (
     <>
-      {/* SVG Filter for parchment torn edges - hidden but referenced by CSS */}
+      {/* SVG Mask for parchment torn edges - smooth, anti-aliased vector mask */}
       <svg style={{ position: 'absolute', width: 0, height: 0 }} aria-hidden="true">
         <defs>
-          <filter id="parchment-torn-edge">
+          {/* Smooth torn edge mask - vector-based for crisp edges at any resolution */}
+          <mask id="parchment-torn-mask" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox">
+            {/* Base rectangle with subtle organic edge variations */}
+            <path 
+              fill="white"
+              d="M 0.002 0.08
+                 C 0.008 0.04, 0.015 0.02, 0.025 0.015
+                 C 0.04 0.008, 0.06 0.012, 0.08 0.008
+                 C 0.12 0.002, 0.18 0.006, 0.25 0.004
+                 C 0.32 0.002, 0.4 0.008, 0.5 0.005
+                 C 0.6 0.002, 0.68 0.007, 0.75 0.004
+                 C 0.82 0.001, 0.88 0.006, 0.92 0.008
+                 C 0.96 0.01, 0.985 0.015, 0.992 0.025
+                 C 0.998 0.04, 0.995 0.06, 0.997 0.1
+                 C 0.999 0.2, 0.996 0.35, 0.998 0.5
+                 C 1.0 0.65, 0.997 0.8, 0.998 0.9
+                 C 0.999 0.94, 0.995 0.96, 0.992 0.975
+                 C 0.985 0.985, 0.96 0.99, 0.92 0.992
+                 C 0.88 0.994, 0.82 0.998, 0.75 0.996
+                 C 0.68 0.994, 0.6 0.998, 0.5 0.995
+                 C 0.4 0.992, 0.32 0.997, 0.25 0.996
+                 C 0.18 0.995, 0.12 0.998, 0.08 0.992
+                 C 0.06 0.988, 0.04 0.992, 0.025 0.985
+                 C 0.015 0.98, 0.008 0.96, 0.002 0.92
+                 C -0.002 0.88, 0.003 0.8, 0.001 0.65
+                 C -0.001 0.5, 0.002 0.35, 0.001 0.2
+                 C 0.0 0.12, 0.004 0.1, 0.002 0.08
+                 Z"
+            />
+          </mask>
+          {/* Fallback filter with anti-aliasing for browsers that don't support mask well */}
+          <filter id="parchment-torn-edge-smooth">
             <feTurbulence 
               x="0" 
               y="0" 
-              baseFrequency="0.04" 
-              numOctaves="5" 
+              baseFrequency="0.02" 
+              numOctaves="3" 
               seed="2"
+              result="turbulence"
             />
             <feDisplacementMap 
               in="SourceGraphic" 
-              scale="8"
+              in2="turbulence"
+              scale="4"
+              result="displaced"
             />
+            {/* Add subtle blur for anti-aliasing on edges only */}
+            <feGaussianBlur in="displaced" stdDeviation="0.3" result="blurred" />
+            <feComposite in="blurred" in2="SourceGraphic" operator="atop" />
           </filter>
         </defs>
       </svg>
