@@ -813,10 +813,16 @@
 .test-immersive .parchment-log-entry {
   position: relative;
   padding: 0.75rem 1rem;
-  margin-bottom: 1rem; /* Increased spacing between entries */
+  margin-bottom: 1.25rem !important; /* Increased spacing between entries - override Tailwind space-y */
+  margin-top: 0 !important; /* Reset Tailwind space-y margin-top */
   
   /* No background/filter on container - moved to ::before */
   background: transparent;
+}
+
+/* Ensure first entry also has proper spacing from header */
+.test-immersive .parchment-log-entry:first-child {
+  margin-top: 0.75rem !important;
 }
 
 /* Parchment background layer - renders BEHIND content */
