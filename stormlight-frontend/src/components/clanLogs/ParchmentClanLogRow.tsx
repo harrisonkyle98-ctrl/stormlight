@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ClanLogEntry, getLogVisual } from '../../utils/clanLogUtils'
+import { ClanLogEntry, getLogVisual, normalizeLogType } from '../../utils/clanLogUtils'
 
 interface ParchmentClanLogRowProps {
   entry: ClanLogEntry
@@ -9,8 +9,8 @@ interface ParchmentClanLogRowProps {
 }
 
 /**
- * Parchment-styled clan log row for /test page only
- * Individual torn parchment strip appearance
+ * Styled clan log row for /test page only
+ * Uses Members Active Today row styling with log type coloring and pattern background
  */
 export function ParchmentClanLogRow({
   entry,
@@ -18,7 +18,8 @@ export function ParchmentClanLogRow({
   getRankIcon,
   usernameToUrl
 }: ParchmentClanLogRowProps) {
-  const { Icon, message } = getLogVisual(entry, getRankIcon)
+  const { Icon, message, color } = getLogVisual(entry, getRankIcon)
+  const logType = normalizeLogType(entry.event_type)
   
   const isCompetitionEvent = entry.event_type === 'competition_start' || entry.event_type === 'competition_end'
   const linkPath = isCompetitionEvent 
@@ -26,11 +27,21 @@ export function ParchmentClanLogRow({
     : `/clan-member/${usernameToUrl(entry.username)}`
 
   return (
-    <div className="parchment-log-entry">
-      <div className="flex items-center gap-3">
-        {/* Icon - embossed/printed style */}
-        <div className="parchment-icon flex items-center justify-center flex-shrink-0 w-8 h-8 rounded">
-          <Icon className="w-4 h-4" aria-hidden="true" />
+    <div 
+      className="test-log-row test-row-panel"
+      data-log-type={logType}
+      style={{ '--row-accent': color } as React.CSSProperties}
+    >
+      <div className="flex items-center gap-3 py-2 px-3">
+        {/* Icon container - recolored by log type */}
+        <div 
+          className="test-log-icon flex items-center justify-center flex-shrink-0 w-8 h-8 rounded"
+          style={{ 
+            backgroundColor: `color-mix(in srgb, ${color} 15%, transparent)`,
+            border: `1px solid color-mix(in srgb, ${color} 30%, transparent)`
+          }}
+        >
+          <Icon className="w-4 h-4" style={{ color }} aria-hidden="true" />
         </div>
 
         {/* Content */}
@@ -38,13 +49,14 @@ export function ParchmentClanLogRow({
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <Link
               to={linkPath}
-              className="parchment-text-link hover:underline flex-shrink-0"
+              className="test-log-link hover:underline flex-shrink-0"
+              style={{ color }}
             >
               {entry.username}
             </Link>
-            <span className="parchment-text truncate">{message}</span>
+            <span className="test-log-text truncate">{message}</span>
           </div>
-          <span className="parchment-timestamp whitespace-nowrap ml-2 flex-shrink-0">
+          <span className="test-log-timestamp whitespace-nowrap ml-2 flex-shrink-0">
             {formatTimeAgo(new Date(entry.timestamp).getTime() / 1000)}
           </span>
         </div>

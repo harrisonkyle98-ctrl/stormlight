@@ -803,105 +803,86 @@
 }
 
 /* ========================================
-   PARCHMENT LOG STYLING - CodePen-inspired torn parchment strips
-   Uses SVG feTurbulence filter for torn edges on ALL 4 sides
+   LOG ROW STYLING - Members Active Today style with pattern background
    Applies to Clan Log and Recent Activity on /test only
-   Reference: https://codepen.io/AgnusDei/pen/NWPbOxL
+   Uses CSS masking for subtle ornamental pattern underlay
    ======================================== */
 
-/* Parchment strip container - holds the parchment background layer */
-.test-immersive .parchment-log-entry {
+/* Log row container - uses test-row-panel base styling */
+.test-immersive .test-log-row {
   position: relative;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1.25rem !important; /* Increased spacing between entries - override Tailwind space-y */
-  margin-top: 0 !important; /* Reset Tailwind space-y margin-top */
-  
-  /* No background/filter on container - moved to ::before */
-  background: transparent;
+  margin-bottom: 0.5rem !important;
+  margin-top: 0 !important;
+  overflow: hidden;
 }
 
 /* Ensure first entry also has proper spacing from header */
-.test-immersive .parchment-log-entry:first-child {
-  margin-top: 0.75rem !important;
+.test-immersive .test-log-row:first-child {
+  margin-top: 0.5rem !important;
 }
 
-/* Parchment background layer - renders BEHIND content */
-.test-immersive .parchment-log-entry::before {
+/* Pattern background layer - renders BEHIND content using CSS masking */
+.test-immersive .test-log-row::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   z-index: 0;
   pointer-events: none;
   
-  /* Warm parchment background color - slightly more golden */
-  background: #fffdf2;
+  /* Background color driven by --row-accent CSS variable */
+  background-color: var(--row-accent, rgba(180, 160, 120, 0.5));
   
-  /* Parchment paper texture - base64 noise from CodePen */
-  background-image: url(data:image/png;base64,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);
+  /* Very low opacity for subtle texture effect */
+  opacity: 0.08;
   
-  /* Stronger shadow for stacked parchment effect + inset aged edge - golden tint */
-  box-shadow:
-    3px 4px 16px rgba(0, 0, 0, 0.35),
-    0 6px 20px rgba(0, 0, 0, 0.15),
-    0 0 60px #9a6528 inset;
-  
-  /* Apply SVG mask for smooth, anti-aliased torn edges on ALL 4 sides */
-  /* Vector-based mask scales cleanly at any resolution */
-  mask: url(#parchment-torn-mask);
-  -webkit-mask: url(#parchment-torn-mask);
-  
-  /* Ensure smooth edge rendering */
-  image-rendering: auto;
+  /* Apply pattern mask - ornamental repeating pattern */
+  -webkit-mask-image: url('/assets/patterns/stormlight-parchment-pattern-mask.png');
+  mask-image: url('/assets/patterns/stormlight-parchment-pattern-mask.png');
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+  -webkit-mask-size: 180px 180px;
+  mask-size: 180px 180px;
 }
 
-/* Content wrapper - renders ABOVE parchment layer */
-.test-immersive .parchment-log-entry > * {
+/* Content wrapper - renders ABOVE pattern layer */
+.test-immersive .test-log-row > * {
   position: relative;
   z-index: 1;
 }
 
-/* Parchment entry text styling - dark ink for readability - golden-brown tones */
-.test-immersive .parchment-log-entry .parchment-text {
-  color: #32291a !important;
-  font-weight: 500;
+/* Log row text styling - warm parchment tones */
+.test-immersive .test-log-row .test-log-text {
+  color: #ccc0a8 !important;
+  font-weight: 400;
+  font-size: 0.875rem;
 }
 
-.test-immersive .parchment-log-entry .parchment-text-muted {
-  color: #524430 !important;
+/* Log row link styling - uses row accent color (set inline) */
+.test-immersive .test-log-row .test-log-link {
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: opacity 0.15s ease;
 }
 
-.test-immersive .parchment-log-entry .parchment-text-link {
-  color: #443828 !important;
-  font-weight: 700;
+.test-immersive .test-log-row .test-log-link:hover {
+  opacity: 0.8;
 }
 
-.test-immersive .parchment-log-entry .parchment-text-link:hover {
-  color: #1e180f !important;
-  text-decoration: underline;
-}
-
-/* Icon styling - printed/stamped look, no glow or opacity issues - golden-brown tones */
-.test-immersive .parchment-log-entry .parchment-icon {
-  background: rgba(68, 56, 38, 0.12) !important;
-  color: #443828 !important;
-  border: 1px solid rgba(68, 56, 38, 0.2) !important;
-  box-shadow: none !important;
-}
-
-.test-immersive .parchment-log-entry .parchment-icon svg {
-  filter: none !important;
-  color: #443828 !important;
-  opacity: 1 !important;
-}
-
-/* Timestamp styling - readable ink tone - golden-brown */
-.test-immersive .parchment-log-entry .parchment-timestamp {
-  color: #64553e !important;
+/* Timestamp styling - muted warm tone */
+.test-immersive .test-log-row .test-log-timestamp {
+  color: #a49680 !important;
   font-size: 0.75rem;
   font-weight: 500;
+}
+
+/* Icon container styling - handled inline via style prop for dynamic colors */
+.test-immersive .test-log-row .test-log-icon {
+  box-shadow: none !important;
+  transition: transform 0.15s ease;
+}
+
+.test-immersive .test-log-row:hover .test-log-icon {
+  transform: scale(1.05);
 }
 
 /* ========================================
