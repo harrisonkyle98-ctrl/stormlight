@@ -821,30 +821,22 @@
   margin-top: 0.5rem !important;
 }
 
-/* Pattern background layer - renders BEHIND content using CSS masking */
+/* Pattern background layer - renders BEHIND content using background-image */
 .test-immersive .test-log-row::before {
   content: '';
   position: absolute;
-  inset: 1px; /* Fix 1px bleed - pattern stays inside row border */
+  inset: 0;
   z-index: 0;
   pointer-events: none;
-  border-radius: inherit; /* Match row's border radius */
   
-  /* Background color driven by --row-accent CSS variable */
-  background-color: var(--row-accent, rgba(180, 160, 120, 0.5));
+  /* Apply grid pattern as background-image with exact 128px tiling */
+  background-image: url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png');
+  background-repeat: repeat;
+  background-size: 128px 128px; /* Exact tile size - no fractional scaling */
+  background-position: 0 0;
   
   /* Very low opacity for subtle texture effect */
-  opacity: 0.08;
-  
-  /* Apply INVERTED grid pattern mask - 128px tile for seamless repeating */
-  -webkit-mask-image: url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png');
-  mask-image: url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png');
-  -webkit-mask-repeat: repeat;
-  mask-repeat: repeat;
-  -webkit-mask-position: 0 0;
-  mask-position: 0 0;
-  -webkit-mask-size: 128px 128px; /* Exact integer size - no fractional scaling */
-  mask-size: 128px 128px;
+  opacity: 0.05;
 }
 
 /* Content wrapper - renders ABOVE pattern layer */
@@ -892,6 +884,8 @@
 
 /* Clickable row styling - entire row acts as a button */
 .test-immersive .test-log-row {
+  position: relative;
+  overflow: hidden; /* Prevent pattern bleed and ensure proper clipping */
   cursor: pointer;
   transition: background-color 0.15s ease, transform 0.1s ease;
 }
