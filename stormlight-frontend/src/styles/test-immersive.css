@@ -836,13 +836,13 @@
   /* Very low opacity for subtle texture effect */
   opacity: 0.08;
   
-  /* Apply INVERTED pattern mask - ornamental repeating pattern */
-  -webkit-mask-image: url('/assets/patterns/stormlight-parchment-pattern-mask-inverted.png');
-  mask-image: url('/assets/patterns/stormlight-parchment-pattern-mask-inverted.png');
+  /* Apply INVERTED grid pattern mask - diamond grid repeating pattern */
+  -webkit-mask-image: url('/assets/patterns/stormlight-grid-pattern-mask-inverted.png');
+  mask-image: url('/assets/patterns/stormlight-grid-pattern-mask-inverted.png');
   -webkit-mask-repeat: repeat;
   mask-repeat: repeat;
-  -webkit-mask-size: 280px 280px; /* Enlarged pattern size */
-  mask-size: 280px 280px;
+  -webkit-mask-size: 60px 60px; /* Smaller size for clean diamond grid appearance */
+  mask-size: 60px 60px;
 }
 
 /* Content wrapper - renders ABOVE pattern layer */
