@@ -355,9 +355,11 @@ const DailyscapeCard = () => {
   )
 
   return (
-    <div className="fantasy-section">
-      <h3 className="fantasy-section-title">Dailyscape</h3>
-      
+    <div className="test-panel test-panel--dailyscape">
+      <div className="test-panel-header">
+        <h3 className="test-panel-header-title">Dailyscape</h3>
+      </div>
+      <div className="test-panel-body">
       {loading ? (
         <LoadingSkeleton />
       ) : error ? (
@@ -804,6 +806,7 @@ const DailyscapeCard = () => {
           </TabsContent>
         </Tabs>
       )}
+      </div>
     </div>
   )
 }

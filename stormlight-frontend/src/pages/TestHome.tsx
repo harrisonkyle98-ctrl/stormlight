@@ -449,8 +449,11 @@ const TestHome = () => {
             </div>
 
             {/* Clan Summary - Full Width below navigation */}
-            <div className="fantasy-section test-clan-summary-fullwidth">
-              <h3 className="fantasy-section-title">Clan Summary</h3>
+            <div className="test-panel test-panel--clan-summary test-clan-summary-fullwidth">
+              <div className="test-panel-header">
+                <h3 className="test-panel-header-title">Clan Summary</h3>
+              </div>
+              <div className="test-panel-body">
               <div className="fantasy-grid-4">
                 {/* 1. Total Members */}
                 <div className="fantasy-stat-item">
@@ -546,6 +549,7 @@ const TestHome = () => {
                   </div>
                 </div>
               </div>
+              </div>
             </div>
 
             {/* 3-Column Client Layout */}
@@ -554,8 +558,11 @@ const TestHome = () => {
               <div className="test-column-left">
                 {/* Account Panel */}
                 {user?.username && user?.isLinked && (
-                  <div className="fantasy-section test-account-panel">
-                    <h3 className="fantasy-section-title">Account</h3>
+                  <div className="test-panel test-panel--account test-account-panel">
+                    <div className="test-panel-header">
+                      <h3 className="test-panel-header-title">Account</h3>
+                    </div>
+                    <div className="test-panel-body">
                     <div className="flex flex-col items-center gap-3">
                       {/* User Avatar */}
                       <Avatar className="w-16 h-16">
@@ -612,6 +619,7 @@ const TestHome = () => {
                         </Button>
                       </div>
                     </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -623,8 +631,11 @@ const TestHome = () => {
                 <DailyscapeCard />
 
                 {/* Clan Log */}
-                <div className="fantasy-section">
-                  <h3 className="fantasy-section-title">Clan Log</h3>
+                <div className="test-panel test-panel--clan-log">
+                  <div className="test-panel-header">
+                    <h3 className="test-panel-header-title">Clan Log</h3>
+                  </div>
+                  <div className="test-panel-body">
                   {clanLogLoading ? (
                     <div className="space-y-3 animate-pulse">
                       {[1, 2, 3, 4, 5].map((i) => (
@@ -654,11 +665,15 @@ const TestHome = () => {
                       )}
                     </div>
                   )}
+                  </div>
                 </div>
 
                 {/* Recent Activity */}
-                <div className="fantasy-section">
-                  <h3 className="fantasy-section-title">Recent Activity</h3>
+                <div className="test-panel test-panel--recent-activity">
+                  <div className="test-panel-header">
+                    <h3 className="test-panel-header-title">Recent Activity</h3>
+                  </div>
+                  <div className="test-panel-body">
                   {activityLoading ? (
                     <div className="space-y-3 animate-pulse">
                       {[1, 2, 3, 4, 5].map((i) => (
@@ -687,6 +702,7 @@ const TestHome = () => {
                       )}
                     </div>
                   )}
+                  </div>
                 </div>
               </div>
               {/* End center column */}
@@ -694,8 +710,11 @@ const TestHome = () => {
               {/* ========== RIGHT COLUMN - Members Active Today Only ========== */}
               <div className="test-column-right">
                 {/* Members Active Today */}
-                <div className="fantasy-section">
-                  <h3 className="fantasy-section-title">Members Active Today</h3>
+                <div className="test-panel test-panel--members-active">
+                  <div className="test-panel-header">
+                    <h3 className="test-panel-header-title">Members Active Today</h3>
+                  </div>
+                  <div className="test-panel-body">
                   {activeMembersLoading ? (
                     <div className="space-y-3 animate-pulse">
                       {[1, 2, 3, 4, 5].map((i) => (
@@ -746,6 +765,7 @@ const TestHome = () => {
                   ) : (
                     <p className="text-center text-slate-400 py-4 text-sm">No active members today</p>
                   )}
+                  </div>
                 </div>
               </div>
               {/* End right column */}

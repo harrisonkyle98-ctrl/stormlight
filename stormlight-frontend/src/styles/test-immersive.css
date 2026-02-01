@@ -986,3 +986,200 @@
     padding: 1rem !important;
   }
 }
+
+/* ========================================
+   PANEL HEADER SYSTEM - Distinct header bars for inner panels
+   Applied to /test homepage panels only
+   Uses diamond-grid pattern with panel-specific color tints
+   ======================================== */
+
+/* Panel wrapper - contains header + body */
+.test-immersive .test-panel {
+  display: flex;
+  flex-direction: column;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+/* Panel header bar - sits above panel body */
+.test-immersive .test-panel-header {
+  position: relative;
+  padding: 0.625rem 1rem;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Base background - will be tinted by panel type */
+  background-color: var(--panel-header-color, rgba(140, 115, 75, 0.9));
+  
+  /* Vertical gradient for depth - top brighter, bottom darker */
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.04) 30%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.08) 80%,
+    rgba(0, 0, 0, 0.15) 100%
+  );
+  
+  /* Top highlight line - soft bevel effect */
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  
+  /* Bottom shadow line - separates from body */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+  
+  /* Inner shadow at bottom edge */
+  box-shadow:
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  
+  /* Stacking context for pattern layer */
+  isolation: isolate;
+}
+
+/* Diamond grid pattern underlay for header */
+.test-immersive .test-panel-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  
+  /* Use panel header color for pattern tint */
+  background-color: var(--panel-header-pattern, rgba(255, 255, 255, 0.5));
+  
+  /* Apply diamond grid pattern as mask */
+  -webkit-mask-image: url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png');
+  mask-image: url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png');
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+  -webkit-mask-size: 20px 20px;
+  mask-size: 20px 20px;
+  -webkit-mask-position: 0 0;
+  mask-position: 0 0;
+  
+  /* Subtle pattern opacity */
+  opacity: 0.08;
+}
+
+/* Header title text */
+.test-immersive .test-panel-header-title {
+  position: relative;
+  z-index: 1;
+  
+  /* Typography - matches existing fantasy-section-title */
+  font-family: 'Cinzel', 'Times New Roman', serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  
+  /* Light text with shadow for contrast */
+  color: #f5efe6;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.6),
+    0 0 8px rgba(0, 0, 0, 0.3);
+  
+  /* No margin/padding - header handles spacing */
+  margin: 0;
+  padding: 0;
+}
+
+/* Panel body - the main content area */
+.test-immersive .test-panel-body {
+  /* Inherit fantasy-section styling */
+  background: rgba(24, 21, 16, 0.7);
+  padding: 1rem;
+  position: relative;
+  
+  /* Carved frame effect - same as fantasy-section */
+  box-shadow:
+    inset 0 0 0 1px rgba(12, 10, 6, 0.9),
+    inset 0 0 0 2px rgba(58, 50, 38, 0.7),
+    inset 0 0 0 3px rgba(105, 90, 68, 0.25),
+    inset 0 4px 12px rgba(0, 0, 0, 0.5),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 0 40px rgba(0, 0, 0, 0.15);
+  
+  border-radius: 0 0 2px 2px;
+}
+
+/* Panel body ambient lighting - same as fantasy-section::after */
+.test-immersive .test-panel-body::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 70% 50% at 50% 0%,
+      rgba(255, 235, 200, 0.08) 0%,
+      rgba(255, 220, 180, 0.03) 50%,
+      transparent 100%
+    );
+  opacity: 0.8;
+}
+
+/* ========================================
+   PANEL HEADER COLOR VARIANTS
+   Each panel type has a distinct tint color
+   ======================================== */
+
+/* Clan Summary - warm gold/tan (importance) */
+.test-immersive .test-panel--clan-summary .test-panel-header {
+  --panel-header-color: rgba(165, 130, 70, 0.95);
+  --panel-header-pattern: rgba(215, 180, 100, 0.6);
+}
+
+/* Account - muted amethyst/purple */
+.test-immersive .test-panel--account .test-panel-header {
+  --panel-header-color: rgba(95, 80, 120, 0.95);
+  --panel-header-pattern: rgba(140, 120, 170, 0.6);
+}
+
+/* Dailyscape - muted sapphire/steel-blue */
+.test-immersive .test-panel--dailyscape .test-panel-header {
+  --panel-header-color: rgba(65, 90, 115, 0.95);
+  --panel-header-pattern: rgba(100, 140, 180, 0.6);
+}
+
+/* Members Active Today - muted emerald/green */
+.test-immersive .test-panel--members-active .test-panel-header {
+  --panel-header-color: rgba(60, 100, 75, 0.95);
+  --panel-header-pattern: rgba(90, 150, 110, 0.6);
+}
+
+/* Clan Log - muted amber/orange */
+.test-immersive .test-panel--clan-log .test-panel-header {
+  --panel-header-color: rgba(140, 95, 55, 0.95);
+  --panel-header-pattern: rgba(190, 140, 80, 0.6);
+}
+
+/* Recent Activity - muted crimson/red */
+.test-immersive .test-panel--recent-activity .test-panel-header {
+  --panel-header-color: rgba(120, 65, 65, 0.95);
+  --panel-header-pattern: rgba(170, 100, 100, 0.6);
+}
+
+/* ========================================
+   PANEL BODY OVERRIDES
+   Remove old title styling when using new header system
+   ======================================== */
+
+/* Hide the old title divider line when using new panel system */
+.test-immersive .test-panel .fantasy-section-title {
+  display: none;
+}
+
+/* Ensure panel body content has proper spacing */
+.test-immersive .test-panel-body > *:first-child {
+  margin-top: 0;
+}
+
+.test-immersive .test-panel-body > *:last-child {
+  margin-bottom: 0;
+}
