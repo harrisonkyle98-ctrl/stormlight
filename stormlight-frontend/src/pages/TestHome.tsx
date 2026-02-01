@@ -449,7 +449,7 @@ const TestHome = () => {
             </div>
 
             {/* Clan Summary - Full Width below navigation */}
-            <div className="fantasy-section test-clan-summary-fullwidth">
+            <div className="fantasy-section test-clan-summary-fullwidth test-panel-frame">
               <h3 className="fantasy-section-title">Clan Summary</h3>
               <div className="fantasy-grid-4">
                 {/* 1. Total Members */}
@@ -554,7 +554,7 @@ const TestHome = () => {
               <div className="test-column-left">
                 {/* Account Panel */}
                 {user?.username && user?.isLinked && (
-                  <div className="fantasy-section test-account-panel">
+                  <div className="fantasy-section test-account-panel test-panel-frame">
                     <h3 className="fantasy-section-title">Account</h3>
                     <div className="flex flex-col items-center gap-3">
                       {/* User Avatar */}
@@ -623,7 +623,7 @@ const TestHome = () => {
                 <DailyscapeCard />
 
                 {/* Clan Log */}
-                <div className="fantasy-section">
+                <div className="fantasy-section test-panel-frame">
                   <h3 className="fantasy-section-title">Clan Log</h3>
                   {clanLogLoading ? (
                     <div className="space-y-3 animate-pulse">
@@ -657,7 +657,7 @@ const TestHome = () => {
                 </div>
 
                 {/* Recent Activity */}
-                <div className="fantasy-section">
+                <div className="fantasy-section test-panel-frame">
                   <h3 className="fantasy-section-title">Recent Activity</h3>
                   {activityLoading ? (
                     <div className="space-y-3 animate-pulse">
@@ -694,7 +694,7 @@ const TestHome = () => {
               {/* ========== RIGHT COLUMN - Members Active Today Only ========== */}
               <div className="test-column-right">
                 {/* Members Active Today */}
-                <div className="fantasy-section">
+                <div className="fantasy-section test-panel-frame">
                   <h3 className="fantasy-section-title">Members Active Today</h3>
                   {activeMembersLoading ? (
                     <div className="space-y-3 animate-pulse">

@@ -986,3 +986,60 @@
     padding: 1rem !important;
   }
 }
+
+/* ========================================
+   ORNATE FRAME BORDER - Decorative panel overlay
+   Applied to inner content panels on /test only
+   Uses CSS mask to paint gold gradient through ornate frame shape
+   ======================================== */
+
+.test-immersive .test-panel-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0;
+  transform: translateZ(0); /* Prevent subpixel seams */
+}
+
+/* Ornate frame overlay - painted through mask */
+.test-immersive .test-panel-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1; /* Below the top accent (::before is z-index: 2) */
+  
+  /* Metallic gold gradient - matches our golden-brown palette */
+  background: linear-gradient(
+    135deg,
+    rgba(180, 150, 100, 0.9) 0%,
+    rgba(215, 180, 130, 1) 25%,
+    rgba(160, 130, 85, 0.85) 50%,
+    rgba(195, 165, 115, 0.95) 75%,
+    rgba(140, 115, 75, 0.9) 100%
+  );
+  
+  /* Apply ornate frame mask */
+  -webkit-mask-image: url('/assets/masks/stormlight-ornate-frame-mask.png');
+  mask-image: url('/assets/masks/stormlight-ornate-frame-mask.png');
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  
+  /* Subtle opacity - don't overpower content */
+  opacity: 0.75;
+}
+
+/* Ensure existing top border lighting accent stays on top */
+.test-immersive .test-panel-frame.fantasy-section::before {
+  z-index: 2; /* Above the ornate frame overlay */
+}
+
+/* Ensure ambient lighting stays visible */
+.test-immersive .test-panel-frame.fantasy-section > .fantasy-section-title,
+.test-immersive .test-panel-frame.fantasy-section > * {
+  position: relative;
+  z-index: 3; /* Content above all overlays */
+}
