@@ -355,7 +355,7 @@ const DailyscapeCard = () => {
   )
 
   return (
-    <div className="fantasy-section test-panel-frame">
+    <div className="fantasy-section">
       <h3 className="fantasy-section-title">Dailyscape</h3>
       
       {loading ? (
