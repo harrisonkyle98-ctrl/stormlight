@@ -825,9 +825,10 @@
 .test-immersive .test-log-row::before {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: 1px; /* Fix 1px bleed - pattern stays inside row border */
   z-index: 0;
   pointer-events: none;
+  border-radius: inherit; /* Match row's border radius */
   
   /* Background color driven by --row-accent CSS variable */
   background-color: var(--row-accent, rgba(180, 160, 120, 0.5));
@@ -835,13 +836,13 @@
   /* Very low opacity for subtle texture effect */
   opacity: 0.08;
   
-  /* Apply pattern mask - ornamental repeating pattern */
-  -webkit-mask-image: url('/assets/patterns/stormlight-parchment-pattern-mask.png');
-  mask-image: url('/assets/patterns/stormlight-parchment-pattern-mask.png');
+  /* Apply INVERTED pattern mask - ornamental repeating pattern */
+  -webkit-mask-image: url('/assets/patterns/stormlight-parchment-pattern-mask-inverted.png');
+  mask-image: url('/assets/patterns/stormlight-parchment-pattern-mask-inverted.png');
   -webkit-mask-repeat: repeat;
   mask-repeat: repeat;
-  -webkit-mask-size: 180px 180px;
-  mask-size: 180px 180px;
+  -webkit-mask-size: 280px 280px; /* Enlarged pattern size */
+  mask-size: 280px 280px;
 }
 
 /* Content wrapper - renders ABOVE pattern layer */
@@ -857,15 +858,17 @@
   font-size: 0.875rem;
 }
 
-/* Log row link styling - uses row accent color (set inline) */
+/* Log row link styling - uses DEFAULT username color, NOT type color */
 .test-immersive .test-log-row .test-log-link {
+  color: #e8d5b0 !important; /* Warm parchment username color - NOT type-colored */
   font-weight: 600;
   font-size: 0.875rem;
-  transition: opacity 0.15s ease;
+  transition: color 0.15s ease;
 }
 
 .test-immersive .test-log-row .test-log-link:hover {
-  opacity: 0.8;
+  color: #f5e6c8 !important; /* Slightly lighter on hover */
+  text-decoration: underline;
 }
 
 /* Timestamp styling - muted warm tone */
@@ -883,6 +886,41 @@
 
 .test-immersive .test-log-row:hover .test-log-icon {
   transform: scale(1.05);
+}
+
+/* Clickable row styling - entire row acts as a button */
+.test-immersive .test-log-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.test-immersive .test-log-row:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.test-immersive .test-log-row:focus {
+  outline: 2px solid rgba(232, 213, 176, 0.4);
+  outline-offset: -2px;
+}
+
+.test-immersive .test-log-row:focus-visible {
+  outline: 2px solid rgba(232, 213, 176, 0.6);
+  outline-offset: -2px;
+}
+
+/* Chevron indicator - appears after timestamp */
+.test-immersive .test-log-row .test-log-chevron {
+  color: #a49680;
+  opacity: 0.5;
+  transform: translateX(0);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+
+.test-immersive .test-log-row:hover .test-log-chevron {
+  opacity: 0.9;
+  transform: translateX(3px);
 }
 
 /* ========================================

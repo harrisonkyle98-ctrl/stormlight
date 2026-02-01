@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { ChevronRight } from 'lucide-react'
 import { ClanLogEntry, getLogVisual, normalizeLogType } from '../../utils/clanLogUtils'
 
 interface ParchmentClanLogRowProps {
@@ -11,6 +12,7 @@ interface ParchmentClanLogRowProps {
 /**
  * Styled clan log row for /test page only
  * Uses Members Active Today row styling with log type coloring and pattern background
+ * Entire row is clickable with keyboard accessibility
  */
 export function ParchmentClanLogRow({
   entry,
@@ -18,6 +20,7 @@ export function ParchmentClanLogRow({
   getRankIcon,
   usernameToUrl
 }: ParchmentClanLogRowProps) {
+  const navigate = useNavigate()
   const { Icon, message, color } = getLogVisual(entry, getRankIcon)
   const logType = normalizeLogType(entry.event_type)
   
@@ -26,11 +29,33 @@ export function ParchmentClanLogRow({
     ? `/competitions/${entry.old_rank}` 
     : `/clan-member/${usernameToUrl(entry.username)}`
 
+  const handleRowClick = (e: React.MouseEvent) => {
+    // Allow middle-click and ctrl/cmd+click to open in new tab
+    if (e.button === 1 || e.ctrlKey || e.metaKey) {
+      window.open(linkPath, '_blank')
+      return
+    }
+    navigate(linkPath)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      navigate(linkPath)
+    }
+  }
+
   return (
     <div 
       className="test-log-row test-row-panel"
       data-log-type={logType}
       style={{ '--row-accent': color } as React.CSSProperties}
+      onClick={handleRowClick}
+      onKeyDown={handleKeyDown}
+      onAuxClick={handleRowClick}
+      role="button"
+      tabIndex={0}
+      aria-label={`View ${entry.username}'s profile`}
     >
       <div className="flex items-center gap-3 py-2 px-3">
         {/* Icon container - recolored by log type */}
@@ -47,18 +72,17 @@ export function ParchmentClanLogRow({
         {/* Content */}
         <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <Link
-              to={linkPath}
-              className="test-log-link hover:underline flex-shrink-0"
-              style={{ color }}
-            >
+            <span className="test-log-link flex-shrink-0">
               {entry.username}
-            </Link>
+            </span>
             <span className="test-log-text truncate">{message}</span>
           </div>
-          <span className="test-log-timestamp whitespace-nowrap ml-2 flex-shrink-0">
-            {formatTimeAgo(new Date(entry.timestamp).getTime() / 1000)}
-          </span>
+          <div className="flex items-center flex-shrink-0">
+            <span className="test-log-timestamp whitespace-nowrap">
+              {formatTimeAgo(new Date(entry.timestamp).getTime() / 1000)}
+            </span>
+            <ChevronRight className="test-log-chevron w-4 h-4" aria-hidden="true" />
+          </div>
         </div>
       </div>
     </div>
