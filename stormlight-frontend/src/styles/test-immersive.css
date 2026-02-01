@@ -821,7 +821,7 @@
   margin-top: 0.5rem !important;
 }
 
-/* Pattern background layer - renders BEHIND content using background-image */
+/* Pattern background layer - renders BEHIND content using CSS masking for type-color tinting */
 .test-immersive .test-log-row::before {
   content: '';
   position: absolute;
@@ -829,14 +829,21 @@
   z-index: 0;
   pointer-events: none;
   
-  /* Apply grid pattern as background-image with very small tile size for texture feel */
-  background-image: url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png');
-  background-repeat: repeat;
-  background-size: 20px 20px; /* Smaller tile - should read as texture, not structure */
-  background-position: 0 0;
+  /* Use log-type color from --row-accent variable set by component */
+  background-color: var(--row-accent, #c9a227);
+  
+  /* Apply grid pattern as mask - mask provides shape, background-color provides tint */
+  -webkit-mask-image: url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png');
+  mask-image: url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png');
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+  -webkit-mask-size: 20px 20px; /* Small tile for texture feel */
+  mask-size: 20px 20px;
+  -webkit-mask-position: 0 0;
+  mask-position: 0 0;
   
   /* Very low opacity for subtle texture effect */
-  opacity: 0.04;
+  opacity: 0.05;
 }
 
 /* Content wrapper - renders ABOVE pattern layer */
