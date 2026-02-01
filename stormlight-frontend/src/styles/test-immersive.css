@@ -829,10 +829,10 @@
   z-index: 0;
   pointer-events: none;
   
-  /* Apply grid pattern as background-image with exact 128px tiling */
+  /* Apply grid pattern as background-image with smaller tile size for consistent diamond grid */
   background-image: url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png');
   background-repeat: repeat;
-  background-size: 128px 128px; /* Exact tile size - no fractional scaling */
+  background-size: 64px 64px; /* Smaller tile size to resolve diamond grid at row height */
   background-position: 0 0;
   
   /* Very low opacity for subtle texture effect */
