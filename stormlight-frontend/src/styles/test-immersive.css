@@ -990,88 +990,81 @@
 /* ========================================
    ORNATE FRAME BORDER - Decorative panel overlay
    Applied to inner content panels on /test only
-   Uses 9-slice approach: corners stay fixed, edges repeat
+   Uses CSS mask to paint gold color through ornate frame shape
    ======================================== */
 
 .test-immersive .test-panel-frame {
   position: relative;
-  overflow: hidden;
+  overflow: visible; /* Allow frame to show */
   border-radius: 0;
   transform: translateZ(0); /* Prevent subpixel seams */
+  /* Create stacking context for z-index layering */
+  isolation: isolate;
 }
 
-/* Ornate frame overlay - 9-slice approach with multiple backgrounds */
-.test-immersive .test-panel-frame::after {
+/* Override the default ::after (ambient lighting) to make room for frame */
+/* The frame will use a separate element approach via box-shadow or outline */
+.test-immersive .test-panel-frame.fantasy-section::after {
+  /* Keep the ambient lighting but ensure it doesn't interfere */
+  z-index: 1;
+}
+
+/* Ornate frame overlay - uses CSS mask with gold background-color */
+/* We use an outline/box-shadow approach combined with the ::after for the frame */
+.test-immersive .test-panel-frame::before {
+  /* Keep existing top highlight - this is the ::before */
+  z-index: 4; /* Above the ornate frame */
+}
+
+/* Add ornate frame as a separate overlay using a wrapper pseudo-element */
+/* Since ::before is used for top highlight and ::after for ambient, we need JS or extra element */
+/* For now, let's use the ::after and override it completely for .test-panel-frame */
+.test-immersive .test-panel-frame.fantasy-section::after {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 1; /* Below the top accent (::before is z-index: 2) */
+  z-index: 2; /* Above background, below content */
   
-  /* 9-slice frame: 4 corners (fixed size) + 4 edges (repeating) */
-  /* Layer order: corners on top, then edges */
-  background-image:
-    /* Corners - fixed size, no repeat */
-    url('/assets/masks/ornate-corner-tl.png'),
-    url('/assets/masks/ornate-corner-tr.png'),
-    url('/assets/masks/ornate-corner-bl.png'),
-    url('/assets/masks/ornate-corner-br.png'),
-    /* Edges - repeat along their axis */
-    url('/assets/masks/ornate-edge-top.png'),
-    url('/assets/masks/ornate-edge-bottom.png'),
-    url('/assets/masks/ornate-edge-left.png'),
-    url('/assets/masks/ornate-edge-right.png');
+  /* Gold/tan background color - matches our palette */
+  background-color: rgba(180, 145, 95, 0.95);
   
-  background-repeat:
-    /* Corners - no repeat */
-    no-repeat,
-    no-repeat,
-    no-repeat,
-    no-repeat,
-    /* Edges - repeat along axis */
-    repeat-x,
-    repeat-x,
-    repeat-y,
-    repeat-y;
+  /* Apply ornate frame mask - white areas visible, black areas hidden */
+  -webkit-mask-image: url('/assets/masks/stormlight-ornate-frame-mask.png');
+  mask-image: url('/assets/masks/stormlight-ornate-frame-mask.png');
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
   
-  background-position:
-    /* Corners - anchored to each corner */
-    top left,
-    top right,
-    bottom left,
-    bottom right,
-    /* Edges - positioned after corner width/height */
-    top 0 left 60px,
-    bottom 0 left 60px,
-    top 60px left 0,
-    top 60px right 0;
+  /* Use luminance mode - white = visible (frame lines), black = hidden (center) */
+  -webkit-mask-mode: luminance;
+  mask-mode: luminance;
   
-  background-size:
-    /* Corners - fixed 60px (scaled down from 120px source for crisp display) */
-    60px 60px,
-    60px 60px,
-    60px 60px,
-    60px 60px,
-    /* Edges - width auto for horizontal, height auto for vertical */
-    calc(100% - 120px) 10px,
-    calc(100% - 120px) 10px,
-    10px calc(100% - 120px),
-    10px calc(100% - 120px);
+  /* Override the height from fantasy-section::after */
+  height: 100% !important;
+  width: 100% !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
   
-  /* Gold tint applied via filter since we're using images directly */
-  filter: sepia(0.3) saturate(1.5) brightness(1.1) hue-rotate(-10deg);
+  /* Remove the radial gradient from fantasy-section */
+  background-image: none !important;
   
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 /* Ensure existing top border lighting accent stays on top */
 .test-immersive .test-panel-frame.fantasy-section::before {
-  z-index: 2; /* Above the ornate frame overlay */
+  z-index: 4; /* Above the ornate frame overlay */
 }
 
-/* Ensure ambient lighting stays visible */
+/* Ensure content stays above all overlays */
 .test-immersive .test-panel-frame.fantasy-section > .fantasy-section-title,
 .test-immersive .test-panel-frame.fantasy-section > * {
   position: relative;
-  z-index: 3; /* Content above all overlays */
+  z-index: 5; /* Content above all overlays */
 }
