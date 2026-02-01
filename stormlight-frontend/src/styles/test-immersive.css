@@ -990,7 +990,7 @@
 /* ========================================
    ORNATE FRAME BORDER - Decorative panel overlay
    Applied to inner content panels on /test only
-   Uses CSS mask to paint gold gradient through ornate frame shape
+   Uses 9-slice approach: corners stay fixed, edges repeat
    ======================================== */
 
 .test-immersive .test-panel-frame {
@@ -1000,7 +1000,7 @@
   transform: translateZ(0); /* Prevent subpixel seams */
 }
 
-/* Ornate frame overlay - base setup (hidden by default) */
+/* Ornate frame overlay - 9-slice approach with multiple backgrounds */
 .test-immersive .test-panel-frame::after {
   content: '';
   position: absolute;
@@ -1008,40 +1008,60 @@
   pointer-events: none;
   z-index: 1; /* Below the top accent (::before is z-index: 2) */
   
-  /* Hidden by default - only show if mask is supported */
-  opacity: 0;
-}
-
-/* Only show ornate frame if CSS masking is supported */
-@supports (-webkit-mask-image: url("")) {
-  .test-immersive .test-panel-frame::after {
-    /* Metallic gold gradient - matches our golden-brown palette */
-    background: linear-gradient(
-      135deg,
-      rgba(180, 150, 100, 0.9) 0%,
-      rgba(215, 180, 130, 1) 25%,
-      rgba(160, 130, 85, 0.85) 50%,
-      rgba(195, 165, 115, 0.95) 75%,
-      rgba(140, 115, 75, 0.9) 100%
-    );
-    
-    /* Apply ornate frame mask - white areas visible, black areas hidden */
-    -webkit-mask-image: url('/assets/masks/stormlight-ornate-frame-mask.png');
-    mask-image: url('/assets/masks/stormlight-ornate-frame-mask.png');
-    -webkit-mask-size: 100% 100%;
-    mask-size: 100% 100%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    mask-position: center;
-    
-    /* Use luminance mode - white = visible, black = hidden */
-    -webkit-mask-mode: luminance;
-    mask-mode: luminance;
-    
-    /* Show the overlay now that mask is applied */
-    opacity: 0.8;
-  }
+  /* 9-slice frame: 4 corners (fixed size) + 4 edges (repeating) */
+  /* Layer order: corners on top, then edges */
+  background-image:
+    /* Corners - fixed size, no repeat */
+    url('/assets/masks/ornate-corner-tl.png'),
+    url('/assets/masks/ornate-corner-tr.png'),
+    url('/assets/masks/ornate-corner-bl.png'),
+    url('/assets/masks/ornate-corner-br.png'),
+    /* Edges - repeat along their axis */
+    url('/assets/masks/ornate-edge-top.png'),
+    url('/assets/masks/ornate-edge-bottom.png'),
+    url('/assets/masks/ornate-edge-left.png'),
+    url('/assets/masks/ornate-edge-right.png');
+  
+  background-repeat:
+    /* Corners - no repeat */
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    /* Edges - repeat along axis */
+    repeat-x,
+    repeat-x,
+    repeat-y,
+    repeat-y;
+  
+  background-position:
+    /* Corners - anchored to each corner */
+    top left,
+    top right,
+    bottom left,
+    bottom right,
+    /* Edges - positioned after corner width/height */
+    top 0 left 60px,
+    bottom 0 left 60px,
+    top 60px left 0,
+    top 60px right 0;
+  
+  background-size:
+    /* Corners - fixed 60px (scaled down from 120px source for crisp display) */
+    60px 60px,
+    60px 60px,
+    60px 60px,
+    60px 60px,
+    /* Edges - width auto for horizontal, height auto for vertical */
+    calc(100% - 120px) 10px,
+    calc(100% - 120px) 10px,
+    10px calc(100% - 120px),
+    10px calc(100% - 120px);
+  
+  /* Gold tint applied via filter since we're using images directly */
+  filter: sepia(0.3) saturate(1.5) brightness(1.1) hue-rotate(-10deg);
+  
+  opacity: 0.85;
 }
 
 /* Ensure existing top border lighting accent stays on top */
