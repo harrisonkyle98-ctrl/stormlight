@@ -644,6 +644,7 @@ const TestHome = () => {
                             formatTimeAgo={formatTimeAgo}
                             getRankIcon={getRankIcon}
                             usernameToUrl={usernameToUrl}
+                            clanMembers={clanMembers}
                           />
                         ))
                       ) : (
@@ -676,6 +677,7 @@ const TestHome = () => {
                             activity={activity}
                             formatTimeAgo={formatTimeAgo}
                             usernameToUrl={usernameToUrl}
+                            clanMembers={clanMembers}
                           />
                         ))
                       ) : (

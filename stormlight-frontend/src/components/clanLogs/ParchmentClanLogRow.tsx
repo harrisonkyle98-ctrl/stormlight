@@ -1,12 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { ClanLogEntry, getLogVisual, normalizeLogType } from '../../utils/clanLogUtils'
+import { Username } from '../ui/username'
 
 interface ParchmentClanLogRowProps {
   entry: ClanLogEntry
   formatTimeAgo: (timestamp: number) => string
   getRankIcon?: (rank: string) => string
   usernameToUrl: (username: string) => string
+  clanMembers?: Array<{ username: string; clan_rank?: string }>
 }
 
 /**
@@ -18,11 +20,16 @@ export function ParchmentClanLogRow({
   entry,
   formatTimeAgo,
   getRankIcon,
-  usernameToUrl
+  usernameToUrl,
+  clanMembers = []
 }: ParchmentClanLogRowProps) {
   const navigate = useNavigate()
   const { Icon, message, color } = getLogVisual(entry, getRankIcon)
   const logType = normalizeLogType(entry.event_type)
+  
+  // Look up clan rank for username styling (matches Members Active Today behavior)
+  const memberData = clanMembers.find(m => m.username === entry.username)
+  const clanRank = memberData?.clan_rank
   
   const isCompetitionEvent = entry.event_type === 'competition_start' || entry.event_type === 'competition_end'
   const linkPath = isCompetitionEvent 
@@ -73,7 +80,7 @@ export function ParchmentClanLogRow({
         <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <span className="test-log-link flex-shrink-0">
-              {entry.username}
+              <Username username={entry.username} clanRank={clanRank} />
             </span>
             <span className="test-log-text truncate">{message}</span>
           </div>

@@ -1,11 +1,13 @@
 import { useNavigate } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { ActivityEntry, getActivityVisual, categorizeActivity } from '../../utils/activityLogUtils'
+import { Username } from '../ui/username'
 
 interface ParchmentActivityLogRowProps {
   activity: ActivityEntry
   formatTimeAgo: (timestamp: number) => string
   usernameToUrl: (username: string) => string
+  clanMembers?: Array<{ username: string; clan_rank?: string }>
 }
 
 /**
@@ -16,12 +18,17 @@ interface ParchmentActivityLogRowProps {
 export function ParchmentActivityLogRow({
   activity,
   formatTimeAgo,
-  usernameToUrl
+  usernameToUrl,
+  clanMembers = []
 }: ParchmentActivityLogRowProps) {
   const navigate = useNavigate()
   const { Icon, color } = getActivityVisual(activity)
   const activityType = categorizeActivity(activity.text)
   const linkPath = `/clan-member/${usernameToUrl(activity.username)}`
+  
+  // Look up clan rank for username styling (matches Members Active Today behavior)
+  const memberData = clanMembers.find(m => m.username === activity.username)
+  const clanRank = memberData?.clan_rank
 
   const handleRowClick = (e: React.MouseEvent) => {
     // Allow middle-click and ctrl/cmd+click to open in new tab
@@ -67,7 +74,7 @@ export function ParchmentActivityLogRow({
         <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
             <span className="test-log-link flex-shrink-0">
-              {activity.username}
+              <Username username={activity.username} clanRank={clanRank} />
             </span>
             <span className="test-log-text truncate">{activity.text}</span>
           </div>

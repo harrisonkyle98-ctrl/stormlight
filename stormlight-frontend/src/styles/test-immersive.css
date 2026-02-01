@@ -822,6 +822,7 @@
 }
 
 /* Pattern background layer - renders BEHIND content using CSS masking for type-color tinting */
+/* Pattern fades horizontally: strongest in center, fading to transparent at edges */
 .test-immersive .test-log-row::before {
   content: '';
   position: absolute;
@@ -832,15 +833,32 @@
   /* Use log-type color from --row-accent variable set by component */
   background-color: var(--row-accent, #c9a227);
   
-  /* Apply grid pattern as mask - mask provides shape, background-color provides tint */
-  -webkit-mask-image: url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png');
-  mask-image: url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png');
-  -webkit-mask-repeat: repeat;
-  mask-repeat: repeat;
-  -webkit-mask-size: 20px 20px; /* Small tile for texture feel */
-  mask-size: 20px 20px;
-  -webkit-mask-position: 0 0;
-  mask-position: 0 0;
+  /* Apply grid pattern as mask with horizontal fade overlay */
+  /* First mask: grid pattern (repeating), Second mask: horizontal fade (single) */
+  -webkit-mask-image: 
+    url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png'),
+    linear-gradient(to right,
+      transparent 0%,
+      rgba(0,0,0,1) 18%,
+      rgba(0,0,0,1) 82%,
+      transparent 100%
+    );
+  mask-image: 
+    url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png'),
+    linear-gradient(to right,
+      transparent 0%,
+      rgba(0,0,0,1) 18%,
+      rgba(0,0,0,1) 82%,
+      transparent 100%
+    );
+  -webkit-mask-repeat: repeat, no-repeat;
+  mask-repeat: repeat, no-repeat;
+  -webkit-mask-size: 20px 20px, 100% 100%;
+  mask-size: 20px 20px, 100% 100%;
+  -webkit-mask-position: 0 0, 0 0;
+  mask-position: 0 0, 0 0;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
   
   /* Very low opacity for subtle texture effect */
   opacity: 0.05;
@@ -859,17 +877,19 @@
   font-size: 0.875rem;
 }
 
-/* Log row link styling - uses DEFAULT username color, NOT type color */
+/* Log row link styling - matches Members Active Today username styling */
+/* Uses Username component for clan leader gradients and badge color overrides */
+/* Base style: white text - NOT type-colored */
 .test-immersive .test-log-row .test-log-link {
-  color: #e8d5b0 !important; /* Warm parchment username color - NOT type-colored */
+  color: #ffffff !important; /* White base color - matches Members Active Today */
   font-weight: 600;
   font-size: 0.875rem;
   transition: color 0.15s ease;
 }
 
 .test-immersive .test-log-row .test-log-link:hover {
-  color: #f5e6c8 !important; /* Slightly lighter on hover */
-  text-decoration: underline;
+  color: #93c5fd !important; /* Light blue on hover - matches Members Active Today */
+  text-decoration: none;
 }
 
 /* Timestamp styling - muted warm tone */
