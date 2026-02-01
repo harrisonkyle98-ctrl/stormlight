@@ -1000,7 +1000,7 @@
   transform: translateZ(0); /* Prevent subpixel seams */
 }
 
-/* Ornate frame overlay - painted through mask */
+/* Ornate frame overlay - base setup (hidden by default) */
 .test-immersive .test-panel-frame::after {
   content: '';
   position: absolute;
@@ -1008,28 +1008,36 @@
   pointer-events: none;
   z-index: 1; /* Below the top accent (::before is z-index: 2) */
   
-  /* Metallic gold gradient - matches our golden-brown palette */
-  background: linear-gradient(
-    135deg,
-    rgba(180, 150, 100, 0.9) 0%,
-    rgba(215, 180, 130, 1) 25%,
-    rgba(160, 130, 85, 0.85) 50%,
-    rgba(195, 165, 115, 0.95) 75%,
-    rgba(140, 115, 75, 0.9) 100%
-  );
-  
-  /* Apply ornate frame mask */
-  -webkit-mask-image: url('/assets/masks/stormlight-ornate-frame-mask.png');
-  mask-image: url('/assets/masks/stormlight-ornate-frame-mask.png');
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-  
-  /* Subtle opacity - don't overpower content */
-  opacity: 0.75;
+  /* Hidden by default - only show if mask is supported */
+  opacity: 0;
+}
+
+/* Only show ornate frame if CSS masking is supported */
+@supports (-webkit-mask-image: url("")) {
+  .test-immersive .test-panel-frame::after {
+    /* Metallic gold gradient - matches our golden-brown palette */
+    background: linear-gradient(
+      135deg,
+      rgba(180, 150, 100, 0.9) 0%,
+      rgba(215, 180, 130, 1) 25%,
+      rgba(160, 130, 85, 0.85) 50%,
+      rgba(195, 165, 115, 0.95) 75%,
+      rgba(140, 115, 75, 0.9) 100%
+    );
+    
+    /* Apply ornate frame mask - white areas visible, black areas hidden */
+    -webkit-mask-image: url('/assets/masks/stormlight-ornate-frame-mask.png');
+    mask-image: url('/assets/masks/stormlight-ornate-frame-mask.png');
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    
+    /* Show the overlay now that mask is applied */
+    opacity: 0.8;
+  }
 }
 
 /* Ensure existing top border lighting accent stays on top */
