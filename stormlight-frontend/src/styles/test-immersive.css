@@ -822,7 +822,7 @@
 }
 
 /* Pattern background layer - renders BEHIND content using CSS masking for type-color tinting */
-/* Pattern fades horizontally: strongest in center, fading to transparent at edges */
+/* Uniform grid pattern across full row width (no horizontal fade) */
 .test-immersive .test-log-row::before {
   content: '';
   position: absolute;
@@ -833,32 +833,15 @@
   /* Use log-type color from --row-accent variable set by component */
   background-color: var(--row-accent, #c9a227);
   
-  /* Apply grid pattern as mask with horizontal fade overlay */
-  /* First mask: grid pattern (repeating), Second mask: horizontal fade (single) */
-  -webkit-mask-image: 
-    url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png'),
-    linear-gradient(to right,
-      transparent 0%,
-      rgba(0,0,0,1) 18%,
-      rgba(0,0,0,1) 82%,
-      transparent 100%
-    );
-  mask-image: 
-    url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png'),
-    linear-gradient(to right,
-      transparent 0%,
-      rgba(0,0,0,1) 18%,
-      rgba(0,0,0,1) 82%,
-      transparent 100%
-    );
-  -webkit-mask-repeat: repeat, no-repeat;
-  mask-repeat: repeat, no-repeat;
-  -webkit-mask-size: 20px 20px, 100% 100%;
-  mask-size: 20px 20px, 100% 100%;
-  -webkit-mask-position: 0 0, 0 0;
-  mask-position: 0 0, 0 0;
-  -webkit-mask-composite: source-in;
-  mask-composite: intersect;
+  /* Apply grid pattern as mask - uniform across full row width */
+  -webkit-mask-image: url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png');
+  mask-image: url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png');
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+  -webkit-mask-size: 20px 20px;
+  mask-size: 20px 20px;
+  -webkit-mask-position: 0 0;
+  mask-position: 0 0;
   
   /* Very low opacity for subtle texture effect */
   opacity: 0.05;
