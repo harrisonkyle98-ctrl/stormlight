@@ -1027,7 +1027,7 @@
   isolation: isolate;
 }
 
-/* Diamond grid pattern underlay for header */
+/* Diamond grid pattern - Layer 1: Blue diamond fills */
 .test-immersive .test-panel-header::before {
   content: '';
   position: absolute;
@@ -1035,10 +1035,10 @@
   z-index: 0;
   pointer-events: none;
   
-  /* Use panel header color for pattern tint */
-  background-color: var(--panel-header-pattern, rgba(255, 255, 255, 0.5));
+  /* Blue fill for diamond shapes - matches Dailyscape header blue */
+  background-color: rgba(100, 140, 180, 0.6);
   
-  /* Apply diamond grid pattern as mask */
+  /* Apply inverted mask to show diamond fill areas */
   -webkit-mask-image: url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png');
   mask-image: url('/assets/patterns/stormlight-grid-pattern-mask-inverted-tile-128.png');
   -webkit-mask-repeat: repeat;
@@ -1048,7 +1048,30 @@
   -webkit-mask-position: 0 0;
   mask-position: 0 0;
   
-  /* Pattern opacity - slightly more visible */
+  opacity: 0.15;
+}
+
+/* Diamond grid pattern - Layer 2: Gold grid lines/outlines */
+.test-immersive .test-panel-header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  
+  /* Gold color for grid lines - site's gold accent */
+  background-color: rgba(201, 162, 39, 0.7);
+  
+  /* Apply normal mask to show grid line areas */
+  -webkit-mask-image: url('/assets/patterns/stormlight-grid-pattern-mask-tile-128.png');
+  mask-image: url('/assets/patterns/stormlight-grid-pattern-mask-tile-128.png');
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+  -webkit-mask-size: 20px 20px;
+  mask-size: 20px 20px;
+  -webkit-mask-position: 0 0;
+  mask-position: 0 0;
+  
   opacity: 0.15;
 }
 
