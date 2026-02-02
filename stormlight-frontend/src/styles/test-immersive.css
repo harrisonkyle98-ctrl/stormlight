@@ -993,15 +993,21 @@
    Uses diamond-grid pattern with panel-specific color tints
    ======================================== */
 
-/* Panel wrapper - contains header + body */
+/* Panel wrapper - the visual container that encloses header + body */
 .test-immersive .test-panel {
   display: flex;
   flex-direction: column;
   border-radius: 2px;
   overflow: hidden;
+  
+  /* Outer panel frame - 1px border on all sides including top */
+  border: 1px solid rgba(58, 50, 38, 0.7);
+  
+  /* Subtle outer shadow for depth */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Panel header bar - sits above panel body */
+/* Panel header bar - sits inside the panel as first child */
 .test-immersive .test-panel-header {
   position: relative;
   padding: 0.625rem 1rem;
@@ -1023,14 +1029,11 @@
     rgba(0, 0, 0, 0.15) 100%
   );
   
-  /* 1px border on all sides - color-tinted per panel type */
-  border: 1px solid var(--panel-header-border, rgba(100, 80, 50, 0.9));
+  /* No outer border - header is inside the panel frame */
+  border: none;
   
-  /* Top highlight override - soft bevel effect */
-  border-top-color: rgba(255, 255, 255, 0.2);
-  
-  /* Bottom shadow line - separates from body */
-  border-bottom-color: var(--panel-header-border, rgba(100, 80, 50, 0.9));
+  /* Bottom border only - separates header from body */
+  border-bottom: 1px solid var(--panel-header-border, rgba(100, 80, 50, 0.9));
   
   /* Inner shadow at bottom edge */
   box-shadow:
@@ -1089,25 +1092,22 @@
   padding: 0;
 }
 
-/* Panel body - the main content area */
+/* Panel body - the main content area inside the panel */
 .test-immersive .test-panel-body {
   /* Inherit fantasy-section styling */
   background: rgba(24, 21, 16, 0.7);
   padding: 1rem;
   position: relative;
+  flex: 1;
   
-  /* Side and bottom borders only - top border removed (header provides separation) */
-  border: 1px solid rgba(58, 50, 38, 0.7);
-  border-top: none;
+  /* No outer border - outer panel provides the frame */
+  border: none;
+  border-radius: 0;
   
-  /* Carved frame effect - no top shadow since header is above */
+  /* Subtle inner shadow for depth */
   box-shadow:
-    inset 0 0 0 1px rgba(12, 10, 6, 0.5),
-    inset 0 0 0 2px rgba(58, 50, 38, 0.4),
-    inset 0 -2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 2px 8px rgba(0, 0, 0, 0.2),
     inset 0 0 40px rgba(0, 0, 0, 0.15);
-  
-  border-radius: 0 0 2px 2px;
 }
 
 /* Panel body ambient lighting - same as fantasy-section::after */
