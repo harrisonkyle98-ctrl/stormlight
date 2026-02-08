@@ -1252,8 +1252,8 @@
   -webkit-mask-position: 0 0;
   mask-position: 0 0;
   
-  /* INCREASED opacity for clearly visible pattern: 0.06 -> 0.18 */
-  opacity: 0.18;
+  /* Subtle opacity for pattern texture (original value) */
+  opacity: 0.06;
 }
 
 /* Content wrapper - renders ABOVE pattern layer */
