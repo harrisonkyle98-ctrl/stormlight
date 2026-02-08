@@ -63,7 +63,7 @@
 /* Desktop: Full 3-column layout - fixed side columns, fluid center */
 @media (min-width: 1200px) {
   .test-immersive .test-three-column-layout {
-    grid-template-columns: 300px minmax(0, 1fr) 300px;
+    grid-template-columns: 330px minmax(0, 1fr) 330px;
     gap: 1rem;
   }
   
@@ -75,7 +75,7 @@
 /* Large screens: Slightly wider fixed side columns */
 @media (min-width: 1600px) {
   .test-immersive .test-three-column-layout {
-    grid-template-columns: 340px minmax(0, 1fr) 340px;
+    grid-template-columns: 370px minmax(0, 1fr) 370px;
     gap: 1.25rem;
   }
 }
