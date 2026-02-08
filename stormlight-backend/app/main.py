@@ -10138,21 +10138,29 @@ async def startup_event():
                                     import traceback
                                     traceback.print_exc()
                                 
-                                # 3. Daily snapshots - DATABASE is source of truth, fallback runs if missing
-                                # Check DB for existing snapshots (not in-memory state)
+                                # 3. Daily snapshots - DATABASE is source of truth, check COVERAGE not just existence
+                                # Run if coverage is below 90% of expected members
                                 try:
                                     snapshot_check_conn = await get_db_connection()
                                     async with snapshot_check_conn:
-                                        existing_snapshot = await snapshot_check_conn.fetchval(
-                                            "SELECT 1 FROM player_daily_snapshots WHERE snapshot_date = %s LIMIT 1",
+                                        # Count snapshots for today
+                                        snapshot_count = await snapshot_check_conn.fetchval(
+                                            "SELECT COUNT(DISTINCT username) FROM player_daily_snapshots WHERE snapshot_date = %s",
                                             (today,)
                                         )
+                                        # Count expected members (active clan members)
+                                        expected_count = await snapshot_check_conn.fetchval(
+                                            "SELECT COUNT(*) FROM clan_members WHERE left_clan = false"
+                                        )
                                     
-                                    if existing_snapshot:
-                                        print(f"[Scheduler][SNAPSHOT] already_exists date={today.isoformat()} (machine: {machine_id})")
+                                    coverage_pct = (snapshot_count / expected_count * 100) if expected_count > 0 else 0
+                                    coverage_threshold = 90  # Run if below 90% coverage
+                                    
+                                    if coverage_pct >= coverage_threshold:
+                                        print(f"[Scheduler][SNAPSHOT] coverage_ok date={today.isoformat()} snapshots={snapshot_count}/{expected_count} ({coverage_pct:.1f}%) (machine: {machine_id})")
                                     else:
-                                        # No snapshots for today - run immediately regardless of hour (fallback)
-                                        print(f"[Scheduler][SNAPSHOT] starting date={today.isoformat()} (machine: {machine_id})")
+                                        # Coverage below threshold - run collection to fill gaps
+                                        print(f"[Scheduler][SNAPSHOT] coverage_low date={today.isoformat()} snapshots={snapshot_count}/{expected_count} ({coverage_pct:.1f}%) - starting collection (machine: {machine_id})")
                                         
                                         # Use a separate advisory lock for snapshot collection (ID: 987654321)
                                         snapshot_lock_conn = await get_db_connection()

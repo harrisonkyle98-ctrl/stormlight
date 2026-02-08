@@ -290,10 +290,15 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
     """Collect daily snapshots of all clan members using persistent multi-cycle approach with adaptive rate limit handling."""
     import asyncio
     import random
+    import uuid
     from datetime import datetime
     from math import ceil
     
-    print(f"🚀 [Multi-Cycle] Starting multi-cycle snapshot collection at {datetime.utcnow().isoformat()}Z")
+    # Generate unique run_id for tracking this collection run
+    run_id = str(uuid.uuid4())[:8]
+    start_time_utc = datetime.utcnow()
+    
+    print(f"🚀 [Multi-Cycle] run_id={run_id} started at {start_time_utc.isoformat()}Z")
     
     try:
         try:
@@ -312,8 +317,8 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
         db_members = await prisma.clanmember.find_many()
         all_usernames = [m.username for m in db_members if m.username]
         expected_members = len(all_usernames)
-        print(f"📋 [Multi-Cycle] Members to process today: {expected_members}")
-        print(f"🔍 [Multi-Cycle] DEBUG: All usernames sample (first 10): {all_usernames[:10]}")
+        print(f"📋 [Multi-Cycle] run_id={run_id} total_members={expected_members}")
+        print(f"🔍 [Multi-Cycle] run_id={run_id} sample_usernames (first 10): {all_usernames[:10]}")
         
         if not all_usernames:
             print(f"❌ [Multi-Cycle] No clan members found in database")
@@ -337,12 +342,19 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
         final_failure_reasons: dict[str, str] = {}
         consecutive_no_progress_cycles = 0
         consecutive_non_retryable_no_progress = 0
-        max_no_progress_cycles = 30
+        max_no_progress_cycles = 60  # Increased from 30 to allow more retries
+        max_non_retryable_no_progress = 20  # Increased from 10 to be more resilient
         
         while remaining and cycle_num < max_cycles:
             cycle_num += 1
             chunk = remaining[:members_per_cycle]
             total_cycles_est = max(1, (len(remaining) + members_per_cycle - 1) // members_per_cycle)
+            
+            # Heartbeat logging every 5 cycles to show progress
+            if cycle_num % 5 == 1 or cycle_num == 1:
+                elapsed_min = (datetime.utcnow() - start_time_utc).total_seconds() / 60
+                print(f"💓 [Multi-Cycle] run_id={run_id} HEARTBEAT cycle={cycle_num} done={len(done)} remaining={len(remaining)} elapsed_min={elapsed_min:.1f}")
+            
             print(f"🔄 [Multi-Cycle] Cycle {cycle_num}/{total_cycles_est} starting with {len(chunk)} members (remaining={len(remaining)})")
             print(f"🔍 [Multi-Cycle] Chunk usernames: {chunk[:10]}{'...' if len(chunk) > 10 else ''}")
             
@@ -403,8 +415,8 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
                     consecutive_non_retryable_no_progress += 1
                     print(f"⚠️ [Multi-Cycle] No progress this cycle ({consecutive_no_progress_cycles} total, {consecutive_non_retryable_no_progress} non-retryable); rotating remaining to avoid head-of-line blocking")
                 
-                if consecutive_non_retryable_no_progress >= 10:
-                    print(f"🛑 [Multi-Cycle] Stopping after 10 consecutive non-retryable no-progress cycles")
+                if consecutive_non_retryable_no_progress >= max_non_retryable_no_progress:
+                    print(f"🛑 [Multi-Cycle] Stopping after {max_non_retryable_no_progress} consecutive non-retryable no-progress cycles")
                     all_failed_users.extend([u for u in remaining_after if u not in all_failed_users])
                     break
                 
@@ -461,19 +473,18 @@ async def collect_daily_player_stats_multi_cycle(members_per_cycle: int = 10, cy
                 reason = final_failure_reasons.get(u, "UNKNOWN")
                 print(f"  - {u}: {reason}")
         
-        print(f"🎉 [Multi-Cycle] Complete: {final_done_count}/{expected_members} members have a snapshot today in {dur/60:.1f} minutes")
-        print(f"🔍 [Multi-Cycle] DEBUG: Final stats - cycles: {cycle_num}, remaining: {final_remaining_count}")
-        
         success_rate = (final_done_count / expected_members * 100) if expected_members > 0 else 0
-        print(f"📊 [Multi-Cycle] Success rate: {success_rate:.1f}% ({final_done_count}/{expected_members})")
+        
+        # Final summary with run_id for tracking
+        print(f"🎉 [Multi-Cycle] run_id={run_id} COMPLETE: completed={final_done_count} total={expected_members} success_rate={success_rate:.1f}% duration_min={dur/60:.1f} cycles={cycle_num}")
         
         if final_remaining_count > 0:
-            print(f"⚠️ [Multi-Cycle] {final_remaining_count} members still need snapshots - will retry in next scheduled run")
+            print(f"⚠️ [Multi-Cycle] run_id={run_id} {final_remaining_count} members still need snapshots - will retry in next scheduled run")
         
         return final_done_count, final_remaining_count
         
     except Exception as e:
-        print(f"❌ [Multi-Cycle] Critical error in multi-cycle collection: {e}")
+        print(f"❌ [Multi-Cycle] run_id={run_id if 'run_id' in dir() else 'unknown'} Critical error: {e}")
         import traceback
         traceback.print_exc()
         return 0, 0
