@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { usernameToUrl } from '../utils/urlUtils'
 import { ParchmentClanLogRow } from '../components/clanLogs/ParchmentClanLogRow'
 import { ParchmentActivityLogRow } from '../components/activityLogs/ParchmentActivityLogRow'
+import { MembersActiveTodayRow } from '../components/membersActive/MembersActiveTodayRow'
 import { Username } from '../components/ui/username'
 import { usePageTitle } from '../hooks/usePageTitle'
 import DailyscapeCard from '../components/dailyscape/DailyscapeCard'
@@ -726,33 +727,19 @@ const TestHome = () => {
                     </div>
                   ) : activeMembers && activeMembers.active_members.length > 0 ? (
                     <>
-                      <div className="space-y-2 mb-3">
+                      <div className="space-y-1">
                         {activeMembers.active_members.map((member: any, index: number) => (
-                          <div
+                          <MembersActiveTodayRow
                             key={member.username}
-                            className="flex justify-between items-center p-2 test-row-panel"
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className="text-slate-400 font-mono text-xs w-5">
-                                #{index + 1}
-                              </span>
-                              <Link
-                                to={`/clan-member/${usernameToUrl(member.username)}`}
-                                className="text-white text-sm font-medium hover:text-blue-300 transition-colors"
-                              >
-                                <Username
-                                  username={member.username}
-                                  clanRank={clanMembers.find(m => m.username === member.username)?.clan_rank}
-                                />
-                              </Link>
-                            </div>
-                            <span className="text-green-400 text-sm font-semibold">
-                              +{formatNumber(member.xp_gained)}
-                            </span>
-                          </div>
+                            member={member}
+                            rank={index + 1}
+                            formatNumber={formatNumber}
+                            usernameToUrl={usernameToUrl}
+                            clanRank={clanMembers.find(m => m.username === member.username)?.clan_rank}
+                          />
                         ))}
                       </div>
-                      <div className="border-t border-slate-700 pt-2 flex items-center justify-between">
+                      <div className="border-t border-slate-700 pt-2 mt-3 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Activity className="h-4 w-4 text-green-400" />
                           <span className="text-xs text-slate-400">Total active</span>

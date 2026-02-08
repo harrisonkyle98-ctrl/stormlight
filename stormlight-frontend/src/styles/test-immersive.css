@@ -1180,3 +1180,118 @@
 .test-immersive .test-panel-body > *:last-child {
   margin-bottom: 0;
 }
+
+/* ========================================
+   MEMBERS ACTIVE TODAY ROW STYLING
+   Uses floral/parchment pattern (NOT diamond grid)
+   Matches Clan Log / Recent Activity row design principles
+   ======================================== */
+
+/* Members Active Today row container */
+.test-immersive .test-members-active-row {
+  position: relative;
+  margin-bottom: 0.5rem !important;
+  margin-top: 0 !important;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+/* Ensure first entry also has proper spacing from header */
+.test-immersive .test-members-active-row:first-child {
+  margin-top: 0.5rem !important;
+}
+
+/* Floral/parchment pattern background layer - renders BEHIND content */
+/* Uses the parchment pattern asset (not diamond grid) */
+/* Uniform pattern across full row width (no horizontal fade) */
+.test-immersive .test-members-active-row::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  
+  /* Emerald/green tint to match Members Active Today header */
+  background-color: rgba(90, 150, 110, 0.8);
+  
+  /* Apply floral/parchment pattern as mask - uniform across full row width */
+  -webkit-mask-image: url('/assets/patterns/stormlight-parchment-pattern-mask-inverted.png');
+  mask-image: url('/assets/patterns/stormlight-parchment-pattern-mask-inverted.png');
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+  -webkit-mask-size: 100px 100px;
+  mask-size: 100px 100px;
+  -webkit-mask-position: 0 0;
+  mask-position: 0 0;
+  
+  /* Very low opacity for subtle texture effect */
+  opacity: 0.06;
+}
+
+/* Content wrapper - renders ABOVE pattern layer */
+.test-immersive .test-members-active-row > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Hover state - slightly brighter background */
+.test-immersive .test-members-active-row:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Focus state for keyboard accessibility */
+.test-immersive .test-members-active-row:focus {
+  outline: 2px solid rgba(232, 213, 176, 0.4);
+  outline-offset: -2px;
+}
+
+.test-immersive .test-members-active-row:focus-visible {
+  outline: 2px solid rgba(232, 213, 176, 0.6);
+  outline-offset: -2px;
+}
+
+/* Rank number styling */
+.test-immersive .test-members-active-row .test-members-active-rank {
+  color: #a49680;
+  font-family: monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  min-width: 1.5rem;
+  flex-shrink: 0;
+}
+
+/* Username styling - matches Clan Log / Recent Activity */
+.test-immersive .test-members-active-row .test-members-active-username {
+  color: #ffffff !important;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: color 0.15s ease;
+}
+
+.test-immersive .test-members-active-row:hover .test-members-active-username {
+  color: #93c5fd !important;
+}
+
+/* XP gained styling - green accent */
+.test-immersive .test-members-active-row .test-members-active-xp {
+  color: #6bc96b;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Chevron indicator - appears on right side */
+.test-immersive .test-members-active-row .test-members-active-chevron {
+  color: #a49680;
+  opacity: 0.5;
+  transform: translateX(0);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+/* Chevron animation on hover - slides right */
+.test-immersive .test-members-active-row:hover .test-members-active-chevron {
+  opacity: 0.9;
+  transform: translateX(3px);
+}
