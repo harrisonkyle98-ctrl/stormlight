@@ -355,7 +355,7 @@ const DailyscapeCard = () => {
   )
 
   return (
-    <div className="test-panel test-panel--dailyscape">
+    <div className="fantasy-section test-panel test-panel--dailyscape">
       <div className="test-panel-header">
         <h3 className="test-panel-header-title">Dailyscape</h3>
       </div>
