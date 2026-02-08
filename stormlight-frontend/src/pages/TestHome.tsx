@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Users, Trophy, TrendingUp, Calendar, Activity, Home, User, Award, LogOut, Key } from 'lucide-react'
+import { Users, Trophy, TrendingUp, Calendar, Activity, User, LogOut, Key } from 'lucide-react'
 import '../styles/fantasy-container.css'
 import '../styles/test-immersive.css'
 import { fetchClanMembers } from '../utils/gradientUtils'
@@ -427,35 +427,108 @@ const TestHome = () => {
         <div className="fantasy-container test-fullwidth-container">
           {/* Main Content Area - 3-column client layout */}
           <div className="fantasy-content">
-            {/* Embedded Navigation - spans full width at top */}
-            <div className="fantasy-section test-embedded-nav">
-              <nav className="flex items-center justify-center gap-2 flex-wrap">
-                <Link to="/" className="test-nav-item">
-                  <Home className="h-5 w-5" />
-                  <span>Home</span>
-                </Link>
-                <Link to="/members" className="test-nav-item">
-                  <Users className="h-5 w-5" />
-                  <span>Members</span>
-                </Link>
-                <Link to="/competitions" className="test-nav-item">
-                  <Trophy className="h-5 w-5" />
-                  <span>Competitions</span>
-                </Link>
-                <Link to="/clan-hiscores" className="test-nav-item">
-                  <Award className="h-5 w-5" />
-                  <span>Hiscores</span>
-                </Link>
-              </nav>
+            {/* Floating Image Navigation - spans full width at top */}
+            <div className="test-image-nav">
+              <Link to="/" className="test-image-nav-button">
+                <img src="/assets/nav/home.jpg" alt="Home" />
+                <span className="test-image-nav-label">Home</span>
+              </Link>
+              <Link to="/members" className="test-image-nav-button">
+                <img src="/assets/nav/members.jpg" alt="Members" />
+                <span className="test-image-nav-label">Members</span>
+              </Link>
+              <Link to="/competitions" className="test-image-nav-button">
+                <img src="/assets/nav/competitions.jpg" alt="Competitions" />
+                <span className="test-image-nav-label">Competitions</span>
+              </Link>
+              <Link to="/clan-hiscores" className="test-image-nav-button">
+                <img src="/assets/nav/hiscores.png" alt="Hiscores" />
+                <span className="test-image-nav-label">Hiscores</span>
+              </Link>
             </div>
 
-            {/* Clan Summary - Full Width below navigation */}
-            <div className="test-panel test-panel--clan-summary test-clan-summary-fullwidth">
-              <div className="test-panel-header">
-                <h3 className="test-panel-header-title">Clan Summary</h3>
+            {/* 3-Column Client Layout */}            {/* 3-Column Client Layout */}
+            <div className="test-three-column-layout">
+              {/* ========== LEFT COLUMN - Account Only ========== */}
+              <div className="test-column-left">
+                {/* Account Panel */}
+                {user?.username && user?.isLinked && (
+                  <div className="test-panel test-panel--account test-account-panel">
+                    <div className="test-panel-header">
+                      <h3 className="test-panel-header-title">Account</h3>
+                    </div>
+                    <div className="test-panel-body">
+                    <div className="flex flex-col items-center gap-3">
+                      {/* User Avatar */}
+                      <Avatar className="w-16 h-16">
+                        <AvatarImage
+                          src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(user.username)}/chat.png`}
+                          alt={user.username}
+                        />
+                        <AvatarFallback className="bg-slate-700 text-white">
+                          <User className="w-8 h-8" />
+                        </AvatarFallback>
+                      </Avatar>
+                      {/* Username and Rank */}
+                      <div className="text-center">
+                        <Link
+                          to={`/clan-member/${usernameToUrl(user.username)}`}
+                          className="text-lg font-semibold text-white hover:text-blue-300 transition-colors"
+                        >
+                          <Username
+                            username={user.username}
+                            clanRank={playerData?.clan_rank}
+                          />
+                        </Link>
+                        {playerData?.clan_rank && (
+                          <p className="text-xs text-slate-400 mt-1">{playerData.clan_rank}</p>
+                        )}
+                      </div>
+                      {/* Action Buttons - stacked */}
+                      <div className="flex flex-col gap-2 w-full mt-2">
+                        <Button
+                          onClick={() => navigate(`/clan-member/${usernameToUrl(user.username)}`)}
+                          className="test-profile-btn w-full"
+                          size="sm"
+                        >
+                          <User className="w-4 h-4 mr-1" />
+                          Profile
+                        </Button>
+                        {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
+                          <Button
+                            onClick={() => navigate('/admin')}
+                            className="test-profile-btn w-full"
+                            size="sm"
+                          >
+                            <Key className="w-4 h-4 mr-1" />
+                            Admin
+                          </Button>
+                        )}
+                        <Button
+                          onClick={logout}
+                          className="test-profile-btn w-full"
+                          size="sm"
+                        >
+                          <LogOut className="w-4 h-4 mr-1" />
+                          Logout
+                        </Button>
+                      </div>
+                    </div>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="test-panel-body">
-              <div className="fantasy-grid-4">
+              {/* End left column */}
+
+              {/* ========== CENTER COLUMN - Clan Summary + Activity Spine ========== */}
+              <div className="test-column-center">
+                {/* Clan Summary - Now inside center column */}
+                <div className="test-panel test-panel--clan-summary">
+                  <div className="test-panel-header">
+                    <h3 className="test-panel-header-title">Clan Summary</h3>
+                  </div>
+                  <div className="test-panel-body">
+                  <div className="fantasy-grid-4">
                 {/* 1. Total Members */}
                 <div className="fantasy-stat-item">
                   <div className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -549,85 +622,10 @@ const TestHome = () => {
                     )}
                   </div>
                 </div>
-              </div>
-              </div>
-            </div>
-
-            {/* 3-Column Client Layout */}
-            <div className="test-three-column-layout">
-              {/* ========== LEFT COLUMN - Account Only ========== */}
-              <div className="test-column-left">
-                {/* Account Panel */}
-                {user?.username && user?.isLinked && (
-                  <div className="test-panel test-panel--account test-account-panel">
-                    <div className="test-panel-header">
-                      <h3 className="test-panel-header-title">Account</h3>
-                    </div>
-                    <div className="test-panel-body">
-                    <div className="flex flex-col items-center gap-3">
-                      {/* User Avatar */}
-                      <Avatar className="w-16 h-16">
-                        <AvatarImage
-                          src={`http://secure.runescape.com/m=avatar-rs/${encodeURIComponent(user.username)}/chat.png`}
-                          alt={user.username}
-                        />
-                        <AvatarFallback className="bg-slate-700 text-white">
-                          <User className="w-8 h-8" />
-                        </AvatarFallback>
-                      </Avatar>
-                      {/* Username and Rank */}
-                      <div className="text-center">
-                        <Link
-                          to={`/clan-member/${usernameToUrl(user.username)}`}
-                          className="text-lg font-semibold text-white hover:text-blue-300 transition-colors"
-                        >
-                          <Username
-                            username={user.username}
-                            clanRank={playerData?.clan_rank}
-                          />
-                        </Link>
-                        {playerData?.clan_rank && (
-                          <p className="text-xs text-slate-400 mt-1">{playerData.clan_rank}</p>
-                        )}
-                      </div>
-                      {/* Action Buttons - stacked */}
-                      <div className="flex flex-col gap-2 w-full mt-2">
-                        <Button
-                          onClick={() => navigate(`/clan-member/${usernameToUrl(user.username)}`)}
-                          className="test-profile-btn w-full"
-                          size="sm"
-                        >
-                          <User className="w-4 h-4 mr-1" />
-                          Profile
-                        </Button>
-                        {user?.clanRank && ['Owner', 'Deputy Owner', 'Overseer'].includes(user.clanRank) && (
-                          <Button
-                            onClick={() => navigate('/admin')}
-                            className="test-profile-btn w-full"
-                            size="sm"
-                          >
-                            <Key className="w-4 h-4 mr-1" />
-                            Admin
-                          </Button>
-                        )}
-                        <Button
-                          onClick={logout}
-                          className="test-profile-btn w-full"
-                          size="sm"
-                        >
-                          <LogOut className="w-4 h-4 mr-1" />
-                          Logout
-                        </Button>
-                      </div>
-                    </div>
-                    </div>
                   </div>
-                )}
-              </div>
-              {/* End left column */}
+                  </div>
+                </div>
 
-              {/* ========== CENTER COLUMN - Activity Spine ========== */}
-              <div className="test-column-center">
                 {/* Dailyscape Panel - with tabs */}
                 <DailyscapeCard />
 
