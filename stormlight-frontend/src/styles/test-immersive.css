@@ -1185,6 +1185,7 @@
    MEMBERS ACTIVE TODAY ROW STYLING
    Uses floral/parchment pattern (NOT diamond grid)
    Matches Clan Log / Recent Activity row design principles
+   Per-rank tinting: gold (#1), silver (#2), bronze (#3), neutral (#4+)
    ======================================== */
 
 /* Members Active Today row container */
@@ -1195,6 +1196,9 @@
   overflow: hidden;
   cursor: pointer;
   transition: background-color 0.15s ease, transform 0.1s ease;
+  
+  /* Default pattern tint - neutral (same as "Total active" text color) */
+  --floral-pattern-tint: rgba(164, 150, 128, 0.9);
 }
 
 /* Ensure first entry also has proper spacing from header */
@@ -1202,9 +1206,31 @@
   margin-top: 0.5rem !important;
 }
 
+/* Per-rank pattern tint colors */
+/* Rank #1 - Gold */
+.test-immersive .test-members-active-row[data-rank-category="gold"] {
+  --floral-pattern-tint: rgba(212, 175, 55, 0.95);
+}
+
+/* Rank #2 - Silver */
+.test-immersive .test-members-active-row[data-rank-category="silver"] {
+  --floral-pattern-tint: rgba(192, 192, 192, 0.95);
+}
+
+/* Rank #3 - Bronze */
+.test-immersive .test-members-active-row[data-rank-category="bronze"] {
+  --floral-pattern-tint: rgba(176, 141, 87, 0.95);
+}
+
+/* Rank #4+ - Neutral (matches "Total active" text) */
+.test-immersive .test-members-active-row[data-rank-category="neutral"] {
+  --floral-pattern-tint: rgba(164, 150, 128, 0.9);
+}
+
 /* Floral/parchment pattern background layer - renders BEHIND content */
 /* Uses the parchment pattern asset (not diamond grid) */
 /* Uniform pattern across full row width (no horizontal fade) */
+/* INCREASED: opacity 0.06 -> 0.18, mask-size 100px -> 200px */
 .test-immersive .test-members-active-row::before {
   content: '';
   position: absolute;
@@ -1212,21 +1238,22 @@
   z-index: 0;
   pointer-events: none;
   
-  /* Emerald/green tint to match Members Active Today header */
-  background-color: rgba(90, 150, 110, 0.8);
+  /* Use per-rank tint color from CSS variable */
+  background-color: var(--floral-pattern-tint);
   
   /* Apply floral/parchment pattern as mask - uniform across full row width */
+  /* LARGER scale: 100px -> 200px for more open, readable motif */
   -webkit-mask-image: url('/assets/patterns/stormlight-parchment-pattern-mask-inverted.png');
   mask-image: url('/assets/patterns/stormlight-parchment-pattern-mask-inverted.png');
   -webkit-mask-repeat: repeat;
   mask-repeat: repeat;
-  -webkit-mask-size: 100px 100px;
-  mask-size: 100px 100px;
+  -webkit-mask-size: 200px 200px;
+  mask-size: 200px 200px;
   -webkit-mask-position: 0 0;
   mask-position: 0 0;
   
-  /* Very low opacity for subtle texture effect */
-  opacity: 0.06;
+  /* INCREASED opacity for clearly visible pattern: 0.06 -> 0.18 */
+  opacity: 0.18;
 }
 
 /* Content wrapper - renders ABOVE pattern layer */

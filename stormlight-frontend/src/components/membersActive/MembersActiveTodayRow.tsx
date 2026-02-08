@@ -45,9 +45,14 @@ export function MembersActiveTodayRow({
     }
   }
 
+  // Determine rank category for pattern tinting
+  const rankCategory = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'neutral'
+
   return (
     <div 
       className="test-members-active-row test-row-panel"
+      data-rank={rank}
+      data-rank-category={rankCategory}
       onClick={handleRowClick}
       onKeyDown={handleKeyDown}
       onAuxClick={handleRowClick}
