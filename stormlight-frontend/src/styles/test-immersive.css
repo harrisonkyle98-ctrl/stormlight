@@ -60,10 +60,10 @@
   }
 }
 
-/* Desktop: Full 3-column layout */
+/* Desktop: Full 3-column layout - fixed side columns, fluid center */
 @media (min-width: 1200px) {
   .test-immersive .test-three-column-layout {
-    grid-template-columns: minmax(240px, 22%) 1fr minmax(240px, 22%);
+    grid-template-columns: 280px minmax(0, 1fr) 280px;
     gap: 1rem;
   }
   
@@ -72,10 +72,10 @@
   }
 }
 
-/* Large screens: Slightly wider side columns */
+/* Large screens: Slightly wider fixed side columns */
 @media (min-width: 1600px) {
   .test-immersive .test-three-column-layout {
-    grid-template-columns: minmax(280px, 24%) 1fr minmax(280px, 24%);
+    grid-template-columns: 320px minmax(0, 1fr) 320px;
     gap: 1.25rem;
   }
 }
