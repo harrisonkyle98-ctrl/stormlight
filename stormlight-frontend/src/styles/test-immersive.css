@@ -1077,6 +1077,9 @@
 
 /* Panel body - the main content area inside the panel */
 .test-immersive .test-panel-body {
+  /* Override display: none from fantasy-container.css (production default) */
+  display: block;
+  
   /* Inherit fantasy-section styling */
   background: rgba(24, 21, 16, 0.7);
   padding: 1rem;

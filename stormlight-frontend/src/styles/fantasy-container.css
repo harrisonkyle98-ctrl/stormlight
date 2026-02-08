@@ -933,3 +933,13 @@
 .fantasy-container.w-full.max-w-md {
   margin: 0; /* Override default 4% margin for centered login */
 }
+
+/* ========================================
+   TEST PANEL CLASSES - HIDDEN ON PRODUCTION
+   These classes are used on /test only.
+   On production, hide them so only fantasy-section-title shows.
+   ======================================== */
+
+.test-panel-header {
+  display: none;
+}

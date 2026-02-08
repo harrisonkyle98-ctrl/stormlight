@@ -360,7 +360,6 @@ const DailyscapeCard = () => {
       <div className="test-panel-header">
         <h3 className="test-panel-header-title">Dailyscape</h3>
       </div>
-      <div className="test-panel-body">
       {loading ? (
         <LoadingSkeleton />
       ) : error ? (
@@ -807,7 +806,6 @@ const DailyscapeCard = () => {
           </TabsContent>
         </Tabs>
       )}
-      </div>
     </div>
   )
 }
