@@ -2150,14 +2150,16 @@ async def discord_callback(request: Request, code: str = Query(None)):
                             'username': user_data['username'],
                             'discriminator': user_data.get('discriminator', '0'),
                             'email': user_data.get('email'),
-                            'avatar': user_data.get('avatar')
+                            'avatar': user_data.get('avatar'),
+                            'lastLoginAt': datetime.utcnow()
                         },
                         'update': {
                             'username': user_data['username'],
                             'discriminator': user_data.get('discriminator', '0'),
                             'email': user_data.get('email'),
                             'avatar': user_data.get('avatar'),
-                            'updatedAt': datetime.now()
+                            'updatedAt': datetime.now(),
+                            'lastLoginAt': datetime.utcnow()
                         }
                     }
                 )
@@ -5190,6 +5192,77 @@ async def get_clan_stats():
                 "clan_rank": "Unknown",
                 "last_updated": datetime.now().isoformat()
             }
+
+@api_router.get("/site/recent-logins")
+async def get_recent_site_logins(limit: int = 10):
+    """Get members who have logged into the website since 00:00 UTC today.
+    
+    Returns users with lastLoginAt >= today's midnight UTC.
+    Each user is joined with their linked clan member data if available.
+    """
+    try:
+        # Calculate today's 00:00 UTC
+        now_utc = datetime.utcnow()
+        today_midnight_utc = datetime(now_utc.year, now_utc.month, now_utc.day, 0, 0, 0)
+        
+        # Query users who logged in since midnight UTC today
+        recent_users = await prisma.user.find_many(
+            where={
+                'lastLoginAt': {
+                    'gte': today_midnight_utc
+                }
+            },
+            order={
+                'lastLoginAt': 'desc'
+            },
+            take=limit
+        )
+        
+        # Build response with linked clan member data
+        result = []
+        for user in recent_users:
+            # Try to find linked clan member
+            linked_member = await prisma.clanmember.find_first(
+                where={'discordId': user.discordId},
+                select={
+                    'username': True,
+                    'displayName': True,
+                    'clanRank': True
+                }
+            )
+            
+            if linked_member:
+                result.append({
+                    'username': linked_member['username'],
+                    'displayName': linked_member['displayName'] or linked_member['username'],
+                    'clanRank': linked_member['clanRank'],
+                    'lastLoginAt': user.lastLoginAt.isoformat() if user.lastLoginAt else None,
+                    'isLinked': True
+                })
+            else:
+                # User not linked to clan member - show Discord username
+                result.append({
+                    'username': user.username,
+                    'displayName': user.username,
+                    'clanRank': None,
+                    'lastLoginAt': user.lastLoginAt.isoformat() if user.lastLoginAt else None,
+                    'isLinked': False
+                })
+        
+        return {
+            'logins': result,
+            'count': len(result),
+            'since': today_midnight_utc.isoformat() + 'Z'
+        }
+        
+    except Exception as e:
+        print(f"Error fetching recent site logins: {e}")
+        return {
+            'logins': [],
+            'count': 0,
+            'since': datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0).isoformat() + 'Z',
+            'error': str(e)
+        }
 
 @api_router.get("/clan/activities")
 async def get_clan_activities(

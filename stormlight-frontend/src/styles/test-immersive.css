@@ -1323,7 +1323,7 @@
 /* Floral/parchment pattern background layer - renders BEHIND content */
 /* Uses the parchment pattern asset (not diamond grid) */
 /* Uniform pattern across full row width (no horizontal fade) */
-/* INCREASED: opacity 0.06 -> 0.18, mask-size 100px -> 200px */
+/* FINE-TUNED: opacity 0.06 -> 0.09, mask-size 200px -> 240px */
 .test-immersive .test-members-active-row::before {
   content: '';
   position: absolute;
@@ -1335,18 +1335,18 @@
   background-color: var(--floral-pattern-tint);
   
   /* Apply floral/parchment pattern as mask - uniform across full row width */
-  /* LARGER scale: 100px -> 200px for more open, readable motif */
+  /* Slightly larger scale: 200px -> 240px for more open, readable motif */
   -webkit-mask-image: url('/assets/patterns/stormlight-parchment-pattern-mask-inverted.png');
   mask-image: url('/assets/patterns/stormlight-parchment-pattern-mask-inverted.png');
   -webkit-mask-repeat: repeat;
   mask-repeat: repeat;
-  -webkit-mask-size: 200px 200px;
-  mask-size: 200px 200px;
+  -webkit-mask-size: 240px 240px;
+  mask-size: 240px 240px;
   -webkit-mask-position: 0 0;
   mask-position: 0 0;
   
-  /* Subtle opacity for pattern texture (original value) */
-  opacity: 0.06;
+  /* Slightly increased opacity for better visibility: 0.06 -> 0.09 */
+  opacity: 0.09;
 }
 
 /* Content wrapper - renders ABOVE pattern layer */
@@ -1413,5 +1413,94 @@
 /* Chevron animation on hover - slides right */
 .test-immersive .test-members-active-row:hover .test-members-active-chevron {
   opacity: 0.9;
+  transform: translateX(3px);
+}
+
+/* ========================================
+   RECENT SITE LOGINS PANEL STYLES
+   ======================================== */
+
+/* Recent Site Logins row - clickable, consistent with other /test rows */
+.test-immersive .test-recent-login-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(100, 116, 139, 0.2);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.test-immersive .test-recent-login-row:first-child {
+  margin-top: 0;
+}
+
+/* Hover state */
+.test-immersive .test-recent-login-row:hover {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(100, 116, 139, 0.4);
+}
+
+/* Focus states for accessibility */
+.test-immersive .test-recent-login-row:focus {
+  outline: none;
+}
+
+.test-immersive .test-recent-login-row:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+}
+
+/* Row content layout */
+.test-immersive .test-recent-login-row-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  min-width: 0;
+  gap: 0.5rem;
+}
+
+/* User info section */
+.test-immersive .test-recent-login-user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+}
+
+/* Rank icon */
+.test-immersive .test-recent-login-rank-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Time display */
+.test-immersive .test-recent-login-time {
+  font-size: 0.75rem;
+  color: rgba(148, 163, 184, 0.8);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Arrow indicator */
+.test-immersive .test-recent-login-arrow {
+  font-size: 1.25rem;
+  color: rgba(148, 163, 184, 0.5);
+  margin-left: 0.5rem;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+/* Arrow animation on hover */
+.test-immersive .test-recent-login-row:hover .test-recent-login-arrow {
+  color: rgba(148, 163, 184, 0.9);
   transform: translateX(3px);
 }

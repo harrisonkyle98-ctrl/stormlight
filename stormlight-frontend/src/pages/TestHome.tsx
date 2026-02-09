@@ -147,6 +147,8 @@ const TestHome = () => {
   const [activeMembers, setActiveMembers] = useState<any>(null)
   const [activeMembersLoading, setActiveMembersLoading] = useState(false)
   const [playerData, setPlayerData] = useState<PlayerStats | null>(null)
+  const [recentLogins, setRecentLogins] = useState<any>(null)
+  const [recentLoginsLoading, setRecentLoginsLoading] = useState(false)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -176,6 +178,7 @@ const TestHome = () => {
 
   useEffect(() => {
     fetchActiveMembers()
+    fetchRecentLogins()
   }, [])
 
   useEffect(() => {
@@ -360,6 +363,21 @@ const TestHome = () => {
       console.error('Error fetching active members:', error)
     } finally {
       setActiveMembersLoading(false)
+    }
+  }
+
+  const fetchRecentLogins = async () => {
+    setRecentLoginsLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/api/site/recent-logins?limit=10`)
+      if (response.ok) {
+        const data = await response.json()
+        setRecentLogins(data)
+      }
+    } catch (error) {
+      console.error('Error fetching recent logins:', error)
+    } finally {
+      setRecentLoginsLoading(false)
     }
   }
 
@@ -749,6 +767,71 @@ const TestHome = () => {
                     </>
                   ) : (
                     <p className="text-center text-slate-400 py-4 text-sm">No active members today</p>
+                  )}
+                  </div>
+                </div>
+
+                {/* Recent Site Logins (Last 24h) */}
+                <div className="test-panel test-panel--recent-logins">
+                  <div className="test-panel-header">
+                    <h3 className="test-panel-header-title">Recent Site Logins (Last 24h)</h3>
+                  </div>
+                  <div className="test-panel-body">
+                  {recentLoginsLoading ? (
+                    <div className="space-y-3 animate-pulse">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <div key={i} className="flex justify-between items-center">
+                          <div className="h-4 bg-slate-700/50 rounded w-1/2"></div>
+                          <div className="h-4 bg-slate-700/30 rounded w-1/4"></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : recentLogins && recentLogins.logins.length > 0 ? (
+                    <>
+                      <div className="space-y-1">
+                        {recentLogins.logins.map((login: any, index: number) => (
+                          <Link
+                            key={`${login.username}-${index}`}
+                            to={login.isLinked ? `/clan-member/${usernameToUrl(login.username)}` : '#'}
+                            className={`test-recent-login-row ${!login.isLinked ? 'pointer-events-none' : ''}`}
+                            tabIndex={login.isLinked ? 0 : -1}
+                          >
+                            <div className="test-recent-login-row-content">
+                              <div className="test-recent-login-user">
+                                {login.clanRank && (
+                                  <img 
+                                    src={getRankIcon(login.clanRank)} 
+                                    alt={login.clanRank}
+                                    className="test-recent-login-rank-icon"
+                                  />
+                                )}
+                                <Username 
+                                  username={login.displayName || login.username}
+                                  clanRank={login.clanRank}
+                                />
+                              </div>
+                              <span className="test-recent-login-time">
+                                {login.lastLoginAt ? formatTimeAgo(new Date(login.lastLoginAt).getTime() / 1000) : 'Unknown'}
+                              </span>
+                            </div>
+                            {login.isLinked && (
+                              <span className="test-recent-login-arrow">›</span>
+                            )}
+                          </Link>
+                        ))}
+                      </div>
+                      <div className="border-t border-slate-700 pt-2 mt-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-blue-400" />
+                          <span className="text-xs text-slate-400">Logged in today (UTC)</span>
+                        </div>
+                        <span className="text-sm font-bold text-white">
+                          {recentLogins.count}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-center text-slate-400 py-4 text-sm">No logins today</p>
                   )}
                   </div>
                 </div>
