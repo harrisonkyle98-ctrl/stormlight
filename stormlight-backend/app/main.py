@@ -2032,6 +2032,41 @@ def verify_token(
         print(f"❌ Unexpected error in token verification: {e}")
         raise HTTPException(status_code=401, detail="Invalid token")
 
+# In-memory cache for last_seen_at throttling (15 minute window)
+_last_seen_cache: dict[str, datetime] = {}
+LAST_SEEN_THROTTLE_MINUTES = 15
+
+async def update_last_seen_at(user_id: str):
+    """Update user's lastSeenAt timestamp with throttling to avoid DB spam.
+    
+    Only updates if:
+    - User has never been seen (lastSeenAt is null), OR
+    - Last update was more than LAST_SEEN_THROTTLE_MINUTES ago
+    
+    Uses in-memory cache to avoid DB reads on every request.
+    """
+    global _last_seen_cache
+    now_utc = datetime.utcnow()
+    
+    # Check in-memory cache first
+    if user_id in _last_seen_cache:
+        last_update = _last_seen_cache[user_id]
+        if (now_utc - last_update).total_seconds() < LAST_SEEN_THROTTLE_MINUTES * 60:
+            # Throttled - skip update
+            return
+    
+    try:
+        # Update lastSeenAt in database
+        await prisma.user.update(
+            where={'discordId': user_id},
+            data={'lastSeenAt': now_utc}
+        )
+        # Update cache
+        _last_seen_cache[user_id] = now_utc
+        print(f"✅ Updated lastSeenAt for user {user_id}")
+    except Exception as e:
+        print(f"❌ Error updating lastSeenAt for user {user_id}: {e}")
+
 @app.get("/healthz")
 async def healthz():
     return {"status": "ok"}
@@ -2396,6 +2431,9 @@ async def get_current_user(
     user_id: str = Depends(verify_token)
 ):
     """Get current user info"""
+    # Update lastSeenAt for Recent Site Logins tracking (throttled to avoid DB spam)
+    await update_last_seen_at(user_id)
+    
     if not refresh and user_id in users_db:
         cached = users_db[user_id]
         # Only return cached data if it has activityLogs (added in recent update)
@@ -5195,9 +5233,10 @@ async def get_clan_stats():
 
 @api_router.get("/site/recent-logins")
 async def get_recent_site_logins(limit: int = 10):
-    """Get members who have logged into the website since 00:00 UTC today.
+    """Get members who have visited the website while logged in since 00:00 UTC today.
     
-    Returns users with lastLoginAt >= today's midnight UTC.
+    Returns users with lastSeenAt >= today's midnight UTC.
+    lastSeenAt is updated on authenticated page loads (throttled to 15 min intervals).
     Each user is joined with their linked clan member data if available.
     """
     try:
@@ -5205,15 +5244,15 @@ async def get_recent_site_logins(limit: int = 10):
         now_utc = datetime.utcnow()
         today_midnight_utc = datetime(now_utc.year, now_utc.month, now_utc.day, 0, 0, 0)
         
-        # Query users who logged in since midnight UTC today
+        # Query users who have been seen since midnight UTC today
         recent_users = await prisma.user.find_many(
             where={
-                'lastLoginAt': {
+                'lastSeenAt': {
                     'gte': today_midnight_utc
                 }
             },
             order={
-                'lastLoginAt': 'desc'
+                'lastSeenAt': 'desc'
             },
             take=limit
         )
@@ -5236,7 +5275,7 @@ async def get_recent_site_logins(limit: int = 10):
                     'username': linked_member['username'],
                     'displayName': linked_member['displayName'] or linked_member['username'],
                     'clanRank': linked_member['clanRank'],
-                    'lastLoginAt': user.lastLoginAt.isoformat() if user.lastLoginAt else None,
+                    'lastSeenAt': user.lastSeenAt.isoformat() if user.lastSeenAt else None,
                     'isLinked': True
                 })
             else:
@@ -5245,7 +5284,7 @@ async def get_recent_site_logins(limit: int = 10):
                     'username': user.username,
                     'displayName': user.username,
                     'clanRank': None,
-                    'lastLoginAt': user.lastLoginAt.isoformat() if user.lastLoginAt else None,
+                    'lastSeenAt': user.lastSeenAt.isoformat() if user.lastSeenAt else None,
                     'isLinked': False
                 })
         

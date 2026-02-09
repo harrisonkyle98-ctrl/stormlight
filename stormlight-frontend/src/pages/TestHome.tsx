@@ -811,7 +811,7 @@ const TestHome = () => {
                                 />
                               </div>
                               <span className="test-recent-login-time">
-                                {login.lastLoginAt ? formatTimeAgo(new Date(login.lastLoginAt).getTime() / 1000) : 'Unknown'}
+                                {login.lastSeenAt ? formatTimeAgo(new Date(login.lastSeenAt).getTime() / 1000) : 'Unknown'}
                               </span>
                             </div>
                             {login.isLinked && (

@@ -19,6 +19,7 @@ model User {
   preferences             Json?
   selectedBadgeId         String?  @map("selected_badge_id")
   lastLoginAt             DateTime? @map("last_login_at")
+  lastSeenAt              DateTime? @map("last_seen_at")
   createdAt               DateTime @default(now()) @map("created_at")
   updatedAt               DateTime @updatedAt @map("updated_at")
 
