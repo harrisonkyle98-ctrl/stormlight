@@ -645,7 +645,7 @@ const TestHome = () => {
                 </div>
 
                 {/* Dailyscape Panel - with tabs */}
-                <DailyscapeCard />
+                <DailyscapeCard isTestPage={true} />
 
                 {/* Clan Log */}
                 <div className="test-panel test-panel--clan-log">
